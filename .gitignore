@@ -1,0 +1,24 @@
+# Cấu hình & bí mật của từng người — KHÔNG đưa lên
+config.json
+.copilot-secret
+.env
+*.key
+
+# Dữ liệu cá nhân / trạng thái chạy
+school/
+state.json
+inbox_state.json
+timetable_cache.json
+uni_sha_cache.json
+uni_sync.json
+uni_folders.json
+chat_files/
+copilot.workflow.json
+
+# Rác
+__pycache__/
+*.pyc
+*.bak*
+*.log
+*.lock
+_preview.html

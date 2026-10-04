@@ -1,0 +1,1979 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>University Copilot</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/p32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/p192.png">
+<link rel="apple-touch-icon" href="/icons/p192.png">
+<meta name="theme-color" content="#2d55c8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<style>
+:root {
+  --paper: #f5f7fa; --grid: #e6ebf2; --sheet: #ffffff; --ink: #1b2433; --ink-2: #4a5568; --ink-3: #8592a6;
+  --line: #dce3ee; --blue: #2d55c8; --blue-wash: #e8eefb; --blue-ink: #ffffff; --red: #cf3434; --red-wash: #fbeaea;
+  --green: #2f7d4f; --green-wash: #e6f3ec; --amber: #a86400; --amber-wash: #fbf1e1;
+  --r-s: 8px; --r-m: 12px; --r-l: 18px;
+  --rail: 288px; --col: 760px;
+  --font: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #131a26; --grid: #1a2232; --sheet: #1a2333; --ink: #e9edf4; --ink-2: #b4bdcc; --ink-3: #7d889b;
+    --line: #2a3447; --blue: #7d9cff; --blue-wash: #22305a; --blue-ink: #0f1522; --red: #ff7a72; --red-wash: #3a2024;
+    --green: #6fcf97; --green-wash: #1b3328; --amber: #f2b04e; --amber-wash: #3a2d17;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--font); color: var(--ink); font-size: 15.5px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.app { display: grid; grid-template-columns: var(--rail) 1fr; height: 100vh; }
+
+/* ---------- Rail: dải "Hôm nay" ---------- */
+.rail { border-right: 1px solid var(--line); background: var(--sheet); display: flex; flex-direction: column; padding: 22px 20px; gap: 22px; overflow-y: auto; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--blue); color: var(--blue-ink); display: grid; place-items: center; font-weight: 700; font-size: 15px; letter-spacing: -.02em; }
+.brand b { display: block; font-size: 15px; line-height: 1.2; }
+.brand span { font-size: 12.5px; color: var(--ink-3); }
+.today h2 { font-size: 13.5px; font-weight: 600; margin: 0 0 2px; }
+.today .date { font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin: 0 0 14px; }
+.slots { list-style: none; margin: 0; padding: 0; position: relative; }
+.slots::before { content: ""; position: absolute; left: 55px; top: 8px; bottom: 8px; width: 2px; background: var(--line); }
+.slot { display: grid; grid-template-columns: 44px 1fr; gap: 26px; padding: 6px 0; position: relative; }
+.slot time { font-weight: 600; font-size: 13.5px; color: var(--blue); padding-top: 1px; }
+.slot::after { content: ""; position: absolute; left: 50px; top: 12px; width: 12px; height: 12px; border-radius: 50%; background: var(--sheet); border: 2px solid var(--blue); box-sizing: border-box; }
+.slot div { font-size: 14px; line-height: 1.4; }
+.slot small { display: block; color: var(--ink-3); font-size: 12.5px; }
+.slots .empty { color: var(--ink-3); font-size: 14px; padding: 4px 0; }
+.tally { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tally button { text-align: left; border: 1px solid var(--line); background: transparent; border-radius: var(--r-m); padding: 10px 12px; cursor: pointer; }
+.tally button:hover { border-color: var(--ink-3); }
+.tally strong { display: block; font-size: 24px; line-height: 1.1; letter-spacing: -.02em; }
+.tally span { font-size: 12.5px; color: var(--ink-2); }
+.tally .late strong { color: var(--red); }
+.rail-foot { margin-top: auto; font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+.rail-foot a { color: var(--ink-2); text-decoration: none; }
+.rail-foot a:hover { color: var(--blue); text-decoration: underline; }
+
+/* ---------- Main + tabs ---------- */
+.main { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.tabs { display: flex; gap: 4px; padding: 14px 28px 0; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(8px); }
+.tab { border: 0; background: none; padding: 10px 14px 12px; cursor: pointer; color: var(--ink-2); font-weight: 500; border-bottom: 2.5px solid transparent; margin-bottom: -1px; display: inline-flex; align-items: center; gap: 8px; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--blue); font-weight: 600; }
+.tab .count { font-size: 12px; background: var(--blue-wash); color: var(--blue); border-radius: 999px; padding: 0 7px; font-weight: 600; }
+.tab .count.warn { background: var(--amber-wash); color: var(--amber); }
+.panel { flex: 1; overflow-y: auto; display: none; }
+.panel.on { display: flex; flex-direction: column; }
+.wrap { width: 100%; max-width: var(--col); margin: 0 auto; padding: 0 28px; }
+
+/* ---------- Chat ---------- */
+#chat-log { flex: 1; overflow-y: auto; padding: 28px 0 8px; }
+.hello { padding: 9vh 0 24px; }
+.hello h1 { font-size: clamp(26px, 3.4vw, 34px); line-height: 1.15; letter-spacing: -.03em; margin: 0 0 8px; font-weight: 700; }
+.hello p { color: var(--ink-2); margin: 0 0 20px; max-width: 56ch; }
+.starters { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--line); background: var(--sheet); border-radius: 999px; padding: 7px 14px; cursor: pointer; font-size: 14px; color: var(--ink); }
+.chip:hover { border-color: var(--blue); color: var(--blue); }
+.msg { margin: 0 0 22px; }
+.msg.me { display: flex; justify-content: flex-end; }
+.msg.me .bubble { background: var(--blue-wash); border-radius: var(--r-l) var(--r-l) 6px var(--r-l); padding: 10px 16px; max-width: min(82%, 600px); white-space: pre-wrap; }
+.msg.ai { display: grid; grid-template-columns: 30px 1fr; gap: 12px; }
+.msg.ai .who { width: 30px; height: 30px; border-radius: 9px; background: var(--blue); color: var(--blue-ink); display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+.msg.ai .text { min-width: 0; padding-top: 3px; }
+.msg.err .text { color: var(--red); }
+.text p { margin: 0 0 .7em; } .text > :last-child { margin-bottom: 0; }
+.text ul, .text ol { margin: .2em 0 .8em; padding-left: 1.3em; } .text li { margin: .2em 0; }
+.text strong { font-weight: 600; }
+.text code { font-size: .88em; background: var(--blue-wash); border-radius: 5px; padding: .05em .35em; }
+.text pre { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 14px; overflow-x: auto; }
+.text pre code { background: none; padding: 0; }
+.text table { border-collapse: collapse; width: 100%; margin: .5em 0 1em; font-size: .94em; display: block; overflow-x: auto; }
+.text th, .text td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+.text th { color: var(--ink-2); font-weight: 600; }
+.text a { color: var(--blue); }
+.thinking { display: inline-flex; gap: 5px; padding-top: 10px; }
+.thinking i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); animation: blink 1.2s infinite; }
+.thinking i:nth-child(2) { animation-delay: .2s; } .thinking i:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+.composer { padding: 10px 0 18px; }
+.box { display: flex; align-items: flex-end; gap: 6px; background: var(--sheet); border: 1.5px solid var(--line); border-radius: var(--r-l); padding: 6px; }
+.box:focus-within { border-color: var(--blue); }
+.box textarea { flex: 1; border: 0; outline: none; background: transparent; resize: none; padding: 9px 8px; max-height: 200px; min-height: 42px; line-height: 1.5; }
+.icon-btn { width: 40px; height: 40px; flex: none; border-radius: 12px; border: 0; cursor: pointer; display: grid; place-items: center; background: transparent; color: var(--ink-2); }
+.icon-btn:hover { background: var(--blue-wash); color: var(--blue); }
+.send { background: var(--blue); color: var(--blue-ink); }
+.send:hover { background: var(--blue); color: var(--blue-ink); filter: brightness(1.08); }
+.send:disabled { background: var(--line); color: var(--ink-3); cursor: default; filter: none; }
+.hint { font-size: 12.5px; color: var(--ink-3); margin: 8px 4px 0; }
+.attachments { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
+.att { display: flex; align-items: center; gap: 10px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 6px 8px 6px 6px; max-width: 100%; }
+.att img, .att .doc { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex: none; }
+.att .doc { display: grid; place-items: center; background: var(--blue-wash); color: var(--blue); font-size: 11px; font-weight: 700; }
+.att .nm { font-size: 13.5px; line-height: 1.3; min-width: 0; }
+.att .nm b { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.att label { font-size: 12.5px; color: var(--ink-2); display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+.att .x { border: 0; background: none; cursor: pointer; color: var(--ink-3); font-size: 18px; line-height: 1; padding: 2px 4px; border-radius: 6px; }
+.att .x:hover { color: var(--red); background: var(--red-wash); }
+.att.busy { opacity: .6; }
+.sent-files { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; margin-bottom: 6px; }
+.sent-files img { width: 120px; height: 90px; object-fit: cover; border-radius: 12px; border: 1px solid var(--line); }
+.sent-files span { font-size: 13px; background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; padding: 5px 10px; }
+.msg.me { flex-direction: column; align-items: flex-end; }
+#p-chat.dragging .box { border-color: var(--blue); box-shadow: 0 0 0 4px var(--blue-wash); }
+.mat-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; padding: 12px 14px; border-top: 1px solid var(--line); }
+.mat-row:first-child { border-top: 0; }
+.mat-row a.t { color: var(--ink); font-weight: 600; text-decoration: none; }
+.mat-row a.t:hover { color: var(--blue); text-decoration: underline; }
+.mat-row p { grid-column: 1 / -1; margin: 0; font-size: 13.5px; color: var(--ink-2); }
+.mat-row small { color: var(--ink-3); font-size: 12.5px; }
+.mat-row button { border: 0; background: none; color: var(--blue); font-weight: 500; font-size: 13px; cursor: pointer; }
+.note { color: var(--ink-3); font-size: 14px; padding: 12px 14px; }
+
+/* ---------- Suggest ---------- */
+.sg { padding-top: 28px; padding-bottom: 40px; }
+.sg h1, .ib h1 { font-size: 24px; letter-spacing: -.02em; margin: 0 0 6px; }
+.lead { color: var(--ink-2); margin: 0 0 26px; }
+.group { margin: 0 0 26px; }
+.group h2 { font-size: 15px; margin: 0 0 8px; font-weight: 600; }
+.group.urgent h2 { color: var(--red); }
+.rows { border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sheet); overflow: hidden; }
+.row { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 12px 14px; border: 0; border-top: 1px solid var(--line); background: none; cursor: pointer; }
+.row:first-child { border-top: 0; }
+.row:hover { background: var(--blue-wash); }
+.row .act { font-size: 13px; color: var(--blue); font-weight: 500; }
+.row .ic { font-size: 17px; }
+.skeleton { color: var(--ink-3); padding: 16px 0; }
+
+/* ---------- Inbox ---------- */
+.ib { padding-top: 28px; padding-bottom: 40px; }
+.drop { display: block; border: 2px dashed color-mix(in srgb, var(--blue) 45%, var(--line)); border-radius: var(--r-l); background: color-mix(in srgb, var(--sheet) 70%, transparent); padding: 34px 20px; text-align: center; cursor: pointer; transition: background .15s, border-color .15s; }
+.drop:hover, .drop.over { background: var(--blue-wash); border-color: var(--blue); }
+.drop b { display: block; font-size: 17px; margin-bottom: 4px; }
+.drop span { color: var(--ink-2); font-size: 14px; }
+.drop input { display: none; }
+.files { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
+.file { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 14px 16px; }
+.file.ask { border-color: var(--amber); }
+.file-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.file-name { font-weight: 600; word-break: break-word; }
+.badge { flex: none; font-size: 12.5px; font-weight: 600; border-radius: 999px; padding: 2px 10px; background: var(--blue-wash); color: var(--blue); }
+.badge.ok { background: var(--green-wash); color: var(--green); }
+.badge.ask, .badge.err { background: var(--amber-wash); color: var(--amber); }
+.badge.err { background: var(--red-wash); color: var(--red); }
+.path { margin-top: 6px; font-size: 13.5px; color: var(--ink-2); word-break: break-word; }
+.path .sep { color: var(--ink-3); margin: 0 4px; }
+.meta { margin-top: 6px; font-size: 13px; color: var(--ink-3); }
+.meta a { color: var(--blue); margin-right: 12px; }
+.choose { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+.choose select { flex: 1; min-width: 220px; border: 1px solid var(--line); border-radius: var(--r-s); padding: 8px 10px; background: var(--paper); }
+.btn { border: 0; border-radius: var(--r-s); padding: 8px 14px; background: var(--blue); color: var(--blue-ink); font-weight: 600; cursor: pointer; }
+.btn:disabled { opacity: .5; cursor: default; }
+.why { margin-top: 8px; font-size: 13.5px; color: var(--ink-2); }
+
+/* ---------- ghi bài giảng ---------- */
+.rec { padding-top: 26px; padding-bottom: 60px; }
+.rec h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -.01em; }
+.ticket { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); padding: 20px 22px; margin-bottom: 26px; position: relative; }
+.ticket.live { border-color: var(--red); box-shadow: 0 0 0 4px var(--red-wash); }
+.slotline { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin: 0 0 16px; color: var(--ink-2); font-size: 14px; }
+.slotline b { color: var(--ink); font-size: 16px; }
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.mode { text-align: left; border: 1.5px solid var(--line); background: var(--paper); border-radius: var(--r-m, 12px); padding: 12px 14px; cursor: pointer; color: var(--ink); }
+.mode b { display: block; font-size: 15px; }
+.mode span { font-size: 13px; color: var(--ink-2); }
+.mode[aria-pressed="true"] { border-color: var(--blue); background: var(--blue-wash); }
+.opts { display: grid; gap: 10px; margin: 0 0 16px; font-size: 14px; }
+.opts select { border: 1px solid var(--line); border-radius: var(--r-s); padding: 8px 10px; background: var(--paper); color: var(--ink); font: inherit; }
+.opts label { display: inline-flex; gap: 8px; align-items: center; color: var(--ink-2); }
+.rec-go { width: 100%; border: 0; border-radius: var(--r-m, 12px); padding: 14px; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; background: var(--red); color: #fff; }
+.rec-go:disabled { background: var(--line); color: var(--ink-3); cursor: default; }
+.live-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--red); animation: pulse 1.4s infinite; flex: none; }
+@keyframes pulse { 50% { opacity: .35; } }
+.clock { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; color: var(--red); }
+.live-meta { color: var(--ink-2); font-size: 13.5px; }
+.meter { height: 8px; border-radius: 999px; background: var(--grid); overflow: hidden; margin: 14px 0 4px; }
+.meter i { display: block; height: 100%; width: 0; background: var(--blue); transition: width .2s; }
+.meter-note { font-size: 12.5px; color: var(--ink-3); margin: 0 0 14px; }
+.marks { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.marks button { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 8px 14px; cursor: pointer; font: inherit; font-size: 14px; color: var(--ink); }
+.marks button:hover { border-color: var(--blue); color: var(--blue); }
+.marks button.ok { border-color: var(--blue); background: var(--blue-wash); }
+.live-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+.ghost { border: 1px solid var(--line); background: var(--paper); border-radius: var(--r-s); padding: 9px 14px; cursor: pointer; font: inherit; font-size: 14px; color: var(--ink); }
+.ghost:hover { border-color: var(--blue); color: var(--blue); }
+.stop { margin-left: auto; border: 0; border-radius: var(--r-s); padding: 10px 18px; font: inherit; font-weight: 700; cursor: pointer; background: var(--ink); color: var(--paper); }
+.capwarn { margin-top: 14px; padding: 10px 14px; border-radius: var(--r-s); background: var(--red-wash); color: var(--red); font-size: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.events { margin: 12px 0 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--ink-3); }
+.sessions .file { cursor: default; }
+.prog { height: 4px; border-radius: 999px; background: var(--grid); margin-top: 8px; overflow: hidden; }
+.prog i { display: block; height: 100%; background: var(--blue); }
+.ai-usage { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin-top: 4px; }
+.ai-usage b { color: var(--ink); }
+.ai-usage .warn { color: var(--red); }
+
+/* ---------- Lịch + Học kỳ (Claude 2026-10-03) ---------- */
+.cal, .sem { padding-top: 26px; padding-bottom: 50px; }
+.cal h1, .sem h1 { font-size: 24px; letter-spacing: -.02em; margin: 0 0 6px; }
+.wide { max-width: 1180px; }
+.cal-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+.cal-nav .wk { font-weight: 600; margin-right: auto; }
+.cal-nav .wk small { color: var(--ink-3); font-weight: 400; margin-left: 6px; }
+.banner { background: var(--amber-wash); color: var(--amber); border-radius: var(--r-m); padding: 10px 14px; font-weight: 600; margin: 0 0 12px; }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.day { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); min-height: 140px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.day { cursor: pointer; }
+.day:hover { border-color: var(--ink-3); }
+.day.sel { border: 2px solid var(--blue); padding: 7px; background: color-mix(in srgb, var(--blue-wash) 55%, var(--sheet)); box-shadow: 0 0 0 3px var(--blue-wash); }
+.day .tag { font-size: 11px; font-weight: 600; color: var(--blue-ink); background: var(--blue); border-radius: 999px; padding: 0 7px; margin-left: 6px; }
+.day h3 { margin: 0 0 2px; font-size: 13px; font-weight: 600; color: var(--ink-2); display: flex; justify-content: space-between; }
+.day.today h3 { color: var(--blue); }
+.day .none { color: var(--ink-3); font-size: 12.5px; }
+.ev { border-left: 3px solid var(--blue); background: var(--paper); border-radius: 6px; padding: 6px 8px; font-size: 13px; line-height: 1.35; }
+.ev time { display: block; font-weight: 600; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ev b { display: block; font-weight: 600; }
+.ev small { display: block; color: var(--ink-3); font-size: 12px; }
+.ev .md { display: inline-block; font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 0 7px; margin-top: 3px; }
+.ev.on { border-left-color: var(--blue); } .ev.on .md { background: var(--blue-wash); color: var(--blue); }
+.ev.off { border-left-color: var(--green); } .ev.off .md { background: var(--green-wash); color: var(--green); }
+.ev.dl { border-left-color: var(--red); background: var(--red-wash); } .ev.dl time { color: var(--red); }
+.ev.past { opacity: .55; }
+.cal-sync { font-size: 12.5px; color: var(--ink-3); margin: 10px 0 0; min-height: 1.2em; }
+.month-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 34px 0 12px; padding-top: 22px; border-top: 1px solid var(--line); }
+.month-head h2 { font-size: 19px; letter-spacing: -.01em; margin: 0 auto 0 0; }
+.month-head h2 small { color: var(--ink-3); font-weight: 400; font-size: 14px; margin-left: 8px; }
+.mgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; background: var(--line); gap: 1px; }
+.mgrid .dow { background: var(--paper); font-size: 12px; font-weight: 600; color: var(--ink-3); padding: 6px 8px; }
+.mcell { background: var(--sheet); min-height: 104px; padding: 6px 7px 7px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; border: 0; text-align: left; font: inherit; color: inherit; }
+.mcell:hover { background: var(--blue-wash); }
+.mcell .dn { font-size: 13px; font-weight: 600; color: var(--ink-2); display: flex; justify-content: space-between; align-items: baseline; }
+.mcell .dn i { font-style: normal; font-weight: 500; font-size: 11px; color: var(--amber); }
+.mcell.out { background: var(--paper); } .mcell.out .dn { color: var(--ink-3); font-weight: 400; }
+.mcell.today .dn b { background: var(--blue); color: var(--blue-ink); border-radius: 999px; padding: 0 7px; }
+.mcell.inweek { background: color-mix(in srgb, var(--blue-wash) 40%, var(--sheet)); }
+.mcell.inweek.out { background: color-mix(in srgb, var(--blue-wash) 40%, var(--paper)); }
+.mcell.sel { box-shadow: inset 0 0 0 2px var(--blue); background: var(--blue-wash); }
+.mcell.long { background: var(--amber-wash); }
+.mi { font-size: 12px; line-height: 1.3; padding-left: 6px; border-left: 2.5px solid var(--green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mi.on { border-left-color: var(--blue); } .mi.dl { border-left-color: var(--red); color: var(--red); font-weight: 600; }
+.mi.past { opacity: .5; }
+.mi time { font-variant-numeric: tabular-nums; color: var(--ink-3); margin-right: 4px; }
+.mmore { font-size: 11.5px; color: var(--ink-3); }
+.mlegend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-3); margin: 10px 0 0; }
+.mlegend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+.mcell .cnt { display: none; font-size: 11.5px; color: var(--ink-2); }
+@media (max-width: 860px) { .mcell { min-height: 64px; } .mi, .mmore { display: none; } .mcell .cnt { display: block; } }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 24px; }
+.stat { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 14px; }
+.stat strong { display: block; font-size: 24px; letter-spacing: -.02em; line-height: 1.15; }
+.stat span { font-size: 12.5px; color: var(--ink-2); }
+.stat em { display: block; font-style: normal; font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+.ctable { width: 100%; border-collapse: collapse; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; font-size: 14px; }
+.ctable th, .ctable td { text-align: left; padding: 9px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+.ctable th { color: var(--ink-2); font-weight: 600; font-size: 13px; border-top: 0; background: var(--paper); }
+.ctable td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.ctable .grp td { background: var(--paper); font-weight: 600; color: var(--ink-2); font-size: 13px; }
+.ctable small { color: var(--ink-3); }
+.pill { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+.pill.Taking { background: var(--blue-wash); color: var(--blue); } .pill.Completed { background: var(--green-wash); color: var(--green); }
+.pill.Planned { background: var(--grid); color: var(--ink-2); } .pill[class~="Miễn"] { background: var(--green-wash); color: var(--green); } .pill.warn { background: var(--amber-wash); color: var(--amber); }
+.road { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; margin: 10px 0 6px; }
+.road div { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-s); padding: 8px; font-size: 12.5px; }
+.road div.cur { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-wash); }
+.road b { display: block; font-size: 14px; } .road .bad { color: var(--amber); font-weight: 600; }
+.checks { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
+/* ---------- Học kỳ: thẻ kỳ bấm được ---------- */
+.overall { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 22px; }
+.semcards { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; margin: 0 0 26px; }
+.semcard { text-align: left; font: inherit; color: inherit; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 10px 10px 9px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.semcard:hover { border-color: var(--ink-3); }
+.semcard[aria-pressed="true"] { border: 2px solid var(--blue); padding: 9px 9px 8px; background: color-mix(in srgb, var(--blue-wash) 55%, var(--sheet)); }
+.semcard .lbl { font-size: 17px; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.semcard .st { align-self: flex-start; font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 0 8px; }
+.st.dang { background: var(--blue); color: var(--blue-ink); } .st.da { background: var(--green-wash); color: var(--green); } .st.chua { background: var(--grid); color: var(--ink-2); }
+.semcard dl { margin: 2px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; font-size: 12px; }
+.semcard dt { color: var(--ink-3); } .semcard dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.semcard dd.bad { color: var(--red); }
+.semhead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
+.semhead h2 { font-size: 20px; margin: 0; letter-spacing: -.01em; }
+/* ---------- Thanh phải: GDTC tự chọn ---------- */
+.app.r-open { grid-template-columns: var(--rail) 1fr 340px; }
+.side-r { display: none; border-left: 1px solid var(--line); background: var(--sheet); overflow-y: auto; padding: 20px 18px 30px; height: 100vh; }
+.app.r-open .side-r { display: block; }
+.side-r h2 { font-size: 17px; margin: 0 0 2px; display: flex; justify-content: space-between; align-items: center; }
+.side-r .x { border: 0; background: none; font-size: 20px; cursor: pointer; color: var(--ink-3); line-height: 1; padding: 2px 6px; }
+.side-r .sub { color: var(--ink-3); font-size: 13px; margin: 0 0 14px; }
+.tab-r { margin-left: auto; }
+.tab-r[aria-expanded="true"] { color: var(--blue); }
+.pebar { height: 8px; border-radius: 999px; background: var(--grid); overflow: hidden; margin: 6px 0 4px; }
+.pebar i { display: block; height: 100%; background: var(--green); }
+.lockbox { background: var(--amber-wash); color: var(--amber); border-radius: var(--r-m); padding: 10px 12px; font-size: 13.5px; font-weight: 500; margin: 12px 0; }
+.pegroup { margin: 14px 0 0; }
+.pegroup h3 { font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 0 0 6px; }
+.pegroup .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.pe { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: var(--r-s); padding: 5px 9px; cursor: pointer; text-align: left; line-height: 1.25; }
+.pe small { display: block; font-size: 11px; color: var(--ink-3); }
+.pe.open:hover { border-color: var(--blue); color: var(--blue); }
+.pe.passed { background: var(--green-wash); border-color: transparent; color: var(--green); cursor: default; }
+.pe.taking { background: var(--blue); border-color: transparent; color: var(--blue-ink); cursor: default; } .pe.taking small { color: inherit; opacity: .85; }
+.pe.chosen { border: 2px solid var(--blue); padding: 4px 8px; color: var(--blue); } .pe.chosen small { color: var(--blue); }
+.pe.locked { color: var(--ink-3); cursor: not-allowed; border-style: dashed; }
+.pe[aria-expanded="true"] { box-shadow: 0 0 0 3px var(--blue-wash); }
+.sidetabs { display: flex; border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; margin: 10px 0 14px; background: var(--paper); }
+.sidetabs button { flex: 1; border: 0; background: none; font: inherit; font-size: 13.5px; padding: 7px 6px; cursor: pointer; color: var(--ink-2); }
+.sidetabs button + button { border-left: 1px solid var(--line); }
+.sidetabs button[aria-selected="true"] { background: var(--ink-2); color: var(--blue-ink); font-weight: 600; }
+#c-rt:not(:empty) { margin-left: 5px; font-size: 11.5px; color: var(--red); font-weight: 700; }
+.sucard { border: 1px solid var(--line); border-radius: var(--r-m); background: var(--paper); padding: 10px 12px; margin: 0 0 10px; font-size: 13.5px; }
+.sucard h3 { font-size: 14.5px; margin: 0 0 2px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sucard .chip { font-size: 12px; border-radius: 999px; padding: 1px 8px; background: var(--grid); color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+.sucard.now { border-color: var(--amber); }
+.sucard.past { opacity: .6; }
+.sucard .row { margin-top: 8px; }
+.smeta { color: var(--ink-3); font-size: 12.5px; }
+.sform label { display: block; margin: 8px 0 0; font-size: 12.5px; color: var(--ink-2); }
+.sform input, .sform select { display: block; width: 100%; box-sizing: border-box; margin-top: 3px; font: inherit; font-size: 13.5px; padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--sheet); color: var(--ink); }
+.sform .choices { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.sform .choices button[aria-pressed="true"] { border-color: var(--ink-2); font-weight: 600; }
+.sask { margin-top: 10px; padding: 10px; border: 1px solid var(--amber); border-radius: var(--r-s); background: var(--sheet); }
+.schoolbar { border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sheet); padding: 10px 14px; margin: 0 0 18px; font-size: 14px; }
+.schoolbar.warn { border-color: var(--amber); }
+.schoolbar .row1 { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+.schoolbar .row1 .sub { color: var(--ink-3); font-size: 12.5px; }
+.schoolbar .row1 button { margin-left: auto; }
+.schoolbar p { margin: 8px 0 0; color: var(--ink-2); }
+.schoolbar details { margin-top: 8px; }
+.schoolbar summary { cursor: pointer; color: var(--ink-2); font-size: 13.5px; }
+.schoolbar ul { margin: 6px 0 0; padding-left: 20px; color: var(--ink-2); font-size: 13px; }
+.sask ul { margin: 6px 0 8px; padding-left: 18px; color: var(--ink-2); }
+.smsg { color: var(--red); font-size: 12.5px; margin-top: 6px; }
+.pepick { margin: 8px 0 2px; padding: 10px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--paper); font-size: 13px; }
+.pepick .row { margin-top: 8px; }
+.pepick select { font: inherit; padding: 6px 8px; border-radius: var(--r-s); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); }
+.pepick .msg { color: var(--red); margin-top: 6px; }
+.primary { border: 0; background: var(--blue); color: var(--blue-ink); border-radius: var(--r-s); padding: 7px 14px; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+/* ---------- Hôm nay (Daily Task + chế độ ngày) ---------- */
+.modebar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 22px; }
+.modebar .seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; background: var(--sheet); }
+.modebar .seg button { border: 0; background: none; padding: 10px 16px; font: inherit; font-size: 14.5px; cursor: pointer; color: var(--ink-2); }
+.modebar .seg button + button { border-left: 1px solid var(--line); }
+.modebar .seg button[aria-pressed="true"] { color: var(--blue-ink); font-weight: 600; }
+.modebar .seg button[data-m="Bình thường"][aria-pressed="true"] { background: var(--ink-2); }
+.modebar .seg button[data-m="Camp"][aria-pressed="true"] { background: var(--amber); }
+.modebar .seg button[data-m="Rest"][aria-pressed="true"] { background: var(--blue); }
+.modebar label { font-size: 13.5px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+.modebar input { width: 64px; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--paper); color: var(--ink); }
+.modebar .msg { font-size: 13px; color: var(--ink-3); }
+.tasks { list-style: none; margin: 0 0 26px; padding: 0; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--sheet); overflow: hidden; }
+.tasks li { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: start; padding: 11px 14px; border-top: 1px solid var(--line); }
+.tasks li:first-child { border-top: 0; }
+.tasks li.done .tname { text-decoration: line-through; color: var(--ink-3); }
+.tasks .chk { width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--ink-3); background: none; cursor: pointer; display: grid; place-items: center; font-size: 14px; color: var(--blue-ink); padding: 0; }
+.tasks li.done .chk { background: var(--green); border-color: var(--green); }
+.tasks .tname { font-weight: 600; } .tasks small { display: block; color: var(--ink-3); font-size: 12.5px; margin-top: 2px; }
+.tasks .h { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 13.5px; white-space: nowrap; }
+.tasks .empty { display: block; padding: 18px; color: var(--ink-3); }
+.strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin: 6px 0 4px; }
+@media (max-width: 600px) { .strip { gap: 3px; } .dcell { padding: 5px 4px; min-height: 54px; } .dcell span { display: none; } .tasks li { grid-template-columns: 30px 1fr; } .tasks .h { grid-column: 2; } }
+.strip .lab { grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-3); margin-top: 6px; }
+.dcell { font: inherit; text-align: left; border: 1px solid var(--line); background: var(--sheet); border-radius: var(--r-s); padding: 7px 8px; cursor: pointer; color: inherit; min-height: 62px; display: flex; flex-direction: column; gap: 2px; }
+.dcell:hover { border-color: var(--ink-3); }
+.dcell b { font-size: 12.5px; } .dcell span { font-size: 12px; color: var(--ink-3); } .dcell em { font-style: normal; font-size: 12.5px; font-weight: 600; }
+.dcell.Camp { background: var(--amber-wash); border-color: color-mix(in srgb, var(--amber) 40%, var(--line)); } .dcell.Camp em { color: var(--amber); }
+.dcell.Rest { background: var(--blue-wash); border-color: color-mix(in srgb, var(--blue) 35%, var(--line)); } .dcell.Rest em { color: var(--blue); }
+.dcell.today { box-shadow: 0 0 0 2px var(--ink); }
+.dcell.sugg { border-style: dashed; border-color: var(--amber); }
+.dcell.past { opacity: .7; cursor: default; }
+.daypick { margin: 8px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--paper); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13.5px; }
+.dconfirm { margin: -10px 0 22px; padding: 14px 16px; border: 1px solid var(--amber); border-radius: var(--r-m); background: var(--sheet); font-size: 14px; }
+.dconfirm ul { margin: 6px 0 10px; padding-left: 20px; color: var(--ink-2); }
+.dconfirm .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.daypick + .dconfirm { margin: 8px 0 0; }
+.weekbox { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 14px 16px; margin: 18px 0 0; font-size: 14px; }
+.weekbox b.v-Ổn { color: var(--green); } .weekbox b.v-Cần { color: var(--amber); } .weekbox b.v-Không { color: var(--red); }
+/* ---------- Ngoại ngữ ---------- */
+.ccols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 26px; }
+.ccol h2 { font-size: 15px; margin: 0 0 8px; display: flex; justify-content: space-between; color: var(--ink-2); }
+.ccol h2 span { font-weight: 500; color: var(--ink-3); }
+.ccol .empty { color: var(--ink-3); font-size: 13.5px; border: 1px dashed var(--line); border-radius: var(--r-m); padding: 14px; }
+.cert { background: var(--sheet); border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: var(--r-m); padding: 10px 12px; margin: 0 0 8px; font-size: 13.5px; }
+.cert.goal { border-left-color: var(--blue); } .cert.old { border-left-color: var(--ink-3); opacity: .8; }
+.cert b { font-size: 14.5px; } .cert .lv { float: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cert .meta { color: var(--ink-3); font-size: 12.5px; margin: 2px 0 6px; }
+.cert .badges { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 6px; }
+.badge { font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 0 8px; background: var(--grid); color: var(--ink-2); }
+.badge.ok { background: var(--green-wash); color: var(--green); } .badge.warn { background: var(--amber-wash); color: var(--amber); } .badge.info { background: var(--blue-wash); color: var(--blue); }
+.cert .acts { display: flex; gap: 10px; } .cert .acts button { border: 0; background: none; padding: 0; font: inherit; font-size: 12.5px; color: var(--blue); cursor: pointer; }
+.cert .acts button.del { color: var(--ink-3); }
+.cform { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); padding: 16px 18px; margin: 0 0 26px; }
+.cform h2 { font-size: 16px; margin: 0 0 10px; }
+.cform .seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-s); overflow: hidden; margin: 0 0 12px; }
+.cform .seg button { border: 0; background: var(--paper); padding: 6px 14px; font: inherit; font-size: 13.5px; cursor: pointer; color: var(--ink-2); }
+.cform .seg button[aria-pressed="true"] { background: var(--blue); color: var(--blue-ink); font-weight: 600; }
+.cform .grid { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.cform label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ink-2); }
+.cform select, .cform input { font: inherit; padding: 7px 9px; border-radius: var(--r-s); border: 1px solid var(--line); background: var(--paper); color: var(--ink); min-width: 140px; }
+.cform .link { border: 0; background: none; color: var(--blue); font: inherit; font-size: 13px; cursor: pointer; padding: 8px 0; }
+.cform .preview { margin: 12px 0 0; font-size: 13.5px; color: var(--ink-2); min-height: 1.4em; }
+.cform .msg { color: var(--red); font-size: 13.5px; margin-top: 6px; min-height: 1.2em; }
+.ruletab { margin: 0 0 18px; }
+details.catalog { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 10px 14px; margin: 0 0 10px; font-size: 13.5px; }
+details.catalog summary { cursor: pointer; font-weight: 600; }
+details.catalog table { width: 100%; border-collapse: collapse; margin: 8px 0 0; font-size: 13px; }
+details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+@media (max-width: 1100px) { .ccols { grid-template-columns: 1fr; } }
+/* ---------- ĐK tốt nghiệp ---------- */
+.gengine { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); padding: 18px 20px; }
+.gengine .big { font-size: 34px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.gengine .big small { font-size: 16px; color: var(--ink-3); font-weight: 500; }
+.gbar { position: relative; height: 12px; background: var(--grid); border-radius: 999px; margin: 12px 0 6px; overflow: hidden; }
+.gbar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--blue); border-radius: 999px; }
+.gbar.ok i { background: var(--green); }
+.gscale { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.verdict { margin: 12px 0 0; font-weight: 600; } .verdict.ok { color: var(--green); } .verdict.no { color: var(--ink-2); }
+.gsec { position: relative; margin: 18px 0 0; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); padding: 16px 20px; }
+.gsec h2 { font-size: 16px; margin: 0 0 4px; } .gsec p { margin: 0 0 10px; color: var(--ink-2); font-size: 14px; }
+.gsec.locked > *:not(.lockcover) { opacity: .35; pointer-events: none; user-select: none; }
+.lockcover { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; color: var(--ink-2); font-weight: 600; font-size: 14px; }
+.gform { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.gform label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ink-2); }
+.gform input, .gform select { font: inherit; padding: 7px 9px; border-radius: var(--r-s); border: 1px solid var(--line); background: var(--paper); color: var(--ink); width: 150px; }
+.gres { margin-top: 10px; font-weight: 600; } .gres.ok { color: var(--green); } .gres.no { color: var(--red); }
+@media (max-width: 1180px) { .semcards { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .app.r-open { grid-template-columns: var(--rail) 1fr; } .app.r-open .side-r { position: fixed; right: 0; top: 0; width: min(360px, 100vw); z-index: 30; box-shadow: -12px 0 30px rgba(0,0,0,.18); } }
+@media (max-width: 860px) { .overall { grid-template-columns: 1fr 1fr; } .semcards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .app.r-open { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .week { grid-template-columns: 1fr; } .stats { grid-template-columns: 1fr 1fr; } .road { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 860px) {
+  .modes { grid-template-columns: 1fr; }
+  .app { grid-template-columns: 1fr; }
+  .rail { display: none; }
+  .tabs { padding: 10px 12px 0; overflow-x: auto; }
+  .wrap { padding: 0 16px; }
+  .hello { padding-top: 5vh; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+/* 📡 cảnh báo sự kiện từ mail trường — trên mọi tab */
+.alerts:empty { display: none; }
+.alerts { display: grid; gap: 8px; margin: 0 0 12px; }
+.alert { border-radius: var(--r-m); padding: 10px 14px; border-left: 5px solid var(--amber); background: var(--amber-wash); color: var(--ink); }
+.alert.red { border-left-color: var(--red); background: var(--red-wash); }
+.alert.blue { border-left-color: var(--blue); background: var(--blue-wash); } .alert.blue b { color: var(--blue); }
+.alert.pinned { border: 2px solid var(--red); border-left-width: 7px; }
+.alert b { display: block; font-size: 15px; } .alert.red b { color: var(--red); } .alert.yellow b { color: var(--amber); }
+.alert .fact { font-size: 14px; margin-top: 2px; } .alert .note { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
+.alert .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+.alert .acts button { font: inherit; font-size: 13.5px; padding: 5px 12px; border-radius: var(--r-s); border: 1px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; }
+.alert .acts button.go { border-color: var(--red); background: var(--red); color: #fff; }
+.alert .ask { font-size: 13.5px; font-weight: 600; }
+.alert .amsg { color: var(--red); font-size: 12.5px; }
+.alert-opt summary { cursor: pointer; font-size: 13.5px; color: var(--amber); font-weight: 600; padding: 4px 2px; }
+.alert-opt[open] { display: grid; gap: 8px; } .alert-opt .alert { margin-top: 6px; }
+.tasks.dls li.soon .h { color: var(--red); font-weight: 600; }
+.kind { font-weight: 600; } .kind.k-mh { color: var(--red); } .kind.k-tl { color: var(--blue); } .kind.k-cl { color: var(--amber); }
+.dupbox { border: 1px solid var(--amber); background: var(--amber-wash); border-radius: var(--r-m); padding: 10px 14px; margin: 0 0 14px; }
+.dpair + .dpair { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 10px; }
+.dwhy { font-size: 13px; color: var(--amber); font-weight: 600; margin-bottom: 6px; }
+.dsides { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } @media (max-width: 640px) { .dsides { grid-template-columns: 1fr; } }
+.dside { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-s); padding: 8px 10px; display: grid; gap: 4px; }
+.dside small { color: var(--ink-3); } .dside button { justify-self: start; font-size: 13px; }
+/* 🔔 thông báo gom vào nút chuông (4/10) — không che các tab */
+.brand .bell { margin-left: auto; }
+.bell { position: relative; border: 1px solid var(--line); background: var(--sheet); color: var(--ink-2); width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; cursor: pointer; flex: none; }
+.bell:hover, .bell[aria-expanded="true"] { color: var(--blue); border-color: var(--blue); }
+.bell.has-red { color: var(--red); border-color: var(--red); }
+.bell-n { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--amber); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+.bell.has-red .bell-n { background: var(--red); }
+.bell.has-pin { animation: bellpulse 1.6s ease-in-out infinite; }
+@keyframes bellpulse { 50% { box-shadow: 0 0 0 5px var(--red-wash); } }
+@media (prefers-reduced-motion: reduce) { .bell.has-pin { animation: none; } }
+.bell-m { display: none; position: fixed; top: 10px; right: 12px; z-index: 40; }
+.notif { position: fixed; top: 70px; left: 16px; width: min(440px, calc(100vw - 32px)); max-height: min(72vh, 680px); overflow: auto; z-index: 50;
+         background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-l); box-shadow: 0 12px 40px rgba(15, 25, 45, .22); padding: 12px; }
+.notif-head { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 10px; }
+.notif-head b { font-size: 16px; }
+.notif .alerts { margin: 0; }
+.notif-empty { color: var(--ink-3); font-size: 14px; margin: 4px 2px 6px; }
+.tasks.exlist li { grid-template-columns: 1fr auto; }
+.tasks.exlist .tname a { color: var(--ink); text-decoration: none; } .tasks.exlist .tname a:hover { color: var(--blue); text-decoration: underline; }
+.tasks.exlist .h { text-align: right; white-space: nowrap; }
+@media (max-width: 860px) { .bell-m { display: grid; } .notif { left: auto; right: 12px; top: 56px; } .tabs { padding-right: 56px; } }
+@media (max-width: 600px) { .tasks.exlist li { grid-template-columns: 1fr; } .tasks.exlist .h { grid-column: 1; text-align: left; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail" aria-label="Hôm nay">
+    <div class="brand"><div class="brand-mark" aria-hidden="true">UC</div><div><b>University Copilot</b><span>Hậu phương học tập 4 năm</span></div>
+      <button class="bell" id="bell" aria-label="Thông báo" aria-expanded="false" aria-controls="notif"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg><span class="bell-n" id="bell-n" hidden></span></button></div>
+    <section class="today">
+      <h2>Hôm nay</h2>
+      <p class="date" id="today-date"></p>
+      <ul class="slots" id="slots"><li class="empty">Đang đọc lịch…</li></ul>
+    </section>
+    <div class="tally">
+      <button class="late" data-ask="Liệt kê các task quá hạn và hỏi mình từng cái đã xong chưa để đánh dấu Done."><strong id="n-late">–</strong><span>việc quá hạn</span></button>
+      <button data-ask="Tuần này có hạn nộp nào?"><strong id="n-due">–</strong><span>hạn trong 7 ngày</span></button>
+    </div>
+    <section class="today" aria-label="Gemini hôm nay">
+      <h2>Gemini hôm nay</h2>
+      <div class="ai-usage" id="ai-usage">Đang đọc…</div>
+    </section>
+    <nav class="rail-foot" aria-label="Liên kết">
+      <a href="https://www.notion.so/{{notion:home_dashboard}}" target="_blank" rel="noopener">Mở Home Dashboard trong Notion</a>
+      <a href="https://www.notion.so/{{notion:daily_brief}}" target="_blank" rel="noopener">Bản tin sáng và tối</a>
+      <a href="http://localhost:8300" target="_blank" rel="noopener">Phòng họp Hội đồng AI</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <button class="bell bell-m" id="bell-m" aria-label="Thông báo" aria-expanded="false" aria-controls="notif"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg><span class="bell-n" id="bell-n-m" hidden></span></button>
+    <div class="notif" id="notif" role="dialog" aria-label="Thông báo" hidden>
+      <div class="notif-head"><b>Thông báo</b><button class="ghost" id="notif-x" aria-label="Đóng">Đóng</button></div>
+      <div class="alerts" id="alerts" aria-live="polite"></div>
+      <p class="notif-empty" id="notif-empty">Không có thông báo nào.</p>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="t-chat" aria-selected="true" aria-controls="p-chat">Trò chuyện</button>
+      <button class="tab" role="tab" id="t-day" aria-selected="false" aria-controls="p-day">Hôm nay</button>
+      <button class="tab" role="tab" id="t-sg" aria-selected="false" aria-controls="p-sg">Gợi ý <span class="count" id="c-sg" hidden></span></button>
+      <button class="tab" role="tab" id="t-ib" aria-selected="false" aria-controls="p-ib">Inbox tài liệu <span class="count warn" id="c-ib" hidden></span></button>
+      <button class="tab" role="tab" id="t-cal" aria-selected="false" aria-controls="p-cal">Lịch</button>
+      <button class="tab" role="tab" id="t-extra" aria-selected="false" aria-controls="p-extra">Ngoại khoá</button>
+      <button class="tab" role="tab" id="t-sem" aria-selected="false" aria-controls="p-sem">Học kỳ</button>
+      <button class="tab" role="tab" id="t-lang" aria-selected="false" aria-controls="p-lang">Ngoại ngữ</button>
+      <button class="tab" role="tab" id="t-grad" aria-selected="false" aria-controls="p-grad">ĐK tốt nghiệp</button>
+      <button class="tab" role="tab" id="t-rec" aria-selected="false" aria-controls="p-rec">Ghi bài giảng <span class="count warn" id="c-rec" hidden>●</span></button>
+      <button class="tab tab-r" id="t-pe" aria-expanded="false" aria-controls="side-pe">GDTC · Hè · Học lại <span class="count" id="c-pe">0/4</span></button>
+    </div>
+
+    <section class="panel on" id="p-chat" role="tabpanel" aria-labelledby="t-chat">
+      <div id="chat-log"><div class="wrap" id="chat-inner">
+        <div class="hello" id="hello">
+          <h1>Hôm nay bạn muốn lo việc gì?</h1>
+          <p>Hỏi về lịch, hạn nộp, kế hoạch trong ngày. Báo deadline mới hoặc gửi tài liệu, mình ghi vào hệ thống giúp bạn.</p>
+          <div class="starters" id="starters"></div>
+        </div>
+      </div></div>
+      <div class="composer"><div class="wrap">
+        <div class="attachments" id="attachments" aria-live="polite"></div>
+        <input type="file" id="chat-file" multiple hidden accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.csv,.c,.cpp,.h,.py,.ino">
+        <form class="box" id="form">
+          <button type="button" class="icon-btn" id="attach" title="Đính kèm ảnh hoặc tài liệu" aria-label="Đính kèm ảnh hoặc tài liệu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1 12.2 20.3a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>
+          </button>
+          <textarea id="input" rows="1" placeholder="Nhắn cho Copilot, ví dụ: thứ 6 nộp Lab 2 IT3190" aria-label="Tin nhắn"></textarea>
+          <button class="icon-btn send" id="send" type="submit" aria-label="Gửi" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </form>
+        <p class="hint">Enter để gửi, Shift + Enter để xuống dòng. Kéo ảnh hoặc tài liệu vào đây để hỏi về nó. Copilot ghi thẳng vào Notion, nên xem lại những thay đổi quan trọng.</p>
+      </div></div>
+    </section>
+
+    <section class="panel" id="p-sg" role="tabpanel" aria-labelledby="t-sg">
+      <div class="wrap sg">
+        <h1>Gợi ý cho bạn</h1>
+        <p class="lead">Dựa trên lịch, task và hạn nộp trong Notion. Chọn một dòng để Copilot làm luôn.</p>
+        <div id="sg-list"><p class="skeleton">Đang đọc dữ liệu…</p></div>
+      </div>
+    </section>
+
+    <section class="panel" id="p-ib" role="tabpanel" aria-labelledby="t-ib">
+      <div class="wrap ib">
+        <h1>Inbox tài liệu</h1>
+        <p class="lead">Thả slide, đề bài, ảnh chụp bảng vào đây. Agent đọc nội dung, xếp vào đúng thư mục môn trong Uni-Documents, sao lưu Drive rồi đưa vào Notion.</p>
+        <label class="drop" id="drop">
+          <input type="file" id="file" multiple>
+          <b>Thả file vào đây hoặc bấm để chọn</b>
+          <span>PDF, Word, PowerPoint, Excel, ảnh, file code. Tối đa 200 MB mỗi file.</span>
+        </label>
+        <div class="files" id="files"></div>
+      </div>
+    </section>
+
+
+    <section class="panel" id="p-cal" role="tabpanel" aria-labelledby="t-cal">
+      <div class="wrap wide cal">
+        <h1>Lịch học và hạn nộp</h1>
+        <p class="lead">Thời khoá biểu và deadline trong Notion: tuần ở trên, cả tháng ở dưới. Muốn đổi lịch, nhắn cho Copilot.</p>
+        <div class="cal-nav">
+          <span class="wk" id="cal-wk">Đang đọc…</span>
+          <button class="ghost" id="cal-prev">‹ Tuần trước</button>
+          <button class="ghost" id="cal-now">Tuần này</button>
+          <button class="ghost" id="cal-next">Tuần sau ›</button>
+        </div>
+        <div id="cal-body"><p class="skeleton">Đang đọc lịch…</p></div>
+        <p class="cal-sync" id="cal-sync"></p>
+        <div class="month-head">
+          <h2 id="cal-mtitle">Tháng</h2>
+          <button class="ghost" id="cal-mprev">‹ Tháng trước</button>
+          <button class="ghost" id="cal-mnow">Tháng này</button>
+          <button class="ghost" id="cal-mnext">Tháng sau ›</button>
+        </div>
+        <div id="cal-month"></div>
+        <div class="mlegend"><span style="--c: var(--green)">Học trên lớp</span><span style="--c: var(--blue)">Online</span><span style="--c: var(--red)">Hạn nộp</span><span style="--c: var(--amber)">Đợt nghỉ / đợt học tập trung</span><span>Bấm một ngày ở lịch tuần hoặc lịch tháng để chọn; hai lịch luôn chọn cùng một ngày</span></div>
+      </div>
+    </section>
+
+    <section class="panel" id="p-extra" role="tabpanel" aria-labelledby="t-extra">
+      <div class="wrap wide cal">
+        <h1>Hoạt động ngoại khoá</h1>
+        <p class="lead">Từ CTSV (hoạt động bạn đã đăng ký, hạn nộp minh chứng, hoạt động đang mở, học bổng) và từ mail / Teams (CLB, Đoàn – Hội, cuộc thi, tuyển thành viên). Tách riêng khỏi lịch học và hạn học tập.</p>
+        <div class="cal-nav">
+          <span class="wk" id="ex-wk">Đang đọc…</span>
+          <button class="ghost" id="ex-prev">‹ Tuần trước</button>
+          <button class="ghost" id="ex-now">Tuần này</button>
+          <button class="ghost" id="ex-next">Tuần sau ›</button>
+        </div>
+        <div id="ex-week"><p class="skeleton">Đang đọc…</p></div>
+        <div class="month-head">
+          <h2 id="ex-mtitle">Tháng</h2>
+          <button class="ghost" id="ex-mprev">‹ Tháng trước</button>
+          <button class="ghost" id="ex-mnow">Tháng này</button>
+          <button class="ghost" id="ex-mnext">Tháng sau ›</button>
+        </div>
+        <div id="ex-month"></div>
+        <div class="mlegend"><span style="--c: var(--green)">Đã đăng ký</span><span style="--c: var(--red)">Hạn (minh chứng / đăng ký / học bổng)</span><span style="--c: var(--blue)">Đang mở · sự kiện quan tâm</span></div>
+        <div id="ex-lists"></div>
+        <p class="cal-sync" id="ex-sync"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="p-sem" role="tabpanel" aria-labelledby="t-sem">
+      <div class="wrap wide sem">
+        <h1 id="sem-title">Học kỳ</h1>
+        <p class="lead">Chọn một kỳ để xem môn, điểm và chuyên cần. Báo điểm hoặc buổi vắng cho Copilot để ghi; GDTC tự chọn, kỳ hè và học lại nằm ở thanh bên phải.</p>
+        <div id="school-bar"></div>
+        <div id="sem-body"><p class="skeleton">Đang đọc dữ liệu học kỳ…</p></div>
+      </div>
+    </section>
+    <section class="panel" id="p-day" role="tabpanel" aria-labelledby="t-day">
+      <div class="wrap wide sem">
+        <h1 id="day-title">Hôm nay</h1>
+        <p class="lead">Việc hôm nay do A4 xếp, và chế độ ngày: ⛺ Camp khi bạn dồn sức, 💤 Rest khi nghỉ. Các giám sát viên (A4, bản tin, đánh giá tuần, Copilot) nhìn vào đây — không cảnh báo vì một ngày nghỉ.</p>
+        <div id="day-body"><p class="skeleton">Đang đọc…</p></div>
+      </div>
+    </section>
+    <section class="panel" id="p-lang" role="tabpanel" aria-labelledby="t-lang">
+      <div class="wrap wide sem">
+        <h1>Chứng chỉ ngoại ngữ</h1>
+        <p class="lead">Chứng chỉ bạn nhắm tới, đang có và đã hết hạn — quy đổi bậc, miễn học phần tiếng Anh và chuẩn đầu ra theo quy định ĐHBK từ K70. Dữ liệu nằm trong Notion (🎫 Chứng chỉ ngoại ngữ của tôi).</p>
+        <div id="lang-body"><p class="skeleton">Đang đọc…</p></div>
+      </div>
+    </section>
+    <section class="panel" id="p-grad" role="tabpanel" aria-labelledby="t-grad">
+      <div class="wrap wide sem">
+        <h1>Điều kiện tốt nghiệp</h1>
+        <p class="lead">Hệ thống tự đếm tín tích luỹ. Đủ 128 tín (khung 128–132) thì mở phần ngoại ngữ và CPA bên dưới. Kết quả ghi cả vào 🎓 Xét tốt nghiệp trong Home Dashboard.</p>
+        <div id="grad-body"><p class="skeleton">Đang tính…</p></div>
+      </div>
+    </section>
+    <section class="panel" id="p-rec" role="tabpanel" aria-labelledby="t-rec">
+      <div class="wrap rec">
+        <h1>Ghi bài giảng</h1>
+        <p class="lead">Chỉ ghi khi bạn bấm <b>Bắt đầu ghi</b>, chỉ dừng khi bạn bấm <b>Dừng</b>. Audio được chép lời ngay trên máy; Gemini chỉ nhận ghi chú đã nén, không nhận âm thanh.</p>
+        <div id="rec-card" class="ticket"><p class="skeleton">Đang kết nối app ghi âm…</p></div>
+        <h2 style="font-size:17px;margin:0 0 10px">Các buổi đã ghi</h2>
+        <div class="files sessions" id="rec-list"><p class="skeleton">Đang đọc…</p></div>
+      </div>
+    </section>
+  </main>
+  <aside class="side-r" id="side-pe" aria-label="Thanh bên học kỳ">
+    <h2>Thanh học kỳ <button class="x" id="pe-close" aria-label="Đóng">×</button></h2>
+    <div class="sidetabs" role="tablist" aria-label="Mục thanh bên">
+      <button role="tab" data-st="pe" aria-selected="true">GDTC</button><button role="tab" data-st="su" aria-selected="false">Kỳ hè</button><button role="tab" data-st="rt" aria-selected="false">Học lại<span id="c-rt"></span></button>
+    </div>
+    <div id="sp-pe">
+    <p class="sub">Đạt ít nhất 4 học phần. Môn có số học lần lượt (1 → 2 → 3…); môn không số học một lần là đủ. Bấm môn để chọn kỳ khi đăng ký.</p>
+    <div id="pe-body"><p class="skeleton">Đang đọc…</p></div>
+    </div>
+    <div id="sp-su" hidden>
+      <p class="sub">Mỗi hè chọn một: học hè, nghỉ hoặc thực tập. Chọn trước cho các hè sau cũng được. Lưu vào ☀️ Summer Planning sau khi bạn bấm Xác nhận.</p>
+      <div id="su-body"><p class="skeleton">Đang đọc…</p></div>
+    </div>
+    <div id="sp-rt" hidden>
+      <p class="sub">Môn trượt và kỳ học lại. Nợ tín chỉ hết khi môn học lại đạt. Hết kỳ, môn trượt tự xếp sang kỳ sau; muốn học kỳ khác thì đổi ở đây.</p>
+      <div id="rt-body"><p class="skeleton">Đang đọc…</p></div>
+      <h2 style="font-size:15.5px;margin:22px 0 2px">Học cải thiện</h2>
+      <p class="sub">Học lại môn đã đạt để nâng CPA; điểm lần cao nhất là điểm chính thức. Tín học cải thiện không tính vào 5% học lại khi xét hạng tốt nghiệp.</p>
+      <div id="im-body"><p class="skeleton">Đang đọc…</p></div>
+    </div>
+  </aside>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const md = (s) => DOMPurify.sanitize(marked.parse(String(s || ''), { breaks: true }));
+let sessionId = localStorage.getItem('uc-session');
+if (!sessionId) { sessionId = 'web-' + crypto.randomUUID(); localStorage.setItem('uc-session', sessionId); }
+
+/* ---------- tabs ---------- */
+const tabs = { chat: ['#t-chat', '#p-chat'], day: ['#t-day', '#p-day'], sg: ['#t-sg', '#p-sg'], ib: ['#t-ib', '#p-ib'], cal: ['#t-cal', '#p-cal'], extra: ['#t-extra', '#p-extra'], sem: ['#t-sem', '#p-sem'], lang: ['#t-lang', '#p-lang'], grad: ['#t-grad', '#p-grad'], rec: ['#t-rec', '#p-rec'] };
+function show(name) {
+  for (const [k, [t, p]] of Object.entries(tabs)) { $(t).setAttribute('aria-selected', k === name); $(p).classList.toggle('on', k === name); }
+  if (name === 'ib') refreshInbox();
+  if (name === 'rec') { recTick(); loadLectures(); }
+  if (name === 'cal') loadCal();
+  if (name === 'extra') loadExtra();
+  if (name === 'sem') loadSem();
+  if (name === 'grad') loadGrad();
+  if (name === 'lang') loadLang();
+  if (name === 'day') loadDay();
+  if (name === 'chat') $('#input').focus();
+}
+$('#t-chat').onclick = () => show('chat'); $('#t-sg').onclick = () => show('sg'); $('#t-ib').onclick = () => show('ib'); $('#t-rec').onclick = () => show('rec'); $('#t-cal').onclick = () => show('cal'); $('#t-sem').onclick = () => show('sem'); $('#t-grad').onclick = () => show('grad'); $('#t-lang').onclick = () => show('lang'); $('#t-day').onclick = () => show('day');
+
+/* ---------- Lịch (Claude 2026-10-03) ---------- */
+const TZ_OFF = 7 * 3600e3, WEEK1 = Date.parse('2026-08-31T00:00:00+07:00');
+const vnDate = (ms) => new Date(ms + TZ_OFF).toISOString().slice(0, 10);
+const vnHM = (iso) => iso && iso.length > 10 ? new Date(Date.parse(iso) + TZ_OFF).toISOString().slice(11, 16) : '';
+const DOW = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ nhật'];
+function mondayOf(ms) { const d = new Date(ms + TZ_OFF); const k = (d.getUTCDay() + 6) % 7; return Date.parse(vnDate(ms) + 'T00:00:00+07:00') - k * 864e5; }
+let calMon = mondayOf(Date.now());
+let calMonth = vnDate(Date.now()).slice(0, 7);   // 'YYYY-MM' của lịch tháng
+let calSel = vnDate(Date.now());                 // ngày đang chọn — dùng chung cho lịch tuần và lịch tháng
+const dayMs = (d) => Date.parse(d + 'T12:00:00+07:00');
+function selectDay(d, from) {
+  calSel = d; calMon = mondayOf(dayMs(d)); calMonth = d.slice(0, 7);
+  renderCal();
+  // chọn từ lịch tháng mà lịch tuần đang khuất phía trên -> cuộn lên cho thấy
+  if (from === 'month' && $('#cal-wk').getBoundingClientRect().top < 0) $('#cal-wk').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+// Dữ liệu lịch: lấy 1 lần từ web app (bộ đệm timetable.py), lưu bản sao trong trình duyệt để mở là có ngay.
+let CAL = null;
+try { CAL = JSON.parse(localStorage.getItem('cal-cache') || 'null'); } catch (e) { CAL = null; }
+let calSyncing = null;
+function calSync(force) {
+  if (calSyncing) return calSyncing;
+  calSyncing = fetch('/api/timetable/all' + (force ? '?force=1' : '')).then(r => r.json()).then(j => {
+    if (j && Array.isArray(j.events) && (!CAL || j.fetchedAt !== CAL.fetchedAt || JSON.stringify(j.events) !== JSON.stringify(CAL.events))) {
+      CAL = { events: j.events, fetchedAt: j.fetchedAt };
+      try { localStorage.setItem('cal-cache', JSON.stringify(CAL)); } catch (e) {}
+      renderCal();
+    }
+    calStamp(j && j.refreshing);
+    // bản trên máy đang được làm mới từ Notion -> hỏi lại sau ít giây
+    if (j && j.refreshing) setTimeout(() => { calSyncing = null; calSync(); }, 4000);
+  }).catch(() => { if (!CAL) $('#cal-body').innerHTML = '<p class="note">Không đọc được lịch: web app, n8n hoặc Docker chưa chạy.</p>'; })
+    .finally(() => { calSyncing = null; });
+  return calSyncing;
+}
+function calStamp(refreshing) {
+  if (!CAL || !CAL.fetchedAt) { $('#cal-sync').textContent = ''; return; }
+  const t = new Date(CAL.fetchedAt * 1000 + TZ_OFF).toISOString();
+  $('#cal-sync').textContent = 'Lấy từ Notion lúc ' + t.slice(11, 16) + ' ' + t.slice(8, 10) + '/' + t.slice(5, 7) + (refreshing ? ' · đang cập nhật…' : '');
+}
+const calNav = (fn) => () => { fn(); renderCal(); };
+$('#cal-prev').onclick = () => selectDay(vnDate(dayMs(calSel) - 7 * 864e5));
+$('#cal-next').onclick = () => selectDay(vnDate(dayMs(calSel) + 7 * 864e5));
+$('#cal-now').onclick = () => selectDay(vnDate(Date.now()));
+const shiftMonth = (k) => { let [y, m] = calMonth.split('-').map(Number); m += k; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } calMonth = y + '-' + String(m).padStart(2, '0'); };
+$('#cal-mprev').onclick = calNav(() => shiftMonth(-1));
+$('#cal-mnext').onclick = calNav(() => shiftMonth(1));
+$('#cal-mnow').onclick = () => selectDay(vnDate(Date.now()));
+function loadCal() { renderCal(); calSync(); }   // bấm tab: vẽ ngay từ dữ liệu đang có, cập nhật ngầm
+
+const isLong = (e) => !e.start.includes('T') && e.end && e.end.slice(0, 10) !== e.start.slice(0, 10);
+const evDay = (e) => e.start.slice(0, 10);
+function evInfo(e, now) {
+  const dl = e.kind === 'Deadline';
+  const parts = e.title.split(' · ');
+  const online = !dl && (/· online$/i.test(e.title) || /^online/i.test(e.location || ''));
+  return { dl, online, cls: dl ? 'dl' : (online ? 'on' : 'off'), past: Date.parse(e.end || e.start) < now,
+           name: dl ? e.title : (parts.length >= 3 ? parts[1] + ' · ' + parts[2] : e.title), short: dl ? e.title : (parts[1] || e.title) + (parts[2] ? ' ' + parts[2] : '') };
+}
+function renderCal() {
+  renderWeek(); renderMonth(); calStamp(false);
+}
+function renderWeek() {
+  const from = vnDate(calMon), to = vnDate(calMon + 6 * 864e5);
+  const wk = Math.floor((calMon - WEEK1) / (7 * 864e5)) + 1;
+  const fmt = (x) => x.slice(8, 10) + '/' + x.slice(5, 7);
+  $('#cal-wk').innerHTML = (wk >= 1 && wk <= 25 ? 'Tuần ' + wk : 'Ngoài kỳ học') + ' <small>' + fmt(from) + ' – ' + fmt(to) + '/' + to.slice(0, 4) + '</small>';
+  const body = $('#cal-body');
+  if (!CAL) { body.innerHTML = '<p class="skeleton">Đang đọc lịch lần đầu…</p>'; return; }
+  const today = vnDate(Date.now()), now = Date.now();
+  const evs = CAL.events.filter(e => (e.end || e.start).slice(0, 10) >= from && e.start.slice(0, 10) <= to);
+  const days = Array.from({ length: 7 }, (_, i) => ({ date: vnDate(calMon + i * 864e5), items: [] }));
+  for (const e of evs) { if (isLong(e)) continue; const d = days.find(x => x.date === evDay(e)); if (d) d.items.push(e); }
+  let html = evs.filter(isLong).map(e => '<div class="banner">' + esc(e.title) + (e.notes ? ' · ' + esc(e.notes) : '') + '</div>').join('');
+  html += '<div class="week">' + days.map((d, i) => {
+    const items = d.items.map(e => {
+      const x = evInfo(e, now);
+      const t = x.dl ? 'Hạn ' + (vnHM(e.start) || 'cả ngày') : vnHM(e.start) + '–' + vnHM(e.end);
+      const md = x.dl ? '' : '<span class="md">' + (x.online ? 'Online' : esc(e.location || 'Offline')) + '</span>';
+      const gv = (e.notes || '').match(/GV ([^·]+)/);
+      const extra = x.online && /B1-103/.test(e.location || '') ? '<small>Nếu được gọi đi học: B1-103</small>' : '';
+      return '<div class="ev ' + x.cls + (x.past ? ' past' : '') + '"><time>' + t + '</time><b>' + esc(x.name) + '</b>' + md +
+             (gv ? '<small>' + esc(gv[1].trim()) + '</small>' : '') + extra + '</div>';
+    }).join('') || '<span class="none">Trống</span>';
+    const sel = d.date === calSel;
+    return '<div class="day' + (d.date === today ? ' today' : '') + (sel ? ' sel' : '') + '" data-d="' + d.date + '" role="button" tabindex="0" aria-pressed="' + sel + '">' +
+           '<h3><span>' + DOW[i] + (d.date === today ? '<span class="tag">Hôm nay</span>' : '') + '</span><span>' +
+           d.date.slice(8, 10) + '/' + d.date.slice(5, 7) + '</span></h3>' + items + '</div>';
+  }).join('') + '</div>';
+  body.innerHTML = html;
+  body.querySelectorAll('.day').forEach(c => {
+    c.onclick = () => selectDay(c.dataset.d, 'week');
+    c.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); selectDay(c.dataset.d, 'week'); } };
+  });
+}
+function renderMonth() {
+  const [y, m] = calMonth.split('-').map(Number);
+  $('#cal-mtitle').innerHTML = 'Tháng ' + m + '/' + y;
+  const box = $('#cal-month');
+  if (!CAL) { box.innerHTML = ''; return; }
+  const first = Date.parse(calMonth + '-01T00:00:00+07:00');
+  const start = mondayOf(first);
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const end = Date.parse(calMonth + '-' + String(lastDay).padStart(2, '0') + 'T00:00:00+07:00');
+  const weeks = Math.ceil((end - start) / (7 * 864e5) + 1 / 7);
+  const today = vnDate(Date.now()), now = Date.now();
+  const wkFrom = vnDate(calMon), wkTo = vnDate(calMon + 6 * 864e5);
+  const longs = CAL.events.filter(isLong);
+  const byDay = {};
+  for (const e of CAL.events) { if (!isLong(e)) (byDay[evDay(e)] = byDay[evDay(e)] || []).push(e); }
+  let html = '<div class="mgrid">' + ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => '<div class="dow">' + d + '</div>').join('');
+  for (let i = 0; i < weeks * 7; i++) {
+    const ms = start + i * 864e5, d = vnDate(ms);
+    const items = (byDay[d] || []).slice().sort((a, b) => (a.kind === 'Deadline') - (b.kind === 'Deadline') || a.start.localeCompare(b.start));
+    const lg = longs.find(e => e.start.slice(0, 10) <= d && e.end.slice(0, 10) >= d);
+    const cls = ['mcell', d.slice(0, 7) !== calMonth ? 'out' : '', d === today ? 'today' : '', d >= wkFrom && d <= wkTo ? 'inweek' : '', d === calSel ? 'sel' : '', lg ? 'long' : ''].filter(Boolean).join(' ');
+    const shown = items.slice(0, 4).map(e => {
+      const x = evInfo(e, now);
+      return '<div class="mi ' + x.cls + (x.past ? ' past' : '') + '" title="' + esc(x.name) + '">' +
+             (x.dl ? '' : '<time>' + vnHM(e.start) + '</time>') + esc(x.dl ? 'Hạn: ' + x.short : x.short) + '</div>';
+    }).join('');
+    const more = items.length > 4 ? '<span class="mmore">+' + (items.length - 4) + ' mục</span>' : '';
+    const cnt = items.length ? '<span class="cnt">' + items.length + ' mục</span>' : '';
+    const lgl = lg && (d === lg.start.slice(0, 10) || (ms - start) % (7 * 864e5) === 0) ? '<i>' + esc(lg.title.replace(/^[^\p{L}\p{N}]+/u, '').replace(/\s*\(.*\)$/, '')) + '</i>' : '';
+    html += '<button class="' + cls + '" data-d="' + d + '" aria-pressed="' + (d === calSel) + '"><span class="dn"><b>' + Number(d.slice(8, 10)) + '</b>' + lgl + '</span>' + shown + more + cnt + '</button>';
+  }
+  box.innerHTML = html + '</div>';
+  box.querySelectorAll('.mcell').forEach(c => c.onclick = () => selectDay(c.dataset.d, 'month'));
+}
+// tải ngầm ngay khi mở app để lần đầu bấm tab Lịch đã có dữ liệu
+calSync();
+/* ---------- 🎯 Hoạt động ngoại khoá (Claude 2026-10-04): /api/extra -> extracurricular.py ---------- */
+let EX = null, exMon = mondayOf(Date.now()), exMonth = vnDate(Date.now()).slice(0, 7), exSel = vnDate(Date.now());
+function exSync() {
+  return fetch('/api/extra').then(r => r.json()).then(j => { EX = j; renderExtra(); }).catch(() => { $('#ex-week').innerHTML = '<p class="note">Không đọc được dữ liệu ngoại khoá.</p>'; });
+}
+function loadExtra() { renderExtra(); exSync(); }
+// một mục -> ngày hiện trên lịch: sự kiện theo ngày bắt đầu (nếu ngắn), hạn theo ngày hạn; hoạt động kéo dài nhiều ngày -> dải "đang diễn ra"
+function exDay(x) { return (x.han || x.start || '').slice(0, 10); }
+function exLong(x) { return x.start && x.end && (Date.parse(x.end) - Date.parse(x.start)) > 864e5 && !x.han; }
+function exCls(x) { return x.han ? 'dl' : x.loai === 'Đã đăng ký' ? 'off' : 'on'; }
+function exLabel(x) { return x.loai === 'Hạn nộp minh chứng' ? 'Nộp MC: ' : x.loai === 'Học bổng' ? 'Học bổng: ' : x.han ? 'Hạn: ' : ''; }
+function renderExtra() {
+  if (!$('#ex-week')) return;
+  const from = vnDate(exMon), to = vnDate(exMon + 6 * 864e5), fmt = (d) => d.slice(8, 10) + '/' + d.slice(5, 7);
+  $('#ex-wk').innerHTML = 'Tuần <small>' + fmt(from) + ' – ' + fmt(to) + '/' + to.slice(0, 4) + '</small>';
+  if (!EX) { $('#ex-week').innerHTML = '<p class="skeleton">Đang đọc…</p>'; return; }
+  const items = EX.items || [], now = Date.now(), today = vnDate(now);
+  const longs = items.filter(x => exLong(x) && x.start.slice(0, 10) <= to && x.end.slice(0, 10) >= from);
+  let html = longs.map(x => '<div class="banner">' + esc(x.name) + ' · ' + fmt(x.start.slice(0, 10)) + ' → ' + fmt(x.end.slice(0, 10)) + (x.status ? ' · ' + esc(x.status) : '') + '</div>').join('');
+  html += '<div class="week">' + Array.from({ length: 7 }, (_, i) => {
+    const d = vnDate(exMon + i * 864e5);
+    const its = items.filter(x => !exLong(x) && exDay(x) === d).map(x => {
+      const t = x.han ? 'Hạn ' + vnHM(x.han) : vnHM(x.start) + (x.end ? '–' + vnHM(x.end) : '');
+      return '<div class="ev ' + exCls(x) + (Date.parse(x.han || x.end || x.start) < now ? ' past' : '') + '"><time>' + t + '</time><b>' + esc(exLabel(x) + x.name) + '</b>' +
+             (x.place ? '<span class="md">' + esc(x.place) + '</span>' : '') + '<small>' + esc([x.status, x.src].filter(Boolean).join(' · ')) + '</small></div>';
+    }).join('') || '<span class="none">Trống</span>';
+    return '<div class="day' + (d === today ? ' today' : '') + (d === exSel ? ' sel' : '') + '" data-d="' + d + '"><h3><span>' + DOW[i] + (d === today ? '<span class="tag">Hôm nay</span>' : '') +
+           '</span><span>' + fmt(d) + '</span></h3>' + its + '</div>';
+  }).join('') + '</div>';
+  $('#ex-week').innerHTML = html;
+  $('#ex-week').querySelectorAll('.day').forEach(c => c.onclick = () => { exSel = c.dataset.d; renderExtra(); });
+  // tháng
+  const [y, m] = exMonth.split('-').map(Number);
+  $('#ex-mtitle').textContent = 'Tháng ' + m + '/' + y;
+  const first = Date.parse(exMonth + '-01T00:00:00+07:00'), start = mondayOf(first), lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const end = Date.parse(exMonth + '-' + String(lastDay).padStart(2, '0') + 'T00:00:00+07:00'), weeks = Math.ceil((end - start) / (7 * 864e5) + 1 / 7);
+  let mh = '<div class="mgrid">' + ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => '<div class="dow">' + d + '</div>').join('');
+  for (let i = 0; i < weeks * 7; i++) {
+    const d = vnDate(start + i * 864e5);
+    const its = items.filter(x => !exLong(x) && exDay(x) === d);
+    const cls = ['mcell', d.slice(0, 7) !== exMonth ? 'out' : '', d === today ? 'today' : '', d >= from && d <= to ? 'inweek' : '', d === exSel ? 'sel' : ''].filter(Boolean).join(' ');
+    mh += '<button class="' + cls + '" data-d="' + d + '"><span class="dn"><b>' + Number(d.slice(8, 10)) + '</b></span>' +
+          its.slice(0, 3).map(x => '<div class="mi ' + exCls(x) + '" title="' + esc(x.name) + '">' + esc(exLabel(x) + x.name) + '</div>').join('') +
+          (its.length > 3 ? '<span class="mmore">+' + (its.length - 3) + ' mục</span>' : '') + '</button>';
+  }
+  $('#ex-month').innerHTML = mh + '</div>';
+  $('#ex-month').querySelectorAll('.mcell').forEach(c => c.onclick = () => { exSel = c.dataset.d; exMon = mondayOf(Date.parse(exSel + 'T12:00:00+07:00')); renderExtra(); });
+  // danh sách
+  const up = (x) => Date.parse(x.han || x.end || x.start || 0) >= now - 864e5;
+  const sec = (title, arr, empty) => '<h2 style="font-size:17px;margin:18px 0 6px">' + title + ' <small style="color:var(--ink-3);font-weight:400">' + arr.length + '</small></h2>' +
+    (arr.length ? '<ul class="tasks exlist">' + arr.map(x => '<li><div><span class="tname">' + (x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.name) + '</a>' : esc(x.name)) + '</span><small>' +
+      esc([x.org, x.place, x.type].filter(Boolean).join(' · ')) + (x.note ? ' — ' + esc(x.note) : '') + '</small></div><span class="h">' +
+      (x.han ? 'hạn ' + vnHM(x.han) + ' ' + fmt(x.han.slice(0, 10)) : x.start ? fmt(x.start.slice(0, 10)) + (x.end && x.end.slice(0, 10) !== x.start.slice(0, 10) ? ' → ' + fmt(x.end.slice(0, 10)) : '') : '') +
+      (x.status ? '<br>' + esc(x.status) : '') + '</span></li>').join('') + '</ul>' : '<span class="empty">' + empty + '</span>');
+  $('#ex-lists').innerHTML =
+    sec('Hạn nộp minh chứng (điểm rèn luyện)', items.filter(x => x.loai === 'Hạn nộp minh chứng' && up(x)), 'Không có hạn nộp minh chứng nào đang mở.') +
+    sec('Hoạt động bạn đã đăng ký', items.filter(x => x.loai === 'Đã đăng ký').slice().reverse(), 'Chưa đăng ký hoạt động nào trên CTSV.') +
+    sec('Đang mở trên CTSV', items.filter(x => x.loai === 'Đang mở'), 'Không có hoạt động nào đang mở.') +
+    sec('Học bổng còn hạn', items.filter(x => x.loai === 'Học bổng'), 'Không có học bổng nào còn hạn.') +
+    sec('Từ mail / Teams (sắp tới)', items.filter(x => x.loai === 'Sự kiện (mail/Teams)' && up(x)), 'Không có sự kiện ngoại khoá nào sắp tới.');
+  const t = EX.ctsv_at ? EX.ctsv_at.slice(11, 16) + ' ' + EX.ctsv_at.slice(8, 10) + '/' + EX.ctsv_at.slice(5, 7) : '?';
+  $('#ex-sync').textContent = 'CTSV đọc lúc ' + t + ' (cùng lượt đồng bộ trường 06:30 · 12:30 · 18:30 · 22:30) · mail / Teams mỗi 20 phút';
+}
+$('#ex-prev').onclick = () => { exMon -= 7 * 864e5; renderExtra(); };
+$('#ex-next').onclick = () => { exMon += 7 * 864e5; renderExtra(); };
+$('#ex-now').onclick = () => { exMon = mondayOf(Date.now()); exSel = vnDate(Date.now()); exMonth = exSel.slice(0, 7); renderExtra(); };
+const exShift = (k) => { let [y, m] = exMonth.split('-').map(Number); m += k; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } exMonth = y + '-' + String(m).padStart(2, '0'); renderExtra(); };
+$('#ex-mprev').onclick = () => exShift(-1); $('#ex-mnext').onclick = () => exShift(1);
+$('#ex-mnow').onclick = () => { exMonth = vnDate(Date.now()).slice(0, 7); renderExtra(); };
+$('#t-extra').onclick = () => show('extra');
+
+
+/* ---------- Chương trình: Học kỳ / GDTC tự chọn / ĐK tốt nghiệp (Claude 2026-10-03) ---------- */
+// Dữ liệu từ /api/program (program.py, có đệm): lấy 1 lần, lưu bản sao trong trình duyệt, tự vẽ lại khi có bản mới.
+let PRG = null, semSel = null, peOpen = null;
+try { PRG = JSON.parse(localStorage.getItem('prg-cache') || 'null'); } catch (e) { PRG = null; }
+let prgSyncing = null;
+function prgSet(j) {
+  if (!j || !Array.isArray(j.semesters)) return;
+  PRG = j; try { localStorage.setItem('prg-cache', JSON.stringify(j)); } catch (e) {}
+  renderSem(); renderPE(); renderGrad(); renderLang(); renderSummer(); renderRetake(); renderImprove();
+}
+function prgSync(force) {
+  if (prgSyncing) return prgSyncing;
+  prgSyncing = fetch('/api/program' + (force ? '?force=1' : '')).then(r => r.json()).then(j => {
+    if (j && Array.isArray(j.semesters) && (!PRG || JSON.stringify(j.semesters) !== JSON.stringify(PRG.semesters) || JSON.stringify(j.electives) !== JSON.stringify(PRG.electives) || JSON.stringify(j.graduation) !== JSON.stringify(PRG.graduation) || JSON.stringify(j.certs) !== JSON.stringify(PRG.certs) || JSON.stringify(j.summer) !== JSON.stringify(PRG.summer) || JSON.stringify(j.retake) !== JSON.stringify(PRG.retake) || JSON.stringify(j.improve) !== JSON.stringify(PRG.improve))) prgSet(j);
+    if (j && j.refreshing) setTimeout(() => { prgSyncing = null; prgSync(); }, 5000);
+  }).catch(() => {}).finally(() => { prgSyncing = null; });
+  return prgSyncing;
+}
+const f2 = (x) => x == null ? '–' : Number(x).toFixed(2);
+function loadSem() { renderSem(); prgSync(); loadSchool(); }
+/* 🏫 dữ liệu trường (qldt + iCTSV) — đồng bộ tự động; "Đồng bộ ngay" cần Xác nhận */
+let SCH = null, schAsk = false, schPoll = null;
+function loadSchool() { fetch('/api/school').then(r => r.json()).then(j => { SCH = j; renderSchool(); }).catch(() => {}); }
+const fmtAt = s => s ? s.slice(11, 16) + ' ' + s.slice(8, 10) + '/' + s.slice(5, 7) : '';
+function renderSchool() {
+  const el = $('#school-bar'), s = SCH;
+  if (!s) { el.innerHTML = ''; return; }
+  let h = '<div class="schoolbar' + (s.status === 'Cần đăng nhập' || s.status === 'Lỗi' || s.locked || !s.creds ? ' warn' : '') + '">';
+  h += '<div class="row1"><b>🏫 Dữ liệu trường</b> <span>' + (s.running ? 'Đang đọc qldt và iCTSV…' :
+    s.last_ok ? 'Đồng bộ lần cuối ' + fmtAt(s.last_ok) + (s.status === 'Đã đồng bộ' ? ' · ' + (s.changes || []).length + ' thay đổi' : s.status === 'Không đổi' ? ' · không có gì mới' : '') : 'Chưa đồng bộ lần nào') +
+    '</span><span class="sub">Tự động ' + (s.slots || []).join(' · ') + '</span>' +
+    (s.running ? '' : '<button class="ghost" id="sch-now">Đồng bộ ngay</button>') + '</div>';
+  if (!s.creds) h += '<p>Chưa cất tài khoản trường nên không tự đăng nhập lại được. Mở PowerShell, chạy <code>python school_cred.py</code>.</p>';
+  else if (s.locked) h += '<p>Tự đăng nhập đang <b>khoá</b> vì lần trước trường từ chối mật khẩu (tránh khoá tài khoản). Nếu bạn vừa đổi mật khẩu, chạy lại <code>python school_cred.py</code> để nhập mới.</p>';
+  else if (s.status === 'Cần đăng nhập' || s.status === 'Lỗi') h += '<p>' + (s.status === 'Cần đăng nhập' ? 'Trường cần đăng nhập thủ công: ' : 'Lần đồng bộ gần nhất lỗi: ') + esc(s.error || '') + '</p>';
+  if (schAsk) h += '<div class="sask"><b>Đồng bộ với trường ngay?</b><ul><li>Mở Chrome đồng bộ (chạy ngầm), tự đăng nhập Office 365 nếu hết phiên.</li>' +
+    '<li>Đọc TKB, vắng, bảng điểm, chương trình đào tạo, điểm rèn luyện.</li><li>Dữ liệu trường là cao nhất: khác thì sửa thẳng trong Notion; mọi thay đổi ghi vào 🏫 Đồng bộ trường.</li></ul>' +
+    '<div class="row"><button class="primary" id="sch-ok">Xác nhận</button> <button class="ghost" id="sch-no">Hủy</button></div><div class="smsg"></div></div>';
+  if ((s.review || []).length) h += '<details><summary>Cần bạn xem (' + s.review.length + ')</summary><ul>' + s.review.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></details>';
+  if ((s.changes || []).length) h += '<details><summary>Thay đổi lần gần nhất (' + s.changes.length + ')</summary><ul>' + s.changes.slice(0, 60).map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></details>';
+  el.innerHTML = h + '</div>';
+  const now = $('#sch-now'); if (now) now.onclick = () => { schAsk = true; renderSchool(); };
+  const no = $('#sch-no'); if (no) no.onclick = () => { schAsk = false; renderSchool(); };
+  const ok = $('#sch-ok'); if (ok) ok.onclick = async () => {
+    ok.disabled = true;
+    const r = await fetch('/api/school-sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmed: true }) }).then(x => x.json()).catch(() => ({ ok: false, loi: 'Không gọi được web app.' }));
+    if (!r.ok) { el.querySelector('.smsg').textContent = r.loi || 'Không bắt đầu được.'; ok.disabled = false; return; }
+    schAsk = false; SCH = r; renderSchool();
+  };
+  clearTimeout(schPoll);
+  if (s.running) schPoll = setTimeout(() => { fetch('/api/school').then(r => r.json()).then(j => { const was = SCH && SCH.running; SCH = j; renderSchool(); if (was && !j.running) { prgSync(true); if (typeof calSync === 'function') calSync(true); } }).catch(() => {}); }, 5000);
+}
+function loadGrad() { renderGrad(); prgSync(); }
+
+function renderSem() {
+  const body = $('#sem-body');
+  if (!PRG) { body.innerHTML = '<p class="skeleton">Đang đọc dữ liệu học kỳ lần đầu…</p>'; return; }
+  const sems = PRG.semesters;
+  if (!semSel) semSel = PRG.current;
+  const cur = sems.find(x => x.sem === semSel) || sems[0];
+  const periodVi = { Semester: 'đang học', 'Tết': 'nghỉ Tết', 'Hè': 'kỳ hè', 'Thực tập': 'thực tập' }[PRG.period] || PRG.period;
+  $('#sem-title').textContent = 'Học kỳ ' + PRG.currentLabel + ' · ' + periodVi;
+  const o = PRG.overall || {};
+  let html = '<div class="overall">' +
+    '<div class="stat"><strong>' + f2(o.cpa) + '</strong><span>CPA tích luỹ</span><em>' + (o.cpa != null ? 'theo các môn đã tổng kết' : 'tính khi có điểm tổng kết') + '</em></div>' +
+    '<div class="stat"><strong>' + (o.earned || 0) + '</strong><span>tín tích luỹ</span><em>xét tốt nghiệp từ 128 tín</em></div>' +
+    '<div class="stat"><strong' + (o.debt ? ' style="color:var(--red)"' : '') + '>' + (o.debt || 0) + '</strong><span>tín đang nợ</span><em>môn trượt chưa học lại qua · thanh Học lại</em></div>' +
+    '<div class="stat"><strong>' + ((PRG.electives || {}).passed || 0) + '/' + ((PRG.electives || {}).need || 4) + '</strong><span>GDTC tự chọn đã đạt</span><em>xem ở thanh bên phải</em></div></div>';
+  const stCls = { 'Đang học': 'dang', 'Đã học': 'da', 'Chưa học': 'chua' };
+  html += '<div class="semcards" role="group" aria-label="Chọn học kỳ">' + sems.map(x =>
+    '<button class="semcard" data-s="' + x.sem + '" aria-pressed="' + (x.sem === cur.sem) + '">' +
+    '<span class="lbl">' + x.label + '</span><span class="st ' + stCls[x.status] + '">' + x.status + '</span>' +
+    '<dl><dt>GPA</dt><dd>' + f2(x.gpa) + '</dd><dt>CPA</dt><dd>' + f2(x.cpa) + '</dd>' +
+    '<dt>Hoàn tất</dt><dd>' + x.done + '/' + (x.credits ?? '–') + '</dd><dt>Nợ tín</dt><dd' + (x.debt ? ' class="bad"' : '') + '>' + x.debt + '</dd></dl></button>').join('') + '</div>';
+  // chi tiết kỳ đang chọn
+  html += '<div class="semhead"><h2>Học kỳ ' + cur.label + '</h2><span class="st ' + stCls[cur.status] + '" style="font-size:12.5px;border-radius:999px;padding:1px 9px;font-weight:600">' + cur.status + '</span>' +
+    '<span style="color:var(--ink-3);font-size:13.5px">' + cur.sem + ' trong Notion · dự kiến ' + (cur.credits ?? '–') + (cur.required != null ? '/' + cur.required : '') + ' tín theo chương trình</span></div>';
+  const totalAbs = cur.courses.reduce((a, c) => a + (c.abs ? c.abs.absent : 0), 0);
+  html += '<div class="stats">' +
+    '<div class="stat"><strong>' + f2(cur.gpa) + '</strong><span>GPA kỳ</span><em>' + (cur.gpa != null ? 'theo môn đã tổng kết' : 'chưa có điểm tổng kết') + '</em></div>' +
+    '<div class="stat"><strong>' + f2(cur.cpa) + '</strong><span>CPA đến hết kỳ</span><em>tự tính từ các kỳ trước</em></div>' +
+    '<div class="stat"><strong>' + cur.done + '</strong><span>tín hoàn tất</span><em>nợ ' + cur.debt + ' tín</em></div>' +
+    '<div class="stat"><strong>' + totalAbs + '</strong><span>buổi vắng</span><em>báo vắng cho Copilot để ghi</em></div></div>';
+  const rl = cur.conduct;
+  html += '<p class="lead" style="margin:-10px 0 20px">Điểm rèn luyện ' + cur.label + ': ' + (rl && rl.diem != null ? '<b>' + rl.diem + '</b> · ' + esc(rl.xep_loai) : 'chưa có — báo cho Copilot khi có') + '</p>';
+  const order = ['Môn Đại cương', 'Môn Cơ sở ngành', 'Môn Chuyên ngành', 'Thực hành', 'Chính trị', 'Thể chất', 'Kỹ năng mềm', 'Cử nhân'];
+  const groups = {};
+  for (const c of cur.courses) (groups[c.category || 'Khác'] = groups[c.category || 'Khác'] || []).push(c);
+  const statusVi = { Taking: 'Đang học', Planned: 'Chưa học', Completed: 'Hoàn thành' };
+  const rank = { Taking: 0, Completed: 1, Planned: 2 };
+  for (const c of cur.courses) if (c.result === 'Miễn (R)') c.status = 'Miễn (R)';
+  statusVi['Miễn (R)'] = 'Miễn (R)'; rank['Miễn (R)'] = 1;
+  if (!cur.courses.length) html += '<p class="note">Kỳ này chưa có môn nào.</p>';
+  else {
+    html += '<table class="ctable"><thead><tr><th>Môn</th><th>Tín</th><th>Trạng thái</th><th>Điểm</th><th>Vắng</th></tr></thead><tbody>';
+    const keys = [...order.filter(k => groups[k]), ...Object.keys(groups).filter(k => !order.includes(k))];
+    for (const g of keys) {
+      html += '<tr class="grp"><td colspan="5">' + esc(g) + '</td></tr>';
+      for (const c of groups[g].sort((a, b) => (rank[a.status] ?? 9) - (rank[b.status] ?? 9))) {
+        const gs = (c.grades || []).map(x => esc(x.component) + ' ' + (x.score ?? '–')).join(' · ');
+        const a = c.abs || {};
+        const av = (a.absent || 0) + (c.max_abs != null ? '/' + c.max_abs : '') + (a.late ? ' · muộn ' + a.late : '');
+        const ruleTxt = c.rule ? c.rule.split(String.fromCharCode(10)).pop().replace(/^\[[^\]]+\]\s*/, '') : '';
+        const note = (c.group ? '<br><small>Tự chọn GDTC</small>' : '') + (c.retake ? '<br><small>Học lại</small>' : '') +
+          (ruleTxt ? '<br><small>Luật: ' + esc(ruleTxt) + '</small>' : (c.notes && !c.retake && !c.group ? '<br><small>' + esc(c.notes) + '</small>' : ''));
+        const res = c.result && c.result !== 'Unknown' && c.result !== 'Miễn (R)' ? ' · ' + (c.result === 'Pass' ? 'Đạt' : c.result === 'Fail' ? 'Trượt' : esc(c.result)) + (c.gpa4 != null ? ' (' + c.gpa4 + ')' : '') : '';
+        html += '<tr><td><b>' + esc(c.code) + '</b> · ' + esc(c.name) + note + '</td><td class="n">' + c.credits + '</td>' +
+          '<td><span class="pill ' + esc(c.status) + '">' + (statusVi[c.status] || esc(c.status)) + '</span>' +
+          (c.risk && c.risk !== 'OK' ? ' <span class="pill warn">' + esc(c.risk) + '</span>' : '') + '</td>' +
+          '<td>' + (gs || '<small>chưa có</small>') + res + '</td><td class="n">' + av + '</td></tr>';
+      }
+    }
+    html += '</tbody></table>';
+  }
+  if (cur.check && !/^Khớp/.test(cur.check)) html += '<p class="note" style="padding:10px 0 0">' + esc(cur.check) + '</p>';
+  body.innerHTML = html;
+  body.querySelectorAll('.semcard').forEach(b => b.onclick = () => { semSel = b.dataset.s; renderSem(); });
+}
+
+/* thanh phải GDTC */
+function peToggle(open) {
+  const on = open ?? !$('.app').classList.contains('r-open');
+  $('.app').classList.toggle('r-open', on); $('#t-pe').setAttribute('aria-expanded', on);
+  try { localStorage.setItem('pe-open', on ? '1' : ''); } catch (e) {}
+  if (on) { renderPE(); prgSync(); }
+}
+$('#t-pe').onclick = () => peToggle(); $('#pe-close').onclick = () => peToggle(false);
+try { if (localStorage.getItem('pe-open')) peToggle(true); } catch (e) {}
+function renderPE() {
+  const el = PRG && PRG.electives;
+  $('#c-pe').textContent = el ? el.passed + '/' + el.need : '0/4';
+  const body = $('#pe-body');
+  if (!el) { body.innerHTML = '<p class="skeleton">Đang đọc lần đầu…</p>'; return; }
+  const pct = Math.min(100, el.passed / el.need * 100);
+  let html = '<div><b>Đã đạt ' + el.passed + '/' + el.need + '</b> · đã chọn ' + el.chosen + '</div><div class="pebar"><i style="width:' + pct + '%"></i></div>';
+  if (!el.unlocked) {
+    const g = el.gate;
+    html += '<div class="lockbox">Kho tự chọn mở khi đạt ' + esc(g.code) + ' ' + esc(g.name) + (g.status === 'Taking' ? ' (đang học kỳ này)' : '') + '. Danh sách bên dưới để xem trước.</div>';
+  }
+  const groups = {};
+  for (const i of el.items) (groups[i.level ? i.base : 'Học một lần'] = groups[i.level ? i.base : 'Học một lần'] || []).push(i);
+  const names = Object.keys(groups).sort((a, b) => (a === 'Học một lần') - (b === 'Học một lần') || a.localeCompare(b, 'vi'));
+  for (const gname of names) {
+    html += '<div class="pegroup"><h3>' + esc(gname) + '</h3><div class="row">' + groups[gname].map(i => {
+      const sub = i.state === 'passed' ? 'Đã đạt' : i.state === 'taking' ? 'Đang học ' + i.semLabel : i.state === 'chosen' ? 'Kỳ ' + i.semLabel : 'gợi ý kỳ ' + esc(i.hint || '–');
+      const label = i.level ? (i.base.length > 18 ? i.level : esc(i.name)) : esc(i.name);
+      return '<button class="pe ' + i.state + '" data-code="' + i.code + '" title="' + esc(i.code + ' ' + i.name + ' — ' + i.why) + '" aria-expanded="' + (peOpen === i.code) + '"' +
+        (i.state === 'locked' || i.state === 'passed' || i.state === 'taking' ? ' aria-disabled="true"' : '') + '>' + (i.level && i.base.length > 18 ? esc(i.base.replace('Chuyên sâu ', 'CS ')) + ' ' : '') + label + '<small>' + sub + '</small></button>';
+    }).join('') + '</div>' + (groups[gname].some(i => i.code === peOpen) ? pePicker(el, el.items.find(i => i.code === peOpen)) : '') + '</div>';
+  }
+  body.innerHTML = html;
+  body.querySelectorAll('.pe').forEach(b => b.onclick = () => {
+    const it = el.items.find(i => i.code === b.dataset.code);
+    if (!it || !['open', 'chosen'].includes(it.state)) return;
+    peOpen = peOpen === it.code ? null : it.code; renderPE();
+  });
+  const pk = body.querySelector('.pepick');
+  if (pk) {
+    pk.querySelector('[data-act="ok"]').onclick = () => peSave(peOpen, pk.querySelector('select').value, pk);
+    const rm = pk.querySelector('[data-act="rm"]'); if (rm) rm.onclick = () => peSave(peOpen, '', pk);
+  }
+}
+function pePicker(el, it) {
+  const opts = el.semesters.map(x => '<option value="' + x.sem + '"' + ((it.semester || '') === x.sem ? ' selected' : '') + '>' + x.label + '</option>').join('');
+  return '<div class="pepick"><b>' + esc(it.code + ' ' + it.name) + '</b><br><small>' + esc(it.why) + '</small><div class="row">' +
+    '<select aria-label="Học kỳ">' + opts + '</select> <button class="primary" data-act="ok">' + (it.state === 'chosen' ? 'Đổi kỳ' : 'Chọn môn') + '</button>' +
+    (it.state === 'chosen' ? ' <button class="ghost" data-act="rm">Bỏ chọn</button>' : '') + '</div><div class="msg"></div></div>';
+}
+async function peSave(code, sem, pk) {
+  pk.querySelectorAll('button').forEach(b => b.disabled = true);
+  pk.querySelector('.msg').style.color = 'var(--ink-3)'; pk.querySelector('.msg').textContent = 'Đang ghi vào Notion…';
+  let r;
+  try { r = await fetch('/api/elective', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, sem }) }).then(x => x.json()); }
+  catch (e) { r = { ok: false, loi: 'Không gọi được web app.' }; }
+  if (!r.ok) { pk.querySelector('.msg').style.color = ''; pk.querySelector('.msg').textContent = r.loi || 'Không ghi được.'; pk.querySelectorAll('button').forEach(b => b.disabled = false); return; }
+  peOpen = null; if (r.data) prgSet(r.data);
+}
+
+/* thanh bên: Kỳ hè · Học lại (Claude 2026-10-03) — chỉ ghi Notion sau khi bấm Xác nhận */
+let sideTab = 'pe', suOpen = null, suDraft = null, rtOpen = null, rtDraft = null, sideAsk = null;
+try { sideTab = localStorage.getItem('side-tab') || 'pe'; } catch (e) {}
+function sideShow(t) {
+  sideTab = t; try { localStorage.setItem('side-tab', t); } catch (e) {}
+  document.querySelectorAll('.sidetabs [data-st]').forEach(b => b.setAttribute('aria-selected', b.dataset.st === t));
+  ['pe', 'su', 'rt'].forEach(x => { $('#sp-' + x).hidden = x !== t; });
+}
+document.querySelectorAll('.sidetabs [data-st]').forEach(b => b.onclick = () => sideShow(b.dataset.st));
+sideShow(sideTab);
+const suVi = { 'Study Summer': 'Học hè', Relax: 'Nghỉ', Internship: 'Thực tập' };
+function askHtml(lines) {
+  return '<div class="sask" role="alertdialog"><b>Ghi vào Notion?</b><ul>' + lines.map(l => '<li>' + l + '</li>').join('') + '</ul>' +
+    '<div class="row"><button class="primary" data-a="ok">Xác nhận</button> <button class="ghost" data-a="no">Hủy</button></div><div class="smsg"></div></div>';
+}
+async function sidePost(path, body, box) {
+  box.querySelectorAll('button').forEach(b => b.disabled = true);
+  const m = box.querySelector('.smsg'); m.style.color = 'var(--ink-3)'; m.textContent = 'Đang ghi vào Notion…';
+  let r; try { r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, confirmed: true }) }).then(x => x.json()); }
+  catch (e) { r = { ok: false, loi: 'Không gọi được web app.' }; }
+  if (!r.ok) { m.style.color = ''; m.textContent = r.loi || 'Không ghi được.'; box.querySelectorAll('button').forEach(b => b.disabled = false); return false; }
+  if (r.data) prgSet(r.data);
+  return true;
+}
+function suForm(d) {
+  let h = '<div class="sform"><div class="choices">' + Object.keys(suVi).map(c => '<button class="ghost" data-ch="' + c + '" aria-pressed="' + (d.choice === c) + '">' + suVi[c] + '</button>').join('') + '</div>';
+  if (d.choice === 'Internship') h += '<label>Công ty<input data-f="company" value="' + esc(d.company) + '"></label><label>Vị trí<input data-f="position" value="' + esc(d.position) + '"></label>' +
+    '<label>Giờ làm<input data-f="hours" placeholder="vd T2–T6, 8:00–17:00" value="' + esc(d.hours) + '"></label>';
+  if (d.choice === 'Study Summer') h += '<label>Số tín dự kiến (tối đa 8)<input data-f="credits" type="number" min="1" max="8" step="1" value="' + esc(d.credits ?? '') + '"></label>' +
+    '<label>Học phần dự kiến<input data-f="courses" placeholder="mã hoặc tên môn" value="' + esc(d.courses) + '"></label>';
+  if (d.choice) h += '<label>Ghi chú<input data-f="notes" value="' + esc(d.notes) + '"></label>';
+  h += sideAsk && sideAsk.kind === 'su' ? askHtml(sideAsk.lines) :
+    '<div class="row" style="margin-top:10px"><button class="primary" data-a="save"' + (d.choice ? '' : ' disabled') + '>Lưu…</button> <button class="ghost" data-a="cancel">Đóng</button></div><div class="smsg"></div>';
+  return h + '</div>';
+}
+function renderSummer() {
+  const body = $('#su-body'), L = PRG && PRG.summer;
+  if (!L) { body.innerHTML = '<p class="skeleton">Đang đọc lần đầu…</p>'; return; }
+  body.innerHTML = L.map(s => {
+    let h = '<div class="sucard' + (s.now ? ' now' : '') + (s.past ? ' past' : '') + '"><h3><span>' + s.label + '</span><span class="chip">' + (s.choice ? suVi[s.choice] : 'Chưa chọn') + '</span></h3>' +
+      '<div class="smeta">Sau kỳ ' + s.after + (s.now ? ' · đang là kỳ hè' : s.past ? ' · đã qua' : '') + '</div>';
+    const det = s.choice === 'Internship' ? [s.company, s.position, s.hours && 'giờ làm ' + s.hours] : s.choice === 'Study Summer' ? [s.credits && s.credits + ' tín', s.courses] : [];
+    if (det.some(Boolean)) h += '<div>' + det.filter(Boolean).map(esc).join(' · ') + '</div>';
+    if (s.choice && s.notes) h += '<div class="smeta">' + esc(s.notes) + '</div>';
+    if (!s.past) h += suOpen === s.k ? suForm(suDraft) : '<div class="row"><button class="ghost" data-su="' + s.k + '">' + (s.choice ? 'Đổi lựa chọn' : 'Chọn cho hè này') + '</button></div>';
+    return h + '</div>';
+  }).join('');
+  body.querySelectorAll('[data-su]').forEach(b => b.onclick = () => {
+    const s = L.find(x => String(x.k) === b.dataset.su);
+    suOpen = s.k; sideAsk = null;
+    suDraft = { choice: s.choice, company: s.company, position: s.position, hours: s.hours, credits: s.credits ?? '', courses: s.courses, notes: s.choice ? s.notes : '' };
+    renderSummer();
+  });
+  const f = body.querySelector('.sform'); if (!f) return;
+  const s = L.find(x => x.k === suOpen), q = a => f.querySelector('[data-a="' + a + '"]');
+  f.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => { suDraft.choice = b.dataset.ch; sideAsk = null; renderSummer(); });
+  f.querySelectorAll('[data-f]').forEach(i => i.oninput = () => { suDraft[i.dataset.f] = i.value; });
+  if (q('cancel')) q('cancel').onclick = () => { suOpen = null; sideAsk = null; renderSummer(); };
+  if (q('save')) q('save').onclick = () => {
+    const d = suDraft;
+    if (d.choice === 'Internship' && !String(d.company || '').trim()) { f.querySelector('.smsg').textContent = 'Thực tập: điền tên công ty.'; return; }
+    const extra = d.choice === 'Internship' ? [d.company, d.position, d.hours] : d.choice === 'Study Summer' ? [d.credits && d.credits + ' tín', d.courses] : [];
+    const what = suVi[d.choice] + (extra.some(Boolean) ? ' (' + extra.filter(Boolean).join(', ') + ')' : '');
+    sideAsk = { kind: 'su', lines: ['☀️ Summer Planning: ' + s.label + ' = ' + esc(what) + '.', 'Đóng câu hỏi “Hè này bạn chọn gì” trong Exception Queue, nếu đang mở.',
+      d.choice === 'Relax' ? 'Không tạo việc nào cho hè này.' : 'Không tự tạo việc hay đưa giờ vào lịch — phần đó vẫn do bạn quyết.'] };
+    renderSummer();
+  };
+  if (q('no')) q('no').onclick = () => { sideAsk = null; renderSummer(); };
+  if (q('ok')) q('ok').onclick = async () => {
+    const k = suOpen;
+    if (await sidePost('/api/summer', { k, ...suDraft }, f.querySelector('.sask'))) { suOpen = null; sideAsk = null; renderSummer(); }
+  };
+}
+function rtForm(i) {
+  let h = '<div class="sform"><label>Học lại ở kỳ<select data-f="sem">' + i.options.map(o => '<option value="' + o.sem + '"' + (rtDraft === o.sem ? ' selected' : '') + '>' + o.label + '</option>').join('') + '</select></label>';
+  h += sideAsk && sideAsk.kind === 'rt' ? askHtml(sideAsk.lines) :
+    '<div class="row" style="margin-top:10px"><button class="primary" data-a="save">Lưu…</button> <button class="ghost" data-a="cancel">Đóng</button></div><div class="smsg"></div>';
+  return h + '</div>';
+}
+function renderRetake() {
+  const body = $('#rt-body'), R = PRG && PRG.retake;
+  const pending = R ? R.items.filter(i => i.state !== 'passed') : [];
+  $('#c-rt').textContent = pending.length ? pending.length : '';
+  if (!R) { body.innerHTML = '<p class="skeleton">Đang đọc lần đầu…</p>'; return; }
+  let h = '<div style="margin:0 0 10px"><b' + (R.debt ? ' style="color:var(--red)"' : '') + '>Nợ ' + R.debt + ' tín</b> · ' + pending.length + ' môn chưa học lại qua</div>';
+  if (!pending.length) h += '<p class="smeta">Chưa có môn nào phải học lại.</p>';
+  h += pending.map(i => '<div class="sucard"><h3><span>' + esc(i.code + ' ' + i.name) + '</span><span class="chip">' + i.credits + ' tín</span></h3>' +
+    '<div class="smeta">Trượt kỳ ' + esc(i.failedIn) + '</div><div>' + esc(i.why) + '</div>' +
+    (i.options.length ? (rtOpen === i.id ? rtForm(i) : '<div class="row"><button class="ghost" data-rt="' + i.id + '">' + (i.state === 'planned' ? 'Đổi kỳ học lại' : 'Xếp kỳ học lại') + '</button></div>') : '') + '</div>').join('');
+  const done = R.items.filter(i => i.state === 'passed');
+  if (done.length) h += '<h3 style="font-size:13px;color:var(--ink-2);margin:14px 0 6px">Đã học lại qua</h3>' + done.map(i => '<div class="smeta">' + esc(i.code + ' ' + i.name) + ' · ' + esc(i.why) + '</div>').join('');
+  body.innerHTML = h;
+  body.querySelectorAll('[data-rt]').forEach(b => b.onclick = () => {
+    const i = R.items.find(x => x.id === b.dataset.rt);
+    rtOpen = i.id; sideAsk = null; rtDraft = i.state === 'planned' ? i.sem : i.options[0].sem; renderRetake();
+  });
+  const f = body.querySelector('.sform'); if (!f) return;
+  const i = R.items.find(x => x.id === rtOpen), q = a => f.querySelector('[data-a="' + a + '"]');
+  f.querySelector('[data-f="sem"]').onchange = e => { rtDraft = e.target.value; sideAsk = null; renderRetake(); };
+  if (q('cancel')) q('cancel').onclick = () => { rtOpen = null; sideAsk = null; renderRetake(); };
+  if (q('save')) q('save').onclick = () => {
+    if (i.state === 'planned' && rtDraft === i.sem) { f.querySelector('.smsg').textContent = 'Môn đã ở kỳ này rồi.'; return; }
+    const lb = (i.options.find(o => o.sem === rtDraft) || {}).label;
+    sideAsk = { kind: 'rt', lines: (i.state === 'planned'
+      ? ['Courses: ' + esc(i.code) + ' chuyển từ kỳ ' + i.semLabel + ' sang kỳ ' + lb + ' (vẫn là môn học lại).']
+      : ['Courses: ' + esc(i.code) + ' chuyển sang kỳ ' + lb + ', bật “Học lại”, kết quả về “Chưa có”; ghi chú giữ kỳ đã trượt (' + esc(i.failedIn) + ').'])
+      .concat(['Nợ ' + i.credits + ' tín vẫn tính đến khi môn này đạt.', 'TKB kỳ đó mới xác nhận bạn có thật sự học.']) };
+    renderRetake();
+  };
+  if (q('no')) q('no').onclick = () => { sideAsk = null; renderRetake(); };
+  if (q('ok')) q('ok').onclick = async () => {
+    if (await sidePost('/api/retake', { id: i.id, sem: rtDraft }, f.querySelector('.sask'))) { rtOpen = null; sideAsk = null; renderRetake(); }
+  };
+}
+/* học cải thiện */
+let imOpen = null, imDraft = null, imCancel = false;
+const g4L = x => x == null ? '–' : (+x).toFixed(1) + ' (' + ({ 4: 'A', 3.5: 'B+', 3: 'B', 2.5: 'C+', 2: 'C', 1.5: 'D+', 1: 'D', 0: 'F' }[+x] || '') + ')';
+function renderImprove() {
+  const body = $('#im-body'), I = PRG && PRG.improve;
+  if (!I) { body.innerHTML = '<p class="skeleton">Đang đọc lần đầu…</p>'; return; }
+  const form = it => {
+    let f = '<div class="sform">';
+    if (!imCancel) f += '<label>Học cải thiện ở kỳ<select data-f="sem">' + it.options.map(o => '<option value="' + o.sem + '"' + (imDraft === o.sem ? ' selected' : '') + '>' + o.label + '</option>').join('') + '</select></label>';
+    f += sideAsk && sideAsk.kind === 'im' ? askHtml(sideAsk.lines) :
+      '<div class="row" style="margin-top:10px"><button class="primary" data-a="save">' + (imCancel ? 'Huỷ học cải thiện…' : 'Lưu…') + '</button> <button class="ghost" data-a="cancel">Đóng</button></div><div class="smsg"></div>';
+    return f + '</div>';
+  };
+  let h = I.items.map(i => '<div class="sucard"><h3><span>' + esc(i.code + ' ' + i.name) + '</span><span class="chip">' + i.credits + ' tín</span></h3>' +
+    '<div class="smeta">Lần trước ' + g4L(i.prev4) + ' · kỳ ' + esc(i.from) + '</div><div>' + esc(i.why) + '</div>' +
+    (i.state === 'planned' ? (imOpen === i.id ? form(i) : '<div class="row"><button class="ghost" data-im="' + i.id + '">Đổi kỳ</button> <button class="ghost" data-imx="' + i.id + '">Huỷ</button></div>') : '') + '</div>').join('');
+  if (I.candidates.length) {
+    h += '<h3 style="font-size:13px;color:var(--ink-2);margin:10px 0 6px">Môn đã đạt có thể cải thiện</h3>' + I.candidates.map(i => '<div class="sucard"><h3><span>' + esc(i.code + ' ' + i.name) + '</span><span class="chip">' + i.credits + ' tín</span></h3>' +
+      '<div class="smeta">Điểm hiện tại ' + g4L(i.gpa4) + ' · kỳ ' + esc(i.semLabel) + '</div>' +
+      (imOpen === i.id ? form(i) : '<div class="row"><button class="ghost" data-im="' + i.id + '">Học cải thiện</button></div>') + '</div>').join('');
+  } else if (!I.items.length) h += '<p class="smeta">Chưa có môn đạt nào có điểm dưới 4.0 để cải thiện.</p>';
+  body.innerHTML = h;
+  const all = I.items.concat(I.candidates), find = id => all.find(x => x.id === id);
+  body.querySelectorAll('[data-im]').forEach(b => b.onclick = () => { const i = find(b.dataset.im); imOpen = i.id; imCancel = false; sideAsk = null; imDraft = i.state === 'planned' ? i.sem : i.options[0].sem; renderImprove(); });
+  body.querySelectorAll('[data-imx]').forEach(b => b.onclick = () => { imOpen = b.dataset.imx; imCancel = true; sideAsk = null; renderImprove(); });
+  const f = body.querySelector('.sform'); if (!f) return;
+  const i = find(imOpen), q = a => f.querySelector('[data-a="' + a + '"]'), isNew = !i.state;
+  const sel = f.querySelector('[data-f="sem"]'); if (sel) sel.onchange = e => { imDraft = e.target.value; sideAsk = null; renderImprove(); };
+  if (q('cancel')) q('cancel').onclick = () => { imOpen = null; sideAsk = null; renderImprove(); };
+  if (q('save')) q('save').onclick = () => {
+    if (!imCancel && !isNew && imDraft === i.sem) { f.querySelector('.smsg').textContent = 'Môn đã ở kỳ này rồi.'; return; }
+    const lb = imCancel ? '' : (i.options.find(o => o.sem === imDraft) || {}).label;
+    sideAsk = { kind: 'im', lines: imCancel
+      ? ['Courses: ' + esc(i.code) + ' trở về kỳ ' + esc(i.from) + ' với điểm đạt cũ ' + g4L(i.prev4) + ', bỏ đánh dấu “Học cải thiện”.']
+      : isNew ? ['Courses: ' + esc(i.code) + ' chuyển sang kỳ ' + lb + ', đánh dấu “Học cải thiện”; điểm hiện tại ' + g4L(i.gpa4) + ' lưu ở “GPA 4 lần trước” và vẫn tính GPA kỳ ' + esc(i.semLabel) + '.',
+                 i.credits + ' tín đã tích luỹ giữ nguyên. CPA lấy lần điểm cao nhất, nên học lại không bao giờ làm CPA thấp đi.', 'Không tính vào 5% học lại khi xét hạng tốt nghiệp. TKB kỳ đó mới xác nhận bạn có thật sự học.']
+      : ['Courses: ' + esc(i.code) + ' đổi kỳ học cải thiện từ ' + esc(i.semLabel) + ' sang ' + lb + '.'] };
+    renderImprove();
+  };
+  if (q('no')) q('no').onclick = () => { sideAsk = null; renderImprove(); };
+  if (q('ok')) q('ok').onclick = async () => {
+    const body2 = imCancel ? { id: i.id, cancel: true } : { id: i.id, sem: imDraft };
+    if (await sidePost('/api/improve', body2, f.querySelector('.sask'))) { imOpen = null; sideAsk = null; renderImprove(); }
+  };
+}
+renderSummer(); renderRetake(); renderImprove();
+
+/* ĐK tốt nghiệp */
+function renderGrad() {
+  const body = $('#grad-body');
+  if (!PRG || !PRG.graduation) { body.innerHTML = '<p class="skeleton">Đang tính lần đầu…</p>'; return; }
+  const g = PRG.graduation, R = g.rules;
+  const pct = Math.min(100, g.earned / g.max * 100);
+  let html = '<div class="gengine"><div class="big">' + g.earned + ' <small>/ ' + g.min + '–' + g.max + ' tín tích luỹ</small></div>' +
+    '<div class="gbar' + (g.unlocked ? ' ok' : '') + '"><i style="width:' + pct + '%"></i></div>' +
+    '<div class="gscale"><span>0</span><span>' + g.min + '</span></div>' +
+    '<p class="verdict ' + (g.unlocked ? 'ok' : 'no') + '">' + (g.unlocked ? 'Bạn đã đủ số tín để xét tốt nghiệp.' : 'Còn ' + Math.max(0, g.min - g.earned) + ' tín nữa mới đủ điều kiện xét tốt nghiệp. Hai mục bên dưới mở khi đủ.') + '</p>' +
+    (g.eligible ? '<p class="verdict ok">Đủ cả tín, ngoại ngữ và CPA — bạn đủ điều kiện xét tốt nghiệp.</p>' : '') + '</div>';
+  const lock = g.unlocked ? '' : '<div class="lockcover">🔒 Mở khi tích luỹ đủ ' + g.min + ' tín</div>';
+  const c = g.cert || {};
+  html += '<section class="gsec' + (g.unlocked ? '' : ' locked') + '">' + lock + '<h2>1 · Chuẩn ngoại ngữ đầu ra</h2>' +
+    '<p>Chứng chỉ tiếng Anh đủ 4 kỹ năng, tối thiểu ' + esc(R.lang) + ', cấp trong vòng 2 năm tính đến lúc xét và còn hiệu lực (không dùng TOEIC Placement). Chỉ lấy chứng chỉ ở mục <b>Đã có</b> còn hạn của tab Ngoại ngữ — không bao giờ lấy chứng chỉ đã hết hạn.</p>' +
+    (!c.linked ? '<div class="gres">Chưa xét — chỉ nối với chứng chỉ khi đủ ' + g.min + ' tín.</div>' :
+      c.name ? '<div class="gres ok">Đạt: ' + esc(c.name) + '</div>' :
+      '<div class="gres no">Chưa có chứng chỉ đạt chuẩn' + (c.best ? ' — tốt nhất đang có: ' + esc(c.best.cert) + ' (' + esc(c.best.lv) + ')' : '') + '.</div>') +
+    '<p style="margin:10px 0 0"><button class="ghost" id="g-golang">Mở tab Ngoại ngữ</button></p></section>';
+  html += '<section class="gsec' + (g.unlocked ? '' : ' locked') + '">' + lock + '<h2>2 · CPA</h2><p>Lấy từ CPA tích luỹ ở tab Học kỳ. Cần từ ' + R.cpa.toFixed(1) + '/4.0.</p>' +
+    '<div class="big" style="font-size:28px;font-weight:700">' + f2(g.cpa) + ' <small style="font-size:15px;color:var(--ink-3)">/ 4.0</small></div>' +
+    '<div class="gres ' + (g.cpaOk ? 'ok' : 'no') + '">' + (g.cpa == null ? 'Chưa có điểm tổng kết.' : g.cpaOk ? 'CPA của bạn đã đủ điều kiện tốt nghiệp.' : 'CPA chưa đạt ' + R.cpa.toFixed(1) + '.') + '</div></section>';
+  const k = g.rank || {};
+  if (!g.rank) html += '<section class="gsec"><h2>3 · Hạng tốt nghiệp dự kiến</h2><p class="skeleton">Đang tính…</p></section>';
+  else html += '<section class="gsec"><h2>3 · Hạng tốt nghiệp dự kiến</h2>' +
+    '<p>Hạng theo CPA: Xuất sắc từ 3,6 · Giỏi từ 3,2 · Khá từ 2,5 · Trung bình từ 2,0. Hạng Giỏi trở lên bị hạ một mức nếu số tín phải học lại vượt 5% tổng tín tính điểm toàn khoá (học cải thiện không tính), hoặc nếu từng bị kỷ luật từ mức cảnh cáo trở lên (Quy chế đào tạo 2025, Điều 15). Mục này luôn mở để bạn theo dõi sớm.</p>' +
+    '<div class="big" style="font-size:28px;font-weight:700">' + esc(k.final || '–') + (k.down ? ' <small style="font-size:15px;color:var(--red)">hạ từ ' + esc(k.cpaRank) + '</small>' : '') + '</div>' +
+    '<div class="gres ' + (k.final == null ? '' : k.down ? 'no' : 'ok') + '">' + (k.final == null ? 'Chưa có điểm tổng kết để xếp hạng.' : k.down ? 'Bị hạ một mức vì ' + esc(k.reasons.join('; ')) + '.' : 'Không bị hạ hạng.') + '</div>' +
+    '<p style="margin:10px 0 0">Tín phải học lại: <b>' + k.retakeCr + '</b> / ngưỡng <b>' + k.threshold + '</b> tín (5% của ' + k.base + ' tín' + (k.baseReal < g.min ? ', tạm tính theo mức tối thiểu ' + g.min + ' tín' : '') + ')' +
+    (k.room >= 0 ? ' · còn ' + k.room + ' tín trước ngưỡng.' : ' · đã vượt ngưỡng.') + (k.improveCr ? ' Học cải thiện: ' + k.improveCr + ' tín (không tính).' : '') + '</p>' +
+    '<p style="margin:6px 0 0;color:var(--ink-3);font-size:13.5px">Kỷ luật từ cảnh cáo trở lên: ' + (k.discipline ? 'có' : 'không') + '. Ô này bạn tự đánh dấu ở 🎓 Xét tốt nghiệp trong Notion.</p></section>';
+  body.innerHTML = html;
+  $('#g-golang').onclick = () => show('lang');
+  return;
+  const sync = () => { const t = $('#g-type').value; body.querySelectorAll('.gform label[data-for]').forEach(l => l.hidden = l.dataset.for !== t); };
+  $('#g-type').onchange = sync; sync();
+  $('#g-save').onclick = async () => {
+    const res = $('#g-res'); res.className = 'gres'; res.textContent = 'Đang lưu…';
+    let r;
+    try { r = await fetch('/api/graduation', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: $('#g-type').value, ielts: $('#g-ielts').value, lr: $('#g-lr').value, sw: $('#g-sw').value }) }).then(x => x.json()); }
+    catch (e) { r = { ok: false, loi: 'Không gọi được web app.' }; }
+    if (!r.ok) { res.className = 'gres no'; res.textContent = r.loi || 'Không lưu được.'; return; }
+    if (r.data) prgSet(r.data);
+  };
+}
+/* Ngoại ngữ */
+let cfMuc = 'Đã có', cfForgot = false, cfEdit = null;
+function loadLang() { renderLang(); prgSync(); }
+const fmtD = (x) => x ? x.slice(8, 10) + '/' + x.slice(5, 7) + '/' + x.slice(0, 4) : '';
+function certCard(x) {
+  const cls = x.muc === 'Mục tiêu' ? 'goal' : x.muc === 'Đã hết hạn' ? 'old' : '';
+  const band = x.cert === 'TOEIC 4 kỹ năng' ? Object.entries(x.parts || {}).map(([k, v]) => k + ' ' + v).join(' · ') : x.band;
+  let meta = '';
+  if (x.muc !== 'Mục tiêu') {
+    meta = (x.issued ? 'Cấp ' + fmtD(x.issued) : 'Không rõ ngày cấp') + ' · ' +
+      (x.noExpiry ? 'không thời hạn' : x.expiry ? (x.daysLeft >= 0 ? 'hết hạn ' + fmtD(x.expiry) + ' (còn ' + x.daysLeft + ' ngày)' : 'đã hết hạn ' + fmtD(x.expiry)) : '');
+  }
+  const badges = [];
+  if (x.muc === 'Đã có') {
+    if (x.exempt.length) badges.push('<span class="badge ok">Miễn ' + x.exempt.join(', ') + '</span>');
+    else if (x.english) badges.push('<span class="badge">Chưa đủ để miễn học phần</span>');
+    if (x.grad) badges.push('<span class="badge ok">Đủ mức chuẩn đầu ra</span>');
+    else if (x.english) badges.push('<span class="badge">Dưới mức chuẩn đầu ra</span>');
+    if (x.daysLeft != null && x.daysLeft >= 0 && x.daysLeft <= 90) badges.push('<span class="badge warn">Sắp hết hạn</span>');
+  }
+  if (x.muc === 'Mục tiêu') badges.push('<span class="badge info">Mục tiêu</span>');
+  return '<div class="cert ' + cls + '"><span class="lv">' + esc(x.lvLabel || '') + (x.cefr ? ' · ' + esc(x.cefr) : '') + '</span><b>' + esc(x.cert) + '</b><div>' + esc(band || '') + '</div>' +
+    (meta ? '<div class="meta">' + meta + '</div>' : '<div class="meta">' + esc(x.lang || '') + '</div>') +
+    '<div class="badges">' + badges.join('') + '</div><div class="acts">' +
+    (x.muc === 'Mục tiêu' ? '<button data-act="got" data-id="' + x.id + '">Đã đạt → nhập chứng chỉ</button>' : '') +
+    '<button data-act="edit" data-id="' + x.id + '">Sửa</button><button class="del" data-act="del" data-id="' + x.id + '">Xoá</button></div></div>';
+}
+function renderLang() {
+  const body = $('#lang-body');
+  const C = PRG && PRG.certs;
+  if (!C) { body.innerHTML = '<p class="skeleton">Đang đọc lần đầu…</p>'; return; }
+  if (C.error) { body.innerHTML = '<p class="note">' + esc(C.error) + '</p>'; return; }
+  const sm = C.summary || {};
+  let html = '<div class="stats">' +
+    '<div class="stat"><strong>' + (sm.best ? esc(sm.best.lv) : '–') + '</strong><span>trình độ tiếng Anh đang có</span><em>' + (sm.best ? esc(sm.best.cert) + ' · ' + esc(sm.best.cefr || '') : 'chưa có chứng chỉ còn hạn') + '</em></div>' +
+    '<div class="stat"><strong>' + (C.fl || []).filter(f => f.r || f.exempt).length + '/5</strong><span>học phần tiếng Anh cơ sở</span><em>' +
+      ((C.fl || []).some(f => f.r) ? 'đã miễn (R): ' + (C.fl || []).filter(f => f.r).map(f => f.code).join(', ') : ((sm.exempt || []).join(', ') ? 'đủ điều kiện miễn: ' + sm.exempt.join(', ') : 'chưa đủ điều kiện')) + '</em></div>' +
+    '<div class="stat"><strong>' + (sm.gradOk ? 'Đủ mức' : 'Chưa') + '</strong><span>mức chuẩn đầu ra (' + esc(sm.gradNeed || 'Bậc 3') + ')</span><em>tham khảo · chỉ xét ở tab ĐK tốt nghiệp khi đủ 128 tín</em></div>' +
+    '<div class="stat"><strong>' + C.items.filter(x => x.muc === 'Mục tiêu').length + '</strong><span>mục tiêu</span><em>chứng chỉ bạn nhắm tới</em></div></div>';
+  const cols = [['Mục tiêu', '🎯 Mục tiêu', 'Chưa đặt mục tiêu.'], ['Đã có', '✅ Đã có', 'Chưa có chứng chỉ còn hạn.'], ['Đã hết hạn', '⌛ Đã hết hạn', 'Không có.']];
+  html += '<div class="ccols">' + cols.map(([k, t, e]) => {
+    const xs = C.items.filter(x => x.muc === k);
+    return '<div class="ccol"><h2>' + t + '<span>' + xs.length + '</span></h2>' + (xs.map(certCard).join('') || '<div class="empty">' + e + '</div>') + '</div>';
+  }).join('') + '</div>';
+  // biểu mẫu
+  html += '<div class="cform" id="cform"><h2>' + (cfEdit ? 'Sửa chứng chỉ' : 'Nhập chứng chỉ') + '</h2>' +
+    '<div class="seg" role="group" aria-label="Mục"><button data-m="Đã có" aria-pressed="' + (cfMuc === 'Đã có') + '">Đã có</button><button data-m="Mục tiêu" aria-pressed="' + (cfMuc === 'Mục tiêu') + '">Mục tiêu</button></div>' +
+    '<div class="grid"><label>Ngôn ngữ<select id="cf-lang"></select></label><label>Loại chứng chỉ<select id="cf-cert"></select></label><span id="cf-bands" style="display:contents"></span>' +
+    '<span id="cf-dates" style="display:contents"></span></div><div class="preview" id="cf-prev"></div>' +
+    '<div class="grid" style="margin-top:10px"><button class="primary" id="cf-save">' + (cfEdit ? 'Lưu thay đổi' : 'Thêm chứng chỉ') + '</button>' + (cfEdit ? '<button class="ghost" id="cf-cancel">Huỷ</button>' : '') + '</div><div class="msg" id="cf-msg"></div></div>';
+  // quy định miễn học phần
+  const flVi = (f) => f.r ? '<span class="badge ok">Đã miễn (R) · toàn khoá</span>' : f.exempt ? '<span class="badge ok">Đủ điều kiện miễn (nộp đơn để ghi điểm R)</span>' : f.result === 'Pass' ? '<span class="badge ok">Đã đạt</span>' :
+    f.status === 'Taking' ? '<span class="badge info">Đang học ' + esc(f.semester) + '</span>' : '<span class="badge">' + (f.semester ? 'Dự kiến ' + esc(f.semester) : 'Chưa học') + '</span>';
+  html += '<h2 style="font-size:17px;margin:0 0 8px">Miễn học phần tiếng Anh cơ bản</h2><table class="ctable ruletab"><thead><tr><th>Học phần</th><th>Miễn khi đạt</th><th>Xếp lớp / đăng ký</th><th>Của bạn</th></tr></thead><tbody>' +
+    (C.fl || []).sort((a, b) => a.code.localeCompare(b.code)).map(f => '<tr><td><b>' + esc(f.code) + '</b> · ' + esc(f.name) + '</td><td>Bậc ' + f.minLv + ' trở lên</td><td>' + esc(f.when) + '</td><td>' + flVi(f) + '</td></tr>').join('') +
+    '</tbody></table><p class="note" style="padding:0 0 14px">Chứng chỉ phải còn hạn tại lúc nộp đơn xét miễn (muộn nhất 2 tuần trước khi học kỳ bắt đầu). Học phần ngoại ngữ cơ bản không tính tín chỉ trong CTĐT. Nguồn: Quy định ngoại ngữ từ K70, ĐHBK HN (2025).</p>';
+  // danh mục
+  const langs = [...new Set(C.catalog.map(c => c.lang))];
+  html += '<h2 style="font-size:17px;margin:0 0 8px">Danh mục chứng chỉ ĐHBK công nhận</h2>' + langs.map(L => '<details class="catalog"><summary>' + esc(L) + ' · ' + C.catalog.filter(c => c.lang === L).map(c => esc(c.name)).join(', ') + '</summary>' +
+    C.catalog.filter(c => c.lang === L).map(c => '<table><tr><th colspan="2">' + esc(c.name) + ' — ' + (c.months ? 'hiệu lực ' + c.months + ' tháng' : 'không thời hạn') + (c.note ? ' · ' + esc(c.note) : '') + '</th></tr>' +
+      (c.parts ? Object.entries(c.parts).map(([k, bs]) => '<tr><td>' + esc(k) + '</td><td>' + bs.map(b => esc(b.band) + ' → Bậc ' + b.lv).join(' · ') + '</td></tr>').join('')
+               : '<tr><td colspan="2">' + c.bands.map(b => esc(b.band) + ' → Bậc ' + b.lv + ' (' + esc(b.cefr) + ')').join(' · ') + '</td></tr>') + '</table>').join('') + '</details>').join('');
+  body.innerHTML = html;
+  cfWire(C);
+}
+function cfWire(C) {
+  const cat = C.catalog, rules = (C.rules || []).filter(r => r.code !== 'CHUAN_DAU_RA'), need = ((C.rules || []).find(r => r.code === 'CHUAN_DAU_RA') || {}).lv || 3.1;
+  const ed = cfEdit && C.items.find(x => x.id === cfEdit.id);
+  const langSel = $('#cf-lang'), certSel = $('#cf-cert');
+  const langs = [...new Set(cat.map(c => c.lang))];
+  langSel.innerHTML = langs.map(l => '<option>' + esc(l) + '</option>').join('');
+  if (ed) langSel.value = ed.lang || 'Tiếng Anh';
+  const fillCerts = () => { certSel.innerHTML = cat.filter(c => c.lang === langSel.value).map(c => '<option>' + esc(c.name) + '</option>').join(''); };
+  fillCerts(); if (ed) certSel.value = ed.cert;
+  const cur = () => cat.find(c => c.name === certSel.value);
+  const fillBands = () => {
+    const c = cur(); if (!c) return;
+    const opt = (bs, v) => '<option value="">— chọn —</option>' + bs.map(b => '<option value="' + esc(b.band) + '"' + (v === b.band ? ' selected' : '') + '>' + esc(b.band) + '</option>').join('');
+    $('#cf-bands').innerHTML = c.parts ? Object.entries(c.parts).map(([k, bs]) => '<label>' + esc(k) + '<select data-part="' + esc(k) + '">' + opt(bs, ed && ed.parts && ed.parts[k]) + '</select></label>').join('')
+      : '<label>Band điểm<select id="cf-band">' + opt(c.bands, ed && ed.band) + '</select></label>';
+    fillDates(); preview();
+    $('#cf-bands').querySelectorAll('select').forEach(x => x.onchange = preview);
+  };
+  const fillDates = () => {
+    const c = cur();
+    if (cfMuc === 'Mục tiêu') { $('#cf-dates').innerHTML = ''; return; }
+    $('#cf-dates').innerHTML = cfForgot
+      ? '<label>Ngày hết hạn<input type="date" id="cf-exp" value="' + ((ed && ed.forgot && ed.expiry) || '') + '"></label><button class="link" id="cf-forgot">Nhớ ngày cấp? Nhập ngày cấp</button>'
+      : '<label>Ngày cấp<input type="date" id="cf-iss" value="' + ((ed && ed.issued) || '') + '"></label><button class="link" id="cf-forgot">Quên ngày cấp</button>';
+    $('#cf-forgot').onclick = () => { cfForgot = !cfForgot; fillDates(); preview(); };
+    $('#cf-dates').querySelectorAll('input').forEach(x => x.oninput = preview);
+  };
+  const preview = () => {
+    const c = cur(); if (!c) return;
+    let lv = null;
+    if (c.parts) { const v = Object.entries(c.parts).map(([k, bs]) => { const s = $('#cf-bands').querySelector('[data-part="' + k + '"]').value; const b = bs.find(x => x.band === s); return b ? b.lvn : null; }); lv = v.every(x => x != null) ? Math.min(...v) : null; }
+    else { const b = c.bands.find(x => x.band === ($('#cf-band') || {}).value); lv = b ? b.lvn : null; }
+    if (lv == null) { $('#cf-prev').textContent = c.parts ? 'Chọn band cho đủ 4 kỹ năng — bậc tính theo kỹ năng thấp nhất.' : 'Chọn band điểm để xem quy đổi.'; return; }
+    const en = c.lang === 'Tiếng Anh';
+    const ex = en ? rules.filter(r => lv >= r.lv).map(r => r.code).sort() : [];
+    let exp = '';
+    const iss = ($('#cf-iss') || {}).value, e2 = ($('#cf-exp') || {}).value;
+    if (cfMuc === 'Đã có') {
+      if (cfForgot) exp = e2 ? 'hết hạn ' + fmtD(e2) : (c.months ? 'nhập ngày hết hạn' : 'không thời hạn');
+      else if (iss) { if (c.months) { const d = new Date(iss + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + c.months); exp = 'hết hạn ' + fmtD(d.toISOString().slice(0, 10)); } else exp = 'không thời hạn'; }
+    }
+    $('#cf-prev').innerHTML = '→ <b>Bậc ' + lv + '</b>' + (en ? ' · ' + (ex.length ? 'đủ miễn ' + ex.join(', ') : 'chưa đủ miễn học phần nào') + ' · ' + (c.grad && lv >= need ? 'đủ mức chuẩn đầu ra' : 'dưới mức chuẩn đầu ra') : ' · chỉ dùng cho CTĐT có ngoại ngữ chính là ' + esc(c.lang)) + (exp ? ' · ' + exp : '') + (c.note ? '<br><small>' + esc(c.note) + '</small>' : '');
+  };
+  langSel.onchange = () => { fillCerts(); fillBands(); };
+  certSel.onchange = fillBands;
+  fillBands();
+  $('#cform').querySelectorAll('.seg button').forEach(b => b.onclick = () => { cfMuc = b.dataset.m; renderLang(); $('#cform').scrollIntoView({ block: 'nearest' }); });
+  if ($('#cf-cancel')) $('#cf-cancel').onclick = () => { cfEdit = null; cfMuc = 'Đã có'; cfForgot = false; renderLang(); };
+  $('#cf-save').onclick = async () => {
+    const c = cur(); const msg = $('#cf-msg');
+    const parts = {}; if (c.parts) $('#cf-bands').querySelectorAll('[data-part]').forEach(x => parts[x.dataset.part] = x.value);
+    const body = { id: cfEdit ? cfEdit.id : undefined, muc: cfMuc, cert: c.name, band: ($('#cf-band') || {}).value || '', parts,
+      issued: ($('#cf-iss') || {}).value || '', expiry: ($('#cf-exp') || {}).value || '', forgot: cfForgot };
+    msg.style.color = 'var(--ink-3)'; msg.textContent = 'Đang ghi vào Notion…'; $('#cf-save').disabled = true;
+    let r; try { r = await fetch('/api/certs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(x => x.json()); } catch (e) { r = { ok: false, loi: 'Không gọi được web app.' }; }
+    $('#cf-save').disabled = false;
+    if (!r.ok) { msg.style.color = ''; msg.textContent = r.loi || 'Không ghi được.'; return; }
+    cfEdit = null; cfForgot = false; if (r.data) prgSet(r.data);
+  };
+  $('#lang-body').querySelectorAll('.cert .acts button').forEach(b => b.onclick = async () => {
+    const x = C.items.find(i => i.id === b.dataset.id); if (!x) return;
+    if (b.dataset.act === 'del') {
+      if (!confirm('Xoá ' + x.cert + ' khỏi danh sách? (Trong Notion dòng này chuyển sang mục "Đã xoá", không mất dữ liệu.)')) return;
+      const r = await fetch('/api/certs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id: x.id }) }).then(r => r.json()).catch(() => ({}));
+      if (r.data) prgSet(r.data); return;
+    }
+    cfEdit = { id: x.id }; cfMuc = b.dataset.act === 'got' ? 'Đã có' : x.muc === 'Mục tiêu' ? 'Mục tiêu' : 'Đã có'; cfForgot = !!x.forgot;
+    if (b.dataset.act === 'got') cfEdit.fromGoal = true;
+    renderLang(); $('#cform').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+}
+/* Hôm nay */
+let DAY = null, dayPick = null, dayAsk = null;   // dayAsk = thay đổi đang chờ bạn xác nhận
+try { DAY = JSON.parse(localStorage.getItem('day-cache') || 'null'); } catch (e) { DAY = null; }
+function daySet(j) { if (!j || !j.today) return; DAY = j; try { localStorage.setItem('day-cache', JSON.stringify(j)); } catch (e) {} renderDay(); }
+function loadDay() { renderDay(); fetch('/api/today').then(r => r.json()).then(daySet).catch(() => {}); }
+async function dayPost(path, body, msgEl) {
+  if (msgEl) msgEl.textContent = 'Đang ghi vào Notion…';
+  let r; try { r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(x => x.json()); }
+  catch (e) { r = { ok: false, loi: 'Không gọi được web app.' }; }
+  if (!r.ok) { if (msgEl) msgEl.textContent = r.loi || 'Không ghi được.'; return false; }
+  if (msgEl) msgEl.textContent = '';
+  if (r.data) daySet(r.data);
+  return true;
+}
+const modeVi = { 'Bình thường': 'Bình thường', Camp: '⛺ Camp', Rest: '💤 Rest' };
+function askBox(d) {
+  const a = dayAsk, x = d.days.find(z => z.date === a.date) || { dow: '', date: a.date }, isToday = a.date === d.today;
+  const what = a.mode === 'Camp' ? '⛺ Camp ' + a.hours + ' giờ' : a.mode === 'Rest' ? '💤 Rest (nghỉ)' : 'Bình thường';
+  const fx = ['Ghi chế độ này vào bảng 🌗 Chế độ ngày trong Notion.'];
+  if (isToday) {
+    fx.push(a.mode === 'Camp' ? 'Bật Camp Mode (' + a.hours + ' giờ) trong 🎛️ University Control.' : a.mode === 'Rest' ? 'Bật Rest Mode trong 🎛️ University Control.' : 'Tắt Camp Mode và Rest Mode trong 🎛️ University Control.');
+    fx.push(a.mode === 'Rest' ? 'A4 chạy ngay: không xếp việc mới hôm nay, chỉ giữ việc có hạn đúng hôm nay.' : 'A4 chạy ngay và xếp lại việc hôm nay theo chế độ mới.');
+  } else fx.push('Chưa đụng tới Control hay A4. Sáng ' + x.date.slice(8, 10) + '/' + x.date.slice(5, 7) + ' hệ thống mới áp dụng.');
+  return '<div class="dconfirm" role="alertdialog" aria-label="Xác nhận đổi chế độ"><b>Đổi ' + esc(x.dow) + ' ' + a.date.slice(8, 10) + '/' + a.date.slice(5, 7) + ' sang ' + what + '?</b>' +
+    '<ul>' + fx.map(f => '<li>' + f + '</li>').join('') + '</ul><div class="row"><button class="primary" id="ask-ok">Xác nhận đổi</button><button class="ghost" id="ask-no">Hủy</button><span class="msg" id="ask-msg"></span></div></div>';
+}
+function askMode(date, mode, hours) {
+  const cur = (DAY.days.find(z => z.date === date) || {});
+  const h = Number(hours) || DAY.hours || 6;
+  if (cur.mode === mode && (mode !== 'Camp' || Number(cur.hours) === h)) { dayAsk = null; renderDay(); return; }
+  dayAsk = { date, mode, hours: h }; renderDay();
+}
+let dlAsk = null, dupAsk = null;
+function renderDay() {
+  const body = $('#day-body');
+  if (!DAY) { body.innerHTML = '<p class="skeleton">Đang đọc lần đầu…</p>'; return; }
+  const d = DAY, t = d.today;
+  $('#day-title').textContent = 'Hôm nay · ' + d.dow + ' ' + t.slice(8, 10) + '/' + t.slice(5, 7);
+  let html = '<div class="modebar"><div class="seg" role="group" aria-label="Chế độ hôm nay">' +
+    ['Bình thường', 'Camp', 'Rest'].map(m => '<button data-m="' + m + '" aria-pressed="' + (d.mode === m) + '">' + modeVi[m] + '</button>').join('') + '</div>' +
+    '<label>Giờ camp <input id="day-hours" type="number" min="1" max="14" step="0.5" value="' + (d.hours || 6) + '"></label><span class="msg" id="day-msg"></span></div>';
+  if (dayAsk && dayAsk.date === t && !dayPick) html += askBox(d);
+  const done = d.items.filter(x => x.status === 'Done').length;
+  const w = d.week || {};
+  html += '<div class="stats">' +
+    '<div class="stat"><strong>' + done + '/' + d.items.length + '</strong><span>việc hôm nay</span><em>' + (d.mode === 'Rest' ? 'ngày nghỉ' : 'A4 xếp lúc 07:00 và mỗi 30 phút') + '</em></div>' +
+    '<div class="stat"><strong>' + d.doneHours + '/' + d.planHours + 'h</strong><span>giờ đã làm / kế hoạch</span><em>' + (d.mode === 'Camp' ? 'mục tiêu camp ' + d.hours + 'h' : 'không bắt buộc làm đủ') + '</em></div>' +
+    '<div class="stat"><strong>' + (w.hours ?? 0) + 'h</strong><span>giờ tuần này</span><em>' + esc(w.week || '') + '</em></div>' +
+    '<div class="stat"><strong>' + esc(w.verdict || '–') + '</strong><span>đánh giá tuần</span><em>cần ' + (w.need_next ?? 0) + 'h cho tuần sau</em></div></div>';
+  // ⚠ Có thể trùng (dupscan.py): Giữ cả hai / Bỏ một bản — bỏ luôn qua bước Xác nhận, liệt kê đủ những gì vào thùng rác
+  const dups = d.dups || [];
+  if (dups.length) html += '<div class="dupbox"><h2 style="font-size:17px;margin:0 0 6px">Có thể trùng</h2>' + dups.map(p => {
+    const side = (x, k) => '<div class="dside"><b>' + esc(x.name) + '</b><small>' + esc([x.course || x.kindrow, 'tạo ' + (x.created || '').replace('T', ' ')].filter(Boolean).join(' · ')) +
+      (x.tasks != null ? ' · ' + x.tasks + ' việc con' : '') + '</small><button class="ghost" data-dupdrop="' + p.pid + '" data-id="' + x.id + '">Bỏ bản ' + k + '</button></div>';
+    const asking = dupAsk && dupAsk.pid === p.pid;
+    return '<div class="dpair"><div class="dwhy">' + esc(p.why) + '</div><div class="dsides">' + side(p.a, 'này') + side(p.b, 'này') + '</div>' +
+      (asking ? '<div class="sask"><b>Bỏ vào thùng rác Notion (khôi phục được 30 ngày)?</b><ul>' + (dupAsk.what || ['Đang tính…']).map(w => '<li>' + esc(w) + '</li>').join('') + '</ul>' +
+        '<button class="primary" id="dup-ok"' + (dupAsk.what ? '' : ' disabled') + '>Xác nhận</button> <button class="ghost" id="dup-no">Hủy</button><span class="smsg" id="dup-msg"></span></div>'
+        : '<button class="link" data-dupkeep="' + p.pid + '">Không trùng — giữ cả hai</button>') + '</div>';
+  }).join('') + '</div>';
+  const dls = d.deadlines || [];
+  const leftTxt = m => m < 0 ? 'quá hạn' : m >= 2880 ? 'còn ' + Math.floor(m / 1440) + ' ngày' : m >= 120 ? 'còn ' + Math.floor(m / 60) + ' giờ' : 'còn ' + m + ' phút';
+  html += '<h2 style="font-size:17px;margin:0 0 8px">Hạn sắp tới</h2><ul class="tasks dls">' + (dls.map(x => {
+    const w = new Date(x.due), asking = dlAsk === x.id;
+    return '<li class="' + (x.minsLeft < 1440 ? 'soon' : '') + '"><button class="chk dlchk" data-dl="' + x.id + '" aria-label="Hoàn tất ' + esc(x.name) + '"></button>' +
+      '<div><span class="tname">' + esc(x.name) + '</span><small>' + (x.course ? esc(x.course) + ' · ' : '') + '<span class="kind k-' + (x.kind === 'Môn học' ? 'mh' : x.kind === 'Tự luyện cốt lõi' ? 'cl' : 'tl') + '">' + esc(x.kind) + '</span> · hạn ' +
+      String(w.getHours()).padStart(2, '0') + ':' + String(w.getMinutes()).padStart(2, '0') + ' ' + w.getDate() + '/' + (w.getMonth() + 1) + '</small>' +
+      (x.review ? '<small style="color:var(--red)">⚠ ' + esc(x.review) + '</small>' : '') +
+      (asking ? '<div class="sask" style="margin-top:6px"><b>Đánh dấu hoàn tất?</b> Ghi Submitted vào 📋 Academic Work; hạn biến mất và hết nhắc. <button class="primary" id="dl-ok">Xác nhận</button> <button class="ghost" id="dl-no">Hủy</button><span class="smsg" id="dl-msg"></span></div>' : '') +
+      '</div><span class="h">' + leftTxt(x.minsLeft) + '</span></li>';
+  }).join('') || '<span class="empty">Không có hạn nào trong 3 tuần tới.</span>') + '</ul>';
+  html += '<h2 style="font-size:17px;margin:0 0 8px">Việc hôm nay</h2><ul class="tasks">' + (d.items.map(x => {
+    const dn = x.status === 'Done';
+    const note = (x.note || '').replace(/runtime.*$/, '').trim();
+    return '<li class="' + (dn ? 'done' : '') + '"><button class="chk" data-id="' + x.id + '" data-done="' + (dn ? 0 : 1) + '" aria-label="' + (dn ? 'Bỏ đánh dấu' : 'Đánh dấu xong') + '">' + (dn ? '✓' : '') + '</button>' +
+      '<div><span class="tname">' + esc(x.task) + '</span>' + (note ? '<small>' + esc(note.slice(0, 160)) + '</small>' : '') + '</div><span class="h">' + (x.est || 0) + 'h' + (x.priority ? ' · ' + esc(x.priority) : '') + '</span></li>';
+  }).join('') || '<span class="empty">' + (d.mode === 'Rest' ? 'Hôm nay nghỉ — không có việc nào được xếp. Deadline thật (nếu có) vẫn hiện ở bản tin.' :
+     'Chưa có việc nào cho hôm nay. A4 xếp lúc 07:00 và mỗi 30 phút (7–22 giờ); đổi chế độ ở trên thì A4 xếp lại ngay.') + '</span>') + '</ul>';
+  html += '<h2 style="font-size:17px;margin:0 0 4px">Chế độ 2 tuần</h2><p class="note" style="padding:0 0 4px">Bấm một ngày để đặt ⛺ Camp hoặc 💤 Rest. Viền vàng nét đứt = ngày camp đánh giá tuần gợi ý.</p><div class="strip">' +
+    d.days.map((x, i) => (i === 0 ? '<div class="lab">Tuần này</div>' : i === 7 ? '<div class="lab">Tuần sau</div>' : '') +
+      '<button class="dcell ' + x.mode.replace(' ', '') + (x.today ? ' today' : '') + (x.suggested ? ' sugg' : '') + (x.past ? ' past' : '') + '" data-d="' + x.date + '"' + (x.past ? ' disabled' : '') + '>' +
+      '<b>' + ({ 'Thứ Hai': 'T2', 'Thứ Ba': 'T3', 'Thứ Tư': 'T4', 'Thứ Năm': 'T5', 'Thứ Sáu': 'T6', 'Thứ Bảy': 'T7', 'Chủ nhật': 'CN' }[x.dow] || x.dow) + ' ' + x.date.slice(8, 10) + '/' + x.date.slice(5, 7) + '</b>' +
+      '<em>' + (x.mode === 'Bình thường' ? (x.suggested ? '⛺ gợi ý' : '') : modeVi[x.mode] + (x.mode === 'Camp' && x.hours ? ' ' + x.hours + 'h' : '')) + '</em>' +
+      '<span>' + (x.done ? x.done + 'h đã làm' : '') + '</span></button>').join('') + '</div>';
+  if (dayPick) {
+    const x = d.days.find(z => z.date === dayPick);
+    if (x) html += '<div class="daypick" id="daypick"><b>' + x.dow + ' ' + x.date.slice(8, 10) + '/' + x.date.slice(5, 7) + ':</b>' +
+      ['Bình thường', 'Camp', 'Rest'].map(m => '<button class="ghost" data-pm="' + m + '"' + (x.mode === m ? ' aria-pressed="true"' : '') + '>' + modeVi[m] + '</button>').join('') +
+      '<label>giờ <input id="pick-hours" type="number" min="1" max="14" step="0.5" value="' + (x.hours || d.hours || 6) + '" style="width:64px"></label><span class="msg" id="pick-msg"></span></div>';
+  }
+  if (dayAsk && (dayPick || dayAsk.date !== t)) html += askBox(d);
+  if (w.focus) html += '<div class="weekbox"><b class="v-' + String(w.verdict || '').split(' ')[0] + '">' + esc(w.verdict || '') + '</b> · ' + esc(w.focus) + (w.pattern ? '<br><small style="color:var(--ink-3)">' + esc(w.pattern) + '</small>' : '') + '</div>';
+  body.innerHTML = html;
+  body.querySelectorAll('.modebar .seg button').forEach(b => b.onclick = () => { dayPick = null; askMode(t, b.dataset.m, $('#day-hours').value); });
+  const ok = $('#ask-ok'), no = $('#ask-no');
+  if (no) no.onclick = () => { dayAsk = null; renderDay(); };
+  if (ok) ok.onclick = async () => { ok.disabled = no.disabled = true; const a = dayAsk;
+    const done = await dayPost('/api/day-mode', { date: a.date, mode: a.mode, hours: a.hours, confirmed: true }, $('#ask-msg'));
+    if (!done) { ok.disabled = no.disabled = false; return; }
+    dayAsk = null; dayPick = null; renderDay(); };
+  body.querySelectorAll('.chk:not(.dlchk)').forEach(b => b.onclick = () => { b.disabled = true; dayPost('/api/daily-done', { id: b.dataset.id, done: b.dataset.done === '1' }); });
+  body.querySelectorAll('.dlchk').forEach(b => b.onclick = () => { dlAsk = dlAsk === b.dataset.dl ? null : b.dataset.dl; renderDay(); });
+  body.querySelectorAll('[data-dupdrop]').forEach(b => b.onclick = async () => {
+    dupAsk = { pid: b.dataset.dupdrop, id: b.dataset.id, what: null }; renderDay();
+    const r = await api('/api/dup-plan', { pid: dupAsk.pid, drop_id: dupAsk.id }).catch(() => null);
+    if (dupAsk && r && r.ok) { dupAsk.what = r.what; renderDay(); }
+  });
+  body.querySelectorAll('[data-dupkeep]').forEach(b => b.onclick = async () => {
+    b.disabled = true; const r = await api('/api/dup-resolve', { confirmed: true, pid: b.dataset.dupkeep, action: 'keep' }).catch(() => ({}));
+    if (r.ok) { DAY.dups = r.dups; renderDay(); }
+  });
+  const duno = $('#dup-no'), duok = $('#dup-ok');
+  if (duno) duno.onclick = () => { dupAsk = null; renderDay(); };
+  if (duok) duok.onclick = async () => { duok.disabled = true;
+    const r = await api('/api/dup-resolve', { confirmed: true, pid: dupAsk.pid, action: 'drop', drop_id: dupAsk.id }).catch(() => ({ ok: false, loi: 'Không gọi được web app.' }));
+    if (!r.ok) { $('#dup-msg').textContent = r.loi || 'Không làm được.'; duok.disabled = false; return; }
+    dupAsk = null; DAY.dups = r.dups; DAY.deadlines = r.deadlines || DAY.deadlines; renderDay(); };
+  const dno = $('#dl-no'), dok = $('#dl-ok');
+  if (dno) dno.onclick = () => { dlAsk = null; renderDay(); };
+  if (dok) dok.onclick = async () => { dok.disabled = true;
+    const r = await api('/api/deadline-done', { confirmed: true, id: dlAsk }).catch(() => ({ ok: false, loi: 'Không gọi được web app.' }));
+    if (!r.ok) { $('#dl-msg').textContent = r.loi || 'Không ghi được.'; dok.disabled = false; return; }
+    dlAsk = null; DAY.deadlines = r.deadlines; ALR = r.alerts || ALR; renderAlerts(); renderDay(); };
+  body.querySelectorAll('.dcell').forEach(b => b.onclick = () => { if (b.disabled) return; dayPick = dayPick === b.dataset.d ? null : b.dataset.d; dayAsk = null; renderDay(); });
+  body.querySelectorAll('#daypick [data-pm]').forEach(b => b.onclick = () => askMode(dayPick, b.dataset.pm, $('#pick-hours').value));
+}
+fetch('/api/today').then(r => r.json()).then(daySet).catch(() => {});
+
+prgSync();   // tải ngầm khi mở app
+
+/* ---------- chat ---------- */
+const log = $('#chat-inner'), input = $('#input'), send = $('#send');
+let history = []; try { history = JSON.parse(localStorage.getItem('uc-history') || '[]'); } catch {}
+function addMsg(role, text, opts = {}) {
+  $('#hello').hidden = true;
+  const el = document.createElement('div');
+  el.className = 'msg ' + (role === 'me' ? 'me' : 'ai') + (opts.err ? ' err' : '');
+  el.innerHTML = role === 'me' ? `<div class="bubble">${esc(text)}</div>`
+    : `<div class="who" aria-hidden="true">UC</div><div class="text">${opts.thinking ? '<span class="thinking" aria-label="Đang trả lời"><i></i><i></i><i></i></span>' : md(text)}</div>`;
+  log.appendChild(el); $('#chat-log').scrollTop = 1e9;
+  return el;
+}
+function persist(role, text) { history.push({ role, text }); history = history.slice(-40); localStorage.setItem('uc-history', JSON.stringify(history)); }
+for (const m of history) addMsg(m.role, m.text);
+
+/* ---------- chat attachments ---------- */
+let atts = [];
+function renderAtts() {
+  $('#attachments').innerHTML = atts.map((a, i) => `<div class="att ${a.fid ? '' : 'busy'}">
+    ${a.isImage ? `<img src="${a.url}" alt="">` : `<span class="doc" aria-hidden="true">${esc((a.name.split('.').pop() || 'FILE').slice(0, 4).toUpperCase())}</span>`}
+    <span class="nm"><b title="${esc(a.name)}">${esc(a.name)}</b>${a.fid ? `<label><input type="checkbox" data-i="${i}" ${a.save ? 'checked' : ''}> Lưu vào Uni-Documents</label>` : 'Đang tải lên…'}</span>
+    <button class="x" data-i="${i}" aria-label="Bỏ ${esc(a.name)}">×</button></div>`).join('');
+  $('#attachments').querySelectorAll('input[type=checkbox]').forEach(c => c.onchange = () => { atts[c.dataset.i].save = c.checked; });
+  $('#attachments').querySelectorAll('.x').forEach(b => b.onclick = () => { atts.splice(+b.dataset.i, 1); renderAtts(); autosize(); });
+  autosize();
+}
+async function attach(fileList) {
+  for (const f of [...fileList].slice(0, 6 - atts.length)) {
+    const a = { name: f.name, isImage: f.type.startsWith('image/'), url: f.type.startsWith('image/') ? URL.createObjectURL(f) : '', save: !f.type.startsWith('image/') };
+    atts.push(a); renderAtts();
+    try {
+      const r = await fetch('/api/chat-file?name=' + encodeURIComponent(f.name), { method: 'POST', body: f });
+      const j = await r.json(); if (!r.ok) throw new Error(j.error);
+      a.fid = j.fid;
+    } catch (e) { atts.splice(atts.indexOf(a), 1); alert('Không đính kèm được ' + f.name + ': ' + e.message); }
+    renderAtts();
+  }
+}
+$('#chat-file').onchange = (e) => { attach(e.target.files); e.target.value = ''; };
+
+async function ask(text) {
+  text = text.trim();
+  const files = atts.filter(a => a.fid);
+  if (!text && !files.length) return;
+  if (atts.some(a => !a.fid)) { alert('Đợi tệp tải lên xong rồi gửi.'); return; }
+  show('chat');
+  const bubble = addMsg('me', text || '(gửi tệp đính kèm)');
+  if (files.length) bubble.insertAdjacentHTML('afterbegin', `<div class="sent-files">${files.map(a => a.isImage ? `<img src="${a.url}" alt="${esc(a.name)}">` : `<span>📄 ${esc(a.name)}</span>`).join('')}</div>`);
+  persist('me', (text || '') + (files.length ? `\n📎 ${files.map(a => a.name).join(', ')}` : ''));
+  const payloadFiles = files.map(a => ({ fid: a.fid, save: a.save }));
+  atts = []; renderAtts();
+  input.value = ''; autosize(); send.disabled = true;
+  const pending = addMsg('ai', '', { thinking: true });
+  try {
+    const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 180000);
+    const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, sessionId, files: payloadFiles }), signal: ctl.signal })
+      .catch(e => { throw new Error(e.name === 'AbortError' ? 'quá 2 phút chưa có trả lời' : 'không kết nối được web app'); })
+      .finally(() => clearTimeout(timer));
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'Lỗi ' + r.status);
+    pending.querySelector('.text').innerHTML = md(j.output || '(Copilot không trả lời gì)'); persist('ai', j.output || '');
+    loadSuggest(); if (payloadFiles.some(f => f.save)) refreshInbox();
+  } catch (e) {
+    pending.classList.add('err');
+    pending.querySelector('.text').textContent = 'Chưa gửi được: ' + e.message + '. Kiểm tra n8n (Docker) đang chạy rồi gửi lại.';
+  }
+  $('#chat-log').scrollTop = 1e9;
+}
+function autosize() { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 200) + 'px'; send.disabled = !input.value.trim() && !atts.some(a => a.fid); }
+input.addEventListener('input', autosize);
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(input.value); } });
+$('#form').onsubmit = (e) => { e.preventDefault(); ask(input.value); };
+document.querySelectorAll('[data-ask]').forEach(b => b.onclick = () => ask(b.dataset.ask));
+
+/* ---------- today + suggestions ---------- */
+const fmtDate = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric' }).format(new Date());
+$('#today-date').textContent = fmtDate.charAt(0).toUpperCase() + fmtDate.slice(1);
+const STARTERS = ['Hôm nay mình nên làm gì?', 'Tuần này có hạn nộp nào?', 'Ngày mai học gì, phòng nào?', 'Tìm tài liệu Giải tích I'];
+$('#starters').innerHTML = STARTERS.map(s => `<button class="chip">${esc(s)}</button>`).join('');
+$('#starters').querySelectorAll('.chip').forEach(b => b.onclick = () => ask(b.textContent));
+async function loadSuggest() {
+  try {
+    const r = await fetch('/api/suggest'); const j = await r.json(); if (!r.ok) throw new Error(j.error);
+    todaySlots = j.todaySlots || []; if ($('#p-rec').classList.contains('on') && recState && !recState.recording) renderRec();
+    const slots = (j.todaySlots || []).map(s => `<li class="slot"><time>${esc(s.time)}</time><div>${esc(s.title || s.course)}${s.room ? `<small>Phòng ${esc(s.room)}</small>` : ''}</div></li>`);
+    $('#slots').innerHTML = slots.length ? slots.join('') : '<li class="empty">Hôm nay không có tiết nào.</li>';
+    const S = j.suggestions || [], st = j.stats || {};
+    $('#n-late').textContent = st.overdue ?? '–';
+    $('#n-due').textContent = st.due7 ?? '–';
+    const actionable = S.filter(s => s.group !== 'Hỏi nhanh').length;
+    $('#c-sg').hidden = !actionable; $('#c-sg').textContent = actionable;
+    const order = ['Gấp hôm nay', 'Chờ bạn quyết', 'Dọn việc tồn', 'Sắp tới', 'Hỏi nhanh'];
+    const verb = { 'Gấp hôm nay': 'Làm ngay', 'Chờ bạn quyết': 'Trả lời', 'Dọn việc tồn': 'Xử lý', 'Sắp tới': 'Lên kế hoạch', 'Hỏi nhanh': 'Hỏi' };
+    const M = j.materials || [];
+    const matHtml = `<section class="group"><h2>Tài liệu Notion gợi ý hôm nay</h2><div class="rows">${M.length ? M.map(m => `
+      <div class="mat-row"><a class="t" href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.title)}</a>
+      <button data-p="${esc('Tóm tắt giúp mình tài liệu "' + m.title + '" và vì sao nên xem hôm nay')}">Hỏi Copilot</button>
+      ${m.reason ? `<p>${esc(m.reason)}</p>` : ''}<small>${esc([m.course, m.type].filter(Boolean).join(', '))}</small></div>`).join('')
+      : '<p class="note">Hôm nay Notion chưa gợi ý tài liệu nào. Agent gợi ý tài liệu chạy lúc 07:10 dựa trên kế hoạch trong ngày.</p>'}</div></section>`;
+    $('#sg-list').innerHTML = matHtml + order.filter(g => S.some(s => s.group === g)).map(g => `
+      <section class="group ${g === 'Gấp hôm nay' ? 'urgent' : ''}"><h2>${esc(g)}</h2><div class="rows">
+        ${S.filter(s => s.group === g).map(s => `<button class="row" data-p="${esc(s.prompt)}"><span class="ic" aria-hidden="true">${esc(s.icon)}</span><span>${esc(s.label)}</span><span class="act">${verb[g]}</span></button>`).join('')}
+      </div></section>`).join('') || '<p class="skeleton">Không có gợi ý nào lúc này.</p>';
+    $('#sg-list').querySelectorAll('.row, .mat-row button').forEach(b => b.onclick = () => ask(b.dataset.p));
+  } catch (e) {
+    $('#sg-list').innerHTML = `<p class="skeleton">Chưa đọc được dữ liệu từ n8n (${esc(e.message)}). Kiểm tra Docker đang chạy rồi mở lại tab này.</p>`;
+    $('#slots').innerHTML = '<li class="empty">Chưa đọc được lịch.</li>';
+  }
+}
+
+/* ---------- inbox ---------- */
+let folders = [];
+const STATUS = { queued: ['Đang chờ', ''], reading: ['Đang đọc nội dung', ''], thinking: ['Đang chọn thư mục', ''],
+  needs_choice: ['Cần bạn chọn thư mục', 'ask'], placed: ['Đã xếp', 'ok'], error: ['Lỗi', 'err'], duplicate: ['Đã có trên máy', 'ok'] };
+const crumbs = (p) => esc(p || '').split('\\').join('<span class="sep">/</span>');
+async function refreshInbox() {
+  try {
+    if (!folders.length) folders = (await (await fetch('/api/folders')).json()).folders || [];
+    const { items = [] } = await (await fetch('/api/inbox')).json();
+    const waiting = items.filter(i => i.status === 'needs_choice').length;
+    $('#c-ib').hidden = !waiting; $('#c-ib').textContent = waiting;
+    $('#files').innerHTML = items.map(it => {
+      const [label, cls] = STATUS[it.status] || [it.status, ''];
+      const notion = it.notion === 'done' ? 'đã vào Notion' : it.notion === 'sending' ? 'đang gửi Notion' : it.notion === 'error' ? 'gửi Notion lỗi' : '';
+      let body = '';
+      if (it.status === 'placed') body = `<div class="path">${crumbs('Uni-Documents\\' + it.relPath)}</div>
+        <div class="meta">${it.placedBy === 'you' ? 'Bạn chọn thư mục' : 'Agent tự xếp'}${notion ? ', ' + notion : ''}.
+        ${it.inboxUrl ? `<a href="${esc(it.inboxUrl)}" target="_blank" rel="noopener">Mở trong Notion</a>` : ''}${it.driveLink ? `<a href="${esc(it.driveLink)}" target="_blank" rel="noopener">Bản sao Drive</a>` : ''}</div>`;
+      if (it.status === 'needs_choice' || it.status === 'error') body = `
+        ${it.reason ? `<p class="why">Agent chưa chắc: ${esc(it.reason)}</p>` : ''}
+        <div class="choose"><select aria-label="Chọn thư mục cho ${esc(it.name)}">
+          ${folders.map(f => `<option ${f === it.suggestion ? 'selected' : ''}>${esc(f)}</option>`).join('')}
+          ${it.suggestion && !folders.includes(it.suggestion) ? `<option selected>${esc(it.suggestion)}</option>` : ''}
+        </select><button class="btn" data-id="${it.id}">Xếp vào thư mục này</button></div>`;
+      if (it.status === 'duplicate') body = `<div class="meta">Trùng nội dung với file đã có, nên không xếp thêm bản nữa và không gửi lại Notion:</div><div class="path">${crumbs('Uni-Documents\\' + (it.dupOf || ''))}</div><div class="meta">Bản vừa tải lên còn ở thư mục 00 · Inbox, bạn xoá được nếu không cần.</div>`;
+      if (['queued', 'reading', 'thinking'].includes(it.status)) body = `<div class="meta">Model local đang xử lý, thường mất 10 đến 40 giây.</div>`;
+      return `<article class="file ${it.status === 'needs_choice' ? 'ask' : ''}"><div class="file-top"><span class="file-name">${esc(it.title && it.status === 'placed' ? it.title : it.name)}</span><span class="badge ${cls}">${label}</span></div>${body}</article>`;
+    }).join('');
+    $('#files').querySelectorAll('.btn[data-id]').forEach(b => b.onclick = async () => {
+      b.disabled = true; const folder = b.previousElementSibling.value;
+      const r = await fetch(`/api/inbox/${b.dataset.id}/assign`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder }) });
+      if (!r.ok) { b.disabled = false; alert((await r.json()).error); } refreshInbox();
+    });
+    clearTimeout(refreshInbox.t);
+    if (items.some(i => ['queued', 'reading', 'thinking'].includes(i.status) || i.notion === 'sending')) refreshInbox.t = setTimeout(refreshInbox, 2500);
+  } catch (e) { $('#files').innerHTML = `<p class="skeleton">Không đọc được Inbox: ${esc(e.message)}</p>`; }
+}
+async function upload(fileList) {
+  const list = [...fileList]; if (!list.length) return;
+  show('ib');
+  for (const f of list) {
+    const r = await fetch('/api/upload?name=' + encodeURIComponent(f.name), { method: 'POST', body: f });
+    if (!r.ok) alert('Không gửi được ' + f.name + ': ' + ((await r.json()).error || r.status));
+  }
+  refreshInbox();
+}
+const drop = $('#drop'), fileInput = $('#file');
+fileInput.onchange = () => { upload(fileInput.files); fileInput.value = ''; };
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => upload(e.dataTransfer.files));
+$('#attach').onclick = () => $('#chat-file').click();
+document.addEventListener('dragover', e => { e.preventDefault(); if ($('#p-chat').classList.contains('on')) $('#p-chat').classList.add('dragging'); });
+document.addEventListener('dragleave', e => { if (!e.relatedTarget) $('#p-chat').classList.remove('dragging'); });
+document.addEventListener('drop', e => {
+  e.preventDefault(); $('#p-chat').classList.remove('dragging');
+  if (!e.dataTransfer?.files?.length || drop.contains(e.target)) return;
+  if ($('#p-chat').classList.contains('on')) attach(e.dataTransfer.files); else upload(e.dataTransfer.files);
+});
+
+/* ---------- ghi bài giảng ---------- */
+let todaySlots = [], recState = null, recApps = [], recMode = localStorage.getItem('uc-rec-mode') || 'room', slideCount = 0;
+const SIM = new URLSearchParams(location.search).get('sim');      // chỉ để kiểm thử: phát file thay cho thiết bị
+const MARKS = [['Quan trọng', '⭐ Quan trọng'], ['BTVN', '📝 BTVN'], ['Có thể thi', '🎯 Có thể thi'], ['Ghi chú', '✏️ Ghi chú…']];
+const hms = (s) => { s = Math.max(0, Math.round(s || 0)); return `${Math.floor(s / 3600)}:${String(Math.floor(s % 3600 / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+function currentSlot() {
+  const now = new Date(), m = now.getHours() * 60 + now.getMinutes();
+  for (const s of todaySlots) {
+    const t = String(s.time || '').match(/(\d{1,2}):(\d{2})\D+(\d{1,2}):(\d{2})/); if (!t) continue;
+    if (m >= +t[1] * 60 + +t[2] - 20 && m <= +t[3] * 60 + +t[4]) return s;
+  }
+  return null;
+}
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  return r.json();
+}
+async function recTick() {
+  clearTimeout(recTick.t);
+  try { recState = await api('/api/rec/status'); } catch { recState = { offline: true }; }
+  renderRec();
+  recTick.t = setTimeout(recTick, recState && recState.recording ? 1000 : ($('#p-rec').classList.contains('on') ? 5000 : 20000));
+}
+function renderRec() {
+  const s = recState || {}, card = $('#rec-card');
+  $('#c-rec').hidden = !s.recording;
+  if (s.offline) { card.className = 'ticket'; card.dataset.view = 'off';
+    card.innerHTML = '<p class="why">App ghi âm chưa chạy. Nó tự bật cùng máy (tác vụ "University Copilot - khoi dong"); nếu vừa mở máy, đợi khoảng 1 phút rồi mở lại tab này.</p>'; return; }
+  if (s.recording) return renderLive(s);
+  const slot = currentSlot();
+  // chỉ vẽ lại khi trạng thái đổi -> không làm mất lựa chọn nguồn âm thanh / ô "trộn giọng tôi" đang chọn dở
+  const sig = JSON.stringify([recMode, s.pending, s.lastError, s.capMinutes, slot && slot.time, recApps.map(a => a.pid)]);
+  if (card.dataset.view === 'idle' && card.dataset.sig === sig) return;
+  card.className = 'ticket'; card.dataset.view = 'idle'; card.dataset.sig = sig;
+  const cap = s.capMinutes || 210;
+  card.innerHTML = `
+    <p class="slotline">${slot ? `<span>Đang có tiết</span><b>${esc(slot.title || slot.course)}</b><span>${esc(slot.time)}${slot.room ? ', phòng ' + esc(slot.room) : ''}</span>`
+      : '<span>Theo thời khoá biểu, lúc này không có tiết nào.</span>'}</p>
+    <div class="modes">
+      <button class="mode" data-m="room" aria-pressed="${recMode === 'room'}"><b>🎓 Giảng đường</b><span>Thu bằng micro máy. Đặt máy càng gần giảng viên càng tốt, đừng để trong balo.</span></button>
+      <button class="mode" data-m="online" aria-pressed="${recMode === 'online'}"><b>💻 Học online</b><span>Thu âm thanh máy đang phát: Zoom, Teams, Meet, video bài giảng.</span></button>
+    </div>
+    ${recMode === 'online' ? `<div class="opts">
+      <label>Nguồn âm thanh <select id="rec-app"><option value="">Toàn bộ âm thanh máy</option>
+        ${recApps.map(a => `<option value="${a.pid}" data-name="${esc(a.name)}">Chỉ ${esc(a.name)}${a.title ? ' (' + esc(a.title.slice(0, 40)) + ')' : ''}</option>`).join('')}</select></label>
+      <label><input type="checkbox" id="rec-mic"> Trộn cả giọng tôi (micro), dùng khi bạn cần phát biểu</label></div>` : ''}
+    ${s.pending ? `<p class="why">Có ${s.pending} bản ghi chưa gửi được lên n8n. <button class="ghost" id="rec-retry">Gửi lại</button></p>` : ''}
+    ${s.lastError ? `<p class="why">${esc(s.lastError)}</p>` : ''}
+    <button class="rec-go" id="rec-start">● Bắt đầu ghi${slot ? ' ' + esc(slot.title || slot.course) : ''}</button>
+    <p class="meter-note" style="margin-top:10px">Lưới an toàn: nếu quên bấm Dừng, app tự dừng sau ${Math.floor(cap / 60)} giờ ${cap % 60} phút (báo trước 10 phút, gia hạn được).${SIM ? ' <b>Chế độ kiểm thử: phát file ' + esc(SIM) + '.</b>' : ''}</p>`;
+  card.querySelectorAll('.mode').forEach(b => b.onclick = async () => {
+    recMode = b.dataset.m; localStorage.setItem('uc-rec-mode', recMode);
+    if (recMode === 'online') { try { recApps = (await api('/api/rec/apps')).apps || []; } catch {} }
+    renderRec();
+  });
+  if (recMode === 'online' && !recApps.length) api('/api/rec/apps').then(j => { recApps = j.apps || []; if (recApps.length) renderRec(); }).catch(() => {});
+  const retry = $('#rec-retry');
+  if (retry) retry.onclick = async () => { retry.disabled = true; const p = (await api('/api/rec/pending')).pending || [];
+    for (const id of p) await api('/api/rec/retry-upload', { captureId: id }); recTick(); loadLectures(); };
+  $('#rec-start').onclick = async () => {
+    const btn = $('#rec-start'); btn.disabled = true; btn.textContent = 'Đang mở thiết bị…';
+    const sel = $('#rec-app'), opt = sel && sel.selectedOptions[0];
+    const body = { mode: recMode, course: slot ? (slot.title || slot.course) : '', includeMic: !!($('#rec-mic') && $('#rec-mic').checked) };
+    if (opt && opt.value) { body.appPid = +opt.value; body.appName = opt.dataset.name; }
+    if (SIM) body.simulateFile = SIM;
+    const r = await api('/api/rec/start', body);
+    if (!r.ok) { alert('Chưa bắt đầu ghi được: ' + (r.error || 'lỗi không rõ')); }
+    slideCount = 0; recTick();
+  };
+}
+function renderLive(s) {
+  const card = $('#rec-card');
+  if (card.dataset.view !== 'live' || card.dataset.cap !== s.captureId) {
+    card.className = 'ticket live'; card.dataset.view = 'live'; card.dataset.cap = s.captureId;
+    card.innerHTML = `
+      <div class="live-top"><span class="dot" aria-hidden="true"></span><span class="clock" id="rec-clock" aria-live="off">0:00:00</span><span class="live-meta" id="rec-meta"></span></div>
+      <div class="meter" aria-hidden="true"><i id="rec-level"></i></div><p class="meter-note" id="rec-level-note"></p>
+      <div class="marks">${MARKS.map(([k, l]) => `<button data-k="${esc(k)}">${l}</button>`).join('')}</div>
+      <div class="live-row"><input type="file" id="rec-slide" accept="image/*" capture="environment" multiple hidden>
+        <button class="ghost" id="rec-slide-btn">📷 Thêm ảnh slide hoặc bảng</button><span class="live-meta" id="rec-slides"></span>
+        <button class="stop" id="rec-stop">■ Dừng và gửi xử lý</button></div>
+      <div id="rec-cap"></div><ul class="events" id="rec-events"></ul>`;
+    card.querySelectorAll('.marks button').forEach(b => b.onclick = async () => {
+      let note = ''; if (b.dataset.k === 'Ghi chú') { note = prompt('Ghi chú nhanh tại thời điểm này:') || ''; if (!note) return; }
+      const r = await api('/api/rec/marker', { kind: b.dataset.k, note });
+      if (r.ok) { b.classList.add('ok'); setTimeout(() => b.classList.remove('ok'), 1200); }
+    });
+    $('#rec-slide-btn').onclick = () => $('#rec-slide').click();
+    $('#rec-slide').onchange = async (e) => {
+      for (const f of e.target.files) {
+        const r = await fetch(`/api/rec/slide?captureId=${encodeURIComponent(s.captureId)}&name=${encodeURIComponent(f.name)}`, { method: 'POST', body: f });
+        if (r.ok) slideCount = (await r.json()).count || slideCount + 1;
+      }
+      e.target.value = ''; $('#rec-slides').textContent = slideCount ? `${slideCount} ảnh đã gửi kèm` : '';
+    };
+    $('#rec-stop').onclick = async () => {
+      if (!confirm('Dừng ghi và gửi bản ghi đi xử lý?')) return;
+      const b = $('#rec-stop'); b.disabled = true; b.textContent = 'Đang lưu và gửi…';
+      const r = await api('/api/rec/stop', {});
+      if (!r.ok) alert('Đã dừng nhưng chưa gửi được: ' + (r.error || '') + '. Bản ghi vẫn được giữ, bấm "Gửi lại" sau.');
+      card.dataset.view = ''; recTick(); setTimeout(loadLectures, 1500);
+    };
+  }
+  $('#rec-clock').textContent = hms(s.elapsedSec);
+  $('#rec-meta').textContent = [s.mode === 'online' ? 'Học online' : 'Giảng đường', s.device, s.course, s.markers ? s.markers + ' marker' : ''].filter(Boolean).join(' · ');
+  const lv = Math.max(0, Math.min(100, ((s.levelDb ?? -120) + 60) / 60 * 100));
+  $('#rec-level').style.width = lv + '%';
+  $('#rec-level-note').textContent = s.levelDb < -50 ? 'Gần như im lặng. Nếu giảng viên đang nói, hãy đưa máy lại gần hoặc kiểm tra micro.' : 'Đang thu tiếng bình thường.';
+  $('#rec-cap').innerHTML = s.capWarning ? `<div class="capwarn">Còn ${Math.max(0, Math.round(s.capLeftSec / 60))} phút nữa app sẽ tự dừng ở ngưỡng an toàn. <button class="ghost" id="rec-extend">Ghi tiếp thêm 1 giờ</button></div>` : '';
+  const ext = $('#rec-extend'); if (ext) ext.onclick = async () => { await api('/api/rec/extend', { minutes: 60 }); recTick(); };
+  $('#rec-events').innerHTML = (s.events || []).map(e => `<li>${esc(e)}</li>`).join('');
+}
+const LSTATE = { Uploaded: ['Chờ chép lời', ''], Processing: ['Đang xử lý', ''], Completed: ['Xong', 'ok'], 'Needs review': ['Cần xem lại', 'err'] };
+const STAGE = { queued: 'Đang xếp hàng', decode: 'Đọc audio', quality: 'Kiểm tra chất lượng', transcribe: 'Chép lời trên máy', compact: 'Nén bằng LM Studio', finished: 'Xong phần trên máy' };
+async function loadLectures() {
+  clearTimeout(loadLectures.t);
+  try {
+    const { sessions = [] } = await api('/api/lectures');
+    const when = (iso) => iso ? new Intl.DateTimeFormat('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)) : '';
+    $('#rec-list').innerHTML = sessions.length ? sessions.map(x => {
+      const [label, cls] = LSTATE[x.state] || [x.state || '?', ''];
+      const g = x.gate;
+      return `<article class="file"><div class="file-top"><span class="file-name">${esc(x.title || x.captureId)}</span><span class="badge ${cls}">${label}</span></div>
+        <div class="meta">${esc(when(x.startedAt))}${x.endedAt ? ' đến ' + esc(new Date(x.endedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })) : ''}</div>
+        ${g && g.status !== 'done' && g.status !== 'unusable' ? `<div class="meta">${esc(STAGE[g.stage] || g.stage)}${g.progress ? ' · ' + Math.round(g.progress * 100) + '%' : ''}</div><div class="prog"><i style="width:${Math.round((g.progress || 0) * 100)}%"></i></div>` : ''}
+        ${x.notes ? `<p class="why">${esc(x.notes)}</p>` : ''}
+        <div class="meta">${x.noteUrl ? `<a href="${esc(x.noteUrl)}" target="_blank" rel="noopener">Mở ghi chú bài giảng</a>` : ''}<a href="${esc(x.url)}" target="_blank" rel="noopener">Phiên trong Notion</a>
+        ${['Completed', 'Needs review'].includes(x.state) ? `<button class="ghost" data-re="${esc(x.pageId)}">Phân tích lại</button>` : ''}</div></article>`;
+    }).join('') : '<p class="note">Chưa có buổi ghi nào.</p>';
+    $('#rec-list').querySelectorAll('[data-re]').forEach(b => b.onclick = async () => {
+      if (!confirm('Phân tích lại buổi này? Sẽ chép lời lại trên máy rồi mới gửi bản nén cho Gemini.')) return;
+      b.disabled = true; await api(`/api/lectures/${b.dataset.re}/reanalyze`, {}); loadLectures();
+    });
+    if (sessions.some(x => ['Uploaded', 'Processing'].includes(x.state)) && $('#p-rec').classList.contains('on')) loadLectures.t = setTimeout(loadLectures, 15000);
+  } catch (e) { $('#rec-list').innerHTML = `<p class="skeleton">Chưa đọc được danh sách (${esc(e.message)}).</p>`; }
+}
+async function loadAI() {
+  clearTimeout(loadAI.t);
+  try {
+    const j = await api('/api/gemini');
+    if (j.offline) { $('#ai-usage').innerHTML = '<span class="warn">Cổng Gemini chưa chạy.</span>'; }
+    else {
+      const ms = Object.entries(j.models || {}).filter(([m]) => !m.startsWith('lmstudio'));
+      const lm = Object.entries(j.models || {}).find(([m]) => m.startsWith('lmstudio'));
+      const cd = Object.entries(j.cooldown || {});
+      $('#ai-usage').innerHTML = (ms.length ? ms.map(([m, v]) => `${esc(m.replace('gemini-', ''))}: <b>${v.requests}</b>/${v.limit} lượt (${v.used_pct}%)`).join('<br>') : 'Chưa dùng lượt nào hôm nay.')
+        + (lm ? `<br>Chuyển sang máy (LM Studio): <b>${lm[1].requests}</b> lần` : '')
+        + (cd.length ? `<br><span class="warn">Đang nghỉ: ${cd.map(([m, t]) => esc(m.replace('gemini-', '')) + ' tới ' + esc(t)).join(', ')}</span>` : '')
+        + `<br>Hạn mức reset lúc ${esc(j.reset_at_vn || '14:00')}.`;
+    }
+  } catch { $('#ai-usage').textContent = 'Không đọc được.'; }
+  loadAI.t = setTimeout(loadAI, 60000);
+}
+
+loadSuggest(); refreshInbox(); recTick(); loadAI(); input.focus();
+
+// 📡 cảnh báo sự kiện (mail trường -> alerts.py). Chọn "Sẽ đi / Bỏ / Đã biết" luôn qua bước Xác nhận.
+let ALR = [], alrAsk = null, alrOptOpen = false;
+async function alertsTick() {
+  clearTimeout(alertsTick.t);
+  try { ALR = (await api('/api/alerts')).alerts || []; } catch { }
+  renderAlerts();
+  alertsTick.t = setTimeout(alertsTick, 60000);
+}
+function renderAlerts() {
+  const el = $('#alerts'); if (!el) return;
+  const card = (a, i) => {
+    const asking = alrAsk && alrAsk.i === i;
+    return '<div class="alert ' + a.level + (a.pinned ? ' pinned' : '') + '" role="' + (a.level === 'red' ? 'alert' : 'status') + '">' +
+      '<b>' + esc(a.title) + '</b><div class="fact">' + esc(a.text) + '</div>' + (a.note ? '<div class="note">' + esc(a.note) + '</div>' : '') +
+      '<div class="acts">' + (asking
+        ? '<span class="ask">Xác nhận "' + esc(alrAsk.choice) + '"?' + (alrAsk.choice === 'Bỏ' ? ' Chặng này sẽ không nhắc nữa và ghi "Bỏ" vào Notion.' : alrAsk.choice === 'Sẽ đi' ? ' Ghi "Sẽ đi" vào Notion; vẫn nhắc 2 giờ và 30 phút trước.' : alrAsk.choice === 'Đã nộp' ? ' Bài này sẽ không nhắc nữa và ghi "Đã nộp" vào Notion.' : alrAsk.choice === 'Hoàn tất' ? ' Ghi Submitted vào 📋 Academic Work; hạn biến mất khỏi danh sách và hết nhắc.' : alrAsk.choice === 'Tắt nhắc' ? ' Chỉ dừng thông báo của hạn này; hạn vẫn nằm trong mục Hạn sắp tới ở tab Hôm nay tới khi Hoàn tất.' : ' Ẩn cảnh báo này tới khi lên mức gấp hơn.') + '</span>' +
+          '<button class="go" data-ok="' + i + '">Xác nhận</button><button data-no="1">Hủy</button><span class="amsg"></span>'
+        : a.buttons.map(b => '<button data-i="' + i + '" data-c="' + esc(b) + '"' + (b === 'Sẽ đi' || b === 'Đã nộp' || b === 'Hoàn tất' ? ' class="go"' : '') + '>' + esc(b) + '</button>').join('')) +
+      '</div></div>';
+  };
+  // lời mời chung (không phải việc của bạn) gom vào một mục thu gọn, không đẩy các tab xuống
+  const opt = ALR.map((a, i) => [a, i]).filter(([a]) => a.stage_level === 'optional');
+  const openOpt = opt.some(([, i]) => alrAsk && alrAsk.i === i) || alrOptOpen;
+  el.innerHTML = ALR.map((a, i) => a.stage_level === 'optional' ? '' : card(a, i)).join('') +
+    (opt.length ? '<details class="alert-opt"' + (openOpt ? ' open' : '') + '><summary>Có thể bạn quan tâm (' + opt.length + ')</summary>' + opt.map(([a, i]) => card(a, i)).join('') + '</details>' : '');
+  const det = el.querySelector('.alert-opt'); if (det) det.ontoggle = () => { alrOptOpen = det.open; };
+  const mainN = ALR.filter(a => a.stage_level !== 'optional').length, red = ALR.some(a => a.level === 'red'), pin = ALR.some(a => a.pinned);
+  for (const [b, n] of [['#bell', '#bell-n'], ['#bell-m', '#bell-n-m']]) {
+    const bb = $(b), nn = $(n); if (!bb) continue;
+    nn.hidden = !ALR.length; nn.textContent = mainN || ALR.length;
+    bb.classList.toggle('has-red', red); bb.classList.toggle('has-pin', pin);
+    bb.setAttribute('aria-label', 'Thông báo: ' + ALR.length + (red ? ', có mục gấp' : ''));
+  }
+  $('#notif-empty').hidden = ALR.length > 0;
+  el.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { alrAsk = { i: +b.dataset.i, choice: b.dataset.c }; renderAlerts(); });
+  el.querySelectorAll('[data-no]').forEach(b => b.onclick = () => { alrAsk = null; renderAlerts(); });
+  el.querySelectorAll('[data-ok]').forEach(b => b.onclick = async () => {
+    const a = ALR[+b.dataset.ok]; b.disabled = true;
+    const r = await (alrAsk.choice === 'Hoàn tất' ? api('/api/deadline-done', { confirmed: true, id: a.dl.id })
+      : api('/api/event-ack', { confirmed: true, eid: a.eid, stage: a.stage || null, change_at: a.change_at || null, choice: alrAsk.choice })).catch(() => ({ ok: false, loi: 'Không gọi được web app.' }));
+    if (r.ok && r.deadlines && DAY) { DAY.deadlines = r.deadlines; renderDay(); }
+    if (!r.ok) { b.parentNode.querySelector('.amsg').textContent = r.loi || 'Không ghi được.'; b.disabled = false; return; }
+    alrAsk = null; ALR = r.alerts || []; renderAlerts();
+  });
+}
+
+// 🔔 mở / đóng bảng thông báo
+function notifToggle(open) {
+  const n = $('#notif'); open = open ?? n.hidden;
+  n.hidden = !open; for (const b of ['#bell', '#bell-m']) $(b) && $(b).setAttribute('aria-expanded', open);
+}
+$('#bell').onclick = (e) => { e.stopPropagation(); notifToggle(); };
+$('#bell-m').onclick = (e) => { e.stopPropagation(); notifToggle(); };
+$('#notif-x').onclick = () => notifToggle(false);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#notif').hidden) notifToggle(false); });
+document.addEventListener('click', (e) => { const n = $('#notif'); if (!e.target.isConnected) return;   // nút trong bảng vừa vẽ lại -> không phải bấm ra ngoài
+  if (!n.hidden && !n.contains(e.target) && !e.target.closest('.bell')) notifToggle(false); });
+alertsTick();
+</script>
+</body>
+</html>

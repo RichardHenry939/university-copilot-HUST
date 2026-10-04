@@ -1,0 +1,239 @@
+/* University Copilot — giao diện chat (n8n @n8n/chat, chế độ fullscreen). Chỉ CSS: n8n chỉ cho chèn customCss. */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --cp-bg: #f7f7f5;
+  --cp-surface: #ffffff;
+  --cp-ink: #1f2328;
+  --cp-ink-soft: #5c6370;
+  --cp-ink-faint: #8b919c;
+  --cp-line: #e6e5e1;
+  --cp-accent: #4f5bd5;
+  --cp-accent-ink: #ffffff;
+  --cp-accent-soft: #eceefc;
+  --cp-user-bubble: #eceefc;
+  --cp-code-bg: #f0efeb;
+  --cp-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 8px 24px rgba(16, 24, 40, .08);
+  --cp-col: 780px;
+
+  --chat--font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --chat--font-family--monospace: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  --chat--color--primary: var(--cp-accent);
+  --chat--color--primary-shade-50: var(--cp-accent);
+  --chat--color--primary--shade-100: var(--cp-accent);
+  --chat--color--secondary: var(--cp-accent);
+  --chat--color-secondary-shade-50: var(--cp-accent);
+  --chat--color-dark: var(--cp-ink);
+  --chat--color-typing: var(--cp-ink-faint);
+  --chat--spacing: 1rem;
+  --chat--border-radius: 14px;
+  --chat--transition-duration: .18s;
+
+  --chat--header-height: auto;
+  --chat--header--padding: 14px 20px;
+  --chat--header--background: transparent;
+  --chat--header--color: var(--cp-ink);
+  --chat--header--border-bottom: 1px solid var(--cp-line);
+  --chat--heading--font-size: 1.02rem;
+  --chat--subtitle--font-size: .8rem;
+  --chat--subtitle--line-height: 1.3;
+
+  --chat--body--background: var(--cp-bg);
+  --chat--footer--background: transparent;
+  --chat--footer--border-top: 0;
+  --chat--footer--padding: 0 16px 18px;
+  --chat--footer--color: var(--cp-ink-faint);
+
+  --chat--message--font-size: .975rem;
+  --chat--message-line-height: 1.68;
+  --chat--message--padding: 0;
+  --chat--message--border-radius: 18px;
+  --chat--message--margin-bottom: 1.4rem;
+  --chat--message--bot--background: transparent;
+  --chat--message--bot--color: var(--cp-ink);
+  --chat--message--bot--border: 0;
+  --chat--message--user--background: var(--cp-user-bubble);
+  --chat--message--user--color: var(--cp-ink);
+  --chat--message--user--border: 0;
+  --chat--message--pre--background: var(--cp-code-bg);
+  --chat--messages-list--padding: 28px 20px 12px;
+
+  --chat--input--width: 100%;
+  --chat--input--container--background: var(--cp-surface);
+  --chat--input--container--border: 1px solid var(--cp-line);
+  --chat--input--container--border-radius: 22px;
+  --chat--input--container--padding: 8px 8px 8px 14px;
+  --chat--input--background: transparent;
+  --chat--input--text-color: var(--cp-ink);
+  --chat--input--border: 0;
+  --chat--input--border-active: 0;
+  --chat--input--font-size: .975rem;
+  --chat--input--padding: 10px 6px;
+  --chat--textarea--height: 44px;
+  --chat--textarea--max-height: 220px;
+  --chat--input--send--button--background: var(--cp-accent);
+  --chat--input--send--button--color: var(--cp-accent-ink);
+  --chat--input--send--button--background-hover: #3f4ac0;
+  --chat--input--send--button--color-hover: var(--cp-accent-ink);
+  --chat--input--button--border-radius: 50%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cp-bg: #17181b;
+    --cp-surface: #212328;
+    --cp-ink: #e8e9ec;
+    --cp-ink-soft: #a9aeb8;
+    --cp-ink-faint: #7a808b;
+    --cp-line: #2d3037;
+    --cp-accent: #8b93ff;
+    --cp-accent-ink: #12131a;
+    --cp-accent-soft: #262a45;
+    --cp-user-bubble: #2a2e4a;
+    --cp-code-bg: #1d1f24;
+    --cp-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
+    --chat--input--send--button--background-hover: #a3a9ff;
+  }
+}
+
+html, body { background: var(--cp-bg); color: var(--cp-ink); -webkit-font-smoothing: antialiased; }
+#n8n-chat, .chat-layout, .chat-window-wrapper, .chat-window { background: var(--cp-bg) !important; border: 0 !important; box-shadow: none !important; }
+
+/* ---------- Header: thanh mảnh, có logo, mờ kính khi cuộn ---------- */
+.chat-layout .chat-header {
+  position: sticky; top: 0; z-index: 5;
+  background: color-mix(in srgb, var(--cp-bg) 82%, transparent);
+  backdrop-filter: saturate(160%) blur(12px);
+  gap: 2px; align-items: center; text-align: center;
+}
+.chat-layout .chat-header .chat-heading { justify-content: center; gap: 10px; }
+.chat-layout .chat-header h1 {
+  display: inline-flex; align-items: center; gap: 10px; margin: 0;
+  font-weight: 600; letter-spacing: -.01em;
+}
+.chat-layout .chat-header h1::before {
+  content: ""; width: 26px; height: 26px; border-radius: 8px; flex: none;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,.55) 0 18%, transparent 19%),
+    linear-gradient(135deg, #6c76ff 0%, #4f5bd5 55%, #2f3aa8 100%);
+  box-shadow: 0 2px 8px rgba(79, 91, 213, .35);
+}
+.chat-layout .chat-header p { margin: 0; color: var(--cp-ink-faint); }
+.chat-close-button { display: none !important; }
+
+/* ---------- Cột hội thoại căn giữa ---------- */
+.chat-layout .chat-body { scroll-behavior: smooth; }
+.chat-messages-list { width: 100%; max-width: var(--cp-col); margin-left: auto; margin-right: auto; box-sizing: border-box; }
+
+.chat-message {
+  max-width: 100% !important; box-sizing: border-box; position: relative;
+  font-size: var(--chat--message--font-size);
+  animation: cp-in .22s ease-out both;
+}
+@keyframes cp-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Tin của AI: văn bản phẳng, có avatar nhỏ bên trái */
+.chat-message.chat-message-from-bot {
+  padding: 2px 0 0 42px !important; border-radius: 0 !important;
+}
+.chat-message.chat-message-from-bot::before {
+  content: ""; position: absolute; left: 0; top: 2px; width: 28px; height: 28px; border-radius: 9px;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,.55) 0 18%, transparent 19%),
+    linear-gradient(135deg, #6c76ff 0%, #4f5bd5 55%, #2f3aa8 100%);
+}
+/* Tin của bạn: bong bóng mềm bên phải */
+.chat-message.chat-message-from-user {
+  max-width: min(78%, 620px) !important; width: fit-content;
+  padding: 10px 16px !important;
+  border-radius: 20px 20px 6px 20px !important;
+}
+
+/* Nhiều tin AI liền nhau: chỉ tin đầu có avatar */
+.chat-message.chat-message-from-bot + .chat-message.chat-message-from-bot { margin-top: -.6rem !important; }
+.chat-message.chat-message-from-bot + .chat-message.chat-message-from-bot::before { display: none; }
+
+/* Màn chào khi chưa trò chuyện (Chrome/Edge hỗ trợ :has) */
+.chat-layout .chat-body:not(:has(.chat-message-from-user))::before {
+  content: "Hôm nay bạn muốn lo việc gì?";
+  display: block; margin: auto auto 0; padding: 0 20px;
+  font-size: clamp(1.5rem, 3.2vw, 2.1rem); font-weight: 600; letter-spacing: -.02em; text-align: center;
+  color: var(--cp-ink);
+}
+.chat-layout .chat-body:not(:has(.chat-message-from-user))::after {
+  content: "Lịch học · hạn nộp · kế hoạch hôm nay · tài liệu · Hội đồng AI";
+  display: block; margin: 10px auto 0; text-align: center; font-size: .9rem; color: var(--cp-ink-faint);
+  order: 1;
+}
+.chat-layout .chat-body:not(:has(.chat-message-from-user))::before { order: 0; }
+.chat-layout .chat-body:not(:has(.chat-message-from-user)) .chat-messages-list { order: 2; margin-top: 28px; }
+
+/* Lời chào đầu tiên: thẻ giới thiệu */
+.chat-messages-list > .chat-message.chat-message-from-bot:first-child {
+  padding: 18px 20px 18px 62px !important;
+  background: var(--cp-surface) !important;
+  border: 1px solid var(--cp-line) !important; border-radius: 18px !important;
+  box-shadow: var(--cp-shadow);
+}
+.chat-messages-list > .chat-message.chat-message-from-bot:first-child::before { left: 20px; top: 20px; }
+
+/* ---------- Markdown ---------- */
+.chat-message-markdown p { margin: 0 0 .7em; }
+.chat-message-markdown ul, .chat-message-markdown ol { margin: .2em 0 .8em; padding-left: 1.3em; }
+.chat-message-markdown li { margin: .25em 0; }
+.chat-message-markdown li::marker { color: var(--cp-ink-faint); }
+.chat-message-markdown strong { font-weight: 600; }
+.chat-message-markdown h1, .chat-message-markdown h2, .chat-message-markdown h3 { font-size: 1.02em; font-weight: 600; margin: 1em 0 .4em; }
+.chat-message-markdown a { color: var(--cp-accent); text-decoration: underline; text-underline-offset: 2px; }
+.chat-message-markdown code {
+  font-family: var(--chat--font-family--monospace); font-size: .86em;
+  background: var(--cp-code-bg); border: 1px solid var(--cp-line); border-radius: 6px; padding: .08em .38em;
+}
+.chat-message-markdown pre { border: 1px solid var(--cp-line); padding: 12px 14px !important; overflow-x: auto; }
+.chat-message-markdown pre code { background: none; border: 0; padding: 0; }
+.chat-message-markdown table { border-collapse: collapse; width: 100%; margin: .6em 0 1em; font-size: .92em; display: block; overflow-x: auto; }
+.chat-message-markdown th, .chat-message-markdown td { border-bottom: 1px solid var(--cp-line); padding: 7px 10px; text-align: left; }
+.chat-message-markdown th { font-weight: 600; color: var(--cp-ink-soft); }
+.chat-message-markdown blockquote { margin: .6em 0; padding: .1em 0 .1em 12px; border-left: 3px solid var(--cp-accent); color: var(--cp-ink-soft); }
+.chat-message-markdown hr { border: 0; border-top: 1px solid var(--cp-line); margin: 1em 0; }
+
+/* Nút sao chép / hành động */
+.chat-message .chat-message-actions { color: var(--cp-ink-faint); }
+
+/* Hiệu ứng đang gõ */
+.chat-message-typing { padding-top: 8px !important; }
+.chat-message-typing .chat-message-typing-circle { width: 7px; height: 7px; }
+
+/* ---------- Ô nhập: thẻ nổi ---------- */
+.chat-layout .chat-footer { display: flex; flex-direction: column; align-items: center; position: sticky; bottom: 0;
+  background: linear-gradient(to bottom, transparent, var(--cp-bg) 30%) !important; padding-top: 14px !important; }
+.chat-inputs { max-width: var(--cp-col); box-sizing: border-box; box-shadow: var(--cp-shadow);
+  transition: border-color .15s, box-shadow .15s; align-items: flex-end !important; }
+.chat-inputs:focus-within { border-color: color-mix(in srgb, var(--cp-accent) 55%, var(--cp-line)) !important;
+  box-shadow: 0 0 0 4px var(--cp-accent-soft), var(--cp-shadow); }
+.chat-inputs textarea { outline: none !important; box-shadow: none !important; line-height: 1.5; }
+.chat-inputs textarea::placeholder { color: var(--cp-ink-faint); }
+.chat-input-send-button { width: 40px !important; height: 40px !important; margin: 2px; align-self: flex-end;
+  display: inline-flex; align-items: center; justify-content: center; }
+.chat-input-send-button[disabled] { background: var(--cp-line) !important; color: var(--cp-ink-faint) !important; }
+.chat-input-send-button svg { width: 18px; height: 18px; }
+.chat-input-file-button { color: var(--cp-ink-soft) !important; }
+
+.chat-layout .chat-footer::after {
+  content: "Copilot đọc dữ liệu Notion của bạn và có thể ghi nhầm — kiểm tra lại các thay đổi quan trọng.";
+  display: block; margin-top: 8px; font-size: .72rem; color: var(--cp-ink-faint); text-align: center;
+}
+.chat-powered-by { display: none; }
+
+/* Thanh cuộn mảnh */
+.chat-body::-webkit-scrollbar { width: 10px; }
+.chat-body::-webkit-scrollbar-thumb { background: var(--cp-line); border-radius: 10px; border: 3px solid var(--cp-bg); }
+
+@media (max-width: 640px) {
+  :root { --chat--messages-list--padding: 18px 14px 8px; }
+  .chat-message.chat-message-from-bot { padding-left: 0 !important; }
+  .chat-message.chat-message-from-bot::before { display: none; }
+  .chat-messages-list > .chat-message.chat-message-from-bot:first-child { padding: 16px !important; }
+  .chat-message.chat-message-from-user { max-width: 88% !important; }
+  .chat-layout .chat-footer { padding: 10px 10px 12px !important; }
+}
