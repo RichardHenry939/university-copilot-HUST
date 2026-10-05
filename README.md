@@ -58,6 +58,7 @@ UC chạy trên laptop, cứ 20 phút đọc lại các nguồn (**chỉ đọc*
 - **Python** (thư viện chuẩn + Playwright): khoảng 8.500 dòng, chia thành các module theo từng nguồn: `school_mail.py`, `teams_fetch.py`, `mooc.py`, `fami.py`, `mail_events.py`, `deadlines.py`, `alerts.py`, `phone_sched.py`…
 - **n8n** (Docker): các luồng tự động phía Notion. Workflow được sinh bằng code (`build.py`), không kéo thả tay. Sơ đồ khối: [Map-n8n.svg](docs/Map-n8n.svg) ([ảnh PNG](docs/Map-n8n.png)).
 - **Máy ghi bài giảng** (`lecture-recorder/`, C# .NET 8 + NAudio): ghi giảng đường bằng micro, học online bằng âm thanh máy, hoặc riêng cuộc họp Teams qua cáp ảo VB-CABLE → n8n → chép lời trên máy (PhoWhisper, NPU) → Gemini → ghi chú bài giảng trong Notion.
+- **Cổng chép lời** (`speech-gate/`, Python + OpenVINO): kiểm tra chất lượng → chép lời PhoWhisper trên NPU → nén bằng LM Studio; audio không bao giờ gửi cho Gemini.
 - **Notion API**: nơi lưu dữ liệu.
 - **Gemini API** (flash-lite) để đọc mail và phân loại hạn. **LM Studio** (qwen3-8b, chạy local) để xếp tài liệu.
 - **ntfy**: thông báo đẩy và lời nhắc hẹn giờ lên điện thoại.
