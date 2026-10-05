@@ -1,6 +1,6 @@
 # University Copilot (UC)
 
-> **EN summary:** a personal "copilot" for a HUST student. It reads six official university systems (Outlook mail, Microsoft Teams, eHUST/qldt, iCTSV, the SoICT MOOC and FAMI) in **read-only** mode. It merges everything into one Notion workspace and pushes **time-precise reminders** to the laptop and the phone. AI (Gemini + a local LLM) extracts events from emails and classifies deadlines; n8n orchestrates the Notion side. Built by orchestrating several AI coding agents in phases (Codex → Freebuff → Claude Code): I defined the problem, designed the architecture and rules, coordinated the agents, and tested everything on my own semester.
+> **EN summary:** a personal "copilot" for a HUST student. It reads six official university systems (Outlook mail, Microsoft Teams, eHUST/qldt, iCTSV, the SoICT MOOC and FAMI) in **read-only** mode. It merges everything into one Notion workspace and pushes **time-precise reminders** to the laptop and the phone. AI (Gemini + a local LLM) extracts events from emails and classifies deadlines; n8n orchestrates the Notion side. Built by orchestrating several AIs in phases, each taking over when the previous one hit its limits (Notion AI → ChatGPT → Codex → Freebuff + Codex → Claude Code): I defined the problem, designed the architecture and rules, coordinated the agents, and tested everything on my own semester.
 
 ---
 
@@ -66,16 +66,18 @@ UC chạy trên laptop, cứ 20 phút đọc lại các nguồn (**chỉ đọc*
 
 ## Cách tôi xây dựng dự án
 
-UC không do một công cụ làm ra. Tôi **điều phối nhiều AI coding agent theo từng giai đoạn**, giống một nhóm nhỏ: mỗi AI nhận đúng phần việc hợp với nó, còn tôi giữ bài toán, kiến trúc và luật của cả hệ thống.
+UC không do một công cụ làm ra. Tôi **điều phối nhiều AI theo từng giai đoạn**. Mỗi khi một công cụ chạm giới hạn (hết quota, quên ngữ cảnh vì dự án quá lớn), tôi chuyển dự án sang công cụ tiếp theo. Bài toán, kiến trúc và luật của cả hệ thống thì tôi giữ xuyên suốt.
 
 | Giai đoạn | Thời gian | Ai làm | Kết quả |
 |---|---|---|---|
+| **v0.0.00** | 01/03 – 23/08/2026 | **Notion AI** (chạy Claude Sonnet 5, bản miễn phí) | Từ câu hỏi đầu tiên "How to use notion ?" đến bản kiến trúc đầu tiên: Courses là gốc, S1–S8, Academic Work tách Academic Tasks. Tôi cho ChatGPT phản biện qua lại, rồi đánh giá bản chốt vẫn còn quá đơn giản |
+| Dựng đầu tiên | 23/08 – cuối 08 | **ChatGPT** + plugin Notion | Lần đầu tôi tập nối plugin. ChatGPT đọc được workspace thật, sửa kiến trúc rồi bắt tay dựng, đến khi hết quota. Hợp với giai đoạn dự án còn nhỏ |
 | Sơ đồ khởi nguyên | cuối 08/2026 | **Codex** | Bản thiết kế 10 phần, có Hội đồng 4 AI. Xem [docs/Ban-do-khoi-nguyen-Codex-2026-08.svg](docs/Ban-do-khoi-nguyen-Codex-2026-08.svg) |
-| Lõi các agent | 26/08 – 01/09 | **Codex** | Nhập TKB / deadline, University Inbox (xếp tài liệu), chia nhỏ bài lớn, lập kế hoạch ngày, ghi tiến độ, gợi ý tài liệu, hệ 6-agent đầu tiên |
+| Lõi các agent | 26/08 – giữa 09 | **Codex** | Nhập TKB / deadline, University Inbox (xếp tài liệu), chia nhỏ bài lớn, lập kế hoạch ngày, ghi tiến độ, gợi ý tài liệu, hệ 6-agent đầu tiên. Dự án lớn tới mức Codex quên cả hội thoại sau nhiều lần sửa, quota đốt liên tục |
 | Máy ghi bài giảng bản đầu | 09/2026 | **Codex · Freebuff** | Ghi âm và đẩy sang n8n |
-| Các phase mở rộng | 30/09 | **Freebuff** | Quick Upload, Health Ping, Reconciliation, Council Bridge (nối Hội đồng AI), Conductor |
+| Các phase mở rộng | giữa 09 – 30/09 | **Freebuff + Codex** | Quick Upload, Health Ping, Reconciliation, Council Bridge (nối Hội đồng AI), Conductor |
 | Agent theo lịch | 09/2026 | **ChatGPT** (scheduled task) | Chuyển kỳ, tìm tài liệu. Sau đó chuyển hết vào n8n |
-| Hợp nhất và mở rộng | từ 02/10 | **Claude Code** | Gộp thành một workflow; đồng bộ 6 hệ thống của trường; luật tối cao; nhắc theo mốc lên điện thoại; ghi bài giảng v2 (cáp Teams, chép lời trên NPU); tab Hành chính, Học bổng, Ngoại khoá; giám sát; chat có công cụ và trí nhớ |
+| Tiếp quản, hợp nhất và mở rộng | từ đầu 10 | **Claude Code** | Gộp thành một workflow; đồng bộ 6 hệ thống của trường; luật tối cao; nhắc theo mốc lên điện thoại; ghi bài giảng v2 (cáp Teams, chép lời trên NPU); tab Hành chính, Học bổng, Ngoại khoá; giám sát; chat có công cụ và trí nhớ |
 
 Phần việc của tôi xuyên suốt mọi giai đoạn:
 
@@ -95,10 +97,11 @@ Từng thay đổi được kiểm thử trên học kỳ thật của tôi.
 | | Vai trò |
 |---|---|
 | **[@RichardHenry939](https://github.com/RichardHenry939)** | Chủ dự án: bài toán, kiến trúc, luật, điều phối các AI, kiểm thử |
+| **Notion AI** (Claude Sonnet 5) | v0.0.00: bản kiến trúc dữ liệu đầu tiên |
+| **ChatGPT** (OpenAI) | Phản biện kiến trúc, dựng bản đầu qua plugin Notion; sau đó chạy agent theo lịch (chuyển kỳ, nghiên cứu tài liệu) |
 | **Codex** (OpenAI) | Sơ đồ khởi nguyên, lõi các agent, máy ghi bài giảng bản đầu |
 | **Freebuff** | Các phase mở rộng B–J, máy ghi bài giảng bản đầu |
-| **ChatGPT** (OpenAI) | Agent theo lịch giai đoạn đầu (chuyển kỳ, nghiên cứu tài liệu) |
-| **Claude Code** (Anthropic) | Hợp nhất hệ thống, đồng bộ trường, các tab và công cụ từ 02/10 |
+| **Claude Code** (Anthropic) | Tiếp quản từ đầu 10: hợp nhất hệ thống, đồng bộ trường, các tab và công cụ |
 
 **Chạy bên trong hệ thống:**
 - **Gemini** (Google): đọc thư, phân loại, phân tích bài giảng đã nén;
