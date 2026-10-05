@@ -189,7 +189,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .ticket.live { border-color: var(--red); box-shadow: 0 0 0 4px var(--red-wash); }
 .slotline { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin: 0 0 16px; color: var(--ink-2); font-size: 14px; }
 .slotline b { color: var(--ink); font-size: 16px; }
-.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.modes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .mode { text-align: left; border: 1.5px solid var(--line); background: var(--paper); border-radius: var(--r-m, 12px); padding: 12px 14px; cursor: pointer; color: var(--ink); }
 .mode b { display: block; font-size: 15px; }
 .mode span { font-size: 13px; color: var(--ink-2); }
@@ -1800,11 +1800,13 @@ function renderRec() {
       : '<span>Theo thời khoá biểu, lúc này không có tiết nào.</span>'}</p>
     <div class="modes">
       <button class="mode" data-m="room" aria-pressed="${recMode === 'room'}"><b>🎓 Giảng đường</b><span>Thu bằng micro máy. Đặt máy càng gần giảng viên càng tốt, đừng để trong balo.</span></button>
-      <button class="mode" data-m="online" aria-pressed="${recMode === 'online'}"><b>💻 Học online</b><span>Thu âm thanh máy đang phát: Zoom, Teams, Meet, video bài giảng.</span></button>
+      <button class="mode" data-m="online" aria-pressed="${recMode === 'online'}"><b>💻 Học online</b><span>Thu âm thanh máy đang phát: Zoom, Meet, video bài giảng.</span></button>
+      <button class="mode" data-m="teams" aria-pressed="${recMode === 'teams'}"><b>🟣 Teams (cáp riêng)</b><span>Chỉ tiếng cuộc họp Teams, không lẫn ứng dụng khác, tai nghe rớt vẫn ghi. Teams: Loa = CABLE Input.</span></button>
     </div>
+    ${recMode === 'teams' ? `<div class="opts"><label><input type="checkbox" id="rec-mic"> Trộn cả giọng tôi (micro), dùng khi bạn cần phát biểu</label></div>` : ''}
     ${recMode === 'online' ? `<div class="opts">
       <label>Nguồn âm thanh <select id="rec-app"><option value="">Toàn bộ âm thanh máy</option>
-        ${recApps.map(a => `<option value="${a.pid}" data-name="${esc(a.name)}">Chỉ ${esc(a.name)}${a.title ? ' (' + esc(a.title.slice(0, 40)) + ')' : ''}</option>`).join('')}</select></label>
+        ${recApps.filter(a => !/teams/i.test(a.name)).map(a => `<option value="${a.pid}" data-name="${esc(a.name)}">Chỉ ${esc(a.name)}${a.title ? ' (' + esc(a.title.slice(0, 40)) + ')' : ''}</option>`).join('')}</select></label>
       <label><input type="checkbox" id="rec-mic"> Trộn cả giọng tôi (micro), dùng khi bạn cần phát biểu</label></div>` : ''}
     ${s.pending ? `<p class="why">Có ${s.pending} bản ghi chưa gửi được lên n8n. <button class="ghost" id="rec-retry">Gửi lại</button></p>` : ''}
     ${s.lastError ? `<p class="why">${esc(s.lastError)}</p>` : ''}

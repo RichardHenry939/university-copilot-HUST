@@ -993,6 +993,19 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query)
         # (Claude 2026-10-03) công cụ ghi_hoc_tap của não Copilot (n8n trong Docker) -> logic điểm/luật môn/chuyên cần
+        # (Claude 2026-10-05) công cụ doi_han: dời hạn TỰ ĐẶT (Tự luyện / cốt lõi); hạn Môn học của trường bị từ chối
+        if u.path == "/api/reschedule":
+            if not hmac.compare_digest(self.headers.get("X-Copilot-Key", ""), SECRET):
+                return self._send(403, {"error": "forbidden"})
+            try:
+                import reschedule, deadlines
+                args = json.loads(self._body(64 * 1024) or b"{}")
+                res = reschedule.run(_npost, args, kick_a4=lambda: n8n("copilot-run-a4", None, timeout=60))
+                if args.get("buoc") == "ghi" and res.get("da_doi"):
+                    threading.Thread(target=lambda: _safe(lambda: deadlines.refresh(_npost)), daemon=True).start()
+                return self._send(200, res)
+            except Exception as e:
+                return self._send(200, {"ok": False, "loi": f"{type(e).__name__}: {e}"[:400]})
         if u.path == "/api/academic":
             if not hmac.compare_digest(self.headers.get("X-Copilot-Key", ""), SECRET):
                 return self._send(403, {"error": "forbidden"})

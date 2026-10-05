@@ -251,6 +251,10 @@ for (const t of tasks) { const p = t.properties; const due = D(p, 'Due'); const 
   L.push('- [task_id ' + t.id + '] ' + (od ? '⚠️ BÀI QUÁ HẠN THẬT ' + late + ' ngày · ' : (sl ? '↪ dời lại (bài hạn ' + fmt(rd) + ') · ' : (day(due) === dates.today ? '🔴 HẠN HÔM NAY · ' : ''))) + T(p, 'Task') + ' · hạn việc ' + fmt(due) + ' · ' + S(p, 'Status') + ' · ' + (N(p, 'Estimate (hrs)') ?? '?') + 'h · ' + cn(R(p, 'Course'))); }
 L.push('=> Tổng: ' + tasks.length + ' task chưa xong; ' + overdue + ' thuộc bài đã QUÁ HẠN THẬT; ' + slipped + ' việc nhỏ dời lại (KHÔNG phải quá hạn — bạn làm dồn theo tuần).');
 L.push('');
+// (Claude 2026-10-05) để công cụ doi_han biết work_id + loại hạn (chỉ Tự luyện / Tự luyện cốt lõi dời được)
+L.push('HẠN CHƯA NỘP (' + works.length + '):');
+for (const w of works) { const p = w.properties; L.push('- [work_id ' + w.id + '] ' + T(p, 'Name') + ' · hạn ' + fmt(D(p, 'Due')) + ' · ' + (S(p, 'Loại hạn') || 'chưa phân loại') + ' · ' + cn(R(p, 'Course'))); }
+L.push('');
 const eq = rows('Cần hỏi bạn');
 L.push('ĐANG CHỜ BẠN QUYẾT (' + eq.length + '):');
 for (const q of eq) { const p = q.properties; L.push('- [eq_id ' + q.id + '] ' + T(p, 'Issue') + ' · ' + S(p, 'Reason Type') + ' · ' + X(p, 'Reason').slice(0, 220)); }
@@ -329,12 +333,15 @@ Việc bạn làm được (công cụ):
 - nghien_cuu: sinh viên muốn tìm tài liệu NGOÀI kho (Internet, Studocu, Scholar, docs…) → tạo yêu cầu, báo sẽ có kết quả sau; doc_ket_qua_nghien_cuu: đọc kết quả đã có và đưa link.
 - gui_notebooklm: sinh viên thấy tài liệu khó, muốn học sâu / hỏi đáp trên tài liệu → tìm tài liệu bằng tim_tai_lieu để lấy link Drive, rồi gọi gui_notebooklm; đưa link Drive và hướng dẫn: notebooklm.google.com → Add source → Google Drive.
   Thứ tự gợi ý khi sinh viên cần tài liệu: tìm trong kho trước → không có thì đề nghị nghien_cuu → tài liệu khó thì đề nghị gui_notebooklm.
+- doi_han: dời hạn TỰ ĐẶT (Tự luyện / Tự luyện cốt lõi) khi sinh viên muốn lùi việc — dùng work_id trong mục HẠN CHƯA NỘP. Hai bước: xem_truoc → sinh viên đồng ý → ghi. Hạn Môn học / của trường không dời được: nói thẳng là hạn của trường, gợi ý làm bù hoặc hỏi giảng viên.
 - chay_ngay: chạy ngay một quy trình nền: a1 (xử lý deadline/TKB vừa thêm), a2 (phân loại tài liệu mới), a3 (chia nhỏ bài lớn), a4 (lập lại kế hoạch hôm nay).
 - hoi_hoi_dong: khi sinh viên muốn hỏi Hội đồng 4 AI (Claude/Codex/Gemini + Local AI làm ghế phản biện) về một vấn đề khó — gửi hồ sơ vào phòng họp AgentChattr (3 ghế trên mạng xáo ngẫu nhiên, Local AI luôn ở Ghế 3). Báo lại thứ tự ghế, mã phiên (session_key) và chỗ xem (localhost:8300, kênh #council). Hội đồng cần vài phút.
 - doc_bien_ban_hoi_dong: khi sinh viên hỏi hội đồng nói gì / đã xong chưa — đọc và tóm tắt theo từng ghế.
 - chot_hoi_dong: CHỈ khi sinh viên nói rõ "chốt"/"finalize" — ghi biên bản + quyết định vào Notion. Không tự chốt.
 
 Tệp đính kèm: ảnh/PDF sinh viên gửi được chuyển thẳng cho bạn để đọc; tệp khác được trích chữ và nằm trong tin nhắn dưới dạng "[Tệp đính kèm ...]". Ảnh TKB / ảnh đề bài có hạn nộp → trích thông tin rồi gọi them_vao_he_thong. Nếu tin nhắn ghi "(đã lưu vào Uni-Documents)" thì tài liệu đã tự được xếp vào kho, không cần ghi lại.
+
+LUẬT TRUNG THỰC (quan trọng nhất): chỉ được nói "đã ghi / đã dời / đã đổi / hệ thống đang làm" khi trong LƯỢT NÀY bạn đã gọi công cụ tương ứng và công cụ trả về thành công. Không có công cụ nào làm được việc sinh viên muốn (ví dụ xoá hạn, đổi ngày của một việc trong kế hoạch hôm nay) thì nói thẳng: "Mình chưa làm được việc này", nêu việc gần nhất làm được (vd doi_han, đặt Rest) hoặc chỉ cách tự làm. Công cụ báo lỗi / tu_choi thì đọc lại nguyên nhân, không nói giảm. Sau mỗi lần ghi, nhắc lại KẾT QUẢ THẬT công cụ trả về (bao nhiêu mục, từ mốc nào sang mốc nào) để sinh viên đối chiếu — không hứa việc sẽ xảy ra sau mà công cụ không nói.
 
 Luật cứng: không bao giờ xóa dữ liệu; chỉ ghi điểm / buổi vắng / luật môn khi chính sinh viên báo (không suy đoán, không bịa điểm); không đổi tín chỉ của môn; sau mỗi lần ghi, nói rõ đã ghi gì để sinh viên kiểm tra. Nếu có mục ĐANG CHỜ BẠN QUYẾT, nhắc nhẹ 1 mục ở cuối câu trả lời (không dồn dập).
 
@@ -466,6 +473,13 @@ def chat_section(y):
              "POST", "https://api.notion.com/v1/pages",
              "={{ JSON.stringify({parent:{database_id:'" + NOTEBOOK_DB + "'}, properties:{Item:{title:[{text:{content:" + F("ten", "Tên tài liệu") + "}}]}, Context:{rich_text:[{text:{content:" + F("muc_dich", "Học gì / câu hỏi cần NotebookLM giúp, kèm tên môn") + "}}]}, 'Drive URL':{url:(" + F("drive_url", "Link Google Drive của tài liệu; để trống nếu chưa có") + " || null)}, 'Upload Method':{select:{name:'Google Drive'}}, NotebookLM:{select:{name:'In Drive'}}, 'NotebookLM Source Status':{select:{name:'Ready in Drive'}}, Status:{status:{name:'Not started'}}}}) }}",
              3640, y + 520),
+        # (Claude 2026-10-05) dời hạn TỰ ĐẶT; hạn Môn học / của trường bị web app từ chối (luật tối cao)
+        tool("doi_han",
+             "DỜI HẠN mà sinh viên TỰ ĐẶT (Loại hạn = Tự luyện hoặc Tự luyện cốt lõi) sang mốc mới, kèm việc con và dòng lịch, rồi xếp lại kế hoạch hôm nay. Hạn 'Môn học' và mọi hạn của trường (Teams / MOOC / FAMI) KHÔNG dời được — công cụ sẽ trả về tu_choi. Luôn gọi buoc=xem_truoc trước và đọc lại danh sách 'se_doi' + 'tu_choi'; chỉ khi sinh viên đồng ý mới gọi buoc=ghi với CÙNG work_ids và han_moi. Kết quả buoc=ghi có 'da_doi' và 'tong' — đọc lại nguyên văn.",
+             "POST", "http://host.docker.internal:8320/api/reschedule",
+             "={{ JSON.stringify({buoc:" + F("buoc", "xem_truoc | ghi") + ", work_ids:" + F("work_ids", "Các work_id lấy từ mục HẠN CHƯA NỘP trong ngữ cảnh, cách nhau dấu phẩy") +
+             ", han_moi:" + F("han_moi", "Mốc mới dạng YYYY-MM-DDTHH:MM giờ Việt Nam (vd 2026-10-05T21:00). Sinh viên nói 'tối thứ Hai' mà không nói giờ thì HỎI giờ hoặc đề nghị 21:00 rồi hỏi lại") + ", ly_do:" + F("ly_do", "Lý do ngắn sinh viên nói, có thể để trống") + "}) }}",
+             3280, y + 640, cred="appkey"),
         tool("chay_ngay", "Chạy ngay một quy trình nền thay vì đợi lịch. quy_trinh: a1 = xử lý deadline/TKB mới thêm, a2 = phân loại tài liệu mới, a3 = chia nhỏ bài lớn, a4 = lập lại kế hoạch hôm nay.",
              "GET", "=http://host.docker.internal:5678/webhook/copilot-run-{{ " + F("quy_trinh", "a1 | a2 | a3 | a4") + " }}", None, 2800, y + 520, cred=None),
         tool("hoi_hoi_dong", "Gửi một câu hỏi khó vào phòng họp Hội đồng 4 AI (AgentChattr, kênh #council). Chỉ dùng khi sinh viên yêu cầu hỏi hội đồng.",
