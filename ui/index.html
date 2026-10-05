@@ -189,6 +189,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .ticket.live { border-color: var(--red); box-shadow: 0 0 0 4px var(--red-wash); }
 .slotline { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin: 0 0 16px; color: var(--ink-2); font-size: 14px; }
 .slotline b { color: var(--ink); font-size: 16px; }
+.pipe { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.pipe span { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted, #667); background: var(--paper); }
+.pipe span.ok { border-color: #2e7d32; color: #2e7d32; }
+.pipe span.run { border-color: #1565c0; color: #1565c0; font-weight: 600; }
+.pipe span.err { border-color: #c62828; color: #fff; background: #c62828; }
+.errlog { margin: 6px 0 18px; }
+.errlog li { font-size: 13px; margin: 4px 0; }
+.errlog li.fixed { opacity: .55; text-decoration: line-through; }
 .modes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .mode { text-align: left; border: 1.5px solid var(--line); background: var(--paper); border-radius: var(--r-m, 12px); padding: 12px 14px; cursor: pointer; color: var(--ink); }
 .mode b { display: block; font-size: 15px; }
@@ -551,6 +559,8 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
       <button class="tab" role="tab" id="t-ib" aria-selected="false" aria-controls="p-ib">Inbox tài liệu <span class="count warn" id="c-ib" hidden></span></button>
       <button class="tab" role="tab" id="t-cal" aria-selected="false" aria-controls="p-cal">Lịch</button>
       <button class="tab" role="tab" id="t-extra" aria-selected="false" aria-controls="p-extra">Ngoại khoá</button>
+      <button class="tab" role="tab" id="t-admin" aria-selected="false" aria-controls="p-admin">Hành chính</button>
+      <button class="tab" role="tab" id="t-schol" aria-selected="false" aria-controls="p-schol">Học bổng</button>
       <button class="tab" role="tab" id="t-sem" aria-selected="false" aria-controls="p-sem">Học kỳ</button>
       <button class="tab" role="tab" id="t-lang" aria-selected="false" aria-controls="p-lang">Ngoại ngữ</button>
       <button class="tab" role="tab" id="t-grad" aria-selected="false" aria-controls="p-grad">ĐK tốt nghiệp</button>
@@ -627,10 +637,24 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
       </div>
     </section>
 
+    <section class="panel" id="p-schol" role="tabpanel" aria-labelledby="t-schol">
+      <div class="wrap">
+        <h1>Học bổng</h1>
+        <p class="lead">Học bổng trên iCTSV và thư về học bổng, mới đăng lên trước. Bấm tên để mở trang học bổng và nộp hồ sơ.</p>
+        <div id="schol"><p class="skeleton">Đang đọc…</p></div>
+      </div>
+    </section>
+    <section class="panel" id="p-admin" role="tabpanel" aria-labelledby="t-admin">
+      <div class="wrap">
+        <h1>Hành chính</h1>
+        <p class="lead">Từ ctsv.hust.edu.vn: thông báo gửi riêng cho bạn, giấy tờ đã xin, vé sự kiện. UC tự đọc mỗi giờ, chỉ đọc, không gửi đơn hay đăng ký thay bạn.</p>
+        <div id="adm"><p class="skeleton">Đang đọc…</p></div>
+      </div>
+    </section>
     <section class="panel" id="p-extra" role="tabpanel" aria-labelledby="t-extra">
       <div class="wrap wide cal">
         <h1>Hoạt động ngoại khoá</h1>
-        <p class="lead">Từ CTSV (hoạt động bạn đã đăng ký, hạn nộp minh chứng, hoạt động đang mở, học bổng) và từ mail / Teams (CLB, Đoàn – Hội, cuộc thi, tuyển thành viên). Tách riêng khỏi lịch học và hạn học tập.</p>
+        <p class="lead">Hoạt động ngoại khoá có thể đăng ký, gộp từ iCTSV, mail và Teams; nguồn ghi dưới từng mục. Tách riêng khỏi lịch học. Học bổng ở tab Học bổng.</p>
         <div class="cal-nav">
           <span class="wk" id="ex-wk">Đang đọc…</span>
           <button class="ghost" id="ex-prev">‹ Tuần trước</button>
@@ -685,6 +709,9 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
         <h1>Ghi bài giảng</h1>
         <p class="lead">Chỉ ghi khi bạn bấm <b>Bắt đầu ghi</b>, chỉ dừng khi bạn bấm <b>Dừng</b>. Audio được chép lời ngay trên máy; Gemini chỉ nhận ghi chú đã nén, không nhận âm thanh.</p>
         <div id="rec-card" class="ticket"><p class="skeleton">Đang kết nối app ghi âm…</p></div>
+        <h2 style="font-size:17px;margin:0 0 6px">Đang tải lên</h2>
+        <p class="note" style="margin:0 0 8px">Tự kiểm tra mỗi phút từng bước: máy ghi → n8n → Drive → Notion → chép lời trên máy → nén → Gemini → ghi chú. Chỉ đọc trạng thái, không dùng AI.</p>
+        <div id="rec-pipe"><p class="skeleton">Đang đọc…</p></div>
         <h2 style="font-size:17px;margin:0 0 10px">Các buổi đã ghi</h2>
         <div class="files sessions" id="rec-list"><p class="skeleton">Đang đọc…</p></div>
       </div>
@@ -720,14 +747,22 @@ const md = (s) => DOMPurify.sanitize(marked.parse(String(s || ''), { breaks: tru
 let sessionId = localStorage.getItem('uc-session');
 if (!sessionId) { sessionId = 'web-' + crypto.randomUUID(); localStorage.setItem('uc-session', sessionId); }
 
+/* ---------- tự tải lại (5/10): mỗi 15 phút, trừ khi đang gõ dở tin nhắn ---------- */
+setInterval(() => {
+  const draft = [...document.querySelectorAll('textarea, input[type=text]')].some(e => (e.value || '').trim() && document.activeElement === e) ||
+                [...document.querySelectorAll('textarea')].some(e => (e.value || '').trim());
+  if (!draft) location.reload();
+}, 15 * 60 * 1000);
 /* ---------- tabs ---------- */
-const tabs = { chat: ['#t-chat', '#p-chat'], day: ['#t-day', '#p-day'], sg: ['#t-sg', '#p-sg'], ib: ['#t-ib', '#p-ib'], cal: ['#t-cal', '#p-cal'], extra: ['#t-extra', '#p-extra'], sem: ['#t-sem', '#p-sem'], lang: ['#t-lang', '#p-lang'], grad: ['#t-grad', '#p-grad'], rec: ['#t-rec', '#p-rec'] };
+const tabs = { chat: ['#t-chat', '#p-chat'], day: ['#t-day', '#p-day'], sg: ['#t-sg', '#p-sg'], ib: ['#t-ib', '#p-ib'], cal: ['#t-cal', '#p-cal'], extra: ['#t-extra', '#p-extra'], admin: ['#t-admin', '#p-admin'], schol: ['#t-schol', '#p-schol'], sem: ['#t-sem', '#p-sem'], lang: ['#t-lang', '#p-lang'], grad: ['#t-grad', '#p-grad'], rec: ['#t-rec', '#p-rec'] };
 function show(name) {
   for (const [k, [t, p]] of Object.entries(tabs)) { $(t).setAttribute('aria-selected', k === name); $(p).classList.toggle('on', k === name); }
   if (name === 'ib') refreshInbox();
   if (name === 'rec') { recTick(); loadLectures(); }
   if (name === 'cal') loadCal();
   if (name === 'extra') loadExtra();
+  if (name === 'admin') loadAdmin();
+  if (name === 'schol') loadSchol();
   if (name === 'sem') loadSem();
   if (name === 'grad') loadGrad();
   if (name === 'lang') loadLang();
@@ -924,11 +959,17 @@ function renderExtra() {
   $('#ex-lists').innerHTML =
     sec('Hạn nộp minh chứng (điểm rèn luyện)', items.filter(x => x.loai === 'Hạn nộp minh chứng' && up(x)), 'Không có hạn nộp minh chứng nào đang mở.') +
     sec('Hoạt động bạn đã đăng ký', items.filter(x => x.loai === 'Đã đăng ký').slice().reverse(), 'Chưa đăng ký hoạt động nào trên CTSV.') +
-    sec('Đang mở trên CTSV', items.filter(x => x.loai === 'Đang mở'), 'Không có hoạt động nào đang mở.') +
-    sec('Học bổng còn hạn', items.filter(x => x.loai === 'Học bổng'), 'Không có học bổng nào còn hạn.') +
-    sec('Từ mail / Teams (sắp tới)', items.filter(x => x.loai === 'Sự kiện (mail/Teams)' && up(x)), 'Không có sự kiện ngoại khoá nào sắp tới.');
+    '';
+  const reg = items.filter(x => ['Đang mở', 'Sự kiện (mail/Teams)', 'Thông báo (mail/Teams)'].includes(x.loai) && (x.loai !== 'Sự kiện (mail/Teams)' || up(x)))
+    .sort((a, b) => (b.announced || '').localeCompare(a.announced || ''));
+  $('#ex-lists').innerHTML = '<h2 style="font-size:17px;margin:18px 0 6px">Hoạt động ngoại khoá có thể đăng ký <small style="color:var(--ink-3);font-weight:400">' + reg.length + ' · mới thông báo lên trước</small></h2>' +
+    (reg.length ? '<ul class="tasks exlist">' + reg.map(x => '<li><div><span class="tname">' + (x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.name) + '</a>' : esc(x.name)) + '</span><small>' +
+      esc([x.place, x.type !== 'Thông báo' ? x.type : ''].filter(Boolean).join(' · ')) + (x.note ? (x.place ? ' — ' : '') + esc(x.note.slice(0, 220)) : '') + '</small>' +
+      '<small style="display:block;color:var(--ink-3)">Nguồn: ' + esc(x.nguon || x.src) + (x.repeats > 1 ? ' (nhắc ' + x.repeats + ' lần)' : '') + (x.announced ? ' · đăng ' + fmt(x.announced.slice(0, 10)) : '') + '</small></div><span class="h">' +
+      (x.han ? 'hạn ' + vnHM(x.han) + ' ' + fmt(x.han.slice(0, 10)) : x.start ? fmt(x.start.slice(0, 10)) + (x.end && x.end.slice(0, 10) !== x.start.slice(0, 10) ? ' → ' + fmt(x.end.slice(0, 10)) : '') : '') +
+      '</span></li>').join('') + '</ul>' : '<span class="empty">Không có hoạt động nào đang mở.</span>') + $('#ex-lists').innerHTML;
   const t = EX.ctsv_at ? EX.ctsv_at.slice(11, 16) + ' ' + EX.ctsv_at.slice(8, 10) + '/' + EX.ctsv_at.slice(5, 7) : '?';
-  $('#ex-sync').textContent = 'CTSV đọc lúc ' + t + ' (cùng lượt đồng bộ trường 06:30 · 12:30 · 18:30 · 22:30) · mail / Teams mỗi 20 phút';
+  $('#ex-sync').textContent = 'iCTSV đọc lúc ' + t + ' · mọi nguồn (iCTSV, mail, Teams) tự cập nhật 5 phút / lần, 06:00–23:30';
 }
 $('#ex-prev').onclick = () => { exMon -= 7 * 864e5; renderExtra(); };
 $('#ex-next').onclick = () => { exMon += 7 * 864e5; renderExtra(); };
@@ -936,7 +977,7 @@ $('#ex-now').onclick = () => { exMon = mondayOf(Date.now()); exSel = vnDate(Date
 const exShift = (k) => { let [y, m] = exMonth.split('-').map(Number); m += k; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } exMonth = y + '-' + String(m).padStart(2, '0'); renderExtra(); };
 $('#ex-mprev').onclick = () => exShift(-1); $('#ex-mnext').onclick = () => exShift(1);
 $('#ex-mnow').onclick = () => { exMonth = vnDate(Date.now()).slice(0, 7); renderExtra(); };
-$('#t-extra').onclick = () => show('extra');
+$('#t-extra').onclick = () => show('extra'); $('#t-admin').onclick = () => show('admin'); $('#t-schol').onclick = () => show('schol');
 
 
 /* ---------- Chương trình: Học kỳ / GDTC tự chọn / ĐK tốt nghiệp (Claude 2026-10-03) ---------- */
@@ -1876,7 +1917,84 @@ function renderLive(s) {
 }
 const LSTATE = { Uploaded: ['Chờ chép lời', ''], Processing: ['Đang xử lý', ''], Completed: ['Xong', 'ok'], 'Needs review': ['Cần xem lại', 'err'] };
 const STAGE = { queued: 'Đang xếp hàng', decode: 'Đọc audio', quality: 'Kiểm tra chất lượng', transcribe: 'Chép lời trên máy', compact: 'Nén bằng LM Studio', finished: 'Xong phần trên máy' };
+const vnFmt = (s) => s ? new Date(String(s).replace(' ', 'T')).toLocaleString('vi-VN', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+const linkOr = (url, text) => url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text);
+const srcLine = (nguon, at) => `<span class="meta" style="display:block;margin-top:2px">Nguồn: ${esc(nguon || '')}${at ? ' · đăng ' + esc(vnFmt(at)) : ''}</span>`;
+async function loadSchol() {
+  const box = $('#schol');
+  try {
+    const d = await api('/api/scholarships');
+    const row = (x) => `<li><span class="tname"><b>${linkOr(x.url, x.name)}</b>${x.desc ? `<details><summary class="meta">Chi tiết</summary><p class="note" style="white-space:pre-wrap">${esc(x.desc)}</p>${x.more ? `<p class="note">${esc(x.more)}</p>` : ''}</details>` : ''}
+      <span class="meta">${[x.type, x.quantity ? x.quantity + ' suất' : '', x.price ? 'giá trị ' + (isNaN(+x.price) ? x.price : Number(x.price).toLocaleString('vi-VN')) + 'đ' : '', x.contact].filter(Boolean).map(esc).join(' · ')}</span>${srcLine(x.nguon, x.announced)}</span>
+      <span class="h">${x.deadline ? 'hạn ' + esc(vnFmt(x.deadline)) : ''}${x.applied ? '<br><span class="badge ok">Đã nộp hồ sơ</span>' : ''}</span></li>`;
+    box.innerHTML = `<h2 style="font-size:17px">Đang nhận hồ sơ <span class="meta">${(d.open || []).length}</span></h2>` +
+      ((d.open || []).length ? `<ul class="tasks exlist">${d.open.map(row).join('')}</ul>` : '<p class="note">Không có học bổng nào đang nhận hồ sơ.</p>') +
+      `<details><summary>Đã hết hạn gần đây (${(d.closed || []).length})</summary><ul class="tasks exlist">${(d.closed || []).map(row).join('')}</ul></details>` +
+      `<p class="meta"><a href="${esc(d.list)}" target="_blank" rel="noopener">Danh sách học bổng trên iCTSV</a></p>`;
+  } catch (e) { box.innerHTML = `<p class="skeleton">Chưa đọc được (${esc(e.message)}).</p>`; }
+}
+const mailList = (arr, empty) => arr.length ? `<ul class="tasks exlist">${arr.map(m => `<li><span class="tname"><b>${linkOr((m.links || [])[0], m.subject)}</b>${m.tom_tat ? `<br><span class="note">${esc(m.tom_tat)}</span>` : ''}${(m.links || []).length > 1 ? `<br><span class="meta">Link: ${m.links.slice(0, 4).map(u => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:[/][/](www[.])?/, '').slice(0, 50))}</a>`).join(' · ')}</span>` : ''}${srcLine(m.nguon + (m.from ? ' · ' + m.from : ''), m.at)}</span></li>`).join('')}</ul>` : `<p class="note">${empty}</p>`;
+const PAPER_ST = { 0: 'Chờ tiếp nhận', 1: 'Đang xử lý', 2: 'Đã xong', 3: 'Từ chối' };
+async function loadAdmin() {
+  const box = $('#adm');
+  try {
+    const d = await api('/api/admin');
+    if (!d.ok) { box.innerHTML = `<p class="note">${esc(d.error || 'Chưa có dữ liệu')}</p>`; return; }
+    const fmt = (s) => s ? new Date(s.replace(' ', 'T')).toLocaleString('vi-VN', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    const now = Date.now(), week = 7 * 864e5;
+    const L = d.links || {};
+    let h = `<p class="meta">Cập nhật ${esc(fmt(d.at))}${d.lastError ? ` · <span class="why">lần đọc gần nhất lỗi (${esc(fmt(d.lastTry))}): ${esc(d.lastError)}, đang hiện dữ liệu cũ</span>` : ''}</p>`;
+    const when = (t) => new Date(((t.end || t.start) || '').replace(' ', 'T'));
+    const mine = (d.tickets || []).filter(t => t.ticket && !(when(t) < now));   // vé của sự kiện đã qua thì không hiện
+    const up = (d.tickets || []).filter(t => !t.ticket && t.isOpen && (!t.start || new Date(t.start.replace(' ', 'T')) > now));
+    h += `<h2 style="font-size:17px">Vé sự kiện của bạn</h2>`;
+    h += mine.length ? `<ul class="tasks exlist">${mine.map(t => `<li><span class="tname"><b>${t.url ? `<a href="${esc(t.url)}" target="_blank" rel="noopener">${esc(t.name)}</a>` : esc(t.name)}</b><br><span class="meta">${esc(fmt(t.start))}${t.place ? ' · ' + esc(t.place) : ''} · ghế ${esc(t.ticket.seat)}${t.ticket.checkedIn ? ' · đã check-in' : ''}</span></span><span class="h">sắp tới</span></li>`).join('')}</ul>` : '<p class="note">Không có vé cho sự kiện sắp tới.</p>';
+    h += up.length ? `<p class="meta">Còn mở đăng ký: ${up.map(t => `<a href="${esc(t.url || L.datVe)}" target="_blank" rel="noopener">${esc(t.name)}</a> (${t.start ? esc(fmt(t.start)) + ', ' : ''}${(t.seats || 0) - (t.taken || 0) > 0 ? 'còn ' + ((t.seats || 0) - (t.taken || 0)) + ' chỗ' : 'hết chỗ'})`).join(' · ')}. <a href="${esc(L.datVe)}" target="_blank" rel="noopener">Đặt vé trên CTSV</a></p>` : `<p class="meta">Không có sự kiện nào đang mở đặt vé. <a href="${esc(L.datVe)}" target="_blank" rel="noopener">Trang đặt vé</a></p>`;
+    h += `<h2 style="font-size:17px">Giấy tờ, thủ tục bạn đã xin</h2>`;
+    h += (d.papers || []).length ? `<ul class="tasks exlist">${d.papers.map(x => `<li><span class="tname"><b>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>` : esc(x.name)}</b><br><span class="meta">gửi ${esc(fmt(x.created))}${x.office ? ' · ' + esc(x.office) : ''}${x.accepted ? ' · xử lý ' + esc(fmt(x.accepted)) : ''}${x.note ? ' · ' + esc(x.note) : ''}</span></span><span class="h"><span class="badge ${x.status === 2 ? 'ok' : ''}">${esc(PAPER_ST[x.status] || 'Trạng thái ' + x.status)}</span></span></li>`).join('')}</ul>` : '<p class="note">Chưa xin giấy tờ nào.</p>';
+    h += `<p class="meta"><a href="${esc(L.phanHoi)}" target="_blank" rel="noopener">Theo dõi trên CTSV</a> · <a href="${esc(L.xinGiay)}" target="_blank" rel="noopener">Xin giấy tờ mới</a> · <a href="${esc(L.hoi)}" target="_blank" rel="noopener">Hỏi CTSV</a></p>`;
+    h += `<details><summary>${(d.procedures || []).length} thủ tục có thể xin trên CTSV</summary><ul>${(d.procedures || []).map(x => `<li>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>` : esc(x.name)} <span class="meta">(mở form đăng ký)</span>${x.office ? ' <span class="meta">(' + esc(x.office) + ')</span>' : ''}</li>`).join('')}</ul></details>`;
+    h += `<h2 style="font-size:17px">Công nợ</h2><p class="note">Trang công nợ của CTSV có mã xác minh (reCAPTCHA), nên UC không tự tra. <a href="${esc(L.congNo)}" target="_blank" rel="noopener">Tự tra công nợ</a></p>`;
+    const msgs = d.messages || [];
+    const fresh = msgs.filter(m => m.at && now - new Date(m.at.replace(' ', 'T')) < week).length;
+    h += `<h2 style="font-size:17px">Thông báo CTSV gửi bạn <span class="meta">(${msgs.length}${fresh ? ', ' + fresh + ' trong 7 ngày qua' : ''})</span></h2>`;
+    h += msgs.length ? msgs.map(m => `<details${m.at && now - new Date(m.at.replace(' ', 'T')) < week ? ' open' : ''}><summary><b>${esc(m.subject || '(không tiêu đề)')}</b> <span class="meta">${esc(fmt(m.at))}</span></summary><p class="note" style="white-space:pre-wrap">${esc(m.text)}</p>${(m.links || []).length ? `<p class="meta">Link trong thông báo: ${m.links.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:[/][/](www[.])?/, '').slice(0, 60))}</a>`).join(' · ')}</p>` : ''}</details>`).join('') : '<p class="note">Không có thông báo.</p>';
+    h += `<h2 style="font-size:17px">Thư hành chính <span class="meta">(${(d.mailAdmin || []).length})</span></h2>` + mailList(d.mailAdmin || [], 'Không có thư hành chính nào.');
+    h += `<h2 style="font-size:17px">Thông báo chung <span class="meta">(${(d.mailGeneral || []).length})</span></h2>` + mailList(d.mailGeneral || [], 'Không có thông báo chung nào.');
+    h += `<p class="meta"><a href="${esc(L.thongBao)}" target="_blank" rel="noopener">Mở trang thông báo CTSV</a> · <a href="${esc(L.suKien)}" target="_blank" rel="noopener">Danh sách sự kiện</a> (đã vào tab Ngoại khoá)</p>`;
+    box.innerHTML = h;
+  } catch (e) { box.innerHTML = `<p class="skeleton">Chưa đọc được (${esc(e.message)}).</p>`; }
+}
+async function loadPipe() {
+  clearTimeout(loadPipe.t);
+  const box = $('#rec-pipe'); if (!box) return;
+  try {
+    const m = await api('/api/lecture-monitor');
+    const recent = (m.captures || []).filter(c => c.line.some(x => x.state !== 'ok'));
+    const ago = (iso) => iso ? new Date(iso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'numeric' }) : '';
+    const name = (c) => c.title && !/^Lecture lecture-/.test(c.title) ? c.title : (c.course || c.captureId);
+    let h = recent.length ? recent.map(c => `<article class="file"><div class="file-top"><span class="file-name">${esc(name(c))}</span><span class="meta">${esc(ago(c.startedAt))} <button class="ghost" data-dis="${esc(c.captureId)}" title="Ẩn buổi này khỏi Đang tải lên (vd bản ghi thử)">Bỏ qua</button></span></div>
+      <div class="pipe">${c.line.map(x => `<span class="${x.state}" title="${esc((x.detail || '') + (x.at ? ' · ' + ago(x.at) : ''))}">${x.state === 'ok' ? '✓' : x.state === 'err' ? '✕' : x.state === 'run' ? '●' : '○'} ${esc(x.label)}${x.state === 'run' && x.detail ? ' · ' + esc(x.detail) : ''}</span>`).join('')}</div>
+      ${c.line.filter(x => x.state === 'err').map(x => `<p class="why">${esc(x.label)}: ${esc(x.detail || 'lỗi')}</p>`).join('')}</article>`).join('')
+      : '<p class="note">Không có buổi nào đang xử lý. Mọi buổi đã ghi đều xong.</p>';
+    const errs = m.errors || [], open = errs.filter(e => !e.resolved);
+    h += `<details class="errlog"${open.length ? ' open' : ''}><summary>Nhật ký lỗi: ${open.length} đang mở, ${errs.length - open.length} đã khắc phục</summary>
+      ${errs.length ? `<ul>${errs.map(e => `<li class="${e.resolved ? 'fixed' : ''}"><b>${esc(ago(e.at))}</b> · ${esc(e.source)}${e.captureId ? ' · ' + esc(e.captureId) : ''}<br>${esc(e.message)}</li>`).join('')}</ul>
+      <button class="ghost" id="rec-errcopy">Sao chép nhật ký lỗi</button> <span class="note">Đầy đủ trong ${esc(m.errorLog || '')}</span>` : '<p class="note">Chưa có lỗi nào.</p>'}</details>`;
+    box.innerHTML = h;
+    box.querySelectorAll('[data-dis]').forEach(b => b.onclick = async () => {
+      if (!confirm('Ẩn buổi này khỏi "Đang tải lên"? Không xoá gì trong Notion hay trên máy.')) return;
+      await api('/api/lecture-monitor/dismiss', { captureId: b.dataset.dis }); loadPipe(); });
+    const cp = $('#rec-errcopy');
+    if (cp) cp.onclick = async () => {
+      const txt = errs.map(e => `${e.at} | ${e.resolved ? 'ĐÃ KHẮC PHỤC' : 'ĐANG MỞ'} | ${e.source} | ${e.captureId || '-'} | ${e.message}${e.detail ? ' (' + e.detail + ')' : ''}`).join('\n');
+      try { await navigator.clipboard.writeText(txt); cp.textContent = 'Đã sao chép'; } catch { prompt('Sao chép nhật ký lỗi:', txt); }
+    };
+  } catch (e) { box.innerHTML = `<p class="skeleton">Chưa đọc được giám sát (${esc(e.message)}).</p>`; }
+  if ($('#p-rec').classList.contains('on')) loadPipe.t = setTimeout(loadPipe, 30000);
+}
 async function loadLectures() {
+  loadPipe();
   clearTimeout(loadLectures.t);
   try {
     const { sessions = [] } = await api('/api/lectures');

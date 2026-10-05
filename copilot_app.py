@@ -681,7 +681,7 @@ def uni_sync_once():
     _sync_save(st)
 
 # ---------------------------------------------------------------- 🏫 đồng bộ dữ liệu trường (school_fetch + school_sync)
-SCHOOL_SLOTS = ("06:30", "12:30", "18:30", "22:30")
+SCHOOL_SLOTS = tuple(f"{h:02d}:{m:02d}" for h in range(6, 24) for m in range(0, 60, 5) if (h, m) <= (23, 30))   # (5/10) qldt + iCTSV mỗi 5 phút, 06:00–23:30
 _school = {"running": False, "by": None, "lock": threading.Lock()}
 
 def school_status():
@@ -776,6 +776,14 @@ def mail_run(by):
             r["fami"] = fami.fetch()
             if r["fami"].get("ok"): r["fami_sync"] = fami.sync(_npost)
         except Exception as e: r["fami"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
+        try:   # ✉️ phân loại mọi thư: môn học / hành chính / ngoại khoá / thông báo chung / học bổng (luật trước, AI theo lô)
+            import mail_kinds; importlib.reload(mail_kinds)
+            r["mail_kinds"] = mail_kinds.classify()
+        except Exception as e: r["mail_kinds"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
+        try:   # 🏛️ CTSV nhanh mỗi giờ (5/10): toàn bộ sự kiện (như /danh-sach-su-kien) + Hành chính (thông báo, giấy tờ, đặt vé)
+            import ctsv_live; importlib.reload(ctsv_live)
+            if ctsv_live.due(): r["ctsv_live"] = ctsv_live.fetch()
+        except Exception as e: r["ctsv_live"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
         try:
             import expired; importlib.reload(expired)   # việc của trường đã hết hạn -> ✅ Academic Tasks (không ghi thành hạn)
             r["expired"] = expired.record(_npost)
@@ -795,16 +803,26 @@ def mail_run(by):
     finally:
         _mail["running"] = False
     print("mail:", json.dumps(_mail["last"], ensure_ascii=False)[:300])
+    try:   # (5/10) lưu kết quả từng vòng cập nhật: nguồn nào lỗi / đứng thì đọc school/sync_runs.jsonl là biết (không gọi AI)
+        def _brief(v):
+            if isinstance(v, dict): return {k: v.get(k) for k in ("ok", "error", "new", "updated", "total", "events", "lops", "added", "fixed") if k in v}
+            return str(v)[:200]
+        rec = {"at": _mail["last"].get("at"), "by": by, **{k: _brief(v) for k, v in _mail["last"].items() if k not in ("at", "by")}}
+        f = HERE / "school" / "sync_runs.jsonl"
+        lines = (f.read_text(encoding="utf-8").splitlines() if f.exists() else [])[-500:]
+        f.write_text("\n".join(lines + [json.dumps(rec, ensure_ascii=False)]) + "\n", encoding="utf-8")
+    except Exception as e:
+        print("sync_runs:", e)
     return True
 
 def mail_loop():
-    """Đọc mail trường + Teams mỗi 20 phút (06:00–23:30). Khoá hồ sơ Chrome dùng chung nên không đè lượt đồng bộ qldt."""
-    time.sleep(240)
+    """Đọc mail trường + Teams + MOOC + FAMI + iCTSV mỗi 5 phút (06:00–23:30, người dùng 5/10). Khoá hồ sơ Chrome dùng chung nên không đè lượt đồng bộ qldt."""
+    time.sleep(60)
     while True:
         h = time.localtime()
         if (6, 0) <= (h.tm_hour, h.tm_min) <= (23, 30) and not _school["running"]:
-            mail_run("lịch 20 phút")
-        time.sleep(20 * 60)
+            mail_run("lịch 5 phút")
+        time.sleep(5 * 60)
 
 _sched_lock = threading.Lock()
 
@@ -920,6 +938,18 @@ class H(BaseHTTPRequestHandler):
                 return self._send(200, {"folders": folder_list(), "categories": CATEGORIES})
             if u.path == "/api/health":
                 return self._send(200, {"ok": True, "queue": jobs.qsize()})
+            if u.path == "/api/admin":   # 🏛️ tab Hành chính (CTSV + thư hành chính / thông báo chung) — chỉ đọc
+                import ctsv_live, mail_kinds
+                v = ctsv_live.view()
+                v["mailAdmin"] = mail_kinds.by_kind("hanh_chinh")[:40]
+                v["mailGeneral"] = mail_kinds.by_kind("thong_bao_chung")[:40]
+                return self._send(200, v)
+            if u.path == "/api/scholarships":   # 🎓 tab Học bổng
+                import scholarships
+                return self._send(200, scholarships.view())
+            if u.path == "/api/lecture-monitor":   # (Claude 5/10) giám sát chuỗi Ghi bài giảng — không gọi AI
+                import lecture_monitor
+                return self._send(200, lecture_monitor.view())
             if u.path == "/api/rec/status":
                 return self._send(200, local_json(RECORDER + "/health", timeout=5))
             if u.path == "/api/rec/pending":
@@ -994,6 +1024,10 @@ class H(BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query)
         # (Claude 2026-10-03) công cụ ghi_hoc_tap của não Copilot (n8n trong Docker) -> logic điểm/luật môn/chuyên cần
         # (Claude 2026-10-05) công cụ doi_han: dời hạn TỰ ĐẶT (Tự luyện / cốt lõi); hạn Môn học của trường bị từ chối
+        if u.path == "/api/lecture-monitor/dismiss":   # ẩn một buổi khỏi "Đang tải lên" (chỉ file giám sát trên máy)
+            import lecture_monitor
+            b = json.loads(self._body(10_000) or b"{}")
+            return self._send(200, lecture_monitor.dismiss(str(b.get("captureId", ""))))
         if u.path == "/api/reschedule":
             if not hmac.compare_digest(self.headers.get("X-Copilot-Key", ""), SECRET):
                 return self._send(403, {"error": "forbidden"})
@@ -1001,6 +1035,12 @@ class H(BaseHTTPRequestHandler):
                 import reschedule, deadlines
                 args = json.loads(self._body(64 * 1024) or b"{}")
                 res = reschedule.run(_npost, args, kick_a4=lambda: n8n("copilot-run-a4", None, timeout=60))
+                import chat_memory
+                if res.get("se_doi"):
+                    chat_memory.pending_add("doi_han", {"buoc": "ghi", "work_ids": args.get("work_ids"), "han_moi": args.get("han_moi")},
+                                            "dời " + "; ".join(res["se_doi"]))
+                if res.get("da_doi"):
+                    chat_memory.pending_done("doi_han", args.get("work_ids", ""))
                 if args.get("buoc") == "ghi" and res.get("da_doi"):
                     threading.Thread(target=lambda: _safe(lambda: deadlines.refresh(_npost)), daemon=True).start()
                 return self._send(200, res)
@@ -1213,8 +1253,11 @@ class H(BaseHTTPRequestHandler):
                         enqueue_inbox(hit, name); note += "\n(đã lưu vào Uni-Documents — agent xếp tài liệu sẽ tự xếp vào đúng thư mục)"
                     notes.append(note)
                 chat_input = (text + ("\n\n" + "\n\n".join(notes) if notes else "")).strip() or "(gửi tệp đính kèm)"
-                fields = {"chatInput": chat_input, "sessionId": b.get("sessionId", "web")}
+                import chat_memory   # (Claude 5/10) trí nhớ bền: lịch sử phiên + việc đang chờ xác nhận
+                sess = str(b.get("sessionId", "web"))[:120]
+                fields = {"chatInput": chat_memory.wrap(sess, chat_input), "sessionId": sess}
                 r = n8n_multipart("copilot-api", fields, bins) if bins else n8n("copilot-api", fields, timeout=300)
+                _safe(lambda: chat_memory.remember(sess, chat_input, r.get("output") or r.get("text") or ""))
                 _tt_refresh()
                 return self._send(200, {"output": r.get("output") or r.get("text") or ""})
             if u.path in ("/api/rec/start", "/api/rec/stop", "/api/rec/marker", "/api/rec/extend", "/api/rec/retry-upload"):
@@ -1278,6 +1321,7 @@ if __name__ == "__main__":
     threading.Thread(target=uni_sync_loop, daemon=True).start()
     threading.Thread(target=mail_loop, daemon=True).start()    # 📡 mail trường mỗi 20 phút
     threading.Thread(target=alert_loop, daemon=True).start()
+    threading.Thread(target=lambda: __import__("lecture_monitor").loop(lambda path: n8n(path, timeout=60)), daemon=True).start()   # 🎙️ giám sát Ghi bài giảng mỗi 60 s (0 AI)
     threading.Thread(target=lambda: __import__('phone_link').listen(_npost), daemon=True).start()   # 📱 lệnh từ điện thoại qua ntfy   # 📡 cảnh báo leo thang + toast
     threading.Thread(target=school_loop, daemon=True).start()   # 🏫 qldt + iCTSV -> Notion (dữ liệu trường là cao nhất)
     def _mode_loop():   # 🌗 chế độ HÔM NAY -> 🎛️ University Control (A4 đọc), kể cả lúc qua ngày mới

@@ -8,6 +8,8 @@ Vẽ từ KIỂM KÊ TRỰC TIẾP (không vẽ theo trí nhớ):
     (công cụ Copilot, module Python ghi qua cổng /copilot-notion)
 Chạy lại:  python docs\\gen_n8n_map.py   ->  docs\\Map-n8n.svg
 """
+import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import uc_config as cfg
 import json, re, sys, os, collections, datetime as dt
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
@@ -15,7 +17,7 @@ from n8napi import api
 from notion_ops import NotionOps
 
 OUT = os.path.join(HERE, "Map-n8n.svg")
-UNIFIED, LEC_A, LEC_C = "AhMtmx7g4dpZgB5r", "EtG8zlgeGNCZnak8", "df0t4jhikLNbS5HB"
+UNIFIED, LEC_A, LEC_C = cfg.n8n_workflow("copilot"), cfg.n8n_workflow("lecture_analysis"), cfg.n8n_workflow("lecture_capture")
 
 # ------------------------------------------------------------------ kiểm kê
 def inventory():
@@ -284,7 +286,7 @@ def main():
     # ===== Cột 2-3: workflow hợp nhất
     X2, W2 = 760, 2240
     frame_at = len(out); add("")   # khung vẽ sau khi biết chiều cao nội dung
-    text(X2, Y0, f"③ WORKFLOW HỢP NHẤT · {full[UNIFIED]['name']} · {sum(v['nodes'] for v in uni.values())} node · id {UNIFIED}", 22, INK, 800, HEAD)
+    text(X2, Y0, f"③ WORKFLOW HỢP NHẤT · {full[UNIFIED]['name']} · {sum(v['nodes'] for v in uni.values())} node", 22, INK, 800, HEAD)
     colw = (W2 - 40) // 3
     # 3a Não + công cụ
     xa, ya = X2, Y0 + 30
@@ -330,7 +332,7 @@ def main():
     text(xc, yc, "Workflow bài giảng (chạy riêng)", 17, GREEN, 700, HEAD)
     for wid, sec in ((LEC_C, lc), (LEC_A, la)):
         k = list(sec)[0]
-        yc = card(xc, yc + 12, colw, k, f"{full[wid]['name']} · id {wid}", DESC.get(k, ""), GREEN, sec[k]["nodes"], trig_label(sec[k]["trig"]))
+        yc = card(xc, yc + 12, colw, k, f"{full[wid]['name']}", DESC.get(k, ""), GREEN, sec[k]["nodes"], trig_label(sec[k]["trig"]))
     # vấn đề
     yc += 40
     text(xc, yc, "Ghi chú kiểm kê", 17, RED, 700, HEAD)

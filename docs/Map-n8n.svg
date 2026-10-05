@@ -197,7 +197,7 @@
 <text x="82" y="1352.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="14.5" font-weight="700" fill="#2D55C8" text-anchor="start">mỗi 5 phút</text>
 <text x="320" y="1352.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="13.5" font-weight="400" fill="#4B5D70" text-anchor="start">Lecture Analysis — phân tích bài giảng</text>
 <rect x="740" y="178" width="2280" height="1957.0" rx="10" fill="#FBFAF6" stroke="#14263A" stroke-width="2.2"/>
-<text x="760" y="210" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="800" fill="#14263A" text-anchor="start">③ WORKFLOW HỢP NHẤT · University — Copilot (hệ thống hợp nhất) · 310 node · id AhMtmx7g4dpZgB5r</text>
+<text x="760" y="210" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="800" fill="#14263A" text-anchor="start">③ WORKFLOW HỢP NHẤT · University — Copilot (hệ thống hợp nhất) · 310 node</text>
 <rect x="760" y="240" width="733" height="120.0" rx="7" fill="#fff" stroke="#2D55C8" stroke-width="1.6"/>
 <rect x="760" y="240" width="6" height="120.0" rx="3" fill="#2D55C8"/>
 <text x="776" y="263" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="16" font-weight="700" fill="#2D55C8" text-anchor="start">Chat · Não Copilot</text>
@@ -404,14 +404,14 @@
 <rect x="2266" y="778.5" width="6" height="101.5" rx="3" fill="#2F7D4F"/>
 <text x="2282" y="801.5" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="16" font-weight="700" fill="#2F7D4F" text-anchor="start">Lecture Capture</text>
 <text x="2987" y="801.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="12.5" font-weight="600" fill="#8796A8" text-anchor="end">7 node</text>
-<text x="2282" y="820.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="12.5" font-weight="400" fill="#8796A8" text-anchor="start">University — Lecture Capture · id df0t4jhikLNbS5HB</text>
+<text x="2282" y="820.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="12.5" font-weight="400" fill="#8796A8" text-anchor="start">University — Lecture Capture</text>
 <text x="2282" y="837.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="13.5" font-weight="400" fill="#4B5D70" text-anchor="start">Nhận file ghi âm từ companion :5681 → Google Drive.</text>
 <text x="2282" y="858.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="12.5" font-weight="600" fill="#2D55C8" text-anchor="start">🌐 /lecture-inbox · 🌐 /lecture-capture-upload</text>
 <rect x="2266" y="892.0" width="733" height="120.0" rx="7" fill="#fff" stroke="#2F7D4F" stroke-width="1.6"/>
 <rect x="2266" y="892.0" width="6" height="120.0" rx="3" fill="#2F7D4F"/>
 <text x="2282" y="915.0" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="16" font-weight="700" fill="#2F7D4F" text-anchor="start">Lecture Analysis</text>
 <text x="2987" y="915.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="12.5" font-weight="600" fill="#8796A8" text-anchor="end">29 node</text>
-<text x="2282" y="934.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="12.5" font-weight="400" fill="#8796A8" text-anchor="start">University — Lecture Analysis · id EtG8zlgeGNCZnak8</text>
+<text x="2282" y="934.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="12.5" font-weight="400" fill="#8796A8" text-anchor="start">University — Lecture Analysis</text>
 <text x="2282" y="951.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="13.5" font-weight="400" fill="#4B5D70" text-anchor="start">5 phút + /lecture-transcript-ready: speech gate (NPU) → văn bản gọn → Gemini → 📚 Lecture Notes +</text>
 <text x="2282" y="969.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="13.5" font-weight="400" fill="#4B5D70" text-anchor="start">Inbox.</text>
 <text x="2282" y="990.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="12.5" font-weight="600" fill="#2D55C8" text-anchor="start">⏱ mỗi 5 phút · 🌐 /lecture-transcript-ready</text>

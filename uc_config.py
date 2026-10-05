@@ -33,3 +33,8 @@ def path(key):
 def n8n_cred(kind, name):
     """Tham chiếu credential trong n8n (chỉ là ID, không chứa bí mật)."""
     return {'id': _load()['n8n_credentials'][kind], 'name': name}
+
+
+def n8n_workflow(key):
+    """ID workflow n8n trên máy (copilot | lecture_capture | lecture_analysis)."""
+    return _load()["n8n_workflows"][key]

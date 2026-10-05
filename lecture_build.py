@@ -1,4 +1,4 @@
-"""Dựng lại workflow "University — Lecture Analysis" (EtG8zlgeGNCZnak8) theo plan đã chốt 2/10 — Claude.
+"""Dựng lại workflow "University — Lecture Analysis" (<lecture_analysis>) theo plan đã chốt 2/10 — Claude.
 
 AUDIO KHÔNG BAO GIỜ ĐI TỚI GEMINI.
   Phần A (5 phút/lần): phiên Uploaded -> khoá -> tải audio Drive -> gửi cổng âm thanh→chữ→nén (máy, cổng 8340).
@@ -16,7 +16,7 @@ import copy, json, sys, uuid
 from n8napi import api, NOTION, GEMINI, APPKEY, DRIVE
 from exprfix import fix_tree
 
-WID = "EtG8zlgeGNCZnak8"
+WID = cfg.n8n_workflow("lecture_analysis")
 NS = uuid.UUID("2f6c1d7a-0b11-4c1e-8f53-6b1f9d0a3e21")
 SESSIONS_DB = cfg.notion("lecture_sessions")
 NOTES_DB = cfg.notion("lecture_notes")

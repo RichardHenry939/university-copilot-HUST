@@ -50,5 +50,10 @@
     "uni_documents": "C:/Users/you/Documents/Uni-Documents",
     "chrome_profile": "C:/uc-data/chrome-profile",
     "n8n_template_dir": "C:/uc-data/n8n-templates"
+  },
+  "n8n_workflows": {
+    "copilot": "<n8n-workflow-id>",
+    "lecture_capture": "<n8n-workflow-id>",
+    "lecture_analysis": "<n8n-workflow-id>"
   }
 }
