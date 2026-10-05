@@ -1,6 +1,6 @@
 # University Copilot (UC)
 
-> **EN summary:** a personal "copilot" for a HUST student. It reads six official university systems (Outlook mail, Microsoft Teams, eHUST/qldt, iCTSV, the SoICT MOOC and FAMI) in **read-only** mode. It merges everything into one Notion workspace and pushes **time-precise reminders** to the laptop and the phone. AI (Gemini + a local LLM) extracts events from emails and classifies deadlines; n8n orchestrates the Notion side. Built with an AI coding agent: I designed the problem, the rules and the architecture, and tested it on my own semester.
+> **EN summary:** a personal "copilot" for a HUST student. It reads six official university systems (Outlook mail, Microsoft Teams, eHUST/qldt, iCTSV, the SoICT MOOC and FAMI) in **read-only** mode. It merges everything into one Notion workspace and pushes **time-precise reminders** to the laptop and the phone. AI (Gemini + a local LLM) extracts events from emails and classifies deadlines; n8n orchestrates the Notion side. Built by orchestrating several AI coding agents in phases (Codex → Freebuff → Claude Code): I defined the problem, designed the architecture and rules, coordinated the agents, and tested everything on my own semester.
 
 ---
 
@@ -66,16 +66,45 @@ UC chạy trên laptop, cứ 20 phút đọc lại các nguồn (**chỉ đọc*
 
 ## Cách tôi xây dựng dự án
 
-Tôi xây UC **cùng một AI coding agent (Claude Code)**. Phần việc của tôi:
+UC không do một công cụ làm ra. Tôi **điều phối nhiều AI coding agent theo từng giai đoạn**, giống một nhóm nhỏ: mỗi AI nhận đúng phần việc hợp với nó, còn tôi giữ bài toán, kiến trúc và luật của cả hệ thống.
+
+| Giai đoạn | Thời gian | Ai làm | Kết quả |
+|---|---|---|---|
+| Sơ đồ khởi nguyên | cuối 08/2026 | **Codex** | Bản thiết kế 10 phần, có Hội đồng 4 AI. Xem [docs/Ban-do-khoi-nguyen-Codex-2026-08.svg](docs/Ban-do-khoi-nguyen-Codex-2026-08.svg) |
+| Lõi các agent | 26/08 – 01/09 | **Codex** | Nhập TKB / deadline, University Inbox (xếp tài liệu), chia nhỏ bài lớn, lập kế hoạch ngày, ghi tiến độ, gợi ý tài liệu, hệ 6-agent đầu tiên |
+| Máy ghi bài giảng bản đầu | 09/2026 | **Codex · Freebuff** | Ghi âm và đẩy sang n8n |
+| Các phase mở rộng | 30/09 | **Freebuff** | Quick Upload, Health Ping, Reconciliation, Council Bridge (nối Hội đồng AI), Conductor |
+| Agent theo lịch | 09/2026 | **ChatGPT** (scheduled task) | Chuyển kỳ, tìm tài liệu. Sau đó chuyển hết vào n8n |
+| Hợp nhất và mở rộng | từ 02/10 | **Claude Code** | Gộp thành một workflow; đồng bộ 6 hệ thống của trường; luật tối cao; nhắc theo mốc lên điện thoại; ghi bài giảng v2 (cáp Teams, chép lời trên NPU); tab Hành chính, Học bổng, Ngoại khoá; giám sát; chat có công cụ và trí nhớ |
+
+Phần việc của tôi xuyên suốt mọi giai đoạn:
 
 - đặt bài toán từ chính khó khăn của mình;
-- quyết định luật và kiến trúc: luật tối cao, ba mức hạn, chỉ đọc nguồn trường, điện thoại không có nút tắt;
+- chọn công cụ, chia việc cho từng AI, đối chiếu và gộp kết quả của chúng;
+- quyết định luật và kiến trúc: luật tối cao, ba mức hạn, chỉ đọc nguồn trường, điện thoại không có nút tắt, không ghi ngầm;
 - phát hiện lỗi khi dùng thật và yêu cầu sửa, ví dụ:
   - AI lấy nhầm giờ nhận thư làm giờ sự kiện;
   - hai bài "vá hổng chương I" của hai môn khác nhau bị coi là trùng;
-  - bài ngầm trên FAMI bị bỏ sót.
+  - bài ngầm trên FAMI bị bỏ sót;
+  - chat báo "đã dời hạn" trong khi không làm gì.
 
 Từng thay đổi được kiểm thử trên học kỳ thật của tôi.
+
+## Đóng góp
+
+| | Vai trò |
+|---|---|
+| **[@RichardHenry939](https://github.com/RichardHenry939)** | Chủ dự án: bài toán, kiến trúc, luật, điều phối các AI, kiểm thử |
+| **Codex** (OpenAI) | Sơ đồ khởi nguyên, lõi các agent, máy ghi bài giảng bản đầu |
+| **Freebuff** | Các phase mở rộng B–J, máy ghi bài giảng bản đầu |
+| **ChatGPT** (OpenAI) | Agent theo lịch giai đoạn đầu (chuyển kỳ, nghiên cứu tài liệu) |
+| **Claude Code** (Anthropic) | Hợp nhất hệ thống, đồng bộ trường, các tab và công cụ từ 02/10 |
+
+**Chạy bên trong hệ thống:**
+- **Gemini** (Google): đọc thư, phân loại, phân tích bài giảng đã nén;
+- **Qwen3** qua **LM Studio**: nén bản chép lời, dự phòng khi hết quota, chạy local;
+- **PhoWhisper** (VinAI): chép lời tiếng Việt trên NPU;
+- **Hội đồng 4 AI** trong AgentChattr: Claude, Codex, Gemini và một AI local, dùng để hỏi ý kiến khi gặp vấn đề khó.
 
 ## Chạy thử
 
