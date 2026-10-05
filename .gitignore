@@ -22,3 +22,7 @@ __pycache__/
 *.log
 *.lock
 _preview.html
+
+# Build .NET
+bin/
+obj/
