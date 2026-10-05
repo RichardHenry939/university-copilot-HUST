@@ -68,9 +68,11 @@ UC chạy trên laptop, cứ 20 phút đọc lại các nguồn (**chỉ đọc*
 
 UC không do một công cụ làm ra. Tôi **điều phối nhiều AI theo từng giai đoạn**. Mỗi khi một công cụ chạm giới hạn (hết quota, quên ngữ cảnh vì dự án quá lớn), tôi chuyển dự án sang công cụ tiếp theo. Bài toán, kiến trúc và luật của cả hệ thống thì tôi giữ xuyên suốt.
 
+Từ lúc nảy ra ý tưởng (18/08/2026) đến bản hiện tại là **khoảng 7 tuần**. (Câu hỏi đầu tiên với Notion AI, "How to use notion ?" ngày 01/03, chỉ là lúc tôi mới cài Notion khi đang ôn thi TSA. Khi đó chưa có dự án hay ý tưởng nào.)
+
 | Giai đoạn | Thời gian | Ai làm | Kết quả |
 |---|---|---|---|
-| **v0.0.00** | 01/03 – 23/08/2026 | **Notion AI** (chạy Claude Sonnet 5, bản miễn phí) | Từ câu hỏi đầu tiên "How to use notion ?" đến bản kiến trúc đầu tiên: Courses là gốc, S1–S8, Academic Work tách Academic Tasks. Tôi cho ChatGPT phản biện qua lại, rồi đánh giá bản chốt vẫn còn quá đơn giản |
+| **v0.0.00** | 18/08 – 23/08/2026 | **Notion AI** (chạy Claude Sonnet 5, bản miễn phí) | Ý tưởng nảy ra một tuần trước khi nhập học: "Something important for a Freshman…". Ra bản kiến trúc đầu tiên: Courses là gốc, S1–S8, Academic Work tách Academic Tasks. Tôi cho ChatGPT phản biện qua lại, rồi đánh giá bản chốt vẫn còn quá đơn giản |
 | Dựng đầu tiên | 23/08 – cuối 08 | **ChatGPT** + plugin Notion | Lần đầu tôi tập nối plugin. ChatGPT đọc được workspace thật, sửa kiến trúc rồi bắt tay dựng, đến khi hết quota. Hợp với giai đoạn dự án còn nhỏ |
 | Sơ đồ khởi nguyên | cuối 08/2026 | **Codex** | Bản thiết kế 10 phần, có Hội đồng 4 AI. Xem [docs/Ban-do-khoi-nguyen-Codex-2026-08.svg](docs/Ban-do-khoi-nguyen-Codex-2026-08.svg) |
 | Lõi các agent | 26/08 – giữa 09 | **Codex** | Nhập TKB / deadline, University Inbox (xếp tài liệu), chia nhỏ bài lớn, lập kế hoạch ngày, ghi tiến độ, gợi ý tài liệu, hệ 6-agent đầu tiên. Dự án lớn tới mức Codex quên cả hội thoại sau nhiều lần sửa, quota đốt liên tục |
