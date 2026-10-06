@@ -615,6 +615,10 @@ def a2_pump():
         _a2_pumping.release()
 
 def uni_files():
+    try:   # (6/10) ghi chú bài giảng do UC xuất từ Notion (lecture_export): đã ở Notion rồi -> không nạp ngược lên Notion / Drive
+        exported = {v["rel"].lower() for v in json.loads((HERE / "school" / "lecture_export.json").read_text(encoding="utf-8")).values()}
+    except Exception:
+        exported = set()
     for root, dirs, files in os.walk(UNI):
         rp = Path(root)
         rel_root = "" if rp == UNI else str(rp.relative_to(UNI))
@@ -622,7 +626,7 @@ def uni_files():
             dirs[:] = []; continue
         dirs[:] = [d for d in dirs if not d.startswith(".") and not (rel_root == "" and d.startswith("00 · Inbox"))]
         for f in files:
-            if not SKIP_FILE.search(f):
+            if not SKIP_FILE.search(f) and (os.path.join(rel_root, f) if rel_root else f).lower() not in exported:
                 yield os.path.join(rel_root, f) if rel_root else f
 
 def uni_sync_once():
@@ -784,6 +788,10 @@ def mail_run(by):
             import ctsv_live; importlib.reload(ctsv_live)
             if ctsv_live.due(): r["ctsv_live"] = ctsv_live.fetch()
         except Exception as e: r["ctsv_live"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
+        try:   # 📚 ghi chú bài giảng (Notion) -> Uni-Documents/<môn>/Ghi chú bài giảng/*.md — chỉ bài mới / vừa sửa
+            import lecture_export; importlib.reload(lecture_export)
+            r["lecture_export"] = lecture_export.run(_npost)
+        except Exception as e: r["lecture_export"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
         try:
             import expired; importlib.reload(expired)   # việc của trường đã hết hạn -> ✅ Academic Tasks (không ghi thành hạn)
             r["expired"] = expired.record(_npost)

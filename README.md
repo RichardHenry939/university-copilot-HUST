@@ -62,7 +62,7 @@ UC chạy trên laptop, đọc lại các nguồn đúng khung 5 phút suốt 24
 
 - **Python** (thư viện chuẩn + Playwright): khoảng 8.500 dòng, chia thành các module theo từng nguồn: `school_mail.py`, `teams_fetch.py`, `mooc.py`, `fami.py`, `mail_events.py`, `deadlines.py`, `alerts.py`, `phone_sched.py`…
 - **n8n** (Docker): các luồng tự động phía Notion. Workflow được sinh bằng code (`build.py`), không kéo thả tay. Sơ đồ khối: [Map-n8n.svg](docs/Map-n8n.svg) ([ảnh PNG](docs/Map-n8n.png)).
-- **Máy ghi bài giảng** (`lecture-recorder/`, C# .NET 8 + NAudio): ghi giảng đường bằng micro, học online bằng âm thanh máy, hoặc riêng cuộc họp Teams qua cáp ảo VB-CABLE → n8n → chép lời trên máy (PhoWhisper, NPU) → Gemini → ghi chú bài giảng trong Notion.
+- **Máy ghi bài giảng** (`lecture-recorder/`, C# .NET 8 + NAudio): ghi giảng đường bằng micro, học online bằng âm thanh máy, hoặc riêng cuộc họp Teams qua cáp ảo VB-CABLE → n8n → chép lời trên máy (PhoWhisper, NPU) → Gemini → ghi chú bài giảng trong Notion, đồng thời xuất file .txt vào thư mục đúng môn trong kho tài liệu.
 - **Cổng chép lời** (`speech-gate/`, Python + OpenVINO): kiểm tra chất lượng → chép lời PhoWhisper trên NPU → nén bằng LM Studio; audio không bao giờ gửi cho Gemini.
 - **Notion API**: nơi lưu dữ liệu.
 - **Gemini API** (flash-lite) để đọc mail và phân loại hạn. **LM Studio** (qwen3-8b, chạy local) để xếp tài liệu.
@@ -133,6 +133,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.08** | 06/10/2026 | Nhắc đúng mốc, không gửi bù: trước đây hạn mới phát hiện sau mốc 48 giờ hoặc mốc rơi vào đêm bị nhắc bù với số giờ lẻ ("còn 38 giờ", "còn 41 giờ"). Giờ chỉ nhắc đúng các mốc; mốc rơi vào 23:00–06:00 vẫn tới đúng giờ nhưng không chuông, không rung |
 | **v1.00.09** | 06/10/2026 | Luật mới "kệ giờ, phải đúng mốc": bỏ hẳn giờ yên lặng cho các mốc nhắc (thông báo không tự mất đi), mốc đêm có chuông như ban ngày. Nhắc tiết học cũng chỉ đúng 30 và 15 phút |
 | **v1.00.10** | 06/10/2026 | Cập nhật đúng khung 5 phút suốt 24 giờ (trước chỉ 06:00–23:30, khiến hạn xuất hiện ban đêm bị phát hiện muộn và lỡ mốc); máy tắt thì bỏ khung, không chạy bù. Hạn mới được báo ngay lúc xuất hiện, sau đó mới theo các mốc |
+| **v1.00.11** | 06/10/2026 | Ghi chú bài giảng không còn chỉ nằm trên Notion: mỗi ghi chú được xuất thành file .txt vào đúng thư mục môn đã gán trong Uni-Documents (`<môn>/Ghi chú Bài giảng/`), tự cập nhật khi ghi chú trên Notion được sửa. File UC xuất không bị nạp ngược lên Notion / Drive |
 
 ## Chạy thử
 

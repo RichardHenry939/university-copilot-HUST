@@ -201,7 +201,7 @@ steps = [
     "VAD lọc → PhoWhisper trên NPU → lọc câu bịa → Qwen nén",
     "Cổng chép lời gọi lại n8n: lecture-transcript-ready",
     "Gemini đọc CHỮ đã nén + slide (qua cổng hạn mức)",
-    "📚 Lecture Notes + 📥 Inbox (môn gán theo TKB) → A2 / A3",
+    "📚 Lecture Notes + bản .txt vào Uni-Documents/<môn>/Ghi chú Bài giảng",
 ]
 sy = comp_bottom + 56
 gap_s = (2350 - sy) / len(steps)

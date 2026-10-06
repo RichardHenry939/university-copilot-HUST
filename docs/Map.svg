@@ -213,7 +213,7 @@
 <text x="166" y="2268.444444444445" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Gemini đọc CHỮ đã nén + slide (qua cổng hạn mức)</text>
 <circle cx="130" cy="2302.2222222222226" r="19" fill="#14263A"/>
 <text x="130" y="2309.2222222222226" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">9</text>
-<text x="166" y="2309.2222222222226" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">📚 Lecture Notes + 📥 Inbox (môn gán theo TKB) → A2 / A3</text>
+<text x="166" y="2309.2222222222226" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">📚 Lecture Notes + bản .txt vào Uni-Documents/&lt;môn&gt;/Ghi chú Bài giảng</text>
 <rect x="1080" y="440" width="1940" height="1940" rx="0" fill="#F2F5F9" fill-opacity="1" stroke="#14263A" stroke-width="2.4"/>
 <rect x="1080" y="440" width="555.84" height="56" rx="0" fill="#14263A" fill-opacity="1" stroke="#14263A" stroke-width="0"/>
 <text x="1100" y="478" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="1.2">N8N · DOCKER · LOCALHOST:5678</text>

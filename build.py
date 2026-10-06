@@ -1062,7 +1062,7 @@ def academic_section(y):
         for a, b in zip(chain, chain[1:]):
             conns[a["name"]] = {"main": [[{"node": b["name"], "type": "main", "index": 0}]]}
     # Cổng Notion cho logic học tập trong web app (copilot_app.py /api/academic): chỉ các bảng học tập, không xoá.
-    allowed = [DB["courses"], DB["events"], DB["materials"], STATE_DB, TRACKER_DB, GRADES_DB, ATTEND_DB, CONDUCT_DB, RESEARCH_DB, NOTEBOOK_DB, DB["tasks"], DB["eq"], SUMMER_DB, RESULTS_DB, INBOX_DB, WORK_DB, REVISION_DB, GRAD_DB, MILESTONES_DB, BACKUP_DB, DB["daily"], WEEKLY_DB, CONTROL_DB, MODES_DB, ATTEMPTS_DB, SCHOOL_LOG_DB, EVENTS_TRACK_DB, EXTRA_DB] + CERT_DBS
+    allowed = [DB["courses"], DB["events"], DB["materials"], STATE_DB, TRACKER_DB, GRADES_DB, ATTEND_DB, CONDUCT_DB, RESEARCH_DB, NOTEBOOK_DB, DB["tasks"], DB["eq"], SUMMER_DB, RESULTS_DB, INBOX_DB, WORK_DB, REVISION_DB, GRAD_DB, MILESTONES_DB, BACKUP_DB, DB["daily"], WEEKLY_DB, CONTROL_DB, MODES_DB, ATTEMPTS_DB, SCHOOL_LOG_DB, EVENTS_TRACK_DB, EXTRA_DB, SESSIONS_DB, cfg.notion("lecture_notes")] + CERT_DBS   # (6/10) + 🎙️ Sessions, 📚 Lecture Notes (đọc -> Uni-Documents)
     guard_js = ("const ALLOW = " + json.dumps([a.replace("-", "") for a in allowed]) + ";\n"
                 "const ops = ($json.body && $json.body.ops) || [];\n"
                 "if (!Array.isArray(ops) || ops.length > 60) throw new Error('ops không hợp lệ');\n"
@@ -1074,6 +1074,7 @@ def academic_section(y):
                 "  if (o.method === 'POST' && qm) { if (!ALLOW.includes(qm[1])) throw new Error('bảng không được phép'); }\n"
                 "  else if (o.method === 'POST' && /\\/v1\\/pages$/.test(url)) { const p = String(body.parent?.database_id || '').replace(/-/g, ''); if (!ALLOW.includes(p)) throw new Error('bảng không được phép'); }\n"
                 "  else if (o.method === 'PATCH' && /\\/v1\\/pages\\/[0-9a-f-]{32,36}$/.test(url)) {}\n"
+                "  else if (o.method === 'GET' && /\\/v1\\/(blocks\\/[0-9a-f-]{32,36}\\/children|pages\\/[0-9a-f-]{32,36})(\\?[a-z_=0-9&-]*)?$/.test(url)) {}\n"   # (6/10) GET: chỉ đọc nội dung trang
                 "  else throw new Error('thao tác không được phép: ' + o.method + ' ' + url);\n"
                 "  return { json: { method: o.method, url, body: JSON.stringify(body) } };\n"
                 "});")
