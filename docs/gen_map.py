@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Bản đồ kiến trúc Hệ thống University — bản 4 (04/10/2026, chiều). Sinh SVG kiểu bản vẽ kỹ thuật."""
+"""Bản đồ kiến trúc Hệ thống University — bản 5 (06/10/2026). Sinh SVG kiểu bản vẽ kỹ thuật."""
 import html, sys
 
-W, H = 11800, 3400
+W, H = 13800, 3400
 OUT = sys.argv[1] if len(sys.argv) > 1 else "docs/Map.svg"
 
 # ---- tokens
@@ -119,7 +119,7 @@ def step(x, y, n):
 
 # ======================================================================
 add(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}">')
-add("<title>Bản đồ kiến trúc — Hệ thống University (bản 4, 04/10/2026)</title>")
+add("<title>Bản đồ kiến trúc — Hệ thống University (bản 5, 06/10/2026)</title>")
 add("<defs>")
 for c in (INK, RED, TEAL, INK2):
     add(f'<marker id="a-{c[1:]}" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M1,1 L11,6 L1,11 Z" fill="{c}"/></marker>')
@@ -133,7 +133,7 @@ rect(40, 40, W - 80, H - 80, "url(#G)", INK, 0)
 # ---- drawing frame + reference grid (A–H rows, 1–8 cols)
 rect(40, 40, W - 80, H - 80, "none", INK, 4)
 rect(64, 64, W - 128, H - 128, "none", INK, 1.5)
-cols, rows = 14, 8
+cols, rows = 16, 8
 for i in range(cols):
     cx = 64 + (W - 128) * (i + 0.5) / cols
     text(cx, 58, str(i + 1), 18, INK2, 600, F_HEAD, "middle"); text(cx, H - 46, str(i + 1), 18, INK2, 600, F_HEAD, "middle")
@@ -146,7 +146,7 @@ for j in range(rows):
 
 # ---- header
 text(100, 150, "Bản đồ kiến trúc · Hệ thống University", 64, INK, 600, F_HEAD, ls=0.5)
-text(102, 200, "Một trang nói hết: dữ liệu vào từ đâu, ai xử lý, lưu ở đâu, AI nào chạy ở chỗ nào, nhắc bạn lúc nào, và cái gì không bao giờ được xảy ra. Trạng thái thật chiều 04/10/2026.", 24, INK2)
+text(102, 200, "Một trang nói hết: dữ liệu vào từ đâu, ai xử lý, lưu ở đâu, AI nào chạy ở chỗ nào, nhắc bạn lúc nào, và cái gì không bao giờ được xảy ra. Trạng thái thật 06/10/2026.", 24, INK2)
 
 # user entry chips
 text(100, 282, "CỬA VÀO CỦA BẠN", 17, INK2, 600, F_HEAD, ls=3)
@@ -154,7 +154,7 @@ cx_ = 100
 entries = [("University Copilot", "Chrome App · :8320", 330), ("AgentChattr", "Chrome App · :8300", 290),
            ("Notion · Home Dashboard", "sửa trực tiếp, tick Convene", 360), ("Form Quick Upload", "n8n form", 250),
            ("Google Drive", "Course Materials Backup", 300), ("Lớp học / bài online", "micro · âm thanh app", 310), ("qldt · iCTSV", "dữ liệu trường · tự đồng bộ", 330),
-           ("Mail · Teams · MOOC · FAMI", "chỉ đọc · 20 phút/lần", 330), ("Điện thoại · ntfy", "nhắc + nút bấm · cả khi máy ngủ", 360), ("Notion app · 📱 UC", "xem khi laptop ngủ", 290)]
+           ("Mail · Teams · MOOC · FAMI", "chỉ đọc · 5 phút/lần", 330), ("Điện thoại · ntfy", "nhắc + nút bấm · cả khi máy ngủ", 360), ("Notion app · 📱 UC", "xem khi laptop ngủ", 290), ("NotebookLM", "nhận tài liệu khi bạn bấm", 300)]
 chip_pos = {}
 for lab, sub, w in entries:
     chip(cx_, 300, w, lab, sub)
@@ -163,25 +163,34 @@ for lab, sub, w in entries:
 
 # ======================================================================
 # COL A — 0 · Cửa trước Copilot
-zone(80, 440, 960, 760, "0", "Cửa trước · University Copilot", "copilot_app.py · ui/index.html · 127.0.0.1:8320 — một cửa duy nhất thay cho “buồng lái”", Z_FRONT, new=True)
-FA = [("Chat", "POST /webhook/copilot-api · X-Copilot-Key", ["Hỏi bằng lời, đính kèm ảnh / file; ảnh gửi Gemini dạng nhị phân"]),
-      ("Hôm nay · Lịch · Ngoại khoá · 🔔", "tab Hôm nay / Lịch / Ngoại khoá · chuông cạnh tên app", ["Hạn sắp tới (tích Hoàn tất = biến mất) · Có thể trùng · lịch học và lịch ngoại khoá tách riêng", "🔔 gom mọi cảnh báo, không che tab · Gợi ý (Mục 7)"]),
-      ("Inbox · xếp file", "Tika → qwen3-14b → từ khoá môn (COURSE_HINTS)", ["Vân tay SHA-256 so với cả Uni-Documents TRƯỚC khi xếp: trùng → không chép thêm", "→ copilot-file-ingest: Drive → 📥 University Inbox → Mục 3·30"]),
-      ("Ghi bài giảng", "/api/rec/*  ·  /api/lectures  ·  /api/gemini", ["Start / Stop / marker / ảnh slide; thanh bên “Gemini hôm nay”"])]
+FA = [("Chat", "POST /webhook/copilot-api · X-Copilot-Key", ["Hỏi bằng lời, đính kèm ảnh / file; ảnh gửi Gemini dạng nhị phân",
+                                                                   "Luật trung thực: chỉ nói “đã làm” khi công cụ trả kết quả thật · nhớ hội thoại + việc chờ bạn xác nhận (chat_memory.py)",
+                                                                   "Công cụ dời hạn (reschedule.py): chỉ hạn Tự luyện, 2 bước xem trước → ghi; hạn Môn học / của trường từ chối"]),
+      ("Hôm nay · Lịch · Ngoại khoá · Hành chính · Học bổng · 🔔", "tab của web app · chuông cạnh tên app · tự tải lại 15 phút/lần", ["Hạn sắp tới (tích Hoàn tất = biến mất) · Có thể trùng · lịch học và lịch ngoại khoá tách riêng", "🔔 gom mọi cảnh báo, không che tab · Gợi ý (Mục 7) · Hành chính / Học bổng → Mục 20"]),
+      ("Inbox · xếp file", "Tika → qwen3-14b → từ khoá môn (COURSE_HINTS)", ["Vân tay SHA-256 so với cả Uni-Documents TRƯỚC khi xếp: trùng → không chép thêm", "→ copilot-file-ingest: Drive → 📥 University Inbox → Mục 3·30", "→ gửi tài liệu sang NotebookLM (Mục 20)"]),
+      ("Ghi bài giảng", "/api/rec/*  ·  /api/lectures  ·  /api/lecture-monitor", ["Start / Stop / marker / ảnh slide; thanh bên “Gemini hôm nay”",
+                                                                             "“Đang tải lên”: giám sát từng chặng ①→⑨ mỗi phút, tự ghi lỗi, lỗi tự hết khi chặng chạy lại được · không tốn quota AI (lecture_monitor.py)"])]
+FA_I = len(out)
 y = 556
 FA_Y = {}
 for t, m, ls in FA:
     FA_Y[t] = y
     y = card(108, y, 900, None, "", t, m, ls) + 14
 FRONT_BOTTOM = y - 14
+Z0_H = FRONT_BOTTOM + 28 - 440
+_mark = len(out)
+zone(80, 440, 960, Z0_H, "0", "Cửa trước · University Copilot", "copilot_app.py · ui/index.html · 127.0.0.1:8320 — một cửa duy nhất thay cho “buồng lái”", Z_FRONT, new=True)
+_z = out[_mark:]; del out[_mark:]; out[FA_I:FA_I] = _z   # vùng nền vẽ TRƯỚC các thẻ
 
 # COL A — 11 · Ghi bài giảng
-zone(80, 1240, 960, 1140, "11", "Ghi bài giảng", "Từ nút Start tới ghi chú trong Notion — bút dạ vàng ①→⑨", Z_REC, new=True)
-COMP_Y = 1356
+Z11_Y = 440 + Z0_H + 40
+zone(80, Z11_Y, 960, 2380 - Z11_Y, "11", "Ghi bài giảng", "Từ nút Start tới ghi chú trong Notion — bút dạ vàng ①→⑨", Z_REC, new=True)
+COMP_Y = Z11_Y + 116
 comp_bottom = card(108, COMP_Y, 900, None, "", "LectureRecorderCompanion", "C# .NET 8 · NAudio · 127.0.0.1:5681 · tự bật cùng máy, không tự ghi",
      ["Chỉ ghi khi bạn bấm Start, chỉ dừng khi bạn bấm Stop",
       "Ngắt an toàn 3 h 30 (yêu cầu ≥ 3 h 10), có cảnh báo trước",
-      "Nguồn: micro · âm thanh cả máy · âm thanh riêng 1 app (học online) · trộn micro",
+      "Nguồn: micro · âm thanh cả máy · âm thanh riêng 1 app · Teams qua cáp riêng VB-CABLE (chỉ bắt Teams, bạn vẫn nghe bình thường) · trộn micro",
+      "Im lặng 30 giây → cảnh báo ngay trên UC",
       "16 kHz mono, bơm theo đồng hồ thật → D:\\…\\Documents\\LectureRecorder"])
 steps = [
     "Bấm Start ở tab Ghi bài giảng (Copilot)",
@@ -468,7 +477,7 @@ gy_ = card(FX + 28, 556, FW - 56, None, "", "Đọc trường · school_fetch.py
       "Hết phiên → tự đăng nhập: qldt → e.hust SSO → Microsoft → ADFS (sso / asso.hust.edu.vn) · iCTSV: bấm qua hộp “Phiên đăng nhập đã hết hạn”",
       "Mật khẩu: Windows Credential Manager, bạn tự cất (school_cred.py) · chỉ điền trên 3 trang đăng nhập · 1 lần/lượt · sai → khoá",
       "Xác minh 2 bước / captcha → dừng, báo trên thanh “Dữ liệu trường”"], fill="#fff", accent=TEAL) + 20
-gy_ = card(FX + 28, gy_, FW - 56, None, "", "Ghi Notion · school_sync.py", "web app tự chạy 06:30 · 12:30 · 18:30 · 22:30 (+ chạy bù khi mở máy) · nút Đồng bộ ngay cần Xác nhận",
+gy_ = card(FX + 28, gy_, FW - 56, None, "", "Ghi Notion · school_sync.py", "web app tự chạy 5 phút/lần (06:00–23:30, + chạy bù khi mở máy) · nút Đồng bộ ngay cần Xác nhận",
      ["TKB → 🗓️ Timetable qua tkb.run (khoá Sync Key) · buổi không còn trên qldt → thùng rác Notion",
       "Vắng → Courses “Vắng (trường)” → cảnh báo cấm thi · điểm thành phần, điểm HP, kết quả → Courses",
       "GPA / CPA / TC tích luỹ / TC nợ / cảnh báo theo kỳ → Tracker · điểm rèn luyện → ⭐ Rèn luyện",
@@ -490,7 +499,7 @@ gy_ = card(FX + 28, gy_, FW - 56, None, "", "Thao tác ghi luôn hỏi lại", "
 text(FX + 28, gy_, "LUỒNG MỘT LƯỢT ĐỒNG BỘ", 17, INK2, 600, F_HEAD, ls=2.5)
 flow = [("qldt · iCTSV", "trang web của trường (Office 365 / ADFS)", "#fff", INK),
         ("Chrome hồ sơ đồng bộ", "mở → tự đăng nhập nếu hết phiên → đọc bảng → đóng", "#fff", TEAL),
-        ("school/latest.json", "ảnh chụp dữ liệu (giữ 30 bản) · fetch.log không có mật khẩu", "#fff", INK2),
+        ("school/latest.json", "ảnh chụp dữ liệu (giữ 30 bản) · lượt lỗi chỉ ghi fetch_last.json, không đè bản tốt", "#fff", INK2),
         ("school_sync.py", "so với Notion theo luật tối cao · không đổi thì không ghi", "#fff", RED),
         ("Notion", "Timetable · Courses · Tracker · ⭐ Rèn luyện · 🏫 Đồng bộ trường · 🎯 Ngoại khoá", "#fff", INK),
         ("University Copilot", "tab Lịch · Học kỳ · Hôm nay · Ngoại khoá · cảnh báo cấm thi · bản tin", "#fff", INK)]
@@ -509,13 +518,13 @@ for i, (t_, sub_, fl, ac) in enumerate(flow):
 # COL G — 17 · Thư trường · Teams · Ngoại khoá ; 18 · Nhắc · điện thoại   (04/10 chiều)
 GX, GW = 7960, 1760
 Z17_H = 1110
-zone(GX, 440, GW, Z17_H, "17", "Thư · Teams · Ngoại khoá", "Đọc thay bạn mọi kênh của trường — chỉ đọc, 20 phút/lần (06:00–23:30), cùng một hồ sơ Chrome", "#F3F6F2", new=True)
+zone(GX, 440, GW, Z17_H, "17", "Thư · Teams · Ngoại khoá", "Đọc thay bạn mọi kênh của trường — chỉ đọc, 5 phút/lần (06:00–23:30), cùng một hồ sơ Chrome", "#F3F6F2", new=True)
 gh = (GW - 56 - 20) // 2
 g1 = row(556, [
     (GX + 28, gh, "", "Thư trường · school_mail.py", "Outlook REST bằng token của chính trang",
      ["Không mở thư → không đổi “đã đọc”; không gửi / xoá / di chuyển", "→ school/mail/inbox.json (giữ 400 thư)"], INK),
     (GX + 28 + gh + 20, gh, "", "Teams · teams_fetch.py", "Graph bằng token trang Teams web",
-     ["7 lớp: bài đăng (mỗi lần SỬA bài = 1 phiên bản), thẻ Assignments (hạn), file trong kênh",
+     ["Mọi lớp, cả kênh ẩn: bài đăng (mỗi lần SỬA bài = 1 phiên bản), thẻ Assignments (hạn), file trong kênh + Shared Documents",
       "MOOC soict.daotao.ai (mooc.py, “Đăng nhập bằng HUST”): hạn + ĐIỂM bài → thêm / sửa hạn, có điểm = Hoàn tất, quá hạn 0 điểm = báo bỏ lỡ"], INK)]) + 20
 g2 = card(GX + 28, g1, GW - 56, None, "", "Trích sự kiện · mail_events.py", "Gemini Flash-Lite (cổng :8350, caller mail) CHỈ trích dữ liệu · code so sánh",
      ["Thư / bài sửa cùng chủ đề → dòng “Trước → Nay” (so chữ, không AI) — vd phòng 2 “101-200 → 101-205”",
@@ -528,7 +537,8 @@ g3 = row(g2, [
      ["Teams → đúng thư mục môn / loại (đặt cạnh file cùng tên)", "📥 Notion → máy (không nạp lại) · file thả ở gốc môn → tự vào thư mục loại",
       "Tranh chấp phiên bản: bản trên Teams (trường) luôn thắng, bản cũ rời kho — file trên máy giữ cả hai"], INK),
     (GX + 28 + gh + 20, gh, "", "Ngoại khoá · extracurricular.py", "CTSV + mail / Teams → 🎯 · tab Ngoại khoá",
-     ["Đã đăng ký (Chờ / Đã xác nhận) · hạn nộp minh chứng (điểm rèn luyện) · đang mở · học bổng còn hạn",
+     ["Đã đăng ký (Chờ / Đã xác nhận) · hạn nộp minh chứng (điểm rèn luyện)",
+      "Một danh sách “có thể đăng ký”: CTSV + thư / Teams, xếp theo ngày công bố, ghi nguồn, link đăng ký thẳng · trùng → giữ bản CTSV",
       "Lịch tuần + tháng riêng, KHÔNG lẫn vào lịch học / hạn học tập"], INK)]) + 20
 G17_END = card(GX + 28, g3, GW - 56, None, "", "Quét trùng · dupscan.py", "sau mỗi lượt đồng bộ trường + mỗi lượt thư / Teams",
      ["Hạn còn mở lệch ≤ 2 giờ + tên giống · dòng lịch cùng ngày · sự kiện trùng buổi học",
@@ -571,19 +581,19 @@ HX, HW = 9760, 1960
 zone(HX, 440, HW, 1940, "19", "Nguồn thông tin của UC", "UC TỰ đọc các trang này — bạn không phải mở, chép hay báo lại. Tất cả CHỈ ĐỌC.", "#F2F4FA", new=True)
 SRC = [  # (trang, đọc gì, cách đọc, đăng nhập, nhịp, mức tự động, màu)
     ("qldt.hust.edu.vn", "TKB chi tiết (phòng, tuần, online) · vắng · bảng điểm · khung CTĐT", "đọc bảng trên trang (API trường mã hoá)",
-     "e.hust SSO → Microsoft → ADFS, tự điền từ Credential Manager", "06:30 · 12:30 · 18:30 · 22:30", "Tự động", TEAL),
-    ("ctsv.hust.edu.vn (iCTSV)", "điểm rèn luyện · hoạt động đã đăng ký · hạn minh chứng · đang mở · học bổng", "API JSON của chính trang",
-     "bấm qua “Phiên hết hạn” → ADFS asso", "cùng lượt qldt", "Tự động", TEAL),
+     "e.hust SSO → Microsoft → ADFS, tự điền từ Credential Manager", "5 phút (06:00–23:30)", "Tự động", TEAL),
+    ("ctsv.hust.edu.vn (iCTSV)", "điểm rèn luyện · hoạt động (1000 dòng) · hạn minh chứng · học bổng · thông báo · giấy tờ · thủ tục · đặt vé", "API JSON của chính trang",
+     "bấm qua “Phiên hết hạn” → ADFS asso", "5 phút", "Tự động · công nợ: chỉ link", TEAL),
     ("Outlook · thư trường", "thư gửi bạn: lịch thi, đính chính, xác nhận đăng ký, thông báo", "Outlook REST bằng token của trang",
-     "phiên Microsoft của hồ sơ Chrome", "20 phút (06:00–23:30)", "Tự động · không đổi “đã đọc”", TEAL),
-    ("Teams", "bài đăng 7 lớp (sửa bài = phiên bản mới) · thẻ bài tập (hạn) · file trong kênh", "Microsoft Graph bằng token của trang",
-     "phiên Microsoft", "20 phút", "Tự động", TEAL),
+     "phiên Microsoft của hồ sơ Chrome", "5 phút (06:00–23:30)", "Tự động · không đổi “đã đọc”", TEAL),
+    ("Teams", "bài đăng mọi lớp, cả kênh ẩn (sửa bài = phiên bản mới) · thẻ bài tập (hạn) · file + Shared Documents (công thức điểm)", "Microsoft Graph bằng token của trang",
+     "phiên Microsoft", "5 phút", "Tự động", TEAL),
     ("soict.daotao.ai (MOOC)", "hạn + ĐIỂM bài trước lớp / lab → biết đã làm hay bỏ lỡ · khoá Sinh hoạt công dân", "API Open edX (progress)",
-     "“Đăng nhập bằng HUST” → phiên Microsoft", "20 phút", "Tự động", TEAL),
+     "“Đăng nhập bằng HUST” → phiên Microsoft", "5 phút", "Tự động", TEAL),
     ("fami.hust.edu.vn/sohoa (FAMI)", "học phần mã MI: thi theo chương (CĐ1…10, mở / đóng theo tuần), điểm danh, điểm QT — bài ngầm, không có trên Teams / MOOC", "API của chính trang (Bearer của trang)",
-     "“Đăng nhập bằng Microsoft Teams” → phiên Microsoft", "20 phút", "Tự động", TEAL),
+     "“Đăng nhập bằng Microsoft Teams” → phiên Microsoft", "5 phút", "Tự động", TEAL),
     ("Notion · 📥 University Inbox", "file bạn tải thẳng lên Notion → kéo về Uni-Documents", "Notion API qua n8n",
-     "tích hợp n8n", "20 phút", "Tự động", TEAL),
+     "tích hợp n8n", "5 phút", "Tự động", TEAL),
     ("Uni-Documents (ổ D:)", "file bạn thả vào → xếp môn / loại, chống trùng, lên Drive + Notion", "quét thư mục",
      "—", "mỗi phút", "Tự động", TEAL),
     ("Điện thoại · kênh lệnh ntfy", "nút Sẽ đi / Bỏ / Đã biết (có chữ ký) · lệnh hôm nay / mai / hạn", "ntfy stream",
@@ -620,11 +630,11 @@ for k_, v_, c_ in auto_box:
     para(HX + 330, sy_ + 30, v_, HW - 400, 17, INK)
     sy_ += hh_ + 12
 SRC_END = sy_
-# một lượt 20 phút (mail_run) — chuỗi tự động
-text(HX + 28, sy_ + 20, "MỘT LƯỢT 20 PHÚT · KHÔNG CẦN BẠN", 17, INK2, 600, F_HEAD, ls=2.5)
+# một lượt 5 phút (mail_run) — chuỗi tự động
+text(HX + 28, sy_ + 20, "MỘT LƯỢT 5 PHÚT · KHÔNG CẦN BẠN", 17, INK2, 600, F_HEAD, ls=2.5)
 chain = [("Thư", "school_mail"), ("Teams", "teams_fetch"), ("File Teams", "teams_files"), ("MOOC", "mooc"), ("FAMI · MI", "fami"), ("Hết hạn → ✅ Tasks", "expired"),
-         ("📥 Notion → máy", "teams_files"), ("Trích sự kiện", "mail_events"), ("Bài tập → 📋", "deadlines"), ("🎯 Ngoại khoá", "extracurricular"),
-         ("Quét trùng", "dupscan"), ("Hẹn ntfy · 📱", "phone_sched / page")]
+         ("📥 Notion → máy", "teams_files"), ("Trích sự kiện", "mail_events"), ("Phân loại thư", "mail_kinds"), ("Bài tập → 📋", "deadlines"), ("Công thức điểm", "course_detail"),
+         ("CTSV nhanh", "ctsv_live"), ("🎯 Ngoại khoá", "extracurricular"), ("Quét trùng", "dupscan"), ("Hẹn ntfy · 📱", "phone_sched / page")]
 per = 4; bw_ = (HW - 56 - (per - 1) * 46) / per; bh_ = 64
 cy0 = sy_ + 40
 for i, (t_, m_) in enumerate(chain):
@@ -645,13 +655,45 @@ for i, (t_, m_) in enumerate(chain):
 SRC_END = cy0 + ((len(chain) - 1) // per + 1) * (bh_ + 40)
 
 # ======================================================================
+# COL I — 20 · Hành chính · Học bổng · Học phần · NotebookLM   (05–06/10)
+IX, IW = 11760, 1960
+zone(IX, 440, IW, 1940, "20", "Hành chính · Học bổng · Học phần", "Phần hành chính của trường gom về UC — chỉ đọc, link dẫn thẳng tới trang đăng ký · UC không làm giảng viên", "#F6F3FA", new=True)
+ih = (IW - 56 - 20) // 2
+iy = card(IX + 28, 556, IW - 56, None, "", "CTSV nhanh · ctsv_live.py", "mở /thong-bao một lần rồi gọi API của chính trang · 5 phút/lần · chỉ đọc",
+     ["Sự kiện / hoạt động 1000 dòng (như /danh-sach-su-kien): mô tả, tiêu chí điểm rèn luyện, link đăng ký thẳng",
+      "Thông báo gửi riêng · giấy tờ đã xin + trạng thái · thủ tục có thể xin (bấm là mở form)",
+      "Đặt vé: sự kiện sắp tới + vé của bạn (đọc lại phản hồi trang, không giữ mã phiên) · vé tự ẩn khi sự kiện đã qua",
+      "Công nợ có reCAPTCHA → chỉ đưa link, không tự tra, không vượt captcha"], fill="#fff", accent=TEAL) + 20
+iy = card(IX + 28, iy, IW - 56, None, "", "Phân loại thư · mail_kinds.py", "luật trước (0 quota) → còn lại gom lô 30 thư / 1 lần Gemini Flash-Lite",
+     ["môn học → Lịch · ngoại khoá → Ngoại khoá · hành chính + thông báo chung → Hành chính · học bổng → Học bổng",
+      "Thư tự động của Teams (được thêm vào nhóm, được nhắc tên) → thông báo chung, không phải hoạt động"], fill="#fff", accent=INK) + 20
+iy = row(iy, [
+    (IX + 28, ih, "", "Tab Hành chính", "CTSV + thư hành chính + thông báo chung",
+     ["Thủ tục, giấy tờ, thông báo, đặt vé — mỗi mục có link đính kèm dẫn thẳng tới trang đăng ký"], INK),
+    (IX + 28 + ih + 20, ih, "", "Tab Học bổng · scholarships.py", "tách khỏi Ngoại khoá (05/10)",
+     ["Đang mở / đã đóng theo ngày công bố thật · giá trị · liên hệ · mô tả"], INK)]) + 20
+iy = card(IX + 28, iy, IW - 56, None, "", "Lọc thông báo cũ · stale_filter.py", "luật của bạn (05/10) · không gọi AI",
+     ["Có ghi ngày → chỉ giữ khi còn ít nhất một ngày chưa qua (ngày không ghi năm lấy năm của thông báo)",
+      "Không ghi ngày → cũ hơn 90 ngày thì ẩn · năm n không hiện thông báo năm n-1 (trừ khi hạn kéo sang năm n)",
+      "Áp cho thông báo CTSV, thư Hành chính và thông báo thư / Teams ở Ngoại khoá · số mục bị ẩn hiện ngay trên tab"], fill="#fff", accent=RED) + 20
+iy = card(IX + 28, iy, IW - 56, None, "", "Chi tiết học phần · course_detail.py", "tab Học kỳ → bấm một môn",
+     ["Lớp thành phần (LT / BT / TN) + điểm thành phần từ bảng điểm qldt",
+      "Công thức điểm: bài đăng Teams, trang được dẫn tới, file trong kênh ẩn + Shared Documents (Tika đọc) → Gemini chỉ đọc lại khi nội dung đổi",
+      "Nguồn từng thành phần theo tên: liên tục → FAMI · giữa kỳ / thực hành → qldt · MOOC → bài tuần · chuyên cần",
+      "Cuối kỳ cần bao nhiêu điểm cho từng mức A+ … D"], fill="#fff", accent=INK) + 20
+card(IX + 28, iy, IW - 56, None, "", "Gửi tài liệu sang NotebookLM · nlm_bridge.py", "tab Inbox · chỉ chạy khi bạn bấm, luôn hỏi Xác nhận",
+     ["Tìm trong Uni-Documents → tích chọn → thêm vào notebook có sẵn hoặc tạo notebook mới",
+      "UC dừng ở đó: không tạo task ôn, không ghi Notion, không gọi AI — UC lo hành chính, việc học bạn làm trong NotebookLM",
+      "Phiên Google: tác vụ “NotebookLM keepalive” 20 phút/lần; Google bắt đăng nhập tay → cửa sổ Chrome ở lại tới khi đăng nhập (đóng là mở lại)"], fill="#fff", accent=TEAL)
+
+# ======================================================================
 # Hành trình bản 1 -> bản 2
 JY = 2440 + Z12H + 26
 JH = 3000 - JY
 rect(80, JY, W - 160, JH, "#fff", INK, 2.4)
 rect(80, JY, 340, JH, INK, INK, 0)
 text(100, JY + 44, "HÀNH TRÌNH", 26, "#fff", 600, F_HEAD, ls=2)
-text(100, JY + 74, "bản 1 → bản 3", 19, "#C9D3DD")
+text(100, JY + 74, "bản 1 → bản 5", 19, "#C9D3DD")
 miles = [("08/2026", "Bản 1 (Codex): 10 mục, 6 agent rời rạc, hội đồng 5 ghế có Kimi"),
          ("01–02/10", "Gộp 16 workflow thành 1 “Copilot hợp nhất” + web app một cửa"),
          ("02/10", "Kimi rời hội đồng · Local AI (qwen3-14b) vào ghế phản biện · bộ giữ ghế"),
@@ -663,7 +705,10 @@ miles = [("08/2026", "Bản 1 (Codex): 10 mục, 6 agent rời rạc, hội đ�
          ,("04/10 sáng", "Bản 3: đồng bộ qldt + iCTSV, dữ liệu trường là cao nhất")
          ,("04/10 trưa", "Đọc thư trường + Teams · đính chính = Trước → Nay · nhắc leo thang, toast + điện thoại")
          ,("04/10 chiều", "Bản 4: hạn 3 mức · nhắc tiết học · ngoại khoá CTSV · quét trùng · nhắc cả khi laptop ngủ")
-         ,("04/10 tối", "MOOC SoICT + FAMI (thi theo chương MI) · việc hết hạn → Academic Tasks · bản đồ nguồn (Mục 19)")]
+         ,("04/10 tối", "MOOC SoICT + FAMI (thi theo chương MI) · việc hết hạn → Academic Tasks · bản đồ nguồn (Mục 19)")
+         ,("05/10 trưa", "Chat trung thực + nhớ hội thoại · dời hạn tự đặt · ghi Teams qua cáp riêng · giám sát Ghi bài giảng")
+         ,("05/10 tối", "Tab Hành chính + Học bổng · phân loại thư · CTSV 1000 dòng · mọi nguồn 5 phút/lần")
+         ,("06/10", "Bản 5: chi tiết điểm học phần · gửi tài liệu sang NotebookLM · lọc thông báo hết hạn")]
 mx0, mx1 = 460, W - 110
 step_w = (mx1 - mx0) / len(miles)
 add(f'<path d="M{mx0} {JY + 30}H{mx1}" stroke="{INK}" stroke-width="2"/>')
@@ -694,11 +739,12 @@ cons = ["Chỉ ghi âm khi bấm Start, chỉ dừng khi bấm Stop (ngắt an t
         "Chủ tọa quyết định cuối · C: chỉ cho hệ điều hành",
         "Luật tối cao: thiếu → thêm · tranh chấp → trường thắng · thừa → giữ",
         "Ghi trên UI luôn hỏi Xác nhận · mật khẩu chỉ ở Credential Manager · không tự xoá, chỉ thùng rác",
-        "Nguồn trường chỉ đọc · bài hết hạn không ghi thành hạn (→ Academic Tasks) · điện thoại không Hoàn tất / Tắt nhắc"]
-cy_ = 3092
+        "Nguồn trường chỉ đọc · bài hết hạn không ghi thành hạn (→ Academic Tasks) · điện thoại không Hoàn tất / Tắt nhắc",
+        "UC lo hành chính, không làm giảng viên: không tạo task ôn · chat chỉ báo “đã làm” khi có kết quả thật"]
+cy_ = 3090
 for c in cons:
     add(f'<rect x="2424" y="{cy_ - 12}" width="9" height="9" fill="{RED}"/>')
-    text(2446, cy_, c, 15, INK); cy_ += 27
+    text(2446, cy_, c, 15, INK); cy_ += 24.5
 
 
 # Ai chạy cái gì
@@ -706,27 +752,28 @@ rect(3640, 3020, W - 1160 - 40 - 3640, 300, "#fff", INK, 2.6)
 rect(3640, 3020, 300, 48, INK, INK, 0)
 text(3660, 3053, "AI CHẠY CÁI GÌ", 20, "#fff", 700, F_HEAD, ls=1.5)
 whos = [("n8n · máy bạn (Docker)", "Mục 1–10, não Copilot, bản tin, hội đồng N9, 2 workflow bài giảng", INK),
-        ("Dịch vụ máy bạn", "web app :8320 (trường 4 lần/ngày · thư + Teams 20 phút · nhắc mỗi phút · Chrome hồ sơ riêng), cổng Gemini :8350, chép lời :8340, SearXNG, AgentChattr, LM Studio", INK),
+        ("Dịch vụ máy bạn", "web app :8320 (trường · thư · Teams · CTSV 5 phút/lần · nhắc + giám sát bài giảng mỗi phút · Chrome hồ sơ riêng), cổng Gemini :8350, chép lời :8340, SearXNG, AgentChattr, LM Studio", INK),
+        ("NotebookLM · Google", "nhận tài liệu UC gửi khi bạn bấm — việc ôn bạn tự làm trong đó; phiên giữ bởi tác vụ keepalive 20 phút", TEAL),
         ("ntfy.sh", "đưa nhắc tới điện thoại, giữ hộ lần nhắc đã hẹn (≤ 3 ngày) khi laptop ngủ — không chạy logic", TEAL),
         ("ChatGPT · đám mây", "không còn việc nào — chuyển kỳ, nghiên cứu, kiểm tra ôn thi đã về n8n (03/10/2026)", TEAL),
         ("Notion", "chỉ lưu và hiển thị: database, view, form — tự nó không chạy logic", INK2)]
-wy = 3098
+wy = 3094
 for k_, v_, c_ in whos:
     text(3664, wy, k_, 18, c_, 700, F_HEAD)
     text(3664 + 330, wy, v_, 18, INK)
-    wy += 44
+    wy += 37
 
 # Title block
 rect(W - 1160, 3020, 1080, 300, "#fff", INK, 2.6)
 add(f'<path d="M{W - 1160} 3110H{W - 80}M{W - 1160} 3170H{W - 80}M{W - 1160} 3230H{W - 80}M{W - 1160} 3280H{W - 80}M{W - 620} 3110V3280" stroke="{INK}" stroke-width="1.3"/>')
 text(W - 1138, 3058, "HỆ THỐNG UNIVERSITY", 30, INK, 700, F_HEAD, ls=2)
 text(W - 1138, 3094, "Bản đồ kiến trúc toàn hệ thống", 19, INK2)
-for (x_, y_, k, v) in [(W - 1138, 3150, "Phiên bản", "4 · 04/10/2026 chiều"), (W - 600, 3150, "Thay cho", "bản 3 · 04/10/2026 sáng"),
-                       (W - 1138, 3210, "Vẽ", "Claude Code"), (W - 600, 3210, "Nguồn", "n8n · Notion · qldt · iCTSV · Teams · mã trên D:"),
+for (x_, y_, k, v) in [(W - 1138, 3150, "Phiên bản", "5 · 06/10/2026"), (W - 600, 3150, "Thay cho", "bản 4 · 04/10/2026 chiều"),
+                       (W - 1138, 3210, "Vẽ", "Claude Code"), (W - 600, 3210, "Nguồn", "n8n · Notion · qldt · iCTSV · Teams · mã nguồn"),
                        (W - 1138, 3266, "Tỉ lệ", "không theo tỉ lệ"), (W - 600, 3266, "Tờ", "1 / 1")]:
     text(x_, y_ - 18, k.upper(), 12, INK3, 600, F_HEAD, ls=2)
     text(x_, y_ + 6, v, 19, INK, 500)
-text(W - 1138, 3306, "Mục 1–10 giữ số bản 1 · 0, 11–19 là phần mới (17–19 ngày 04/10)", 15, INK3)
+text(W - 1138, 3306, "Mục 1–10 giữ số bản 1 · 0, 11–20 là phần mới (17–19 ngày 04/10, 20 ngày 05–06/10)", 15, INK3)
 
 # Legend
 LX, LY = 6400, 268

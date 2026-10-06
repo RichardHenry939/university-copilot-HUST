@@ -21,7 +21,7 @@ App của trường chỉ gửi một thông báo lúc 6h sáng cho cả ngày. 
 
 ## Giải pháp
 
-UC chạy trên laptop, cứ 20 phút đọc lại các nguồn (**chỉ đọc**, không bao giờ gửi, xoá hay nộp bài thay tôi). Sau đó nó:
+UC chạy trên laptop, cứ 5 phút đọc lại các nguồn (**chỉ đọc**, không bao giờ gửi, xoá hay nộp bài thay tôi). Sau đó nó:
 
 - **Gộp** lịch, hạn, sự kiện vào một workspace Notion và một giao diện web cục bộ.
 - **Đọc mail bằng AI**: một sự kiện có nhiều chặng (đăng ký, thi, phúc khảo…). Thư đính chính hiển thị dạng *Trước → Nay*.
@@ -34,10 +34,13 @@ UC chạy trên laptop, cứ 20 phút đọc lại các nguồn (**chỉ đọc*
 - **Đồng bộ tài liệu hai chiều**: Teams ⇄ thư mục tài liệu trên máy ⇄ Notion. Tài liệu được xếp đúng môn, chống trùng bằng SHA-256.
 - **Quét trùng**: phát hiện hạn hoặc lịch bị nhập hai lần. Hai mục khác mã môn thì không bao giờ bị coi là trùng.
 - **Có trang riêng trên điện thoại** (Notion) và nhận lệnh xem nhanh qua ntfy.
+- **Gom phần hành chính**: thông báo, giấy tờ, thủ tục, đặt vé của CTSV và thư hành chính vào tab *Hành chính*; học bổng có tab riêng. Mỗi mục có link dẫn thẳng tới trang đăng ký, thông báo đã hết hạn tự ẩn.
+- **Chi tiết học phần**: bấm một môn để xem lớp thành phần, điểm thành phần và công thức tính điểm (lấy từ Teams, qldt, MOOC, FAMI).
+- **Gửi tài liệu sang NotebookLM**: tìm trong kho tài liệu, tích chọn, thêm vào notebook. UC dừng ở đó; việc ôn tập không phải việc của UC.
 
 [![Bản đồ hệ thống](docs/Map.png)](docs/Map.svg)
 
-*Bấm vào ảnh để mở bản SVG nét đầy đủ (rộng 11.800 px, phóng to thoải mái).*
+*Bấm vào ảnh để mở bản SVG nét đầy đủ (rộng 13.800 px, phóng to thoải mái).*
 
 ## Các quyết định thiết kế
 
@@ -110,6 +113,19 @@ Từng thay đổi được kiểm thử trên học kỳ thật của tôi.
 - **Qwen3** qua **LM Studio**: nén bản chép lời, dự phòng khi hết quota, chạy local;
 - **PhoWhisper** (VinAI): chép lời tiếng Việt trên NPU;
 - **Hội đồng 4 AI** trong AgentChattr: Claude, Codex, Gemini và một AI local, dùng để hỏi ý kiến khi gặp vấn đề khó.
+
+## Nhật ký bản vá
+
+Mỗi lần cập nhật mã nguồn được tính là một bản vá (các lần chỉ sửa README hay bản đồ không tính). Mỗi bản có tag git tương ứng.
+
+| Bản | Ngày | Nội dung |
+|---|---|---|
+| **v1.00.00** | 04/10/2026 | Bản công khai đầu tiên: đồng bộ 6 hệ thống của trường, luật tối cao, nhắc theo mốc lên điện thoại, đồng bộ tài liệu, quét trùng, bản đồ hệ thống |
+| **v1.00.01** | 05/10/2026 | Chat trung thực: chỉ báo "đã làm" khi công cụ trả kết quả thật. Công cụ dời hạn tự đặt (xem trước rồi mới ghi, không đụng hạn của trường). Ghi bài giảng riêng cuộc họp Teams qua cáp ảo |
+| **v1.00.02** | 05/10/2026 | Thêm mã nguồn máy ghi bài giảng (`lecture-recorder/`) |
+| **v1.00.03** | 05/10/2026 | Phân loại thư (môn học, ngoại khoá, hành chính, học bổng, thông báo chung). Tab Hành chính và Học bổng. Đọc đủ 1000 sự kiện CTSV. Giám sát Ghi bài giảng ngay trong UC. Chat nhớ hội thoại. Mọi nguồn cập nhật 5 phút một lần |
+| **v1.00.04** | 05/10/2026 | Thêm cổng chép lời (`speech-gate/`), kèm vá: tự thử lại khi LM Studio lỗi, model dự phòng, chạy tiếp từ bước nén |
+| **v1.00.05** | 06/10/2026 | Tự ẩn thông báo hết hạn hoặc của năm cũ. Chi tiết điểm học phần. Gửi tài liệu sang NotebookLM. Script giữ phiên NotebookLM. Đọc cả kênh ẩn và Shared Documents trên Teams. Lượt đồng bộ lỗi không còn ghi đè dữ liệu tốt |
 
 ## Chạy thử
 
