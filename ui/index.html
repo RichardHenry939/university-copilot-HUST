@@ -990,7 +990,7 @@ function renderExtra() {
       (x.han ? 'hạn ' + vnHM(x.han) + ' ' + fmt(x.han.slice(0, 10)) : x.start ? fmt(x.start.slice(0, 10)) + (x.end && x.end.slice(0, 10) !== x.start.slice(0, 10) ? ' → ' + fmt(x.end.slice(0, 10)) : '') : '') +
       '</span></li>').join('') + '</ul>' : '<span class="empty">Không có hoạt động nào đang mở.</span>') + $('#ex-lists').innerHTML;
   const t = EX.ctsv_at ? EX.ctsv_at.slice(11, 16) + ' ' + EX.ctsv_at.slice(8, 10) + '/' + EX.ctsv_at.slice(5, 7) : '?';
-  $('#ex-sync').textContent = 'iCTSV đọc lúc ' + t + ' · mọi nguồn (iCTSV, mail, Teams) tự cập nhật 5 phút / lần, 06:00–23:30';
+  $('#ex-sync').textContent = 'iCTSV đọc lúc ' + t + ' · mọi nguồn (iCTSV, mail, Teams) tự cập nhật đúng khung 5 phút suốt 24 giờ';
 }
 $('#ex-prev').onclick = () => { exMon -= 7 * 864e5; renderExtra(); };
 $('#ex-next').onclick = () => { exMon += 7 * 864e5; renderExtra(); };
@@ -1031,7 +1031,7 @@ function renderSchool() {
   let h = '<div class="schoolbar' + (s.status === 'Cần đăng nhập' || s.status === 'Lỗi' || s.locked || !s.creds ? ' warn' : '') + '">';
   h += '<div class="row1"><b>🏫 Dữ liệu trường</b> <span>' + (s.running ? 'Đang đọc qldt và iCTSV…' :
     s.last_ok ? 'Đồng bộ lần cuối ' + fmtAt(s.last_ok) + (s.status === 'Đã đồng bộ' ? ' · ' + (s.changes || []).length + ' thay đổi' : s.status === 'Không đổi' ? ' · không có gì mới' : '') : 'Chưa đồng bộ lần nào') +
-    '</span><span class="sub">Tự động ' + (s.slots || []).join(' · ') + '</span>' +
+    '</span><span class="sub">Tự động đúng khung 5 phút, 00:00 → 23:55 (máy tắt thì bỏ khung đó, không chạy bù)</span>' +
     (s.running ? '' : '<button class="ghost" id="sch-now">Đồng bộ ngay</button>') + '</div>';
   if (!s.creds) h += '<p>Chưa cất tài khoản trường nên không tự đăng nhập lại được. Mở PowerShell, chạy <code>python school_cred.py</code>.</p>';
   else if (s.locked) h += '<p>Tự đăng nhập đang <b>khoá</b> vì lần trước trường từ chối mật khẩu (tránh khoá tài khoản). Nếu bạn vừa đổi mật khẩu, chạy lại <code>python school_cred.py</code> để nhập mới.</p>';

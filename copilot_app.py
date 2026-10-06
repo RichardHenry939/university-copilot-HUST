@@ -681,7 +681,14 @@ def uni_sync_once():
     _sync_save(st)
 
 # ---------------------------------------------------------------- 🏫 đồng bộ dữ liệu trường (school_fetch + school_sync)
-SCHOOL_SLOTS = tuple(f"{h:02d}:{m:02d}" for h in range(6, 24) for m in range(0, 60, 5) if (h, m) <= (23, 30))   # (5/10) qldt + iCTSV mỗi 5 phút, 06:00–23:30
+SCHOOL_SLOTS = tuple(f"{h:02d}:{m:02d}" for h in range(24) for m in range(0, 60, 5))   # (6/10) mọi nguồn đúng khung 5 phút, 00:00 … 23:55, cả đêm
+SLOT_LATE = 120   # giây: tới khung mà máy đang thức thì chạy; lỡ khung (máy tắt / ngủ) thì bỏ, KHÔNG chạy bù
+
+
+def _slot_now(now):
+    """Khung 5 phút vừa tới (≤ SLOT_LATE giây trước) hoặc None."""
+    s = now.replace(minute=now.minute - now.minute % 5, second=0, microsecond=0)
+    return s if (now - s).total_seconds() <= SLOT_LATE else None
 _school = {"running": False, "by": None, "lock": threading.Lock()}
 
 def school_status():
@@ -726,29 +733,18 @@ def school_start(by):
     return True
 
 def school_loop():
-    """06:30 · 12:30 · 18:30 · 22:30 mỗi ngày; mở máy mà lượt gần nhất đã cũ hơn 6 giờ thì chạy bù sau 3 phút."""
-    import school_sync, datetime as dt
+    """qldt + iCTSV đúng khung 5 phút suốt 24 giờ (6/10). Máy tắt / ngủ đúng khung -> bỏ khung đó, không chạy bù."""
+    import datetime as dt
     from academic import TZ
-    time.sleep(180)
-    try:
-        last = school_sync.state().get("at")
-        if not last or (dt.datetime.now(TZ) - dt.datetime.fromisoformat(last)).total_seconds() > 6 * 3600:
-            school_start("chạy bù khi mở máy")
-    except Exception as e:
-        print("school loop:", e)
-    while True:   # mốc gần nhất đã qua mà chưa có lượt nào sau nó (máy ngủ / tắt đúng giờ) → chạy bù ngay
+    done = pending = None
+    while True:
         now = dt.datetime.now(TZ)
-        past = [now.replace(hour=int(s[:2]), minute=int(s[3:]), second=0, microsecond=0) for s in SCHOOL_SLOTS]
-        past = [p for p in past if p <= now] or [now.replace(hour=int(SCHOOL_SLOTS[-1][:2]), minute=int(SCHOOL_SLOTS[-1][3:]), second=0, microsecond=0) - dt.timedelta(days=1)]
-        due = max(past)
-        try:
-            last = school_sync.state().get("at")
-            last = dt.datetime.fromisoformat(last) if last else None
-        except Exception:
-            last = None
-        if (last is None or last < due) and not _school["running"]:
-            school_start(("lịch " if (now - due).total_seconds() < 120 else "chạy bù mốc ") + f"{due:%H:%M}")
-        time.sleep(60)
+        slot = _slot_now(now)
+        if slot and slot != done: pending = slot   # máy thức đúng khung -> khung này phải chạy
+        if pending and (now - pending).total_seconds() > 280: pending = None   # lượt mail chiếm hết khung -> khung sau
+        if pending and not _school["running"] and not _mail["running"]:
+            done, pending = pending, None; school_start(f"lịch {done:%H:%M}")
+        time.sleep(15)
 
 
 # ---------------------------------------------------------------- 📡 mail trường -> sự kiện theo dõi -> cảnh báo (mail_events + alerts)
@@ -820,20 +816,26 @@ def mail_run(by):
     return True
 
 def mail_loop():
-    """Đọc mail trường + Teams + MOOC + FAMI + iCTSV mỗi 5 phút (06:00–23:30, người dùng 5/10). Khoá hồ sơ Chrome dùng chung nên không đè lượt đồng bộ qldt."""
-    time.sleep(60)
+    """Mail + Teams + MOOC + FAMI + iCTSV đúng khung 5 phút suốt 24 giờ (6/10). Khung trùng lượt qldt thì chờ lượt đó xong
+    (vẫn trong khung); lỡ khung (máy tắt / ngủ) thì bỏ, không chạy bù."""
+    import datetime as dt
+    from academic import TZ
+    done = pending = None
     while True:
-        h = time.localtime()
-        if (6, 0) <= (h.tm_hour, h.tm_min) <= (23, 30) and not _school["running"]:
-            mail_run("lịch 5 phút")
-        time.sleep(5 * 60)
+        now = dt.datetime.now(TZ)
+        s = _slot_now(now)
+        if s and s != done: pending = s   # máy thức đúng khung -> khung này phải chạy
+        if pending and (now - pending).total_seconds() > 280: pending = None   # chờ qldt quá lâu -> nhường khung sau
+        if pending and not _school["running"] and not _mail["running"]:
+            done, pending = pending, None; mail_run(f"lịch {done:%H:%M}")
+        time.sleep(15)
 
 _sched_lock = threading.Lock()
 
-def _dls():
+def _dls(days=21):
     """Hạn đang mở cho banner / vòng nhắc; Notion lỗi -> [] cho lượt này (bộ hẹn ntfy và trang 📱 thì dừng hẳn, không ghi gì)."""
     try:
-        import deadlines; return deadlines.open_list(_npost)
+        import deadlines; return deadlines.open_list(_npost, days=days)
     except Exception as e:
         print("deadlines:", e); return []
 
@@ -863,7 +865,7 @@ def alert_loop():
             import importlib, alerts
             importlib.reload(alerts)
             import timetable
-            sent = alerts.tick(classes=timetable.get(_npost)["events"], dls=_dls())
+            sent = alerts.tick(classes=timetable.get(_npost)["events"], dls=_dls(400))   # (6/10) mọi hạn mở: hạn mới báo ngay lúc xuất hiện
             if sent: print("toast:", sent)
             alert_loop.n = getattr(alert_loop, "n", 0) + 1
             if alert_loop.n % 5 == 1: phone_refresh()   # mỗi 5 phút: đối chiếu lịch hẹn ntfy + trang 📱 UC
@@ -1343,7 +1345,7 @@ if __name__ == "__main__":
     threading.Thread(target=worker, daemon=True).start()
     _tt_refresh()   # làm nóng lịch: tab Lịch hiện ngay lần bấm đầu
     threading.Thread(target=uni_sync_loop, daemon=True).start()
-    threading.Thread(target=mail_loop, daemon=True).start()    # 📡 mail trường mỗi 20 phút
+    threading.Thread(target=mail_loop, daemon=True).start()    # 📡 mọi nguồn đúng khung 5 phút, 24 giờ
     threading.Thread(target=alert_loop, daemon=True).start()
     threading.Thread(target=lambda: __import__("lecture_monitor").loop(lambda path: n8n(path, timeout=60)), daemon=True).start()   # 🎙️ giám sát Ghi bài giảng mỗi 60 s (0 AI)
     threading.Thread(target=lambda: __import__('phone_link').listen(_npost), daemon=True).start()   # 📱 lệnh từ điện thoại qua ntfy   # 📡 cảnh báo leo thang + toast

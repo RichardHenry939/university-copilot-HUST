@@ -777,7 +777,7 @@
 <rect x="6388" y="875" width="1504" height="266" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
 <rect x="6388" y="875" width="6" height="266" fill="#14263A"/>
 <text x="6410" y="909" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Ghi Notion · school_sync.py</text>
-<text x="6410" y="935" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">web app tự chạy 5 phút/lần (06:00–23:30, + chạy bù khi mở máy) · nút Đồng bộ ngay cần Xác nhận</text>
+<text x="6410" y="935" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">web app tự chạy đúng khung 5 phút, 00:00 → 23:55 (máy tắt thì bỏ khung, không chạy bù) · nút Đồng bộ ngay cần Xác nhận</text>
 <circle cx="6414" cy="955.44" r="2.6" fill="#4B5D70"/>
 <text x="6426" y="963.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">TKB → 🗓️ Timetable qua tkb.run (khoá Sync Key) · buổi không còn trên qldt → thùng rác Notion</text>
 <circle cx="6414" cy="988.4200000000001" r="2.6" fill="#4B5D70"/>
@@ -843,7 +843,7 @@
 <text x="7980" y="478" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="1.2">17  ·  THƯ · TEAMS · NGOẠI KHOÁ</text>
 <rect x="8481.48" y="454" width="74" height="30" rx="0" fill="#fff" fill-opacity="1" stroke="#B3122E" stroke-width="2"/>
 <text x="8518.48" y="476" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="17" font-weight="700" fill="#B3122E" text-anchor="middle" letter-spacing="2">MỚI</text>
-<text x="7982" y="532" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="19" font-weight="400" fill="#4B5D70" text-anchor="start">Đọc thay bạn mọi kênh của trường — chỉ đọc, 5 phút/lần (06:00–23:30), cùng một hồ sơ Chrome</text>
+<text x="7982" y="532" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="19" font-weight="400" fill="#4B5D70" text-anchor="start">Đọc thay bạn mọi kênh của trường — chỉ đọc, đúng khung 5 phút suốt 24 giờ, cùng một hồ sơ Chrome</text>
 <rect x="7988" y="556" width="842" height="225" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
 <rect x="7988" y="556" width="6" height="225" fill="#14263A"/>
 <text x="8010" y="590" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Thư trường · school_mail.py</text>
@@ -912,7 +912,7 @@
 <text x="7980" y="1628" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="1.2">18  ·  NHẮC · ĐIỆN THOẠI</text>
 <rect x="8368.64" y="1604" width="74" height="30" rx="0" fill="#fff" fill-opacity="1" stroke="#B3122E" stroke-width="2"/>
 <text x="8405.64" y="1626" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="17" font-weight="700" fill="#B3122E" text-anchor="middle" letter-spacing="2">MỚI</text>
-<text x="7982" y="1682" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="19" font-weight="400" fill="#4B5D70" text-anchor="start">alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · LUẬT: kệ giờ, phải đúng mốc (thông báo không tự mất đi) · lỡ mốc thì không gửi bù</text>
+<text x="7982" y="1682" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="19" font-weight="400" fill="#4B5D70" text-anchor="start">alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · LUẬT: kệ giờ, phải đúng mốc · hạn mới báo NGAY khi xuất hiện, rồi theo mốc</text>
 <text x="7988" y="1710" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="17" font-weight="600" fill="#4B5D70" text-anchor="start" letter-spacing="2.5">MỐC NHẮC</text>
 <rect x="7988" y="1724" width="1704" height="38" rx="0" fill="#fff" fill-opacity="1" stroke="#7A8A9B" stroke-width="1"/>
 <rect x="7988" y="1724" width="6" height="38" fill="#14263A"/>
@@ -983,7 +983,7 @@
 <text x="10692" y="622" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="16" font-weight="400" fill="#14263A" text-anchor="start">đọc bảng trên trang (API trường mã hoá)</text>
 <text x="11022" y="622" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="16" font-weight="400" fill="#14263A" text-anchor="start">e.hust SSO → Microsoft → ADFS, tự điền từ</text>
 <text x="11022" y="645" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="16" font-weight="400" fill="#14263A" text-anchor="start">Credential Manager</text>
-<text x="11382" y="622" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="16" font-weight="400" fill="#14263A" text-anchor="start">5 phút (06:00–23:30)</text>
+<text x="11382" y="622" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="16" font-weight="400" fill="#14263A" text-anchor="start">khung 5 phút, 24 giờ</text>
 <text x="9802" y="674" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="14" font-weight="600" fill="#0D7377" text-anchor="start">● Tự động</text>
 <rect x="9788" y="692" width="1904" height="88" rx="0" fill="#fff" fill-opacity="1" stroke="#7A8A9B" stroke-width="1"/>
 <rect x="9788" y="692" width="6" height="88" fill="#0D7377"/>
@@ -1000,7 +1000,7 @@
 <text x="10132" y="814" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="16" font-weight="400" fill="#14263A" text-anchor="start">thư gửi bạn: lịch thi, đính chính, xác nhận đăng ký, thông báo</text>
 <text x="10692" y="814" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="16" font-weight="400" fill="#14263A" text-anchor="start">Outlook REST bằng token của trang</text>
 <text x="11022" y="814" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="16" font-weight="400" fill="#14263A" text-anchor="start">phiên Microsoft của hồ sơ Chrome</text>
-<text x="11382" y="814" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="16" font-weight="400" fill="#14263A" text-anchor="start">5 phút (06:00–23:30)</text>
+<text x="11382" y="814" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="16" font-weight="400" fill="#14263A" text-anchor="start">khung 5 phút, 24 giờ</text>
 <text x="9802" y="843" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="14" font-weight="600" fill="#0D7377" text-anchor="start">● Tự động · không đổi “đã đọc”</text>
 <rect x="9788" y="861" width="1904" height="88" rx="0" fill="#fff" fill-opacity="1" stroke="#7A8A9B" stroke-width="1"/>
 <rect x="9788" y="861" width="6" height="88" fill="#0D7377"/>
@@ -1290,7 +1290,7 @@
 <rect x="2424" y="3258.0" width="9" height="9" fill="#B3122E"/>
 <text x="2446" y="3270.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">UC lo hành chính, không làm giảng viên: không tạo task ôn · chat chỉ báo “đã làm” khi có kết quả thật</text>
 <rect x="2424" y="3280.5" width="9" height="9" fill="#B3122E"/>
-<text x="2446" y="3292.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Nhắc: kệ giờ, phải đúng mốc — không dời, không gửi bù số giờ lẻ, không có giờ yên lặng cho mốc</text>
+<text x="2446" y="3292.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Nhắc: kệ giờ, phải đúng mốc · cập nhật cả đêm để không lỡ mốc · hạn mới báo ngay khi xuất hiện</text>
 <rect x="3640" y="3020" width="8960" height="300" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="2.6"/>
 <rect x="3640" y="3020" width="300" height="48" rx="0" fill="#14263A" fill-opacity="1" stroke="#14263A" stroke-width="0"/>
 <text x="3660" y="3053" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#fff" text-anchor="start" letter-spacing="1.5">AI CHẠY CÁI GÌ</text>

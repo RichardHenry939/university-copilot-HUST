@@ -223,6 +223,18 @@ def tick(now=None, send=notify, classes=None, dls=None):
     try:
         import phone_sched; sched = phone_sched.scheduled_keys()
     except Exception: sched = set()
+    # (6/10, luật) HẠN MỚI -> báo NGAY lúc nó xuất hiện, sau đó mới theo các mốc. Lần đầu chạy: ghi nhận hạn đã có, không báo dồn.
+    if dls:
+        import deadlines as D
+        boot = 'seen_dl' not in s; seen = s.setdefault('seen_dl', {})
+        for x in dls:
+            if x['id'] in seen: continue
+            seen[x['id']] = x['due']
+            if boot or x['overdue']: continue
+            w = dt.datetime.fromisoformat(x['due']).astimezone(TZ)
+            send(f"Hạn mới: {x['name']}" + (f" · {x['course']}" if x['course'] else ''),
+                 f"{x['kind']} — hạn {w:%H:%M} {w.day}/{w.month} — còn {D.say_left((w - now).total_seconds() / 60)}", level='red', alert=None)
+            sent.append(f"new|{x['id']}")
     for a in active(now, classes, dls):
         key = a['id']; lvl = a.get('stage_level') or a['kind']
         if lvl == 'deadline':   # mốc theo loại hạn; đêm vẫn nhắc các mốc ≤1 giờ (hạn 23:59 cần nhắc 30/20/10/5/2/1 phút)

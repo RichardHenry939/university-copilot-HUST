@@ -477,7 +477,7 @@ gy_ = card(FX + 28, 556, FW - 56, None, "", "Đọc trường · school_fetch.py
       "Hết phiên → tự đăng nhập: qldt → e.hust SSO → Microsoft → ADFS (sso / asso.hust.edu.vn) · iCTSV: bấm qua hộp “Phiên đăng nhập đã hết hạn”",
       "Mật khẩu: Windows Credential Manager, bạn tự cất (school_cred.py) · chỉ điền trên 3 trang đăng nhập · 1 lần/lượt · sai → khoá",
       "Xác minh 2 bước / captcha → dừng, báo trên thanh “Dữ liệu trường”"], fill="#fff", accent=TEAL) + 20
-gy_ = card(FX + 28, gy_, FW - 56, None, "", "Ghi Notion · school_sync.py", "web app tự chạy 5 phút/lần (06:00–23:30, + chạy bù khi mở máy) · nút Đồng bộ ngay cần Xác nhận",
+gy_ = card(FX + 28, gy_, FW - 56, None, "", "Ghi Notion · school_sync.py", "web app tự chạy đúng khung 5 phút, 00:00 → 23:55 (máy tắt thì bỏ khung, không chạy bù) · nút Đồng bộ ngay cần Xác nhận",
      ["TKB → 🗓️ Timetable qua tkb.run (khoá Sync Key) · buổi không còn trên qldt → thùng rác Notion",
       "Vắng → Courses “Vắng (trường)” → cảnh báo cấm thi · điểm thành phần, điểm HP, kết quả → Courses",
       "GPA / CPA / TC tích luỹ / TC nợ / cảnh báo theo kỳ → Tracker · điểm rèn luyện → ⭐ Rèn luyện",
@@ -518,7 +518,7 @@ for i, (t_, sub_, fl, ac) in enumerate(flow):
 # COL G — 17 · Thư trường · Teams · Ngoại khoá ; 18 · Nhắc · điện thoại   (04/10 chiều)
 GX, GW = 7960, 1760
 Z17_H = 1110
-zone(GX, 440, GW, Z17_H, "17", "Thư · Teams · Ngoại khoá", "Đọc thay bạn mọi kênh của trường — chỉ đọc, 5 phút/lần (06:00–23:30), cùng một hồ sơ Chrome", "#F3F6F2", new=True)
+zone(GX, 440, GW, Z17_H, "17", "Thư · Teams · Ngoại khoá", "Đọc thay bạn mọi kênh của trường — chỉ đọc, đúng khung 5 phút suốt 24 giờ, cùng một hồ sơ Chrome", "#F3F6F2", new=True)
 gh = (GW - 56 - 20) // 2
 g1 = row(556, [
     (GX + 28, gh, "", "Thư trường · school_mail.py", "Outlook REST bằng token của chính trang",
@@ -546,7 +546,7 @@ G17_END = card(GX + 28, g3, GW - 56, None, "", "Quét trùng · dupscan.py", "sa
       "Không tự xoá: tab Hôm nay “Có thể trùng” → Giữ cả hai / Bỏ bản này → Xác nhận (liệt kê đủ) → thùng rác Notion"], fill="#fff", accent=RED)
 
 Z18_Y = 440 + Z17_H + 40
-zone(GX, Z18_Y, GW, 2380 - Z18_Y, "18", "Nhắc · điện thoại", "alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · LUẬT: kệ giờ, phải đúng mốc (thông báo không tự mất đi) · lỡ mốc thì không gửi bù", "#FFF6F6", new=True)
+zone(GX, Z18_Y, GW, 2380 - Z18_Y, "18", "Nhắc · điện thoại", "alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · LUẬT: kệ giờ, phải đúng mốc · hạn mới báo NGAY khi xuất hiện, rồi theo mốc", "#FFF6F6", new=True)
 # bảng mốc nhắc
 ty = Z18_Y + 120
 text(GX + 28, ty, "MỐC NHẮC", 17, INK2, 600, F_HEAD, ls=2.5)
@@ -581,11 +581,11 @@ HX, HW = 9760, 1960
 zone(HX, 440, HW, 1940, "19", "Nguồn thông tin của UC", "UC TỰ đọc các trang này — bạn không phải mở, chép hay báo lại. Tất cả CHỈ ĐỌC.", "#F2F4FA", new=True)
 SRC = [  # (trang, đọc gì, cách đọc, đăng nhập, nhịp, mức tự động, màu)
     ("qldt.hust.edu.vn", "TKB chi tiết (phòng, tuần, online) · vắng · bảng điểm · khung CTĐT", "đọc bảng trên trang (API trường mã hoá)",
-     "e.hust SSO → Microsoft → ADFS, tự điền từ Credential Manager", "5 phút (06:00–23:30)", "Tự động", TEAL),
+     "e.hust SSO → Microsoft → ADFS, tự điền từ Credential Manager", "khung 5 phút, 24 giờ", "Tự động", TEAL),
     ("ctsv.hust.edu.vn (iCTSV)", "điểm rèn luyện · hoạt động (1000 dòng) · hạn minh chứng · học bổng · thông báo · giấy tờ · thủ tục · đặt vé", "API JSON của chính trang",
      "bấm qua “Phiên hết hạn” → ADFS asso", "5 phút", "Tự động · công nợ: chỉ link", TEAL),
     ("Outlook · thư trường", "thư gửi bạn: lịch thi, đính chính, xác nhận đăng ký, thông báo", "Outlook REST bằng token của trang",
-     "phiên Microsoft của hồ sơ Chrome", "5 phút (06:00–23:30)", "Tự động · không đổi “đã đọc”", TEAL),
+     "phiên Microsoft của hồ sơ Chrome", "khung 5 phút, 24 giờ", "Tự động · không đổi “đã đọc”", TEAL),
     ("Teams", "bài đăng mọi lớp, cả kênh ẩn (sửa bài = phiên bản mới) · thẻ bài tập (hạn) · file + Shared Documents (công thức điểm)", "Microsoft Graph bằng token của trang",
      "phiên Microsoft", "5 phút", "Tự động", TEAL),
     ("soict.daotao.ai (MOOC)", "hạn + ĐIỂM bài trước lớp / lab → biết đã làm hay bỏ lỡ · khoá Sinh hoạt công dân", "API Open edX (progress)",
@@ -741,7 +741,7 @@ cons = ["Chỉ ghi âm khi bấm Start, chỉ dừng khi bấm Stop (ngắt an t
         "Ghi trên UI luôn hỏi Xác nhận · mật khẩu chỉ ở Credential Manager · không tự xoá, chỉ thùng rác",
         "Nguồn trường chỉ đọc · bài hết hạn không ghi thành hạn (→ Academic Tasks) · điện thoại không Hoàn tất / Tắt nhắc",
         "UC lo hành chính, không làm giảng viên: không tạo task ôn · chat chỉ báo “đã làm” khi có kết quả thật",
-        "Nhắc: kệ giờ, phải đúng mốc — không dời, không gửi bù số giờ lẻ, không có giờ yên lặng cho mốc"]
+        "Nhắc: kệ giờ, phải đúng mốc · cập nhật cả đêm để không lỡ mốc · hạn mới báo ngay khi xuất hiện"]
 cy_ = 3090
 for c in cons:
     add(f'<rect x="2424" y="{cy_ - 12}" width="9" height="9" fill="{RED}"/>')
