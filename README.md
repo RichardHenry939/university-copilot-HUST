@@ -127,6 +127,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.04** | 05/10/2026 | Thêm cổng chép lời (`speech-gate/`), kèm vá: tự thử lại khi LM Studio lỗi, model dự phòng, chạy tiếp từ bước nén |
 | **v1.00.05** | 06/10/2026 | Tự ẩn thông báo hết hạn hoặc của năm cũ. Chi tiết điểm học phần. Gửi tài liệu sang NotebookLM. Script giữ phiên NotebookLM. Đọc cả kênh ẩn và Shared Documents trên Teams. Lượt đồng bộ lỗi không còn ghi đè dữ liệu tốt |
 | **v1.00.06** | 06/10/2026 | Cách tính điểm cho mọi môn, tự động mọi kỳ: đọc thêm trả lời trong luồng ở mọi kênh, Class Notebook và nội dung mọi slide / đề cương (trước chỉ đọc file có tên "đánh giá", nên sót IT1108 có công thức nằm trong slide chương 1). Ưu tiên bài nói rõ nhất về cách tính, bỏ qua trả lời của sinh viên |
+| **v1.00.07** | 06/10/2026 | Sửa lỗi điểm cuối kỳ "ma": thành phần "Cuối kỳ trên MOOC tại phòng máy" (IT2000) bị gán nhầm điểm bài tập MOOC hằng tuần. Cuối kỳ giờ được nhận diện trước, và chỉ lấy điểm khi qldt có nhãn CK rõ ràng |
 
 ## Chạy thử
 

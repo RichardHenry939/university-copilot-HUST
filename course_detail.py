@@ -273,13 +273,16 @@ def view(code):
     for t in rule.get('thanh_phan') or []:
         w = float(t.get('trong_so') or 0); src = t.get('nguon'); score, where = None, None
         nm = academic.norm(t.get('ten'))   # (5/10) nguồn điểm theo TÊN thành phần (AI hay gán nhầm), chỉ khi có dữ liệu nguồn đó
-        if re.search(r'lien tuc|theo chuong', nm) and fam: src = 'fami'
+        # (6/10) CUỐI KỲ xét TRƯỚC: "Cuối kỳ trên MOOC tại phòng máy" là bài thi cuối kỳ, không phải bài MOOC hằng tuần
+        # (lỗi: gán nhầm điểm bài tập MOOC 6,0 thành điểm cuối kỳ IT2000). Điểm cuối kỳ chỉ lấy từ qldt khi trường đã nhập.
+        if 'cuoi ky' in nm or src == 'cuoi_ky': src = 'cuoi_ky'
+        elif re.search(r'lien tuc|theo chuong', nm) and fam: src = 'fami'
         elif re.search(r'giua ky|thuc hanh|thi nghiem|tn th', nm): src = 'qldt'
         elif re.search(r'mooc|truoc khi den lop|bai tap hang tuan', nm) and mooc: src = 'mooc_bt'
         elif 'chuyen can' in nm: src = 'chuyen_can'
-        elif 'cuoi ky' in nm: src = 'cuoi_ky'
         if src == 'qldt' or t.get('nhan_qldt'):
             lab = t.get('nhan_qldt')
+            if src == 'cuoi_ky' and not re.fullmatch(r'\s*(CK|cuối kỳ|cuoi ky|thi cuối kỳ)\s*', lab or '', re.I): lab = None   # cuối kỳ: chỉ nhãn CK rõ ràng
             hit = next((v for k, v in q.items() if lab and academic.norm(k) == academic.norm(lab)), None)
             if hit is None and len(q) == 1 and src == 'qldt': hit = next(iter(q.values()))
             if hit is not None: score, where = hit, 'qldt'
