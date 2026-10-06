@@ -231,15 +231,15 @@ def tick(now=None, send=notify, classes=None, dls=None):
             k2 = f"{key}|{mark}"
             if mark is None or s['sent'].get(k2) or (quiet and mark > 60): continue
             x = a['dl']
-            send(f"Còn {D.say_left(left)}: {x['name']}" + (f" · {x['course']}" if x['course'] else ''),
+            send(f"Còn {D.say_left(mark)}: {x['name']}" + (f" · {x['course']}" if x['course'] else ''),
                  f"{x['kind']} — {a['text'].split(' — ')[0]}", persistent=mark <= 60, level='red', alert=a, phone_ok=k2 not in sched)
             s['sent'][k2] = now.isoformat(timespec='seconds'); sent.append(k2); continue
         if lvl == 'extra':   # ngoại khoá: đúng các mốc của mục (sự kiện 24h/2h · hạn MC như tự luyện cốt lõi)
-            mark = min((m for m in a['marks'] if a['mins'] <= m), default=None)
+            import deadlines as D
+            mark = D.mark_at(a['marks'], a['mins'])
             k2 = f"{key}|{mark}"
             if mark is None or s['sent'].get(k2) or (quiet and mark > 60): continue
-            import deadlines as D
-            send(f"Còn {D.say_left(a['mins'])}: " + a['title'], a['text'] + (f"\n{a['note']}" if a.get('note') else ''), level='red', alert=a, phone_ok=k2 not in sched)
+            send(f"Còn {D.say_left(mark)}: " + a['title'], a['text'] + (f"\n{a['note']}" if a.get('note') else ''), level='red', alert=a, phone_ok=k2 not in sched)
             s['sent'][k2] = now.isoformat(timespec='seconds'); sent.append(k2); continue
         if quiet: continue
         if lvl == 'optional': continue   # gợi ý: chỉ banner trong UC
@@ -251,10 +251,11 @@ def tick(now=None, send=notify, classes=None, dls=None):
             s['sent'][k2] = now.isoformat(timespec='seconds'); sent.append(k2); continue
         if a.get('deadline') and lvl in ('yellow', 'red'):   # hạn nộp: nhắc đúng các mốc 72 / 48 / 36 / 24 giờ
             hours = (dt.datetime.fromisoformat(a['when']) - now).total_seconds() / 3600
-            mark = min((m for m in DL_MARKS if hours <= m), default=None)
+            import deadlines as D
+            mark = next((m for m in DL_MARKS if m - D.GRACE / 60 <= hours <= m), None)   # đúng mốc, lỡ thì bỏ qua
             k2 = f"dl|{a['eid']}|{a['stage']}|{mark}"
             if mark is None or s['sent'].get(k2): continue
-            send(f"Còn {int(hours)} giờ: " + a["title"], a['text'] + (f"\n{a['note']}" if a.get('note') else ''), level='red', alert=a)
+            send(f"Còn {mark} giờ: " + a["title"], a['text'] + (f"\n{a['note']}" if a.get('note') else ''), level='red', alert=a)
             s['sent'][k2] = now.isoformat(timespec='seconds'); sent.append(k2); continue
         last = s['sent'].get(key)
         every = EVERY[lvl]

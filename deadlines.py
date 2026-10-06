@@ -206,12 +206,20 @@ def fix_due(post, work_id, name, old_due, new_due, source, eid=None):
     return line
 
 
+GRACE = 10   # phút: vòng cảnh báo chạy mỗi phút; trễ hơn thế = đã lỡ mốc -> KHÔNG gửi bù (06/10, người dùng)
+
+
+def mark_at(marks, left, grace=GRACE):
+    """Mốc vừa tới (left nằm trong [mốc − grace, mốc]) hoặc None. Lỡ mốc (hạn mới phát hiện, giờ yên lặng) thì bỏ qua,
+    chờ mốc kế tiếp — không bao giờ nhắc "còn 38 giờ" hay "còn 41 giờ" (README: chỉ đúng các mốc)."""
+    return next((m for m in sorted(marks) if m - grace <= left <= m), None)
+
+
 def mark_due(x, now):
     """Mốc nhắc hiện tại (phút) của một hạn, hoặc None."""
     left = (dt.datetime.fromisoformat(x['due']) - now).total_seconds() / 60
     if left <= 0: return None, left
-    marks = MARKS.get(x['kind'], MARKS['Môn học'])
-    return min((m for m in marks if left <= m), default=None), left
+    return mark_at(MARKS.get(x['kind'], MARKS['Môn học']), left), left
 
 
 def say_left(mins):

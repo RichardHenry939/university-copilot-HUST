@@ -546,7 +546,7 @@ G17_END = card(GX + 28, g3, GW - 56, None, "", "Quét trùng · dupscan.py", "sa
       "Không tự xoá: tab Hôm nay “Có thể trùng” → Giữ cả hai / Bỏ bản này → Xác nhận (liệt kê đủ) → thùng rác Notion"], fill="#fff", accent=RED)
 
 Z18_Y = 440 + Z17_H + 40
-zone(GX, Z18_Y, GW, 2380 - Z18_Y, "18", "Nhắc · điện thoại", "alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · giờ yên lặng 23:00–06:00 (mốc ≤ 1 giờ vẫn gửi)", "#FFF6F6", new=True)
+zone(GX, Z18_Y, GW, 2380 - Z18_Y, "18", "Nhắc · điện thoại", "alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · chỉ đúng mốc, lỡ thì không gửi bù · 23:00–06:00: mốc > 1 giờ gửi im lặng", "#FFF6F6", new=True)
 # bảng mốc nhắc
 ty = Z18_Y + 120
 text(GX + 28, ty, "MỐC NHẮC", 17, INK2, 600, F_HEAD, ls=2.5)

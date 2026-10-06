@@ -27,10 +27,8 @@ def seq(key): return 'uc' + hashlib.sha1(key.encode()).hexdigest()[:30]
 
 
 def _quiet_shift(t, mark_min, due):
-    """Mốc > 60 phút rơi vào 23:00–06:00 -> dời về 06:00 (nếu vẫn trước hạn)."""
-    if mark_min <= 60 or 6 <= t.hour < 23: return t
-    t2 = t.replace(hour=6, minute=0, second=0) + (dt.timedelta(days=1) if t.hour >= 23 else dt.timedelta())
-    return t2 if t2 < due else None
+    """(06/10) Không dời mốc sang 06:00 nữa (từng sinh "còn 41 giờ"): mọi mốc gửi đúng giờ, đúng số."""
+    return t   # (06/10) mốc đêm vẫn gửi ĐÚNG giờ nhưng im lặng (priority 2, xem cuối plan) — không bỏ, không dời
 
 
 def plan(post, now=None):
@@ -94,6 +92,8 @@ def plan(post, now=None):
                 left = (w - t).total_seconds() / 60
                 out[f"ev|{eid}|{k}|{m}"] = {'at': t, 'title': f"Còn {D.say_left(left)}: {e['ten']} · {s['ten']}",
                                             'text': me.fmt(s) + (f"\n{s['ghi_chu']}" if s.get('ghi_chu') else ''), 'priority': 5 if m <= 120 else 4}
+    for k, b in out.items():   # giờ yên lặng 23:00–06:00: mốc > 60 phút vẫn tới đúng giờ nhưng không chuông / rung
+        if not (6 <= b['at'].hour < 23) and int(k.rsplit('|', 1)[1]) > 60: b['priority'] = 2
     return out
 
 

@@ -912,7 +912,7 @@
 <text x="7980" y="1628" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="1.2">18  ·  NHẮC · ĐIỆN THOẠI</text>
 <rect x="8368.64" y="1604" width="74" height="30" rx="0" fill="#fff" fill-opacity="1" stroke="#B3122E" stroke-width="2"/>
 <text x="8405.64" y="1626" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="17" font-weight="700" fill="#B3122E" text-anchor="middle" letter-spacing="2">MỚI</text>
-<text x="7982" y="1682" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="19" font-weight="400" fill="#4B5D70" text-anchor="start">alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · giờ yên lặng 23:00–06:00 (mốc ≤ 1 giờ vẫn gửi)</text>
+<text x="7982" y="1682" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="19" font-weight="400" fill="#4B5D70" text-anchor="start">alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · chỉ đúng mốc, lỡ thì không gửi bù · 23:00–06:00: mốc &gt; 1 giờ gửi im lặng</text>
 <text x="7988" y="1710" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="17" font-weight="600" fill="#4B5D70" text-anchor="start" letter-spacing="2.5">MỐC NHẮC</text>
 <rect x="7988" y="1724" width="1704" height="38" rx="0" fill="#fff" fill-opacity="1" stroke="#7A8A9B" stroke-width="1"/>
 <rect x="7988" y="1724" width="6" height="38" fill="#14263A"/>
