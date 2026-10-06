@@ -667,7 +667,9 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
     <section class="panel" id="p-admin" role="tabpanel" aria-labelledby="t-admin">
       <div class="wrap">
         <h1>Hành chính</h1>
-        <p class="lead">Từ ctsv.hust.edu.vn: thông báo gửi riêng cho bạn, giấy tờ đã xin, vé sự kiện. UC tự đọc mỗi giờ, chỉ đọc, không gửi đơn hay đăng ký thay bạn.</p>
+        <p class="lead">Từ ctsv.hust.edu.vn: thông báo gửi riêng cho bạn, giấy tờ đã xin, vé sự kiện. UC tự đọc đúng khung 5 phút, chỉ đọc, không gửi đơn, đăng ký hay nộp tiền thay bạn.</p>
+        <h2 style="font-size:17px">Học phí kỳ này</h2>
+        <div id="fee"><p class="skeleton">Đang đọc…</p></div>
         <div id="adm"><p class="skeleton">Đang đọc…</p></div>
       </div>
     </section>
@@ -1990,7 +1992,37 @@ async function loadSchol() {
 }
 const mailList = (arr, empty) => arr.length ? `<ul class="tasks exlist">${arr.map(m => `<li><span class="tname"><b>${linkOr((m.links || [])[0], m.subject)}</b>${m.tom_tat ? `<br><span class="note">${esc(m.tom_tat)}</span>` : ''}${(m.links || []).length > 1 ? `<br><span class="meta">Link: ${m.links.slice(0, 4).map(u => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:[/][/](www[.])?/, '').slice(0, 50))}</a>`).join(' · ')}</span>` : ''}${srcLine(m.nguon + (m.from ? ' · ' + m.from : ''), m.at)}</span></li>`).join('')}</ul>` : `<p class="note">${empty}</p>`;
 const PAPER_ST = { 0: 'Chờ tiếp nhận', 1: 'Đang xử lý', 2: 'Đã xong', 3: 'Từ chối' };
+/* (6/10) 💰 học phí kỳ này: giá đơn vị × số tín chỉ, đối chiếu hoá đơn của trường, nút nộp học phí */
+async function loadFee() {
+  const box = $('#fee'); if (!box) return;
+  try {
+    const d = await api('/api/tuition');
+    const vnd = (x) => x == null ? null : Math.round(x).toLocaleString('vi-VN') + ' đ';
+    const t = d.truong || {}, c = d.doi_chieu;
+    let h = '<table class="ctable"><tbody>';
+    h += '<tr><th>Giá đơn vị (tín chỉ)</th><td class="n"><b>' + (d.don_gia ? vnd(d.don_gia) : 'chưa có') + '</b></td><td><small>' + esc(d.don_gia_nguon || 'UC tự suy ra khi trường có hoá đơn học phí (từ 12/10), hoặc bạn nhập bên dưới') + '</small></td></tr>';
+    h += '<tr><th>Số tín chỉ</th><td class="n"><b>' + (d.so_tin_chi || 0) + '</b></td><td><small>' + esc(d.hoc_ky_ten || ('Kỳ ' + (d.hoc_ky || ''))) + ': ' + (d.hoc_phan || []).map(x => esc(x.code) + ' ' + x.tc).join(' · ') + '</small></td></tr>';
+    h += '<tr><th>Tổng học phí</th><td class="n"><b>' + (d.tong_tinh != null ? vnd(d.tong_tinh) : 'chưa tính được') + '</b></td><td><small>' +
+      (t.tong_can_dong != null ? 'Trường ghi cần đóng: <b>' + vnd(t.tong_can_dong) + '</b>' + (c ? (c.khop ? ' · <span class="badge ok">khớp</span>' : ' · <span class="badge">chênh ' + vnd(c.chenh) + '</span> ' + esc(c.giai_thich || '')) : '')
+        : 'Trang học phí của trường chưa có hoá đơn kỳ này' + (t.doc_duoc ? '' : (t.loi ? ' (lần đọc gần nhất lỗi: ' + esc(t.loi) + ')' : ' (UC đọc ở lượt đồng bộ qldt kế tiếp)')) + '.') +
+      '</small></td></tr></tbody></table>';
+    if ((t.hoa_don || []).length) h += '<details><summary>' + t.hoa_don.length + ' hoá đơn trên trang học phí của trường</summary><ul>' + t.hoa_don.map(i => '<li>' + esc(i.loai || 'Khoản thu') + ' · kỳ ' + esc(i.hoc_ky || '') + ' · cần đóng ' + (vnd(i.can_dong) || '?') + ' · đã đóng ' + (vnd(i.da_dong) || '0 đ') + (i.trang_thai != null ? ' · ' + esc(i.trang_thai) : '') + '</li>').join('') + '</ul></details>';
+    const n = d.thong_bao || {};
+    h += '<p class="note"><a href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(n.title || 'Thông báo học phí') + '</a> · ' + esc(n.note || '') + '</p>';
+    h += '<p><a class="btn" href="' + esc(d.nop_tai) + '" target="_blank" rel="noopener">Nộp học phí tại đây</a></p>';
+    h += '<details><summary>Sửa giá đơn vị</summary><p class="meta">Chỉ khi trường đổi mức học phí. UC chỉ ghi vào máy bạn, không gửi đi đâu.</p><input type="number" id="fee-price" min="50000" step="1000" placeholder="vd 650000" style="padding:6px 10px;border-radius:8px;border:1.5px solid var(--line)"> <button id="fee-save">Lưu giá đơn vị</button></details>';
+    box.innerHTML = h;
+    $('#fee-save').onclick = async () => {
+      const v = $('#fee-price').value; if (!v) return;
+      if (!confirm('Lưu giá đơn vị ' + Number(v).toLocaleString('vi-VN') + ' đ / tín chỉ?')) return;
+      const r = await api('/api/tuition/price', { don_gia: v, confirmed: true });
+      if (r.ok === false) { alert('Chưa lưu được: ' + (r.error || '')); return; }
+      loadFee();
+    };
+  } catch (e) { box.innerHTML = '<p class="skeleton">Chưa đọc được học phí (' + esc(e.message) + ').</p>'; }
+}
 async function loadAdmin() {
+  loadFee();
   const box = $('#adm');
   try {
     const d = await api('/api/admin');

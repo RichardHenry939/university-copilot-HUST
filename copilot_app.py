@@ -975,6 +975,9 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/scholarships":   # 🎓 tab Học bổng
                 import scholarships
                 return self._send(200, scholarships.view())
+            if u.path == "/api/tuition":   # 💰 học phí kỳ này (chỉ đọc)
+                import importlib, tuition; importlib.reload(tuition)
+                return self._send(200, tuition.view())
             if u.path == "/api/lecture-monitor":   # (Claude 5/10) giám sát chuỗi Ghi bài giảng — không gọi AI
                 import lecture_monitor
                 return self._send(200, lecture_monitor.view())
@@ -1058,6 +1061,12 @@ class H(BaseHTTPRequestHandler):
             if not b.get("confirmed"): return self._send(200, {"ok": False, "error": "cần xác nhận"})
             try: return self._send(200, nlm_bridge.add(b.get("files"), b.get("notebook") or None, b.get("new_title")))
             except ValueError as e: return self._send(200, {"ok": False, "error": str(e)})
+        if u.path == "/api/tuition/price":   # 💰 bạn nhập giá đơn vị / tín chỉ (đã xác nhận) — chỉ ghi file trên máy
+            import tuition
+            b = json.loads(self._body(10_000) or b"{}")
+            if not b.get("confirmed"): return self._send(200, {"ok": False, "error": "cần xác nhận"})
+            try: return self._send(200, tuition.set_price(b.get("don_gia")))
+            except (ValueError, TypeError) as e: return self._send(200, {"ok": False, "error": str(e)})
         if u.path == "/api/lecture-monitor/dismiss":   # ẩn một buổi khỏi "Đang tải lên" (chỉ file giám sát trên máy)
             import lecture_monitor
             b = json.loads(self._body(10_000) or b"{}")

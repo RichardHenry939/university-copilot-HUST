@@ -135,6 +135,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.10** | 06/10/2026 | Cập nhật đúng khung 5 phút suốt 24 giờ (trước chỉ 06:00–23:30, khiến hạn xuất hiện ban đêm bị phát hiện muộn và lỡ mốc); máy tắt thì bỏ khung, không chạy bù. Hạn mới được báo ngay lúc xuất hiện, sau đó mới theo các mốc |
 | **v1.00.11** | 06/10/2026 | Ghi chú bài giảng không còn chỉ nằm trên Notion: mỗi ghi chú được xuất thành file .txt vào đúng thư mục môn đã gán trong Uni-Documents (`<môn>/Ghi chú Bài giảng/`), tự cập nhật khi ghi chú trên Notion được sửa. File UC xuất không bị nạp ngược lên Notion / Drive |
 | **v1.00.12** | 06/10/2026 | Cổng gỡ tài liệu nhận thêm dòng 📥 University Inbox (vẫn chỉ chuyển vào thùng rác, có kiểm tra bảng), để dọn được file bị nạp nhầm |
+| **v1.00.13** | 06/10/2026 | Mục **Học phí kỳ này** (tab Hành chính): giá đơn vị / tín chỉ, số tín chỉ của kỳ đang học, tổng học phí tự nhân rồi đối chiếu với hoá đơn trên trang học phí của trường, kèm nút "Nộp học phí tại đây". Sửa đồng bộ qldt: nút đăng nhập mới của trường và popup khảo sát che trang (chỉ ẩn trên máy, không trả lời khảo sát) |
 
 ## Chạy thử
 

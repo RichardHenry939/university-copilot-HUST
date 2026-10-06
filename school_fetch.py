@@ -136,8 +136,10 @@ def _through_sso(page, want, deadline=90):
             if b.count():
                 b.first.click(); _settle(page, 2000); continue
             d = page.get_by_role("button", name=re.compile("^Đăng nhập$", re.I))
+            if not d.count():   # (6/10) qldt đổi nút "ĐĂNG NHẬP" ở góc phải thành thẻ thường (không còn role=button)
+                d = page.locator("a:visible, div:visible, span:visible").filter(has_text=re.compile(r"^\s*Đăng nhập\s*$", re.I))
             if d.count():
-                d.first.click(); _settle(page, 1500); continue
+                d.last.click(); _settle(page, 1500); continue
         page.wait_for_timeout(1500)
     raise NeedLogin(f"Không vào được {want} sau {deadline}s (đang ở {urlparse(page.url).hostname})")
 
@@ -173,6 +175,9 @@ def ctsv_login(page, tries=3):
     return ctsv_logged_in(page)
 
 
+HIDE_POPUP_JS = """() => { for (const s of ['#uni-survey-popup-root']) { const r = document.querySelector(s); if (r) r.style.display = 'none'; } }"""
+
+
 def _goto(page, url):
     """goto chịu được việc trang tự chuyển hướng chen ngang (qldt SPA hay tự nhảy trang khi vừa có phiên)."""
     try: page.goto(url, wait_until="domcontentloaded")
@@ -180,6 +185,10 @@ def _goto(page, url):
         if "interrupted by another navigation" not in str(e): raise
         page.wait_for_timeout(2000)
     _settle(page)
+    if "qldt.hust.edu.vn" in page.url:   # (6/10) popup "Danh sách khảo sát" của trường che cả trang (không có nút đóng) -> chỉ ẨN trên máy, KHÔNG trả lời khảo sát
+        page.wait_for_timeout(1500)
+        try: page.evaluate(HIDE_POPUP_JS)
+        except Exception: pass
 
 
 def _open(page, url, want, check=None):
@@ -216,6 +225,8 @@ def fetch_qldt(page, out):
     _open(page, QLDT + "/students/learn/timetable", "/students/", qldt_logged_in)
     try: page.wait_for_selector(".ant-spin-spinning", state="detached", timeout=45000)   # trang còn đang tải thì vòng xoay che nút
     except Exception: pass
+    try: page.evaluate(HIDE_POPUP_JS)
+    except Exception: pass
     page.get_by_text("Chi tiết", exact=True).first.click(); _settle(page, 2500)
     page.wait_for_function("document.querySelectorAll('table tbody tr:not(.ant-table-measure-row)').length > 0", timeout=25000)
     t = page.evaluate(ROWS_JS)
@@ -232,6 +243,14 @@ def fetch_qldt(page, out):
     _open(page, QLDT + "/students/learn/education-program", "/students/", qldt_logged_in)
     page.wait_for_function("document.querySelectorAll('table tbody tr:not(.ant-table-measure-row)').length > 0", timeout=25000); _settle(page, 2000)
     out["program"] = page.evaluate(ROWS_JS)
+    # (6/10) Học phí: trang /students/tuition tự gọi api/v1/payment/query (có checkSum của trang) -> đọc lại đúng phản hồi đó, CHỈ ĐỌC
+    try:
+        with page.expect_response(lambda r: "/api/v1/payment/query" in r.url, timeout=30000) as rr:
+            _goto(page, QLDT + "/students/tuition")
+        j = rr.value.json()
+        out["tuition"] = {"ok": True, "items": j if isinstance(j, list) else (j.get("data") or j.get("items") or [])}
+    except Exception as e:
+        out["tuition"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
 
 
 CTSV_API_JS = """async (user) => {
