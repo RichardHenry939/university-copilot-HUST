@@ -912,7 +912,7 @@
 <text x="7980" y="1628" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="1.2">18  ·  NHẮC · ĐIỆN THOẠI</text>
 <rect x="8368.64" y="1604" width="74" height="30" rx="0" fill="#fff" fill-opacity="1" stroke="#B3122E" stroke-width="2"/>
 <text x="8405.64" y="1626" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="17" font-weight="700" fill="#B3122E" text-anchor="middle" letter-spacing="2">MỚI</text>
-<text x="7982" y="1682" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="19" font-weight="400" fill="#4B5D70" text-anchor="start">alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · chỉ đúng mốc, lỡ thì không gửi bù · 23:00–06:00: mốc &gt; 1 giờ gửi im lặng</text>
+<text x="7982" y="1682" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="19" font-weight="400" fill="#4B5D70" text-anchor="start">alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · LUẬT: kệ giờ, phải đúng mốc (thông báo không tự mất đi) · lỡ mốc thì không gửi bù</text>
 <text x="7988" y="1710" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="17" font-weight="600" fill="#4B5D70" text-anchor="start" letter-spacing="2.5">MỐC NHẮC</text>
 <rect x="7988" y="1724" width="1704" height="38" rx="0" fill="#fff" fill-opacity="1" stroke="#7A8A9B" stroke-width="1"/>
 <rect x="7988" y="1724" width="6" height="38" fill="#14263A"/>
@@ -1273,22 +1273,24 @@
 <text x="2420" y="3053" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#fff" text-anchor="start" letter-spacing="1.5">RÀNG BUỘC TOÀN HỆ THỐNG</text>
 <rect x="2424" y="3078" width="9" height="9" fill="#B3122E"/>
 <text x="2446" y="3090" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Chỉ ghi âm khi bấm Start, chỉ dừng khi bấm Stop (ngắt an toàn 3 h 30)</text>
-<rect x="2424" y="3102.5" width="9" height="9" fill="#B3122E"/>
-<text x="2446" y="3114.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Audio không bao giờ tới Gemini; mọi lời gọi Gemini qua cổng :8350</text>
-<rect x="2424" y="3127.0" width="9" height="9" fill="#B3122E"/>
-<text x="2446" y="3139.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Không chắc → ⚠️ Exception Queue, không đoán · khoá chống trùng ở mọi bước ghi</text>
-<rect x="2424" y="3151.5" width="9" height="9" fill="#B3122E"/>
-<text x="2446" y="3163.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Webhook nội bộ cần X-Copilot-Key · workflow sinh từ code (build.py)</text>
-<rect x="2424" y="3176.0" width="9" height="9" fill="#B3122E"/>
-<text x="2446" y="3188.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Chủ tọa quyết định cuối · C: chỉ cho hệ điều hành</text>
-<rect x="2424" y="3200.5" width="9" height="9" fill="#B3122E"/>
-<text x="2446" y="3212.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Luật tối cao: thiếu → thêm · tranh chấp → trường thắng · thừa → giữ</text>
-<rect x="2424" y="3225.0" width="9" height="9" fill="#B3122E"/>
-<text x="2446" y="3237.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Ghi trên UI luôn hỏi Xác nhận · mật khẩu chỉ ở Credential Manager · không tự xoá, chỉ thùng rác</text>
-<rect x="2424" y="3249.5" width="9" height="9" fill="#B3122E"/>
-<text x="2446" y="3261.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Nguồn trường chỉ đọc · bài hết hạn không ghi thành hạn (→ Academic Tasks) · điện thoại không Hoàn tất / Tắt nhắc</text>
-<rect x="2424" y="3274.0" width="9" height="9" fill="#B3122E"/>
-<text x="2446" y="3286.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">UC lo hành chính, không làm giảng viên: không tạo task ôn · chat chỉ báo “đã làm” khi có kết quả thật</text>
+<rect x="2424" y="3100.5" width="9" height="9" fill="#B3122E"/>
+<text x="2446" y="3112.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Audio không bao giờ tới Gemini; mọi lời gọi Gemini qua cổng :8350</text>
+<rect x="2424" y="3123.0" width="9" height="9" fill="#B3122E"/>
+<text x="2446" y="3135.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Không chắc → ⚠️ Exception Queue, không đoán · khoá chống trùng ở mọi bước ghi</text>
+<rect x="2424" y="3145.5" width="9" height="9" fill="#B3122E"/>
+<text x="2446" y="3157.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Webhook nội bộ cần X-Copilot-Key · workflow sinh từ code (build.py)</text>
+<rect x="2424" y="3168.0" width="9" height="9" fill="#B3122E"/>
+<text x="2446" y="3180.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Chủ tọa quyết định cuối · C: chỉ cho hệ điều hành</text>
+<rect x="2424" y="3190.5" width="9" height="9" fill="#B3122E"/>
+<text x="2446" y="3202.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Luật tối cao: thiếu → thêm · tranh chấp → trường thắng · thừa → giữ</text>
+<rect x="2424" y="3213.0" width="9" height="9" fill="#B3122E"/>
+<text x="2446" y="3225.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Ghi trên UI luôn hỏi Xác nhận · mật khẩu chỉ ở Credential Manager · không tự xoá, chỉ thùng rác</text>
+<rect x="2424" y="3235.5" width="9" height="9" fill="#B3122E"/>
+<text x="2446" y="3247.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Nguồn trường chỉ đọc · bài hết hạn không ghi thành hạn (→ Academic Tasks) · điện thoại không Hoàn tất / Tắt nhắc</text>
+<rect x="2424" y="3258.0" width="9" height="9" fill="#B3122E"/>
+<text x="2446" y="3270.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">UC lo hành chính, không làm giảng viên: không tạo task ôn · chat chỉ báo “đã làm” khi có kết quả thật</text>
+<rect x="2424" y="3280.5" width="9" height="9" fill="#B3122E"/>
+<text x="2446" y="3292.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="400" fill="#14263A" text-anchor="start">Nhắc: kệ giờ, phải đúng mốc — không dời, không gửi bù số giờ lẻ, không có giờ yên lặng cho mốc</text>
 <rect x="3640" y="3020" width="8960" height="300" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="2.6"/>
 <rect x="3640" y="3020" width="300" height="48" rx="0" fill="#14263A" fill-opacity="1" stroke="#14263A" stroke-width="0"/>
 <text x="3660" y="3053" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#fff" text-anchor="start" letter-spacing="1.5">AI CHẠY CÁI GÌ</text>

@@ -7,7 +7,7 @@ Máy còn thức -> UC hẹn sẵn trên máy chủ ntfy (tối đa 3 ngày, ở
   • ngoại khoá đã đăng ký (24h + 2h trước) · hạn nộp minh chứng (mốc như tự luyện cốt lõi)
   • sự kiện bạn tham gia (thi, phỏng vấn…): 24 giờ, 2 giờ, 30 phút trước
 Mỗi lần nhắc có mã cố định (sequence id) -> có thay đổi thì SỬA tin đã hẹn, hết cần (Hoàn tất / Tắt nhắc / Bỏ / qua giờ…) thì HUỶ.
-Giờ yên lặng 23:00–06:00: mốc > 1 giờ dời về 06:00 (như nhắc trên máy); mốc ≤ 1 giờ vẫn gửi.
+LUẬT (06/10): kệ giờ, phải đúng mốc — không có giờ yên lặng cho các mốc nhắc.
 Những lần nhắc này KHÔNG gửi lại từ vòng cảnh báo trên máy (tránh trùng) — trên máy chỉ còn toast."""
 import datetime as dt, hashlib, json, time, urllib.request
 from pathlib import Path
@@ -27,8 +27,8 @@ def seq(key): return 'uc' + hashlib.sha1(key.encode()).hexdigest()[:30]
 
 
 def _quiet_shift(t, mark_min, due):
-    """(06/10) Không dời mốc sang 06:00 nữa (từng sinh "còn 41 giờ"): mọi mốc gửi đúng giờ, đúng số."""
-    return t   # (06/10) mốc đêm vẫn gửi ĐÚNG giờ nhưng im lặng (priority 2, xem cuối plan) — không bỏ, không dời
+    """LUẬT (06/10, người dùng): kệ giờ, phải đúng mốc — thông báo không tự mất đi. Không dời, không bỏ, không hạ chuông."""
+    return t
 
 
 def plan(post, now=None):
@@ -52,7 +52,7 @@ def plan(post, now=None):
         name = ' · '.join(c['title'].split(' · ')[:2]); code = c['title'].split(' · ')[0]
         for m in (30, 15):
             t = w - dt.timedelta(minutes=m)
-            if t <= now or not (6 <= t.hour < 23): continue
+            if t <= now: continue   # LUẬT (06/10): kệ giờ, phải đúng mốc
             note = notes.get((code, w.date().isoformat()), '')
             out[f"cls|{c['id']}|{c['start'][:16]}|{m}"] = {'at': t, 'title': f"Còn {m} phút: {name}", 'priority': 4,
                 'text': f"{w:%H:%M}{'–' + en if en else ''} · {c.get('location') or 'chưa có phòng'}" + (f"\n{note}" if note else '')}
@@ -92,8 +92,6 @@ def plan(post, now=None):
                 left = (w - t).total_seconds() / 60
                 out[f"ev|{eid}|{k}|{m}"] = {'at': t, 'title': f"Còn {D.say_left(left)}: {e['ten']} · {s['ten']}",
                                             'text': me.fmt(s) + (f"\n{s['ghi_chu']}" if s.get('ghi_chu') else ''), 'priority': 5 if m <= 120 else 4}
-    for k, b in out.items():   # giờ yên lặng 23:00–06:00: mốc > 60 phút vẫn tới đúng giờ nhưng không chuông / rung
-        if not (6 <= b['at'].hour < 23) and int(k.rsplit('|', 1)[1]) > 60: b['priority'] = 2
     return out
 
 
@@ -116,7 +114,7 @@ def reconcile(post, now=None, dry=False):
     s = _load(); have = s['items']; topic = _cfg()['topic']
     added = changed = cancelled = 0; errors = []
     for key, b in want.items():
-        sig = hashlib.sha1(json.dumps([b['title'], b['text'], int(b['at'].timestamp())], ensure_ascii=False).encode()).hexdigest()[:16]
+        sig = hashlib.sha1(json.dumps([b['title'], b['text'], int(b['at'].timestamp()), b['priority']], ensure_ascii=False).encode()).hexdigest()[:16]
         cur = have.get(key)
         if cur and cur['sig'] == sig: continue
         if (b['at'] - now).total_seconds() < 15: continue   # ntfy cần hẹn ≥10 giây; sát giờ thì để vòng trên máy lo

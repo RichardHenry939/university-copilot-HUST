@@ -229,7 +229,7 @@ def tick(now=None, send=notify, classes=None, dls=None):
             import deadlines as D
             mark, left = D.mark_due(a['dl'], now)
             k2 = f"{key}|{mark}"
-            if mark is None or s['sent'].get(k2) or (quiet and mark > 60): continue
+            if mark is None or s['sent'].get(k2): continue   # LUẬT (06/10): kệ giờ, phải đúng mốc — thông báo không tự mất đi
             x = a['dl']
             send(f"Còn {D.say_left(mark)}: {x['name']}" + (f" · {x['course']}" if x['course'] else ''),
                  f"{x['kind']} — {a['text'].split(' — ')[0]}", persistent=mark <= 60, level='red', alert=a, phone_ok=k2 not in sched)
@@ -238,16 +238,15 @@ def tick(now=None, send=notify, classes=None, dls=None):
             import deadlines as D
             mark = D.mark_at(a['marks'], a['mins'])
             k2 = f"{key}|{mark}"
-            if mark is None or s['sent'].get(k2) or (quiet and mark > 60): continue
+            if mark is None or s['sent'].get(k2): continue   # LUẬT (06/10): kệ giờ, phải đúng mốc — thông báo không tự mất đi
             send(f"Còn {D.say_left(mark)}: " + a['title'], a['text'] + (f"\n{a['note']}" if a.get('note') else ''), level='red', alert=a, phone_ok=k2 not in sched)
             s['sent'][k2] = now.isoformat(timespec='seconds'); sent.append(k2); continue
-        if quiet: continue
-        if lvl == 'optional': continue   # gợi ý: chỉ banner trong UC
         if lvl == 'class':   # tiết học: đúng 2 lần, trước 30 và 15 phút
-            slot = next((m for m in sorted(CLASS_SLOTS) if a['mins'] <= m), None)
+            import deadlines as D
+            slot = D.mark_at(CLASS_SLOTS, a['mins'], 3)   # đúng mốc 30 / 15 phút, lỡ thì bỏ
             k2 = f'{key}|{slot}'
-            if slot is None or s['sent'].get(k2) or (slot == CLASS_SLOTS[0] and s['sent'].get(f'{key}|{CLASS_SLOTS[1]}')): continue
-            send(f"Còn {int(a['mins'] + 0.5)} phút: " + a['title'].split(': ', 1)[1], a['text'].rsplit(' — ', 1)[0] + (f"\n{a['note']}" if a.get('note') else ''), level='red', phone_ok=k2 not in sched)
+            if slot is None or s['sent'].get(k2): continue
+            send(f"Còn {slot} phút: " + a['title'].split(': ', 1)[1], a['text'].rsplit(' — ', 1)[0] + (f"\n{a['note']}" if a.get('note') else ''), level='red', phone_ok=k2 not in sched)
             s['sent'][k2] = now.isoformat(timespec='seconds'); sent.append(k2); continue
         if a.get('deadline') and lvl in ('yellow', 'red'):   # hạn nộp: nhắc đúng các mốc 72 / 48 / 36 / 24 giờ
             hours = (dt.datetime.fromisoformat(a['when']) - now).total_seconds() / 3600
@@ -257,6 +256,8 @@ def tick(now=None, send=notify, classes=None, dls=None):
             if mark is None or s['sent'].get(k2): continue
             send(f"Còn {mark} giờ: " + a["title"], a['text'] + (f"\n{a['note']}" if a.get('note') else ''), level='red', alert=a)
             s['sent'][k2] = now.isoformat(timespec='seconds'); sent.append(k2); continue
+        if quiet: continue
+        if lvl == 'optional': continue   # gợi ý: chỉ banner trong UC
         last = s['sent'].get(key)
         every = EVERY[lvl]
         if a.get('going') and lvl == 'day':   # đã chọn "Sẽ đi": chỉ nhắc 2 giờ và 30 phút trước

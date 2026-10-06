@@ -30,7 +30,7 @@ UC chạy trên laptop, cứ 5 phút đọc lại các nguồn (**chỉ đọc**
   - *Tự luyện cốt lõi*: thêm 7h, 5h, 3h, 1h, 30', 20', 10'.
   - *Ảnh hưởng điểm môn học*: thêm 10h, 5h, 3h, 1h, 30', 20', 10', 5', 2', 1'.
   - Tiết học: 30 và 15 phút trước, đã tính cả đổi phòng lấy từ Teams.
-  - Chỉ nhắc đúng các mốc trên, lỡ mốc thì không gửi bù. Mốc rơi vào 23:00–06:00 vẫn tới đúng giờ nhưng im lặng.
+  - Chỉ nhắc đúng các mốc trên, kể cả lúc nửa đêm; lỡ mốc thì không gửi bù.
 - **Vẫn nhắc khi laptop gập máy**: các lần nhắc được hẹn sẵn trên máy chủ [ntfy](https://ntfy.sh) tới 70 giờ trước, và tự sửa hoặc huỷ khi lịch thay đổi.
 - **Đồng bộ tài liệu hai chiều**: Teams ⇄ thư mục tài liệu trên máy ⇄ Notion. Tài liệu được xếp đúng môn, chống trùng bằng SHA-256.
 - **Quét trùng**: phát hiện hạn hoặc lịch bị nhập hai lần. Hai mục khác mã môn thì không bao giờ bị coi là trùng.
@@ -55,7 +55,8 @@ UC chạy trên laptop, cứ 5 phút đọc lại các nguồn (**chỉ đọc**
 3. **Không ghi ngầm.** Mọi thao tác ghi từ giao diện (Notion, xoá trùng…) đều phải qua bước xác nhận.
 4. **Bài đã hết hạn không biến thành hạn mới.** Chúng được ghi vào lịch sử *Academic Tasks* với kết quả *Đã làm / Bỏ lỡ*, nên không nhắc vô ích.
 5. **Điện thoại chỉ để xem và xác nhận đã biết.** Nút "Hoàn tất" và "Tắt nhắc" chỉ có trên máy tính, để không lỡ tay tắt một hạn thật.
-6. **Mật khẩu không nằm trong code.** Tài khoản trường cất trong Windows Credential Manager. Tự đăng nhập chỉ điền trên trang đăng nhập Microsoft hoặc trang của trường, tối đa một lần mỗi lượt; gặp xác minh 2 bước hoặc captcha thì dừng và báo người dùng.
+6. **Kệ giờ, phải đúng mốc.** Thông báo không tự mất đi, nên mốc rơi vào nửa đêm vẫn gửi đúng giờ, đúng số ("còn 24 giờ" lúc 23:59) thay vì dời sang sáng với số giờ lẻ. Lỡ mốc (ví dụ hạn mới được phát hiện) thì chờ mốc kế tiếp, không gửi bù.
+7. **Mật khẩu không nằm trong code.** Tài khoản trường cất trong Windows Credential Manager. Tự đăng nhập chỉ điền trên trang đăng nhập Microsoft hoặc trang của trường, tối đa một lần mỗi lượt; gặp xác minh 2 bước hoặc captcha thì dừng và báo người dùng.
 
 ## Công nghệ
 
@@ -130,6 +131,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.06** | 06/10/2026 | Cách tính điểm cho mọi môn, tự động mọi kỳ: đọc thêm trả lời trong luồng ở mọi kênh, Class Notebook và nội dung mọi slide / đề cương (trước chỉ đọc file có tên "đánh giá", nên sót IT1108 có công thức nằm trong slide chương 1). Ưu tiên bài nói rõ nhất về cách tính, bỏ qua trả lời của sinh viên |
 | **v1.00.07** | 06/10/2026 | Sửa lỗi điểm cuối kỳ "ma": thành phần "Cuối kỳ trên MOOC tại phòng máy" (IT2000) bị gán nhầm điểm bài tập MOOC hằng tuần. Cuối kỳ giờ được nhận diện trước, và chỉ lấy điểm khi qldt có nhãn CK rõ ràng |
 | **v1.00.08** | 06/10/2026 | Nhắc đúng mốc, không gửi bù: trước đây hạn mới phát hiện sau mốc 48 giờ hoặc mốc rơi vào đêm bị nhắc bù với số giờ lẻ ("còn 38 giờ", "còn 41 giờ"). Giờ chỉ nhắc đúng các mốc; mốc rơi vào 23:00–06:00 vẫn tới đúng giờ nhưng không chuông, không rung |
+| **v1.00.09** | 06/10/2026 | Luật mới "kệ giờ, phải đúng mốc": bỏ hẳn giờ yên lặng cho các mốc nhắc (thông báo không tự mất đi), mốc đêm có chuông như ban ngày. Nhắc tiết học cũng chỉ đúng 30 và 15 phút |
 
 ## Chạy thử
 

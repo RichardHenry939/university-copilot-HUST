@@ -546,7 +546,7 @@ G17_END = card(GX + 28, g3, GW - 56, None, "", "Quét trùng · dupscan.py", "sa
       "Không tự xoá: tab Hôm nay “Có thể trùng” → Giữ cả hai / Bỏ bản này → Xác nhận (liệt kê đủ) → thùng rác Notion"], fill="#fff", accent=RED)
 
 Z18_Y = 440 + Z17_H + 40
-zone(GX, Z18_Y, GW, 2380 - Z18_Y, "18", "Nhắc · điện thoại", "alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · chỉ đúng mốc, lỡ thì không gửi bù · 23:00–06:00: mốc > 1 giờ gửi im lặng", "#FFF6F6", new=True)
+zone(GX, Z18_Y, GW, 2380 - Z18_Y, "18", "Nhắc · điện thoại", "alerts.py mỗi phút · toast Windows + 🔔 UC + ntfy · LUẬT: kệ giờ, phải đúng mốc (thông báo không tự mất đi) · lỡ mốc thì không gửi bù", "#FFF6F6", new=True)
 # bảng mốc nhắc
 ty = Z18_Y + 120
 text(GX + 28, ty, "MỐC NHẮC", 17, INK2, 600, F_HEAD, ls=2.5)
@@ -740,11 +740,12 @@ cons = ["Chỉ ghi âm khi bấm Start, chỉ dừng khi bấm Stop (ngắt an t
         "Luật tối cao: thiếu → thêm · tranh chấp → trường thắng · thừa → giữ",
         "Ghi trên UI luôn hỏi Xác nhận · mật khẩu chỉ ở Credential Manager · không tự xoá, chỉ thùng rác",
         "Nguồn trường chỉ đọc · bài hết hạn không ghi thành hạn (→ Academic Tasks) · điện thoại không Hoàn tất / Tắt nhắc",
-        "UC lo hành chính, không làm giảng viên: không tạo task ôn · chat chỉ báo “đã làm” khi có kết quả thật"]
+        "UC lo hành chính, không làm giảng viên: không tạo task ôn · chat chỉ báo “đã làm” khi có kết quả thật",
+        "Nhắc: kệ giờ, phải đúng mốc — không dời, không gửi bù số giờ lẻ, không có giờ yên lặng cho mốc"]
 cy_ = 3090
 for c in cons:
     add(f'<rect x="2424" y="{cy_ - 12}" width="9" height="9" fill="{RED}"/>')
-    text(2446, cy_, c, 15, INK); cy_ += 24.5
+    text(2446, cy_, c, 15, INK); cy_ += 22.5
 
 
 # Ai chạy cái gì
