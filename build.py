@@ -743,8 +743,8 @@ def ingest_section(y):
                              "options": {"response": {"response": {"neverError": True}}}}}
     ar_chk = {"id": sid("node", "Gỡ tài liệu · Kiểm tra"), "name": "Gỡ tài liệu · Kiểm tra", "type": "n8n-nodes-base.code", "typeVersion": 2,
               "position": [440, y + 600],
-              "parameters": {"jsCode": "// chỉ gỡ trang thuộc 📚 Course Materials; trang khác -> từ chối\n"
-                                       "const ok = String($json.parent?.database_id || '').replace(/-/g, '') === '" + mat_db + "' && !$json.archived;\n"
+              "parameters": {"jsCode": "// chỉ gỡ trang thuộc 📚 Course Materials hoặc 📥 University Inbox; trang khác -> từ chối\n"
+                                       "const ok = ['" + mat_db + "', '" + INBOX_DB.replace("-", "") + "'].includes(String($json.parent?.database_id || '').replace(/-/g, '')) && !$json.archived;   // (6/10) + dòng 📥 Inbox nạp nhầm\n"
                                        "return [{ json: { id: $json.id, ok } }];"}}
     ar_do = {"id": sid("node", "Gỡ tài liệu · Bỏ vào thùng rác"), "name": "Gỡ tài liệu · Bỏ vào thùng rác", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
              "position": [660, y + 600], "credentials": copy.deepcopy(NOTION),
