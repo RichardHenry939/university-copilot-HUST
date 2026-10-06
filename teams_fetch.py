@@ -4,7 +4,9 @@
 Dùng hồ sơ Chrome đồng bộ (school_fetch, tự đăng nhập) + token Graph của chính trang Teams web:
   • lớp (joinedTeams) → kênh → bài đăng (kể cả bài đã SỬA: mỗi lần sửa là một phiên bản để so "Trước → Nay")
   • thẻ bài tập của app Assignments (tên bài + "Due …") → hạn nộp
-  • file trong thư mục của từng kênh (bỏ Recordings, ảnh chụp chat, .loop)
+  • file trong thư mục của từng kênh (bỏ Recordings, ảnh chụp chat, .loop) + Shared Documents của nhóm
+  • (6/10) trả lời trong luồng (giảng viên hay trả lời "cách tính điểm" ngay dưới bài) -> school/teams/replies.json
+  • (6/10) Class Notebook (OneNote) của nhóm, bỏ các mục mẫu rỗng -> school/teams/onenote.json
 Không gửi tin, không bấm gì, không tải lên. Khoá school/chrome.lock dùng chung với mail + qldt.
 Ra: school/teams/posts.json (cùng dạng với school/mail/inbox.json để mail_events xử lý chung)
      school/teams/files.json (danh sách file + link tải tạm thời, teams_files.py tải về)
@@ -39,7 +41,13 @@ JS = r"""async () => {
   const cardText = a => { try { const out = []; const walk = o => { if (!o || typeof o !== 'object') return;
       if (typeof o.text === 'string' && o.text.trim()) out.push(o.text.trim()); for (const v of Object.values(o)) walk(v); };
       walk(JSON.parse(a.content)); return out.join('\n'); } catch (e) { return ''; } };
-  const res = {ok: true, teams: [], posts: [], files: [], tabs: [], errors: []};
+  let ntok = null;   // OneNote (Notes.Read) — token riêng của trang
+  for (const k of Object.keys(localStorage)) { if (!/accesstoken/i.test(k)) continue;
+    try { const o = JSON.parse(localStorage.getItem(k)); if (/graph\.microsoft\.com\/Notes\.Read/i.test(o.target)) ntok = o.secret; } catch (e) {} }
+  const gn = async u => { if (!ntok) return {error: 'no notes token'};
+    try { const r = await fetch('https://graph.microsoft.com/v1.0' + u, {headers: {Authorization: 'Bearer ' + ntok}, signal: AbortSignal.timeout(30000)});
+      return r.ok ? (/json/.test(r.headers.get('content-type') || '') ? r.json() : {html: await r.text()}) : {error: r.status}; } catch (e) { return {error: 'timeout'}; } };
+  const res = {ok: true, teams: [], posts: [], files: [], tabs: [], replies: [], notes: [], errors: []};
   const seenFile = new Set();
   const teams = (await g('/me/joinedTeams')).value || [];
   for (const t of teams) {
@@ -50,7 +58,7 @@ JS = r"""async () => {
     for (const c of tchs) if (!chs.some(x => x.id === c.id)) chs.push(c);
     res.teams[res.teams.length - 1].channels = chs.map(c => ({name: c.displayName, type: c.membershipType || 'standard'}));
     for (const c of chs) {
-      let url = `/teams/${t.id}/channels/${c.id}/messages?$top=50`;
+      let url = `/teams/${t.id}/channels/${c.id}/messages?$top=50&$expand=replies`;
       for (let page = 0; page < 3 && url; page++) {
         const m = await g(url); if (m.error) { res.errors.push(`${t.displayName}/${c.displayName}: ${m.error}`); break; }
         for (const x of (m.value || [])) {
@@ -61,6 +69,13 @@ JS = r"""async () => {
           res.posts.push({id: x.id, team: t.displayName, teamId: t.id, channel: c.displayName, from, subject: x.subject || '',
                           created: x.createdDateTime, modified: x.lastModifiedDateTime || x.createdDateTime,
                           body: (text(x.body && x.body.content) + (cards.length ? '\n' + cards.join('\n') : '')).slice(0, 20000), files});
+          for (const y of (x.replies || [])) {
+            if (y.messageType !== 'message' || y.deletedDateTime) continue;
+            res.replies.push({id: y.id, parent: x.id, team: t.displayName, channel: c.displayName, parentSubject: x.subject || '',
+                              from: y.from && y.from.user ? y.from.user.displayName : '', created: y.createdDateTime,
+                              modified: y.lastModifiedDateTime || y.createdDateTime, body: text(y.body && y.body.content).slice(0, 8000),
+                              files: (y.attachments || []).filter(a => a.contentType === 'reference').map(a => a.name)});
+          }
         }
         url = m['@odata.nextLink'] || null;
       }
@@ -97,6 +112,17 @@ JS = r"""async () => {
       }
     };
     if (drv && drv.id && root.value) await walkRoot(root.value, '', 0);
+    // Class Notebook: chỉ các mục giảng viên thật sự viết (bỏ "Empty Section n", trang chào, hướng dẫn mẫu)
+    const secs = await gn(`/groups/${t.id}/onenote/sections?$top=100`);
+    for (const sc of (secs.value || [])) {
+      if (/^(Empty Section \d+|TeamWelcome|Using the .*)$/i.test(sc.displayName || '')) continue;
+      const pgs = await gn(`/onenote/sections/${sc.id}/pages?$top=50`);
+      for (const pg of (pgs.value || []).slice(0, 30)) {
+        const ct = await gn(`/onenote/pages/${pg.id}/content`);
+        res.notes.push({id: pg.id, team: t.displayName, section: sc.displayName, title: pg.title || '', modified: pg.lastModifiedDateTime,
+                        text: text(ct.html || '').slice(0, 20000)});
+      }
+    }
   }
   return res;
 }"""
@@ -145,7 +171,10 @@ def fetch():
     box['teams'] = res['teams']; box['last_fetch'] = dt.datetime.now().isoformat(timespec='seconds'); box['errors'] = res['errors']
     POSTS.write_text(json.dumps(box, ensure_ascii=False, indent=1), encoding='utf-8')
     FILES.write_text(json.dumps({'at': box['last_fetch'], 'items': res['files'], 'tabs': res.get('tabs', [])}, ensure_ascii=False, indent=1), encoding='utf-8')
-    return {'ok': True, 'teams': len(res['teams']), 'posts_new': len(new), 'posts': len(box['items']), 'files': len(res['files']), 'errors': res['errors'][:5]}
+    (DIR / 'replies.json').write_text(json.dumps({'at': box['last_fetch'], 'items': res.get('replies', [])}, ensure_ascii=False, indent=1), encoding='utf-8')
+    (DIR / 'onenote.json').write_text(json.dumps({'at': box['last_fetch'], 'items': res.get('notes', [])}, ensure_ascii=False, indent=1), encoding='utf-8')
+    return {'ok': True, 'teams': len(res['teams']), 'posts_new': len(new), 'posts': len(box['items']), 'files': len(res['files']),
+            'replies': len(res.get('replies', [])), 'notes': len(res.get('notes', [])), 'errors': res['errors'][:5]}
 
 
 if __name__ == '__main__':

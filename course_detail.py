@@ -31,7 +31,7 @@ Trả lời CHỈ JSON: {{"cong_thuc": "<1 dòng tiếng Việt, đúng như bà
    "nhan_qldt": "<nhãn có thể xuất hiện trên qldt, vd 'TN/TH', 'GK', 'QT' — hoặc null>", "ghi_chu": "<ngắn hoặc null>"}}],
  "ghi_chu": "<luật cộng / trừ điểm quan trọng khác, ngắn, hoặc null>"}}
 Nếu một thành phần gộp nhiều thứ (vd 'tham dự lớp và bài tập hằng tuần trên MOOC 10%') thì giữ là MỘT thành phần với nguon chính.
-Tổng trong_so phải = 100 nếu bài đăng nói đủ.
+Tổng trong_so phải = 100 nếu bài đăng nói đủ. Bài sau ĐÍNH CHÍNH bài trước thì theo bài mới nhất của giảng viên / trợ giảng; bỏ qua câu trả lời của sinh viên và các con số không phải trọng số (phổ điểm, số thứ tự, tỉ lệ vắng, % trong một thành phần con).
 
 BÀI ĐĂNG:
 {posts}"""
@@ -69,6 +69,41 @@ def _page(url, limit=8000):
         return f'(không mở được trang: {type(e).__name__})'
 
 
+DOCS_CACHE = HERE / 'school' / 'grade_docs_cache.json'
+STRICT_WEIGHT = re.compile(r'\d{1,3}\s?%[\s\S]{0,400}?\d{1,3}\s?%|0[.,]\d\s*[*x×]', re.I)   # ít nhất 2 trọng số / một công thức
+HAS_WEIGHT = re.compile(r'\d{1,3}\s?%|trọng số|hệ số\s*0[.,]\d|0[.,]\d\s*\*', re.I)
+
+
+def _grading_excerpt(text, width=1400):
+    """Đoạn trong tài liệu nói về đánh giá / cách tính điểm (có trọng số) — vd slide 16 "Đánh giá học phần: 50% GIỮA KỲ…" của IT1108."""
+    out, last = [], -10**9
+    for m in GRADING_POST.finditer(text or ''):
+        if m.start() < last + width: continue
+        win = text[max(0, m.start() - 300): m.start() + width]
+        if HAS_WEIGHT.search(win): out.append(win.strip()); last = m.start()
+        if len(out) >= 3: break
+    return '\n…\n'.join(out)
+
+
+def _doc_hits(code_files):
+    """MỌI tài liệu của môn (slide, đề cương, file trong kênh / Shared Documents) -> đọc NỘI DUNG bằng Tika, giữ đoạn nói về cách tính.
+    Cache theo file + ngày sửa: mỗi file chỉ đọc một lần (Tika, không AI)."""
+    cache = _load(DOCS_CACHE)
+    hits = {}
+    for code, docs in code_files.items():
+        for d in docs:
+            sig = f"{d['path']}|{d.get('modified')}"
+            c = cache.get(d['path'])
+            if not c or c.get('sig') != sig:
+                if not Path(d['path']).exists(): continue
+                c = {'sig': sig, 'hit': _grading_excerpt(_tika(d['path'], 400000))}
+                cache[d['path']] = c
+            if c['hit'] or GRADING_DOC.search(d['name']):
+                hits.setdefault(code, []).append({**d, 'excerpt': c['hit']})
+    DOCS_CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=0), encoding='utf-8')
+    return hits
+
+
 def refresh_rules(gemini=None):
     """Gọi trong vòng cập nhật, cho MỌI nhóm Teams / môn: gom (1) bài nói về đánh giá / cách tính điểm, (2) trang mà bài đó dẫn tới,
     (3) file đánh giá / đề cương trong Files của nhóm (đọc bằng Tika) -> chỉ khi bộ nguồn đổi mới gọi AI (1 lần / môn)."""
@@ -81,13 +116,31 @@ def refresh_rules(gemini=None):
         text = (m.get('Subject') or '') + ' ' + (m.get('Body') or '')
         if code and (GRADING_POST.search(text) or (GRADING.search(text) and re.search(r'\d{1,3}\s?%', text))):
             by.setdefault(code, {'name': m.get('CourseName') or '', 'posts': [], 'docs': [], 'links': []})['posts'].append(m)
-    try:   # file đánh giá / đề cương đã tải về Uni-Documents (teams_files)
+    try:   # (6/10) trả lời trong luồng + Class Notebook của mọi nhóm lớp
         import teams_files
-        done = _load(HERE / 'school' / 'teams' / 'files_done.json')
+        tab = teams_files.course_table()
+        T = HERE / 'school' / 'teams'
+        for y in _load(T / 'replies.json', {}).get('items') or []:
+            code, name = teams_files.course_of_team(y.get('team') or '', tab)
+            if code and GRADING_POST.search(y.get('body') or '') and STRICT_WEIGHT.search(y.get('body') or ''):   # SV hay nhắc "trọng số" bâng quơ
+                by.setdefault(code, {'name': name or '', 'posts': [], 'docs': [], 'links': []})['posts'].append(
+                    {'Id': 'reply:' + y['id'] + '@' + (y.get('modified') or ''), 'Subject': '↳ trả lời: ' + (y.get('parentSubject') or ''), 'Body': y['body'],
+                     'Created': y.get('created'), 'Team': y.get('team'), 'Source': 'teams'})
+        for n in _load(T / 'onenote.json', {}).get('items') or []:
+            code, name = teams_files.course_of_team(n.get('team') or '', tab)
+            ex = _grading_excerpt(n.get('text') or '')
+            if code and ex:
+                by.setdefault(code, {'name': name or '', 'posts': [], 'docs': [], 'links': []})['posts'].append(
+                    {'Id': 'onenote:' + n['id'] + '@' + (n.get('modified') or ''), 'Subject': 'Class Notebook · ' + (n.get('section') or '') + ' · ' + (n.get('title') or ''),
+                     'Body': ex, 'Created': n.get('modified'), 'Team': n.get('team'), 'Source': 'teams'})
+        # MỌI tài liệu của môn đã tải về Uni-Documents -> đọc nội dung (không chỉ file có tên "đánh giá")
+        done = _load(T / 'files_done.json')
+        files = {}
         for k, v in done.items():
-            if v.get('mon') and v.get('rel') and GRADING_DOC.search(v.get('name') or '') and (v.get('name') or '').lower().endswith(DOC_EXT):
-                by.setdefault(v['mon'], {'name': '', 'posts': [], 'docs': [], 'links': []})['docs'].append(
-                    {'name': v['name'], 'path': str(Path(teams_files.UNI) / v['rel']), 'modified': v.get('modified')})
+            if v.get('mon') and v.get('rel') and (v.get('name') or '').lower().endswith(DOC_EXT):
+                files.setdefault(v['mon'], []).append({'name': v['name'], 'path': str(Path(teams_files.UNI) / v['rel']), 'modified': v.get('modified')})
+        for code, docs in _doc_hits(files).items():
+            by.setdefault(code, {'name': '', 'posts': [], 'docs': [], 'links': []})['docs'].extend(docs)
     except Exception as e:
         print('grade_rules docs:', e)
     shared = [d for x in by.values() for d in x['docs'] if re.search(r'toán (đc|đại cương|cao cấp)|toan dc|toan cao cap', d['name'], re.I)]
@@ -103,12 +156,18 @@ def refresh_rules(gemini=None):
             for u in URL_RX.findall(m.get('Body') or ''):
                 u = u.rstrip('.,;')
                 if re.search(r'hust\.edu\.vn|daotao\.ai', u) and not re.search(r'teams\.microsoft|forms\.|safelinks|sharepoint', u) and u not in links: links.append(u)
+        x['docs'].sort(key=lambda d: (not d.get('excerpt'), not GRADING_DOC.search(d['name'])))   # file có đoạn cách tính lên trước
         key = '|'.join([m['Id'] for m in posts] + [d['name'] + str(d['modified']) for d in x['docs']] + links)
         h = hashlib.sha1(key.encode()).hexdigest()[:12]
         if (rules.get(code) or {}).get('hash') == h: continue
-        parts = [f"[BÀI {(m.get('Created') or m.get('ReceivedDateTime') or '')[:10]}] {m.get('Subject') or ''}\n{me.clean(m.get('Body') or '')[:2500]}" for m in posts[-8:]]
+        # (6/10) chọn 8 bài NÓI RÕ NHẤT về cách tính (nhiều trọng số, tiêu đề về điểm) chứ không phải 8 bài mới nhất — bài giới thiệu đầu kỳ hay bị đẩy ra
+        def score(m):
+            t = (m.get('Subject') or '') + ' ' + (m.get('Body') or '')
+            return len(re.findall(r'\d{1,3}\s?%', t)) + 3 * bool(GRADING_POST.search(m.get('Subject') or '')) + 2 * bool(STRICT_WEIGHT.search(t))
+        top = sorted(sorted(posts, key=score, reverse=True)[:8], key=lambda m: m.get('Created') or m.get('ReceivedDateTime') or '')
+        parts = [f"[BÀI {(m.get('Created') or m.get('ReceivedDateTime') or '')[:10]}] {m.get('Subject') or ''}\n{me.clean(m.get('Body') or '')[:2500]}" for m in top]
         parts += [f"[TRANG {u}]\n{_page(u)}" for u in links[:3]]
-        parts += [f"[FILE {d['name']}]\n{_tika(d['path'])}" for d in x['docs'][:3] if Path(d['path']).exists()]
+        parts += [f"[FILE {d['name']}]\n{d.get('excerpt') or _tika(d['path'])}" for d in x['docs'][:4] if Path(d['path']).exists()]
         if not parts: continue
         try:
             out = gemini(PROMPT.format(code=code, name=x['name'], posts='\n\n'.join(parts)[:30000]), caller='mail'); n_ai += 1
@@ -118,10 +177,18 @@ def refresh_rules(gemini=None):
         if not (out or {}).get('thanh_phan'):   # nguồn không nói cách tính -> ghi hash để khỏi hỏi lại, nhưng không ghi đè luật đã có
             rules.setdefault(code, {})['hash'] = h; continue
         src = [{'subject': (m.get('Subject') or '')[:120], 'at': (m.get('Created') or m.get('ReceivedDateTime') or '')[:10],
-                'where': ('Teams · ' + (m.get('Team') or '')[:50]) if m.get('Source') == 'teams' else 'Mail'} for m in posts[-3:]]
+                'where': ('Teams · ' + (m.get('Team') or '')[:50]) if m.get('Source') == 'teams' else 'Mail'} for m in sorted(top, key=score, reverse=True)[:3]]
         src += [{'subject': 'Trang ' + u, 'at': '', 'where': 'link trong bài'} for u in links[:2]]
         src += [{'subject': d['name'], 'at': (d.get('modified') or '')[:10], 'where': 'File trong nhóm Teams'} for d in x['docs'][:2]]
         rules[code] = {**out, 'hash': h, 'at': dt.datetime.now(TZ).isoformat(timespec='minutes'), 'nguon': src}
+    try:
+        import teams_files
+        for code, name, cls in teams_files.course_table():
+            if not cls: continue   # chỉ môn đang học kỳ này (có lớp trong TKB)
+            x = by.get(code) or {'posts': [], 'docs': []}
+            rules.setdefault(code, {})['quet'] = {'at': dt.datetime.now(TZ).isoformat(timespec='minutes'), 'bai': len(x['posts']), 'file': len(x['docs'])}
+    except Exception as e:
+        print('grade_rules scan:', e)
     RULES.write_text(json.dumps(rules, ensure_ascii=False, indent=1), encoding='utf-8')
     return {'ok': True, 'courses': len([c for c in rules.values() if c.get('thanh_phan')]), 'ai_calls': n_ai}
 
@@ -234,7 +301,7 @@ def view(code):
     return {'ok': True, 'code': code, 'cong_thuc': rule.get('cong_thuc'), 'ghi_chu': rule.get('ghi_chu'), 'nguon_cach_tinh': rule.get('nguon') or [],
             'thanh_phan': comps, 'diem_da_chac': round(known, 2), 'trong_so_da_co': w_known, 'ck_can': need,
             'qldt_tho': q, 'mooc': mooc, 'fami': fam, 'lop': _sections(code, now),
-            'thieu': [c['ten'] for c in others_unknown]}
+            'thieu': [c['ten'] for c in others_unknown], 'quet': rule.get('quet')}
 
 
 if __name__ == '__main__':

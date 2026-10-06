@@ -678,7 +678,7 @@ iy = card(IX + 28, iy, IW - 56, None, "", "Lọc thông báo cũ · stale_filter
       "Áp cho thông báo CTSV, thư Hành chính và thông báo thư / Teams ở Ngoại khoá · số mục bị ẩn hiện ngay trên tab"], fill="#fff", accent=RED) + 20
 iy = card(IX + 28, iy, IW - 56, None, "", "Chi tiết học phần · course_detail.py", "tab Học kỳ → bấm một môn",
      ["Lớp thành phần (LT / BT / TN) + điểm thành phần từ bảng điểm qldt",
-      "Công thức điểm: bài đăng Teams, trang được dẫn tới, file trong kênh ẩn + Shared Documents (Tika đọc) → Gemini chỉ đọc lại khi nội dung đổi",
+      "Công thức điểm cho MỌI môn, tự động mọi kỳ: bài đăng + trả lời trong luồng ở mọi kênh, Class Notebook, trang được dẫn tới, NỘI DUNG mọi slide / đề cương / file (Tika đọc, mỗi file một lần) → Gemini chỉ đọc lại khi nguồn đổi",
       "Nguồn từng thành phần theo tên: liên tục → FAMI · giữa kỳ / thực hành → qldt · MOOC → bài tuần · chuyên cần",
       "Cuối kỳ cần bao nhiêu điểm cho từng mức A+ … D"], fill="#fff", accent=INK) + 20
 card(IX + 28, iy, IW - 56, None, "", "Gửi tài liệu sang NotebookLM · nlm_bridge.py", "tab Inbox · chỉ chạy khi bạn bấm, luôn hỏi Xác nhận",

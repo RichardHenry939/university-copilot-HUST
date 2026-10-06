@@ -1172,28 +1172,29 @@
 <text x="11826" y="1299.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Không ghi ngày → cũ hơn 90 ngày thì ẩn · năm n không hiện thông báo năm n-1 (trừ khi hạn kéo sang năm n)</text>
 <circle cx="11814" cy="1325.4" r="2.6" fill="#4B5D70"/>
 <text x="11826" y="1332.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Áp cho thông báo CTSV, thư Hành chính và thông báo thư / Teams ở Ngoại khoá · số mục bị ẩn hiện ngay trên tab</text>
-<rect x="11788" y="1399" width="1904" height="233" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
-<rect x="11788" y="1399" width="6" height="233" fill="#14263A"/>
+<rect x="11788" y="1399" width="1904" height="262" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
+<rect x="11788" y="1399" width="6" height="262" fill="#14263A"/>
 <text x="11810" y="1433" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Chi tiết học phần · course_detail.py</text>
 <text x="11810" y="1459" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">tab Học kỳ → bấm một môn</text>
 <circle cx="11814" cy="1479.44" r="2.6" fill="#4B5D70"/>
 <text x="11826" y="1487.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Lớp thành phần (LT / BT / TN) + điểm thành phần từ bảng điểm qldt</text>
 <circle cx="11814" cy="1512.42" r="2.6" fill="#4B5D70"/>
-<text x="11826" y="1519.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Công thức điểm: bài đăng Teams, trang được dẫn tới, file trong kênh ẩn + Shared Documents (Tika đọc) → Gemini chỉ đọc lại khi nội dung đổi</text>
-<circle cx="11814" cy="1545.4" r="2.6" fill="#4B5D70"/>
-<text x="11826" y="1552.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Nguồn từng thành phần theo tên: liên tục → FAMI · giữa kỳ / thực hành → qldt · MOOC → bài tuần · chuyên cần</text>
-<circle cx="11814" cy="1578.38" r="2.6" fill="#4B5D70"/>
-<text x="11826" y="1585.94" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Cuối kỳ cần bao nhiêu điểm cho từng mức A+ … D</text>
-<rect x="11788" y="1652" width="1904" height="200" rx="0" fill="#fff" fill-opacity="1" stroke="#0D7377" stroke-width="1.6"/>
-<rect x="11788" y="1652" width="6" height="200" fill="#0D7377"/>
-<text x="11810" y="1686" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Gửi tài liệu sang NotebookLM · nlm_bridge.py</text>
-<text x="11810" y="1712" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">tab Inbox · chỉ chạy khi bạn bấm, luôn hỏi Xác nhận</text>
-<circle cx="11814" cy="1732.44" r="2.6" fill="#4B5D70"/>
-<text x="11826" y="1740.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Tìm trong Uni-Documents → tích chọn → thêm vào notebook có sẵn hoặc tạo notebook mới</text>
-<circle cx="11814" cy="1765.42" r="2.6" fill="#4B5D70"/>
-<text x="11826" y="1772.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">UC dừng ở đó: không tạo task ôn, không ghi Notion, không gọi AI — UC lo hành chính, việc học bạn làm trong NotebookLM</text>
-<circle cx="11814" cy="1798.4" r="2.6" fill="#4B5D70"/>
-<text x="11826" y="1805.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Phiên Google: tác vụ “NotebookLM keepalive” 20 phút/lần; Google bắt đăng nhập tay → cửa sổ Chrome ở lại tới khi đăng nhập (đóng là mở lại)</text>
+<text x="11826" y="1519.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Công thức điểm cho MỌI môn, tự động mọi kỳ: bài đăng + trả lời trong luồng ở mọi kênh, Class Notebook, trang được dẫn tới, NỘI DUNG mọi slide / đề cương / file (Tika đọc, mỗi file một</text>
+<text x="11826" y="1548.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">lần) → Gemini chỉ đọc lại khi nguồn đổi</text>
+<circle cx="11814" cy="1574.38" r="2.6" fill="#4B5D70"/>
+<text x="11826" y="1581.94" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Nguồn từng thành phần theo tên: liên tục → FAMI · giữa kỳ / thực hành → qldt · MOOC → bài tuần · chuyên cần</text>
+<circle cx="11814" cy="1607.3600000000001" r="2.6" fill="#4B5D70"/>
+<text x="11826" y="1614.92" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Cuối kỳ cần bao nhiêu điểm cho từng mức A+ … D</text>
+<rect x="11788" y="1681" width="1904" height="200" rx="0" fill="#fff" fill-opacity="1" stroke="#0D7377" stroke-width="1.6"/>
+<rect x="11788" y="1681" width="6" height="200" fill="#0D7377"/>
+<text x="11810" y="1715" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Gửi tài liệu sang NotebookLM · nlm_bridge.py</text>
+<text x="11810" y="1741" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">tab Inbox · chỉ chạy khi bạn bấm, luôn hỏi Xác nhận</text>
+<circle cx="11814" cy="1761.44" r="2.6" fill="#4B5D70"/>
+<text x="11826" y="1769.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Tìm trong Uni-Documents → tích chọn → thêm vào notebook có sẵn hoặc tạo notebook mới</text>
+<circle cx="11814" cy="1794.42" r="2.6" fill="#4B5D70"/>
+<text x="11826" y="1801.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">UC dừng ở đó: không tạo task ôn, không ghi Notion, không gọi AI — UC lo hành chính, việc học bạn làm trong NotebookLM</text>
+<circle cx="11814" cy="1827.4" r="2.6" fill="#4B5D70"/>
+<text x="11826" y="1834.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Phiên Google: tác vụ “NotebookLM keepalive” 20 phút/lần; Google bắt đăng nhập tay → cửa sổ Chrome ở lại tới khi đăng nhập (đóng là mở lại)</text>
 <rect x="80" y="2870" width="13640" height="130" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="2.4"/>
 <rect x="80" y="2870" width="340" height="130" rx="0" fill="#14263A" fill-opacity="1" stroke="#14263A" stroke-width="0"/>
 <text x="100" y="2914" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="2">HÀNH TRÌNH</text>

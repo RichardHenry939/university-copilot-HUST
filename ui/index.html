@@ -1142,7 +1142,8 @@ async function courseDetail(row) {
       if ((d.ck_can || []).length) h += '<p class="note">Cuối kỳ cần tối thiểu: ' + d.ck_can.map(x => '<b>' + esc(x.chu) + '</b> ≥ ' + f1(x.ck_toi_thieu)).join(' · ') + '</p>';
     } else {
       const raw = Object.entries(d.qldt_tho || {}).map(([k, v]) => esc(k) + ': <b>' + v + '</b>').join(' · ');
-      h += '<p class="note">' + (raw ? 'qldt: ' + raw + '. ' : '') + 'Chưa tìm thấy bài của giảng viên nói cách tính điểm môn này (Teams / mail); có bài là UC tự đọc.</p>';
+      h += '<p class="note">' + (raw ? 'qldt: ' + raw + '. ' : '') + 'Chưa tìm thấy cách tính điểm môn này. UC tự quét mỗi 5 phút: bài đăng và trả lời trong mọi kênh Teams của lớp, mail, Class Notebook, nội dung mọi slide / đề cương / file trong nhóm' +
+        (d.quet ? ' (lần quét gần nhất ' + esc(new Date(d.quet.at).toLocaleString('vi-VN')) + ')' : '') + '. Có nguồn là tự hiện.</p>';
     }
     if (d.mooc && (d.mooc.bai || []).length) h += '<details><summary>Bài tập hằng tuần trên MOOC (' + d.mooc.bai.filter(b => b.qua_han).length + ' bài đã qua hạn)</summary><ul class="cdl">' +
       d.mooc.bai.map(b => '<li>' + esc(b.ten) + ': <b>' + b.diem + '/' + b.toi_da + '</b>' + (b.han ? ' · hạn ' + esc(new Date(b.han).toLocaleDateString('vi-VN')) : '') + (b.qua_han && !b.diem ? ' <span class="pill warn">0 điểm</span>' : '') + '</li>').join('') +
