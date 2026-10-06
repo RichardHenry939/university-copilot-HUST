@@ -780,6 +780,10 @@ def mail_run(by):
             import mail_kinds; importlib.reload(mail_kinds)
             r["mail_kinds"] = mail_kinds.classify()
         except Exception as e: r["mail_kinds"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
+        try:   # 📚 cách tính điểm từng môn: bài của giảng viên trên Teams / mail -> grade_rules.json (AI chỉ khi có bài mới)
+            import course_detail; importlib.reload(course_detail)
+            r["grade_rules"] = course_detail.refresh_rules()
+        except Exception as e: r["grade_rules"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
         try:   # 🏛️ CTSV nhanh mỗi giờ (5/10): toàn bộ sự kiện (như /danh-sach-su-kien) + Hành chính (thông báo, giấy tờ, đặt vé)
             import ctsv_live; importlib.reload(ctsv_live)
             if ctsv_live.due(): r["ctsv_live"] = ctsv_live.fetch()
@@ -941,9 +945,23 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/admin":   # 🏛️ tab Hành chính (CTSV + thư hành chính / thông báo chung) — chỉ đọc
                 import ctsv_live, mail_kinds
                 v = ctsv_live.view()
-                v["mailAdmin"] = mail_kinds.by_kind("hanh_chinh")[:40]
-                v["mailGeneral"] = mail_kinds.by_kind("thong_bao_chung")[:40]
+                import stale_filter   # (5/10) lọc thông báo của năm cũ
+                v["mailAdmin"], h1 = stale_filter.split(mail_kinds.by_kind("hanh_chinh", days=800), "at", ("subject", "tom_tat"))
+                v["mailGeneral"], h2 = stale_filter.split(mail_kinds.by_kind("thong_bao_chung", days=800), "at", ("subject", "tom_tat"))
+                v["mailAdmin"], v["mailGeneral"], v["mailHidden"] = v["mailAdmin"][:40], v["mailGeneral"][:40], h1 + h2
                 return self._send(200, v)
+            if u.path == "/api/nlm/search":   # 🧠 tìm tài liệu trong Uni-Documents để gửi sang NotebookLM (chỉ đọc)
+                import nlm_bridge
+                return self._send(200, nlm_bridge.search(q.get("q", [""])[0]))
+            if u.path == "/api/nlm/notebooks":
+                import nlm_bridge
+                return self._send(200, nlm_bridge.notebooks(force=q.get("force", ["0"])[0] == "1"))
+            if u.path == "/api/nlm/job":
+                import nlm_bridge
+                return self._send(200, nlm_bridge.job(q.get("id", [""])[0]))
+            if u.path == "/api/course-detail":   # 📚 lớp thành phần + điểm thành phần + cách tính (Teams + qldt + MOOC) — chỉ đọc file
+                import course_detail
+                return self._send(200, course_detail.view(re.sub(r"[^A-Z0-9]", "", q.get("code", [""])[0].upper())[:10]))
             if u.path == "/api/scholarships":   # 🎓 tab Học bổng
                 import scholarships
                 return self._send(200, scholarships.view())
@@ -1024,6 +1042,12 @@ class H(BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query)
         # (Claude 2026-10-03) công cụ ghi_hoc_tap của não Copilot (n8n trong Docker) -> logic điểm/luật môn/chuyên cần
         # (Claude 2026-10-05) công cụ doi_han: dời hạn TỰ ĐẶT (Tự luyện / cốt lõi); hạn Môn học của trường bị từ chối
+        if u.path == "/api/nlm/add":   # 🧠 bạn bấm (đã xác nhận) -> gửi file sang NotebookLM; không ghi Notion, không gọi AI
+            import nlm_bridge
+            b = json.loads(self._body(100_000) or b"{}")
+            if not b.get("confirmed"): return self._send(200, {"ok": False, "error": "cần xác nhận"})
+            try: return self._send(200, nlm_bridge.add(b.get("files"), b.get("notebook") or None, b.get("new_title")))
+            except ValueError as e: return self._send(200, {"ok": False, "error": str(e)})
         if u.path == "/api/lecture-monitor/dismiss":   # ẩn một buổi khỏi "Đang tải lên" (chỉ file giám sát trên máy)
             import lecture_monitor
             b = json.loads(self._body(10_000) or b"{}")

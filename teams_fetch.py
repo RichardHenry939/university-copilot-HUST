@@ -39,11 +39,16 @@ JS = r"""async () => {
   const cardText = a => { try { const out = []; const walk = o => { if (!o || typeof o !== 'object') return;
       if (typeof o.text === 'string' && o.text.trim()) out.push(o.text.trim()); for (const v of Object.values(o)) walk(v); };
       walk(JSON.parse(a.content)); return out.join('\n'); } catch (e) { return ''; } };
-  const res = {ok: true, teams: [], posts: [], files: [], errors: []};
+  const res = {ok: true, teams: [], posts: [], files: [], tabs: [], errors: []};
+  const seenFile = new Set();
   const teams = (await g('/me/joinedTeams')).value || [];
   for (const t of teams) {
     res.teams.push({id: t.id, name: t.displayName});
-    const chs = (await g(`/teams/${t.id}/channels`)).value || [];
+    let chs = (await g(`/teams/${t.id}/allChannels`)).value;
+    if (!chs || !chs.length) chs = (await g(`/teams/${t.id}/channels`)).value || [];
+    const tchs = ((await g(`/teams/${t.id}/channels`)).value || []);   // gộp: có tenant trả allChannels thiếu kênh riêng
+    for (const c of tchs) if (!chs.some(x => x.id === c.id)) chs.push(c);
+    res.teams[res.teams.length - 1].channels = chs.map(c => ({name: c.displayName, type: c.membershipType || 'standard'}));
     for (const c of chs) {
       let url = `/teams/${t.id}/channels/${c.id}/messages?$top=50`;
       for (let page = 0; page < 3 && url; page++) {
@@ -65,13 +70,33 @@ JS = r"""async () => {
         const ch = await g(`/drives/${ff.parentReference.driveId}/items/${itemId}/children?$top=200`);
         for (const it of (ch.value || [])) {
           if (it.folder) { if (depth < 3 && !/^recordings$/i.test(it.name)) await walk(it.id, path + it.name + '/', depth + 1); continue; }
+          if (seenFile.has(it.id)) continue; seenFile.add(it.id);
           res.files.push({id: it.id, driveId: ff.parentReference.driveId, name: it.name, path, size: it.size, modified: it.lastModifiedDateTime,
                           team: t.displayName, channel: c.displayName, url: it['@microsoft.graph.downloadUrl'] || null,
                           qxh: it.file && it.file.hashes ? it.file.hashes.quickXorHash : null, web: it.webUrl});
         }
       };
       await walk(ff.id, '', 0);
+      // tab ghim đầu kênh (file / thư mục / trang web: hay là đề cương, cách tính điểm)
+      const tabs = (await g(`/teams/${t.id}/channels/${c.id}/tabs`)).value || [];
+      for (const tb of tabs) {
+        const cfg = tb.configuration || {};
+        const u = cfg.contentUrl || cfg.websiteUrl || tb.webUrl || '';
+        if (!/^(Posts|Conversations|Files|Tệp|Wiki)$/i.test(tb.displayName || '')) res.tabs.push({team: t.displayName, channel: c.displayName, name: tb.displayName, url: u});
+      }
     }
+    // thư viện tài liệu chung của nhóm (Shared Documents): file không nằm trong thư mục riêng của kênh nào
+    const root = await g(`/groups/${t.id}/drive/root/children?$top=200`);
+    const drv = await g(`/groups/${t.id}/drive`);
+    const walkRoot = async (items, path, depth) => {
+      for (const it of (items || [])) {
+        if (it.folder) { if (depth < 3 && !/^recordings$/i.test(it.name)) { const ch = await g(`/drives/${drv.id}/items/${it.id}/children?$top=200`); await walkRoot(ch.value, path + it.name + '/', depth + 1); } continue; }
+        if (seenFile.has(it.id)) continue; seenFile.add(it.id);
+        res.files.push({id: it.id, driveId: drv.id, name: it.name, path, size: it.size, modified: it.lastModifiedDateTime, team: t.displayName,
+                        channel: '(Shared Documents)', url: it['@microsoft.graph.downloadUrl'] || null, qxh: it.file && it.file.hashes ? it.file.hashes.quickXorHash : null, web: it.webUrl});
+      }
+    };
+    if (drv && drv.id && root.value) await walkRoot(root.value, '', 0);
   }
   return res;
 }"""
@@ -119,7 +144,7 @@ def fetch():
     box['items'] = sorted(box['items'] + new, key=lambda m: m['ReceivedDateTime'])[-KEEP:]
     box['teams'] = res['teams']; box['last_fetch'] = dt.datetime.now().isoformat(timespec='seconds'); box['errors'] = res['errors']
     POSTS.write_text(json.dumps(box, ensure_ascii=False, indent=1), encoding='utf-8')
-    FILES.write_text(json.dumps({'at': box['last_fetch'], 'items': res['files']}, ensure_ascii=False, indent=1), encoding='utf-8')
+    FILES.write_text(json.dumps({'at': box['last_fetch'], 'items': res['files'], 'tabs': res.get('tabs', [])}, ensure_ascii=False, indent=1), encoding='utf-8')
     return {'ok': True, 'teams': len(res['teams']), 'posts_new': len(new), 'posts': len(box['items']), 'files': len(res['files']), 'errors': res['errors'][:5]}
 
 

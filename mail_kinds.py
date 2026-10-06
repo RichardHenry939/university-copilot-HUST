@@ -35,6 +35,8 @@ def rule(m):
     sender = (m.get('FromName') or '') + ' ' + (m.get('FromAddress') or '')
     if m.get('CourseCode'): return 'mon_hoc'
     if re.search(r'Microsoft Forms|^My responses', sender + ' ' + (m.get('Subject') or ''), re.I): return 'thong_bao_chung'
+    # (5/10) thư tự động của Teams (được thêm vào nhóm, được nhắc tên) = bản sao bài trong nhóm -> không phải hoạt động
+    if re.search(r'You have been added|mentioned |Microsoft Teams|group chính thức|tham gia group', (m.get('Subject') or '') + ' ' + sender, re.I) and not m.get('CourseCode'): return 'thong_bao_chung'
     if re.search(r'học bổng|scholarship', m.get('Subject') or '', re.I): return 'hoc_bong'
     if re.search(r'\b[A-Z]{2,3}\d{4}\b', (m.get('Team') or '') + ' ' + (m.get('Subject') or '')) and re.search(r'lớp|buổi|bài tập|quiz|thi|kiểm tra|điểm danh', s, re.I):
         return 'mon_hoc'

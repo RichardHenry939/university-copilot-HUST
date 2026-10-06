@@ -296,7 +296,11 @@ def run(headless=True):
         finally:
             ctx.close()
     OUT.mkdir(exist_ok=True)
-    (OUT / "latest.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    # (5/10) đọc 5 phút / lần -> lượt lỗi KHÔNG được đè dữ liệu tốt: trạng thái lượt gần nhất -> fetch_last.json,
+    # latest.json chỉ ghi khi đọc thành công (trước đây một lỗi tạm "OSError 22" xoá sạch bảng điểm / TKB của lần trước)
+    (OUT / "fetch_last.json").write_text(json.dumps({k: out.get(k) for k in ("at", "ok", "error", "need_login", "drl_error")}, ensure_ascii=False), encoding="utf-8")
+    if out["ok"]:
+        (OUT / "latest.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
     if out["ok"]:
         (OUT / f"snap-{dt.datetime.now():%Y%m%d-%H%M}.json").write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
         for old in sorted(OUT.glob("snap-*.json"))[:-30]: old.unlink()

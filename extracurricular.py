@@ -151,6 +151,9 @@ def build(now=None):
         merged.append(i)
     items = merged
     for i in items: i['nguon'] = 'iCTSV' if i['src'] == 'CTSV' else (i.get('sender') or i['src'])
+    # (5/10) lọc thông báo cũ như tab Hành chính: thông báo mail / Teams không có mốc giờ cấu trúc -> xét ngày ghi trong chữ + năm gửi
+    import stale_filter
+    items = [i for i in items if i['loai'] != 'Thông báo (mail/Teams)' or stale_filter.keep(i.get('announced'), i['name'], i.get('note'))]
     items.sort(key=lambda x: x.get('start') or x.get('han') or '')
     data = {'at': now.isoformat(timespec='minutes'), 'items': items, 'ctsv_at': (json.loads((HERE / 'school' / 'latest.json').read_text(encoding='utf-8')).get('at')
                                                                              if (HERE / 'school' / 'latest.json').exists() else None), 'ctsv_raw': snap}

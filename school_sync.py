@@ -249,6 +249,10 @@ def run(post, fetch=True):
             st["fetch_error"] = "Đọc trường quá 7 phút"
     try: snap = json.loads(SNAP.read_text(encoding="utf-8"))
     except Exception: snap = {"ok": False, "error": "Chưa có dữ liệu đọc từ trường"}
+    try:   # (5/10) trạng thái của LẦN ĐỌC GẦN NHẤT (latest.json giữ lần thành công cuối)
+        last = json.loads((HERE / "school" / "fetch_last.json").read_text(encoding="utf-8"))
+        if not last.get("ok"): snap = {**snap, "ok": False, "error": last.get("error"), "need_login": last.get("need_login")}
+    except Exception: pass
     if not snap.get("ok") or st.get("fetch_error"):
         st.update(status="Cần đăng nhập" if snap.get("need_login") else "Lỗi", error=snap.get("error") or st.get("fetch_error"),
                   last_ok=prev.get("last_ok"), changes=[], review=prev.get("review", []))

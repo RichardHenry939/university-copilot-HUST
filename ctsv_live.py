@@ -35,7 +35,7 @@ ADMIN_JS = """async (user) => {
   const mine = await call('/api-q/Paper/GetPaperAllByToken', {});
   const avail = await call('/api-q/Paper/GetPaper', {});
   return {ok: !msg.error, error: msg.error || mine.error || avail.error || null,
-    messages: (msg.UserMessageLst || []).map(x => ({subject: (x.Subject || '').trim(), text: strip(x.Message).slice(0, 2000), at: x.TimeSent,
+    messages: (msg.UserMessageLst || []).map(x => ({subject: (x.Subject || '').trim(), text: strip(x.Message).slice(0, 6000), at: x.TimeSent,
       links: [...new Set([...(x.Message || '').matchAll(/href=["']([^"']+)["']/gi)].map(m => m[1]).concat([...(x.Message || '').replace(/<[^>]+>/g, ' ').matchAll(/https?:[/][/][^ \\n\\t<>"')]+/g)].map(m => m[0])))].slice(0, 6)})),
     papers: (mine.HSPaperStudentInforLst || []).map(x => ({id: x.RowID, name: strip(x.Description || x.TypePaper || x.DescriptionPaper).slice(0, 160),
       office: x.Office, service: x.TypeService, note: x.Note, created: x.TimeCreate, status: x.Status, accepted: x.TimeAccept, by: x.UserAccept, ship: x.Ship})),
@@ -123,8 +123,10 @@ def view():
     for x in a.get('papers') or []: x['url'] = f"{C}/chi-tiet-giay/{x['id']}" if x.get('id') else C + '/giay-to/danh-sach-giay-da-xin'
     for t in (d.get('tickets') or {}).get('events') or []: t['url'] = C + '/dat-ve'   # trang đặt vé không có link riêng từng sự kiện
     msgs = sorted(a.get('messages') or [], key=lambda x: x.get('at') or '', reverse=True)
+    import stale_filter   # (5/10) năm n không hiện thông báo năm cũ, trừ khi có hạn sang năm n
+    msgs, hidden = stale_filter.split(msgs, 'at', ('subject', 'text'))
     return {'ok': True, 'at': d.get('at'), 'lastError': d.get('lastError'), 'lastTry': d.get('lastTry'),
-            'messages': msgs[:60], 'papers': a.get('papers') or [], 'procedures': a.get('procedures') or [],
+            'messages': msgs[:60], 'messagesHidden': hidden, 'papers': a.get('papers') or [], 'procedures': a.get('procedures') or [],
             'tickets': (d.get('tickets') or {}).get('events') or [], 'ticketsError': (d.get('tickets') or {}).get('error'),
             'links': {'congNo': 'https://ctsv.hust.edu.vn/cong-no', 'xinGiay': 'https://ctsv.hust.edu.vn/xin-cap-giay',
                       'phanHoi': 'https://ctsv.hust.edu.vn/giay-to/danh-sach-giay-da-xin', 'datVe': 'https://ctsv.hust.edu.vn/dat-ve',

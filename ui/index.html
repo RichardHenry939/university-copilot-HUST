@@ -197,6 +197,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .errlog { margin: 6px 0 18px; }
 .errlog li { font-size: 13px; margin: 4px 0; }
 .errlog li.fixed { opacity: .55; text-decoration: line-through; }
+.crow { cursor: pointer; } .crow:hover td { background: var(--paper); } .crow:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.cdbox { padding: 6px 4px 12px; } .cdbox h4 { margin: 10px 0 4px; font-size: 14px; } .cdl { margin: 0; padding-left: 18px; } .cdl li { margin: 2px 0; font-size: 13.5px; }
+.cdt { margin: 4px 0; } .cdt td, .cdt th { font-size: 13px; }
+.nlm input[type=search], .nlm input[type=text] { width: 100%; padding: 9px 12px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; }
+.nlm-res { max-height: 340px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; margin: 8px 0; padding: 4px 8px; }
+.nlm-row { display: flex; gap: 10px; align-items: flex-start; padding: 6px 2px; border-bottom: 1px solid var(--line); cursor: pointer; } .nlm-row:last-child { border-bottom: 0; }
+.nlm-row small { color: var(--ink-3); } .nlm-go { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .nlm-go select { padding: 8px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); }
+.nlm-go input { flex: 1; min-width: 180px; }
 .modes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .mode { text-align: left; border: 1.5px solid var(--line); background: var(--paper); border-radius: var(--r-m, 12px); padding: 12px 14px; cursor: pointer; color: var(--ink); }
 .mode b { display: block; font-size: 15px; }
@@ -610,6 +618,18 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
           <span>PDF, Word, PowerPoint, Excel, ảnh, file code. Tối đa 200 MB mỗi file.</span>
         </label>
         <div class="files" id="files"></div>
+        <h2 style="font-size:17px;margin:26px 0 6px">Gửi tài liệu sang NotebookLM</h2>
+        <p class="note" style="margin:0 0 8px">Tìm trong Uni-Documents, tích chọn rồi thêm vào notebook có sẵn hoặc tạo notebook mới. UC chỉ gửi tài liệu, việc ôn thì bạn làm trong NotebookLM.</p>
+        <div class="nlm">
+          <input type="search" id="nlm-q" placeholder="Tìm tài liệu: tên môn, chương, tên file… (vd: giải tích chương 1)" aria-label="Tìm tài liệu trong Uni-Documents">
+          <div id="nlm-res" class="nlm-res"><p class="note">Gõ để tìm. Để trống sẽ hiện tài liệu mới nhất.</p></div>
+          <div class="nlm-go">
+            <select id="nlm-nb" aria-label="Notebook"><option value="">Đang đọc notebook…</option></select>
+            <input type="text" id="nlm-new" placeholder="Tên notebook mới" hidden>
+            <button id="nlm-add" disabled>Thêm vào NotebookLM</button>
+          </div>
+          <p id="nlm-st" class="meta"></p>
+        </div>
       </div>
     </section>
 
@@ -762,6 +782,7 @@ function show(name) {
   if (name === 'cal') loadCal();
   if (name === 'extra') loadExtra();
   if (name === 'admin') loadAdmin();
+  if (name === 'ib' && !NLM.loaded) { NLM.loaded = 1; nlmSearch(); nlmNotebooks(); }
   if (name === 'schol') loadSchol();
   if (name === 'sem') loadSem();
   if (name === 'grad') loadGrad();
@@ -1086,10 +1107,11 @@ function renderSem() {
         const note = (c.group ? '<br><small>Tự chọn GDTC</small>' : '') + (c.retake ? '<br><small>Học lại</small>' : '') +
           (ruleTxt ? '<br><small>Luật: ' + esc(ruleTxt) + '</small>' : (c.notes && !c.retake && !c.group ? '<br><small>' + esc(c.notes) + '</small>' : ''));
         const res = c.result && c.result !== 'Unknown' && c.result !== 'Miễn (R)' ? ' · ' + (c.result === 'Pass' ? 'Đạt' : c.result === 'Fail' ? 'Trượt' : esc(c.result)) + (c.gpa4 != null ? ' (' + c.gpa4 + ')' : '') : '';
-        html += '<tr><td><b>' + esc(c.code) + '</b> · ' + esc(c.name) + note + '</td><td class="n">' + c.credits + '</td>' +
+        html += '<tr class="crow" data-code="' + esc(c.code) + '" tabindex="0" title="Bấm để xem lớp thành phần và điểm"><td><b>' + esc(c.code) + '</b> · ' + esc(c.name) + ' <small class="caret">▸</small>' + note + '</td><td class="n">' + c.credits + '</td>' +
           '<td><span class="pill ' + esc(c.status) + '">' + (statusVi[c.status] || esc(c.status)) + '</span>' +
           (c.risk && c.risk !== 'OK' ? ' <span class="pill warn">' + esc(c.risk) + '</span>' : '') + '</td>' +
-          '<td>' + (gs || '<small>chưa có</small>') + res + '</td><td class="n">' + av + '</td></tr>';
+          '<td>' + (gs || '<small>chưa có</small>') + res + '</td><td class="n">' + av + '</td></tr>' +
+          '<tr class="cdet" data-for="' + esc(c.code) + '" hidden><td colspan="5"><div class="cdbox">Đang đọc…</div></td></tr>';
       }
     }
     html += '</tbody></table>';
@@ -1097,6 +1119,38 @@ function renderSem() {
   if (cur.check && !/^Khớp/.test(cur.check)) html += '<p class="note" style="padding:10px 0 0">' + esc(cur.check) + '</p>';
   body.innerHTML = html;
   body.querySelectorAll('.semcard').forEach(b => b.onclick = () => { semSel = b.dataset.s; renderSem(); });
+  body.querySelectorAll('.crow').forEach(r => { const go = () => courseDetail(r); r.onclick = go; r.onkeydown = (e) => { if (e.key === 'Enter') go(); }; });
+}
+/* (5/10) chi tiết môn: lớp thành phần + điểm thành phần + cách tính — ghép Teams (cách tính) + qldt (điểm) + MOOC (bài hằng tuần) */
+async function courseDetail(row) {
+  const code = row.dataset.code, det = row.nextElementSibling, box = det.querySelector('.cdbox');
+  det.hidden = !det.hidden; row.querySelector('.caret').textContent = det.hidden ? '▸' : '▾';
+  if (det.hidden || det.dataset.loaded) return;
+  try {
+    const d = await api('/api/course-detail?code=' + encodeURIComponent(code));
+    const f1 = (x) => x == null ? '–' : (Math.round(x * 100) / 100).toString().replace('.', ',');
+    let h = '';
+    h += '<h4>Lớp thành phần</h4>' + ((d.lop || []).length ? '<ul class="cdl">' + d.lop.map(l => '<li><b>' + esc(l.loai || 'Lớp') + '</b>' + (l.hinh_thuc ? ' · ' + esc(l.hinh_thuc) : '') +
+      (l.ma_lop ? ' · mã lớp ' + esc(l.ma_lop) : '') + (l.gv ? ' · GV ' + esc(l.gv) : '') + (l.phong.length ? ' · ' + esc(l.phong.join(', ')) : '') +
+      ' · đã học <b>' + l.da_hoc + '/' + l.tong + '</b> buổi' + (l.da_hoc >= l.tong ? ' <span class="pill Completed">xong</span>' : '') + '</li>').join('') + '</ul>' : '<p class="note">Chưa có lịch lớp.</p>');
+    h += '<h4>Điểm thành phần</h4>';
+    if ((d.thanh_phan || []).length) {
+      h += '<table class="ctable cdt"><thead><tr><th>Thành phần</th><th>Trọng số</th><th>Điểm</th><th>Đóng góp</th><th>Lấy từ</th></tr></thead><tbody>' +
+        d.thanh_phan.map(c => '<tr><td>' + esc(c.ten) + (c.ghi_chu ? '<br><small>' + esc(c.ghi_chu) + '</small>' : '') + '</td><td class="n">' + f1(c.trong_so) + '%</td><td class="n"><b>' + f1(c.diem) + '</b></td><td class="n">' + f1(c.dong_gop) + '</td><td><small>' + esc(c.lay_tu || 'chưa có') + '</small></td></tr>').join('') +
+        '</tbody></table>';
+      h += '<p class="note">Đã chắc: <b>' + f1(d.diem_da_chac) + '</b> điểm (trên ' + f1(d.trong_so_da_co) + '% trọng số có điểm).' + ((d.thieu || []).length ? ' Còn thiếu: ' + esc(d.thieu.join(', ')) + '.' : '') + '</p>';
+      if ((d.ck_can || []).length) h += '<p class="note">Cuối kỳ cần tối thiểu: ' + d.ck_can.map(x => '<b>' + esc(x.chu) + '</b> ≥ ' + f1(x.ck_toi_thieu)).join(' · ') + '</p>';
+    } else {
+      const raw = Object.entries(d.qldt_tho || {}).map(([k, v]) => esc(k) + ': <b>' + v + '</b>').join(' · ');
+      h += '<p class="note">' + (raw ? 'qldt: ' + raw + '. ' : '') + 'Chưa tìm thấy bài của giảng viên nói cách tính điểm môn này (Teams / mail); có bài là UC tự đọc.</p>';
+    }
+    if (d.mooc && (d.mooc.bai || []).length) h += '<details><summary>Bài tập hằng tuần trên MOOC (' + d.mooc.bai.filter(b => b.qua_han).length + ' bài đã qua hạn)</summary><ul class="cdl">' +
+      d.mooc.bai.map(b => '<li>' + esc(b.ten) + ': <b>' + b.diem + '/' + b.toi_da + '</b>' + (b.han ? ' · hạn ' + esc(new Date(b.han).toLocaleDateString('vi-VN')) : '') + (b.qua_han && !b.diem ? ' <span class="pill warn">0 điểm</span>' : '') + '</li>').join('') +
+      '</ul><a href="' + esc(d.mooc.url) + '" target="_blank" rel="noopener">Mở tiến độ trên MOOC</a></details>';
+    if (d.cong_thuc) h += '<h4>Cách tính</h4><p class="note">' + esc(d.cong_thuc) + (d.ghi_chu ? '<br>' + esc(d.ghi_chu) : '') + '</p><p class="meta">Nguồn: ' +
+      (d.nguon_cach_tinh || []).map(n => esc(n.where) + ' · “' + esc(n.subject) + '” (' + esc(n.at) + ')').join('; ') + '</p>';
+    box.innerHTML = h; det.dataset.loaded = '1';
+  } catch (e) { box.textContent = 'Chưa đọc được: ' + e.message; }
 }
 
 /* thanh phải GDTC */
@@ -1957,13 +2011,60 @@ async function loadAdmin() {
     h += `<h2 style="font-size:17px">Công nợ</h2><p class="note">Trang công nợ của CTSV có mã xác minh (reCAPTCHA), nên UC không tự tra. <a href="${esc(L.congNo)}" target="_blank" rel="noopener">Tự tra công nợ</a></p>`;
     const msgs = d.messages || [];
     const fresh = msgs.filter(m => m.at && now - new Date(m.at.replace(' ', 'T')) < week).length;
-    h += `<h2 style="font-size:17px">Thông báo CTSV gửi bạn <span class="meta">(${msgs.length}${fresh ? ', ' + fresh + ' trong 7 ngày qua' : ''})</span></h2>`;
+    h += `<h2 style="font-size:17px">Thông báo CTSV gửi bạn <span class="meta">(${msgs.length}${fresh ? ', ' + fresh + ' trong 7 ngày qua' : ''}${d.messagesHidden ? ' · đã ẩn ' + d.messagesHidden + ' thông báo của năm cũ' : ''})</span></h2>`;
     h += msgs.length ? msgs.map(m => `<details${m.at && now - new Date(m.at.replace(' ', 'T')) < week ? ' open' : ''}><summary><b>${esc(m.subject || '(không tiêu đề)')}</b> <span class="meta">${esc(fmt(m.at))}</span></summary><p class="note" style="white-space:pre-wrap">${esc(m.text)}</p>${(m.links || []).length ? `<p class="meta">Link trong thông báo: ${m.links.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:[/][/](www[.])?/, '').slice(0, 60))}</a>`).join(' · ')}</p>` : ''}</details>`).join('') : '<p class="note">Không có thông báo.</p>';
-    h += `<h2 style="font-size:17px">Thư hành chính <span class="meta">(${(d.mailAdmin || []).length})</span></h2>` + mailList(d.mailAdmin || [], 'Không có thư hành chính nào.');
+    h += `<h2 style="font-size:17px">Thư hành chính <span class="meta">(${(d.mailAdmin || []).length}${d.mailHidden ? ' · đã ẩn ' + d.mailHidden + ' thư của năm cũ' : ''})</span></h2>` + mailList(d.mailAdmin || [], 'Không có thư hành chính nào.');
     h += `<h2 style="font-size:17px">Thông báo chung <span class="meta">(${(d.mailGeneral || []).length})</span></h2>` + mailList(d.mailGeneral || [], 'Không có thông báo chung nào.');
     h += `<p class="meta"><a href="${esc(L.thongBao)}" target="_blank" rel="noopener">Mở trang thông báo CTSV</a> · <a href="${esc(L.suKien)}" target="_blank" rel="noopener">Danh sách sự kiện</a> (đã vào tab Ngoại khoá)</p>`;
     box.innerHTML = h;
   } catch (e) { box.innerHTML = `<p class="skeleton">Chưa đọc được (${esc(e.message)}).</p>`; }
+}
+/* (5/10) gửi tài liệu Uni-Documents -> NotebookLM: tìm, tích chọn, chọn / tạo notebook. Không tạo task, không ghi Notion. */
+const NLM = { sel: new Set(), items: [] };
+async function nlmNotebooks(force) {
+  const sel = $('#nlm-nb'); if (!sel) return;
+  try {
+    const d = await api('/api/nlm/notebooks' + (force ? '?force=1' : ''));
+    if (!d.ok) { sel.innerHTML = '<option value="">Chưa kết nối NotebookLM</option>'; $('#nlm-st').textContent = d.error || ''; return; }
+    sel.innerHTML = d.items.map(n => `<option value="${esc(n.id)}">${esc(n.title)}</option>`).join('') + '<option value="__new">➕ Tạo notebook mới…</option>';
+  } catch (e) { sel.innerHTML = '<option value="">Lỗi đọc notebook</option>'; }
+  nlmSync();
+}
+function nlmSync() {
+  const isNew = $('#nlm-nb').value === '__new';
+  $('#nlm-new').hidden = !isNew;
+  $('#nlm-add').disabled = !NLM.sel.size || !$('#nlm-nb').value || (isNew && !$('#nlm-new').value.trim());
+  $('#nlm-add').textContent = NLM.sel.size ? `Thêm ${NLM.sel.size} tài liệu vào NotebookLM` : 'Thêm vào NotebookLM';
+}
+async function nlmSearch() {
+  const box = $('#nlm-res');
+  try {
+    const d = await api('/api/nlm/search?q=' + encodeURIComponent($('#nlm-q').value));
+    NLM.items = d.items || [];
+    box.innerHTML = NLM.items.length ? NLM.items.map((f, i) => `<label class="nlm-row"><input type="checkbox" data-rel="${esc(f.rel)}"${NLM.sel.has(f.rel) ? ' checked' : ''}><span><b>${esc(f.name)}</b><br><small>${esc(f.folder)} · ${(f.size / 1048576).toFixed(1).replace('.', ',')} MB</small></span></label>`).join('') +
+      (d.total > NLM.items.length ? `<p class="meta">Hiện ${NLM.items.length}/${d.total}, gõ thêm từ khoá để lọc.</p>` : '') : '<p class="note">Không thấy tài liệu nào khớp.</p>';
+    box.querySelectorAll('input[type=checkbox]').forEach(c => c.onchange = () => { c.checked ? NLM.sel.add(c.dataset.rel) : NLM.sel.delete(c.dataset.rel); nlmSync(); });
+  } catch (e) { box.innerHTML = `<p class="skeleton">Chưa tìm được (${esc(e.message)}).</p>`; }
+}
+async function nlmAdd() {
+  const nb = $('#nlm-nb'), isNew = nb.value === '__new', name = isNew ? $('#nlm-new').value.trim() : nb.selectedOptions[0].textContent;
+  const files = [...NLM.sel];
+  if (!confirm(`Gửi ${files.length} tài liệu lên NotebookLM (tài khoản Google của bạn), vào notebook ${isNew ? 'MỚI ' : ''}“${name}”?\n\n` + files.map(f => '• ' + f.split(/[\\/]/).pop()).join('\n'))) return;
+  const r = await api('/api/nlm/add', { files, notebook: isNew ? null : nb.value, new_title: isNew ? name : null, confirmed: true });
+  if (!r.ok) { $('#nlm-st').textContent = 'Chưa gửi được: ' + (r.error || ''); return; }
+  $('#nlm-add').disabled = true;
+  const poll = async () => {
+    const j = await api('/api/nlm/job?id=' + r.job);
+    const okN = (j.done || []).filter(x => x.ok).length, bad = (j.done || []).filter(x => !x.ok);
+    $('#nlm-st').innerHTML = `${esc(j.status || '')}: ${okN}/${j.total} tài liệu đã vào notebook` + (bad.length ? ` · lỗi ${bad.length}: ${esc(bad.map(b => b.rel.split(/[\\/]/).pop() + ' (' + b.error + ')').join('; '))}` : '') +
+      (j.error ? ' · ' + esc(j.error) : '') + (j.url && j.status !== 'đang gửi' ? ` · <a href="${esc(j.url)}" target="_blank" rel="noopener">Mở notebook</a>` : '');
+    if (j.status === 'đang gửi') setTimeout(poll, 3000); else { NLM.sel.clear(); nlmSearch(); nlmNotebooks(true); }
+  };
+  poll();
+}
+if ($('#nlm-q')) {
+  let tq; $('#nlm-q').oninput = () => { clearTimeout(tq); tq = setTimeout(nlmSearch, 250); };
+  $('#nlm-nb').onchange = nlmSync; $('#nlm-new').oninput = nlmSync; $('#nlm-add').onclick = nlmAdd;
 }
 async function loadPipe() {
   clearTimeout(loadPipe.t);
