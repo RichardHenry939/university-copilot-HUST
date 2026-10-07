@@ -17,7 +17,7 @@ $how = 'refresh'
 & $N auth refresh 2>$null | Out-Null
 if (-not (Ok)) {
   $how = 'login (im lặng)'
-  & $N login --browser chrome --browser-timeout 45 2>$null | Out-Null     # phiên Chrome còn -> tự lưu, tự đóng
+  & $N login --browser chrome --browser-timeout 120 2>$null | Out-Null   # (7/10) 45 s hay hụt -> 120 s     # phiên Chrome còn -> tự lưu, tự đóng
   if (-not (Ok)) {   # Google bắt đăng nhập tay -> vòng đăng nhập riêng (ở lại đến khi xong; mutex: chỉ một bản)
     $how = 'mở vòng đăng nhập (login_loop.ps1)'
     Start-Process powershell -WindowStyle Hidden -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File',(Join-Path $PSScriptRoot 'login_loop.ps1')
