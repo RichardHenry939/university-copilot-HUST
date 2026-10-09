@@ -205,6 +205,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nlm-row { display: flex; gap: 10px; align-items: flex-start; padding: 6px 2px; border-bottom: 1px solid var(--line); cursor: pointer; } .nlm-row:last-child { border-bottom: 0; }
 .nlm-row small { color: var(--ink-3); } .nlm-go { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .nlm-go select { padding: 8px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); }
 .nlm-go input { flex: 1; min-width: 180px; }
+.kinds { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 0 10px; }
+.kinds .kind { padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); font: inherit; cursor: pointer; }
+.kinds .kind[aria-pressed="true"] { border-color: var(--blue); background: var(--blue); color: var(--blue-ink); font-weight: 600; }
 .modes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .mode { text-align: left; border: 1.5px solid var(--line); background: var(--paper); border-radius: var(--r-m, 12px); padding: 12px 14px; cursor: pointer; color: var(--ink); }
 .mode b { display: block; font-size: 15px; }
@@ -572,7 +575,7 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
       <button class="tab" role="tab" id="t-sem" aria-selected="false" aria-controls="p-sem">Học kỳ</button>
       <button class="tab" role="tab" id="t-lang" aria-selected="false" aria-controls="p-lang">Ngoại ngữ</button>
       <button class="tab" role="tab" id="t-grad" aria-selected="false" aria-controls="p-grad">ĐK tốt nghiệp</button>
-      <button class="tab" role="tab" id="t-rec" aria-selected="false" aria-controls="p-rec">Ghi bài giảng <span class="count warn" id="c-rec" hidden>●</span></button>
+      <button class="tab" role="tab" id="t-rec" aria-selected="false" aria-controls="p-rec">Ghi bài giảng · họp <span class="count warn" id="c-rec" hidden>●</span></button>
       <button class="tab tab-r" id="t-pe" aria-expanded="false" aria-controls="side-pe">GDTC · Hè · Học lại <span class="count" id="c-pe">0/4</span></button>
     </div>
 
@@ -618,6 +621,17 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
           <span>PDF, Word, PowerPoint, Excel, ảnh, file code. Tối đa 200 MB mỗi file.</span>
         </label>
         <div class="files" id="files"></div>
+        <h2 style="font-size:17px;margin:26px 0 6px">Dịch tài liệu PDF sang tiếng Việt</h2>
+        <p class="note" style="margin:0 0 8px">Dịch trên máy (không tốn quota), giữ nguyên bố cục và công thức. Ra 2 file trong thư mục "Bản dịch" cạnh bản gốc: bản tiếng Việt và bản song ngữ, rồi tự nạp vào kho như file bạn thả vào. Khoảng 30 giây mỗi trang.</p>
+        <div class="nlm">
+          <input type="search" id="tr-q" placeholder="Tìm PDF: tên môn, chương, tên file…" aria-label="Tìm PDF trong Uni-Documents">
+          <div id="tr-res" class="nlm-res"><p class="note">Gõ để tìm. Để trống sẽ hiện PDF mới nhất.</p></div>
+          <div class="nlm-go">
+            <select id="tr-lang" aria-label="Ngôn ngữ gốc"><option value="en">Từ tiếng Anh</option><option value="zh">Từ tiếng Trung</option><option value="ja">Từ tiếng Nhật</option><option value="ko">Từ tiếng Hàn</option><option value="fr">Từ tiếng Pháp</option><option value="de">Từ tiếng Đức</option><option value="ru">Từ tiếng Nga</option></select>
+            <button id="tr-go" disabled>Dịch sang tiếng Việt</button>
+          </div>
+          <div id="tr-jobs" class="meta"></div>
+        </div>
         <h2 style="font-size:17px;margin:26px 0 6px">Gửi tài liệu sang NotebookLM</h2>
         <p class="note" style="margin:0 0 8px">Tìm trong Uni-Documents, tích chọn rồi thêm vào notebook có sẵn hoặc tạo notebook mới. UC chỉ gửi tài liệu, việc ôn thì bạn làm trong NotebookLM.</p>
         <div class="nlm">
@@ -728,7 +742,7 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
     </section>
     <section class="panel" id="p-rec" role="tabpanel" aria-labelledby="t-rec">
       <div class="wrap rec">
-        <h1>Ghi bài giảng</h1>
+        <h1>Ghi bài giảng · họp</h1><p class="meta" style="margin-top:-6px">Meeting-LectureRecorder</p>
         <p class="lead">Chỉ ghi khi bạn bấm <b>Bắt đầu ghi</b>, chỉ dừng khi bạn bấm <b>Dừng</b>. Audio được chép lời ngay trên máy; Gemini chỉ nhận ghi chú đã nén, không nhận âm thanh.</p>
         <div id="rec-card" class="ticket"><p class="skeleton">Đang kết nối app ghi âm…</p></div>
         <h2 style="font-size:17px;margin:0 0 6px">Đang tải lên</h2>
@@ -784,7 +798,7 @@ function show(name) {
   if (name === 'cal') loadCal();
   if (name === 'extra') loadExtra();
   if (name === 'admin') loadAdmin();
-  if (name === 'ib' && !NLM.loaded) { NLM.loaded = 1; nlmSearch(); nlmNotebooks(); }
+  if (name === 'ib' && !NLM.loaded) { NLM.loaded = 1; nlmSearch(); nlmNotebooks(); trSearch(); trJobs(); }
   if (name === 'schol') loadSchol();
   if (name === 'sem') loadSem();
   if (name === 'grad') loadGrad();
@@ -1889,13 +1903,18 @@ function renderRec() {
   if (s.recording) return renderLive(s);
   const slot = currentSlot();
   // chỉ vẽ lại khi trạng thái đổi -> không làm mất lựa chọn nguồn âm thanh / ô "trộn giọng tôi" đang chọn dở
-  const sig = JSON.stringify([recMode, s.pending, s.lastError, s.capMinutes, slot && slot.time, recApps.map(a => a.pid)]);
+  const sig = JSON.stringify([recMode, recKind, s.pending, s.lastError, s.capMinutes, slot && slot.time, recApps.map(a => a.pid)]);
   if (card.dataset.view === 'idle' && card.dataset.sig === sig) return;
   card.className = 'ticket'; card.dataset.view = 'idle'; card.dataset.sig = sig;
   const cap = s.capMinutes || 210;
   card.innerHTML = `
     <p class="slotline">${slot ? `<span>Đang có tiết</span><b>${esc(slot.title || slot.course)}</b><span>${esc(slot.time)}${slot.room ? ', phòng ' + esc(slot.room) : ''}</span>`
       : '<span>Theo thời khoá biểu, lúc này không có tiết nào.</span>'}</p>
+    <div class="kinds" role="group" aria-label="Loại buổi ghi">
+      <button class="kind" data-k="lecture" aria-pressed="${recKind !== 'meeting'}">📚 Bài giảng</button>
+      <button class="kind" data-k="meeting" aria-pressed="${recKind === 'meeting'}">🤝 Cuộc họp</button>
+      <span class="meta">${recKind === 'meeting' ? 'Phân biệt từng người nói, ra biên bản: ai nói gì, quyết định, việc cần làm. Không gắn môn.' : 'Ghi chú bài học, gắn môn theo thời khoá biểu.'}</span>
+    </div>
     <div class="modes">
       <button class="mode" data-m="room" aria-pressed="${recMode === 'room'}"><b>🎓 Giảng đường</b><span>Thu bằng micro máy. Đặt máy càng gần giảng viên càng tốt, đừng để trong balo.</span></button>
       <button class="mode" data-m="online" aria-pressed="${recMode === 'online'}"><b>💻 Học online</b><span>Thu âm thanh máy đang phát: Zoom, Meet, video bài giảng.</span></button>
@@ -1911,7 +1930,7 @@ function renderRec() {
     <button class="rec-go" id="rec-start">● Bắt đầu ghi${slot ? ' ' + esc(slot.title || slot.course) : ''}</button>
     <p class="meter-note" style="margin-top:10px">Lưới an toàn: nếu quên bấm Dừng, app tự dừng sau ${Math.floor(cap / 60)} giờ ${cap % 60} phút (báo trước 10 phút, gia hạn được).${SIM ? ' <b>Chế độ kiểm thử: phát file ' + esc(SIM) + '.</b>' : ''}</p>`;
   card.querySelectorAll('.mode').forEach(b => b.onclick = async () => {
-    recMode = b.dataset.m; localStorage.setItem('uc-rec-mode', recMode);
+    recMode = b.dataset.m; try { localStorage.setItem('uc-rec-mode', recMode); } catch (e) {}
     if (recMode === 'online') { try { recApps = (await api('/api/rec/apps')).apps || []; } catch {} }
     renderRec();
   });
@@ -1919,10 +1938,11 @@ function renderRec() {
   const retry = $('#rec-retry');
   if (retry) retry.onclick = async () => { retry.disabled = true; const p = (await api('/api/rec/pending')).pending || [];
     for (const id of p) await api('/api/rec/retry-upload', { captureId: id }); recTick(); loadLectures(); };
+  document.querySelectorAll('.kinds .kind').forEach(k => k.onclick = () => { recKind = k.dataset.k; try { localStorage.setItem('uc-rec-kind', recKind); } catch (e) {} renderRec(); });
   $('#rec-start').onclick = async () => {
     const btn = $('#rec-start'); btn.disabled = true; btn.textContent = 'Đang mở thiết bị…';
     const sel = $('#rec-app'), opt = sel && sel.selectedOptions[0];
-    const body = { mode: recMode, course: slot ? (slot.title || slot.course) : '', includeMic: !!($('#rec-mic') && $('#rec-mic').checked) };
+    const body = { mode: recMode, kind: recKind, course: (slot && recKind !== 'meeting') ? (slot.title || slot.course) : '', includeMic: !!($('#rec-mic') && $('#rec-mic').checked) };
     if (opt && opt.value) { body.appPid = +opt.value; body.appName = opt.dataset.name; }
     if (SIM) body.simulateFile = SIM;
     const r = await api('/api/rec/start', body);
@@ -1930,6 +1950,7 @@ function renderRec() {
     slideCount = 0; recTick();
   };
 }
+var recKind = (() => { try { return localStorage.getItem('uc-rec-kind') || 'lecture'; } catch (e) { return 'lecture'; } })();
 function renderLive(s) {
   const card = $('#rec-card');
   if (card.dataset.view !== 'live' || card.dataset.cap !== s.captureId) {
@@ -2094,6 +2115,35 @@ async function nlmAdd() {
     if (j.status === 'đang gửi') setTimeout(poll, 3000); else { NLM.sel.clear(); nlmSearch(); nlmNotebooks(true); }
   };
   poll();
+}
+/* (7/10) 📄 dịch PDF */
+const TR = { sel: new Set() };
+async function trSearch() {
+  const box = $('#tr-res');
+  try {
+    const d = await api('/api/translate/search?q=' + encodeURIComponent($('#tr-q').value));
+    box.innerHTML = (d.items || []).length ? d.items.map(f => `<label class="nlm-row"><input type="checkbox" data-rel="${esc(f.rel)}"${TR.sel.has(f.rel) ? ' checked' : ''}><span><b>${esc(f.name)}</b><br><small>${esc(f.folder)} · ${(f.size / 1048576).toFixed(1).replace('.', ',')} MB</small></span></label>`).join('') : '<p class="note">Không thấy PDF nào khớp.</p>';
+    box.querySelectorAll('input[type=checkbox]').forEach(c => c.onchange = () => { c.checked ? TR.sel.add(c.dataset.rel) : TR.sel.delete(c.dataset.rel); trSync(); });
+  } catch (e) { box.innerHTML = `<p class="skeleton">Chưa tìm được (${esc(e.message)}).</p>`; }
+}
+function trSync() { $('#tr-go').disabled = !TR.sel.size; $('#tr-go').textContent = TR.sel.size ? `Dịch ${TR.sel.size} file sang tiếng Việt` : 'Dịch sang tiếng Việt'; }
+async function trJobs() {
+  try {
+    const d = await api('/api/translate/jobs');
+    const it = d.items || [];
+    $('#tr-jobs').innerHTML = it.map(j => `${esc(j.rel.split(/[\\/]/).pop())}: <b>${esc(j.status)}</b>` + (j.out && j.out.length ? ' → ' + j.out.map(o => esc(o.split(/[\\/]/).pop())).join(', ') : '') + (j.error ? ' · ' + esc(j.error) : '')).join('<br>');
+    if (it.some(j => /chờ|đang/.test(j.status))) setTimeout(trJobs, 5000);
+  } catch (e) {}
+}
+if ($('#tr-q')) {
+  let tt; $('#tr-q').oninput = () => { clearTimeout(tt); tt = setTimeout(trSearch, 250); };
+  $('#tr-go').onclick = async () => {
+    const files = [...TR.sel], lang = $('#tr-lang').value;
+    if (!confirm(`Dịch ${files.length} file PDF sang tiếng Việt (${$('#tr-lang').selectedOptions[0].textContent.toLowerCase()})? Bản dịch sẽ được nạp vào Uni-Documents và Notion.\n\n` + files.map(f => '• ' + f.split(/[\\/]/).pop()).join('\n'))) return;
+    const r = await api('/api/translate', { files, lang, confirmed: true });
+    if (!r.ok) { $('#tr-jobs').textContent = 'Chưa dịch được: ' + (r.error || ''); return; }
+    TR.sel.clear(); trSearch(); trSync(); trJobs();
+  };
 }
 if ($('#nlm-q')) {
   let tq; $('#nlm-q').oninput = () => { clearTimeout(tq); tq = setTimeout(nlmSearch, 250); };

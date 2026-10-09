@@ -960,6 +960,12 @@ class H(BaseHTTPRequestHandler):
                 v["mailGeneral"], h2 = stale_filter.split(mail_kinds.by_kind("thong_bao_chung", days=800), "at", ("subject", "tom_tat"))
                 v["mailAdmin"], v["mailGeneral"], v["mailHidden"] = v["mailAdmin"][:40], v["mailGeneral"][:40], h1 + h2
                 return self._send(200, v)
+            if u.path == "/api/translate/search":   # 📄 dịch PDF: tìm PDF trong Uni-Documents (chỉ đọc)
+                import pdf_translate
+                return self._send(200, pdf_translate.search(q.get("q", [""])[0]))
+            if u.path == "/api/translate/jobs":
+                import pdf_translate
+                return self._send(200, pdf_translate.jobs())
             if u.path == "/api/nlm/search":   # 🧠 tìm tài liệu trong Uni-Documents để gửi sang NotebookLM (chỉ đọc)
                 import nlm_bridge
                 return self._send(200, nlm_bridge.search(q.get("q", [""])[0]))
@@ -1055,6 +1061,12 @@ class H(BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query)
         # (Claude 2026-10-03) công cụ ghi_hoc_tap của não Copilot (n8n trong Docker) -> logic điểm/luật môn/chuyên cần
         # (Claude 2026-10-05) công cụ doi_han: dời hạn TỰ ĐẶT (Tự luyện / cốt lõi); hạn Môn học của trường bị từ chối
+        if u.path == "/api/translate":   # 📄 bạn bấm (đã xác nhận) -> dịch PDF trên máy, bản dịch vào thư mục "Bản dịch" cạnh bản gốc
+            import pdf_translate
+            b = json.loads(self._body(100_000) or b"{}")
+            if not b.get("confirmed"): return self._send(200, {"ok": False, "error": "cần xác nhận"})
+            try: return self._send(200, pdf_translate.add(b.get("files"), b.get("lang") or "en"))
+            except ValueError as e: return self._send(200, {"ok": False, "error": str(e)})
         if u.path == "/api/nlm/add":   # 🧠 bạn bấm (đã xác nhận) -> gửi file sang NotebookLM; không ghi Notion, không gọi AI
             import nlm_bridge
             b = json.loads(self._body(100_000) or b"{}")
@@ -1071,6 +1083,12 @@ class H(BaseHTTPRequestHandler):
             import lecture_monitor
             b = json.loads(self._body(10_000) or b"{}")
             return self._send(200, lecture_monitor.dismiss(str(b.get("captureId", ""))))
+        if u.path in ("/api/web/search", "/api/web/read"):   # 🌐 công cụ web của não chat (n8n) — chỉ đọc, cần X-Copilot-Key
+            if not hmac.compare_digest(self.headers.get("X-Copilot-Key", ""), SECRET):
+                return self._send(403, {"error": "forbidden"})
+            import web_tools
+            b = json.loads(self._body(16 * 1024) or b"{}")
+            return self._send(200, web_tools.search(b.get("tu_khoa") or b.get("q")) if u.path.endswith("search") else web_tools.read(b.get("url")))
         if u.path == "/api/reschedule":
             if not hmac.compare_digest(self.headers.get("X-Copilot-Key", ""), SECRET):
                 return self._send(403, {"error": "forbidden"})
@@ -1305,10 +1323,20 @@ class H(BaseHTTPRequestHandler):
                 return self._send(200, {"output": r.get("output") or r.get("text") or ""})
             if u.path in ("/api/rec/start", "/api/rec/stop", "/api/rec/marker", "/api/rec/extend", "/api/rec/retry-upload"):
                 b = json.loads(self._body(100_000) or b"{}")
+                kind = "meeting" if b.get("kind") == "meeting" else "lecture"   # (7/10) Bài giảng hay Cuộc họp
                 if u.path == "/api/rec/start":     # chỉ những trường cho phép; mô phỏng chỉ khi có file kiểm thử cục bộ
                     b = {k: b[k] for k in ("mode", "includeMic", "appPid", "appName", "course", "simulateFile") if k in b}
-                return self._send(200, local_json(RECORDER + u.path.replace("/api/rec", ""), b,
-                                                  timeout=900 if u.path.endswith(("stop", "retry-upload")) else 20))
+                    if kind == "meeting": b["course"] = ""   # cuộc họp không gắn môn
+                r = local_json(RECORDER + u.path.replace("/api/rec", ""), b, timeout=900 if u.path.endswith(("stop", "retry-upload")) else 20)
+                if u.path == "/api/rec/start" and isinstance(r, dict) and r.get("captureId"):
+                    try:   # cổng chép lời đọc file này: họp -> phân biệt người nói (pyannote) + nén kiểu biên bản
+                        kp = HERE / "school" / "capture_kinds.json"
+                        kinds = json.loads(kp.read_text(encoding="utf-8")) if kp.exists() else {}
+                        kinds[r["captureId"]] = kind
+                        kp.write_text(json.dumps(dict(list(kinds.items())[-300:]), ensure_ascii=False, indent=1), encoding="utf-8")
+                    except Exception as e:
+                        print("capture_kinds:", e)
+                return self._send(200, r)
             if u.path == "/api/rec/slide":
                 cap = re.sub(r"[^\w\-]", "", q.get("captureId", [""])[0])
                 name = safe_name(q.get("name", ["slide.jpg"])[0])

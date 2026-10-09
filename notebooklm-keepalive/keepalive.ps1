@@ -13,8 +13,16 @@ function Toast($title, $text) {
     [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($app).Show([Windows.UI.Notifications.ToastNotification]::new($x))
   } catch {}
 }
+# (9/10) Vòng đăng nhập (login_loop.ps1) đang chờ bạn -> KHÔNG thử đăng nhập im lặng nữa: lần nào cũng bật một cửa sổ Chrome rồi đóng
+# (từ 15:30 08/10 tới 08:26 09/10 bạn bị bật cửa sổ mỗi 20 phút). Chỉ kiểm tra nhẹ, không mở gì.
+function LoopWaiting { try { $m = [System.Threading.Mutex]::OpenExisting('Local\UC_NotebookLM_Login'); $m.Dispose(); $true } catch { $false } }
 $how = 'refresh'
 & $N auth refresh 2>$null | Out-Null
+if (-not (Ok) -and (LoopWaiting)) {
+  Add-Content -Path $log -Value ("{0:yyyy-MM-dd HH:mm} CHỜ: cửa sổ đăng nhập đang mở, chờ bạn đăng nhập (không thử lại, không mở thêm)" -f (Get-Date)) -Encoding utf8
+  $lines = Get-Content $log -Tail 300; Set-Content $log $lines -Encoding utf8
+  exit
+}
 if (-not (Ok)) {
   $how = 'login (im lặng)'
   & $N login --browser chrome --browser-timeout 120 2>$null | Out-Null   # (7/10) 45 s hay hụt -> 120 s     # phiên Chrome còn -> tự lưu, tự đóng

@@ -38,6 +38,9 @@ UC chạy trên laptop, đọc lại các nguồn đúng khung 5 phút suốt 24
 - **Gom phần hành chính**: thông báo, giấy tờ, thủ tục, đặt vé của CTSV và thư hành chính vào tab *Hành chính*; học bổng có tab riêng. Mỗi mục có link dẫn thẳng tới trang đăng ký, thông báo đã hết hạn tự ẩn.
 - **Chi tiết học phần**: bấm một môn để xem lớp thành phần, điểm thành phần và công thức tính điểm (lấy từ Teams, qldt, MOOC, FAMI).
 - **Gửi tài liệu sang NotebookLM**: tìm trong kho tài liệu, tích chọn, thêm vào notebook. UC dừng ở đó; việc ôn tập không phải việc của UC.
+- **Dịch tài liệu PDF sang tiếng Việt** ngay trên máy (không tốn quota), giữ bố cục và công thức; bản dịch tự vào kho tài liệu như file thả vào.
+- **Chat tìm được web**: khi cần thông tin ngoài dữ liệu của trường, trợ lý chat tìm bằng SearXNG và đọc trang công khai (chỉ đọc, kết quả web chỉ là dữ liệu, không phải lệnh).
+- **Ghi bài giảng và ghi cuộc họp** (Meeting-LectureRecorder): chọn Bài giảng hoặc Cuộc họp; họp thì ra biên bản gồm quyết định và việc cần làm, có phân biệt người nói.
 
 [![Bản đồ hệ thống](docs/Map.png)](docs/Map.svg)
 
@@ -62,8 +65,9 @@ UC chạy trên laptop, đọc lại các nguồn đúng khung 5 phút suốt 24
 
 - **Python** (thư viện chuẩn + Playwright): khoảng 8.500 dòng, chia thành các module theo từng nguồn: `school_mail.py`, `teams_fetch.py`, `mooc.py`, `fami.py`, `mail_events.py`, `deadlines.py`, `alerts.py`, `phone_sched.py`…
 - **n8n** (Docker): các luồng tự động phía Notion. Workflow được sinh bằng code (`build.py`), không kéo thả tay. Sơ đồ khối: [Map-n8n.svg](docs/Map-n8n.svg) ([ảnh PNG](docs/Map-n8n.png)).
-- **Máy ghi bài giảng** (`lecture-recorder/`, C# .NET 8 + NAudio): ghi giảng đường bằng micro, học online bằng âm thanh máy, hoặc riêng cuộc họp Teams qua cáp ảo VB-CABLE → n8n → chép lời trên máy (PhoWhisper, NPU) → Gemini → ghi chú bài giảng trong Notion, đồng thời xuất file .txt vào thư mục đúng môn trong kho tài liệu.
+- **Meeting-LectureRecorder** (`meeting-lecture-recorder/`, tên cũ `lecture-recorder/`; C# .NET 8 + NAudio): ghi giảng đường bằng micro, học online bằng âm thanh máy, hoặc riêng cuộc họp Teams qua cáp ảo VB-CABLE → n8n → chép lời trên máy (PhoWhisper, NPU) → Gemini → ghi chú bài giảng trong Notion, đồng thời xuất file .txt vào thư mục đúng môn trong kho tài liệu. Cuộc họp: thêm bước phân biệt người nói bằng pyannote (CPU) rồi viết biên bản.
 - **Cổng chép lời** (`speech-gate/`, Python + OpenVINO): kiểm tra chất lượng → chép lời PhoWhisper trên NPU → nén bằng LM Studio; audio không bao giờ gửi cho Gemini.
+- **Dịch PDF**: [PDFMathTranslate](https://github.com/PDFMathTranslate/PDFMathTranslate) (`pdf2zh`, AGPL-3.0, chỉ gọi như công cụ ngoài, không chép mã) chạy với model trên máy qua LM Studio. **Tìm web**: SearXNG chạy trên máy. **Phân biệt người nói**: pyannote.audio (cần token Hugging Face của người dùng).
 - **Notion API**: nơi lưu dữ liệu.
 - **Gemini API** (flash-lite) để đọc mail và phân loại hạn. **LM Studio** (qwen3-8b, chạy local) để xếp tài liệu.
 - **ntfy**: thông báo đẩy và lời nhắc hẹn giờ lên điện thoại.
@@ -124,7 +128,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 |---|---|---|
 | **v1.00.00** | 04/10/2026 | Bản công khai đầu tiên: đồng bộ 6 hệ thống của trường, luật tối cao, nhắc theo mốc lên điện thoại, đồng bộ tài liệu, quét trùng, bản đồ hệ thống |
 | **v1.00.01** | 05/10/2026 | Chat trung thực: chỉ báo "đã làm" khi công cụ trả kết quả thật. Công cụ dời hạn tự đặt (xem trước rồi mới ghi, không đụng hạn của trường). Ghi bài giảng riêng cuộc họp Teams qua cáp ảo |
-| **v1.00.02** | 05/10/2026 | Thêm mã nguồn máy ghi bài giảng (`lecture-recorder/`) |
+| **v1.00.02** | 05/10/2026 | Thêm mã nguồn máy ghi bài giảng (`lecture-recorder/`, nay là `meeting-lecture-recorder/`) |
 | **v1.00.03** | 05/10/2026 | Phân loại thư (môn học, ngoại khoá, hành chính, học bổng, thông báo chung). Tab Hành chính và Học bổng. Đọc đủ 1000 sự kiện CTSV. Giám sát Ghi bài giảng ngay trong UC. Chat nhớ hội thoại. Mọi nguồn cập nhật 5 phút một lần |
 | **v1.00.04** | 05/10/2026 | Thêm cổng chép lời (`speech-gate/`), kèm vá: tự thử lại khi LM Studio lỗi, model dự phòng, chạy tiếp từ bước nén |
 | **v1.00.05** | 06/10/2026 | Tự ẩn thông báo hết hạn hoặc của năm cũ. Chi tiết điểm học phần. Gửi tài liệu sang NotebookLM. Script giữ phiên NotebookLM. Đọc cả kênh ẩn và Shared Documents trên Teams. Lượt đồng bộ lỗi không còn ghi đè dữ liệu tốt |
@@ -137,6 +141,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.12** | 06/10/2026 | Cổng gỡ tài liệu nhận thêm dòng 📥 University Inbox (vẫn chỉ chuyển vào thùng rác, có kiểm tra bảng), để dọn được file bị nạp nhầm |
 | **v1.00.13** | 06/10/2026 | Mục **Học phí kỳ này** (tab Hành chính): giá đơn vị / tín chỉ, số tín chỉ của kỳ đang học, tổng học phí tự nhân rồi đối chiếu với hoá đơn trên trang học phí của trường, kèm nút "Nộp học phí tại đây". Sửa đồng bộ qldt: nút đăng nhập mới của trường và popup khảo sát che trang (chỉ ẩn trên máy, không trả lời khảo sát) |
 | **v1.00.14** | 07/10/2026 | Giữ phiên NotebookLM: khi Google còn phiên, cửa sổ đăng nhập tự lưu rồi đóng mà không báo động nhầm; chỉ khi sau 90 giây vẫn cần đăng nhập tay mới hiện thông báo. Lượt đăng nhập im lặng được 120 giây thay vì 45 |
+| **v1.00.15** | 09/10/2026 | Dịch tài liệu PDF sang tiếng Việt trên máy (tab Inbox, bản dịch tự vào kho). Chat tìm web qua SearXNG, hết quota Gemini thì dùng model chạy trên máy. Chế độ Họp: chọn Bài giảng / Cuộc họp, biên bản có quyết định và việc cần làm, phân biệt người nói; máy ghi đổi tên Meeting-LectureRecorder. Sửa giữ phiên NotebookLM: chỉ một cửa sổ đăng nhập mỗi lúc, có công tắc tạm dừng. Cập nhật bản đồ |
 
 ## Chạy thử
 

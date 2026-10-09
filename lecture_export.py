@@ -72,15 +72,18 @@ def run(post):
         day = (((P.get('Lecture Date') or {}).get('date') or {}).get('start') or r['created_time'])[:10]
         cs = [courses.get(c['id']) for c in (P.get('Course') or {}).get('relation', []) if courses.get(c['id'])]
         code, cname = cs[0] if cs else ('', '')
-        if not code:   # ghi chú chưa gán môn -> đoán theo tên môn có trong tiêu đề (vd "Giải tích I - …")
+        meeting = title.lower().startswith('biên bản họp') or _txt((P.get('Analysis Key') or {}).get('rich_text')).endswith(':meeting-v1')
+        if meeting:   # (7/10) biên bản cuộc họp: không thuộc môn nào -> Uni-Documents/Biên bản họp/
+            rel = str(Path('Biên bản họp') / f"{day} - {_safe(title)}.txt"); code = cname = ''
+        if not code and not meeting:   # ghi chú chưa gán môn -> đoán theo tên môn có trong tiêu đề (vd "Giải tích I - …")
             hit = [(len(n), c, n) for c, n, _ in teams_files.course_table() if n and teams_files.norm(n) in teams_files.norm(title)]
             if hit: _, code, cname = max(hit)
-        folder = teams_files.folder_for(code, cname) if code else SUB + ' (chưa rõ môn)'
+        folder = teams_files.folder_for(code, cname) if code else ('Biên bản họp' if meeting else SUB + ' (chưa rõ môn)')
         sub = SUB
         if code:
             try: sub = next((d.name for d in (app.UNI / folder).iterdir() if d.is_dir() and d.name.lower() == SUB.lower()), SUB)
             except OSError: pass
-        rel = str(Path(folder) / sub / f"{day} - {_safe(title)}.txt") if code else str(Path(folder) / f"{day} - {_safe(title)}.txt")
+        if not meeting: rel = str(Path(folder) / sub / f"{day} - {_safe(title)}.txt") if code else str(Path(folder) / f"{day} - {_safe(title)}.txt")
         old = st.get(nid) or {}
         dest = app.UNI / rel
         if old.get('sig') == r['last_edited_time'] and old.get('rel') == rel and dest.exists():

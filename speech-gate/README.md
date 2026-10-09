@@ -1,6 +1,6 @@
 # Speech gate: audio → text → compact (127.0.0.1:8340)
 
-The second half of **Ghi bài giảng** (lecture recording). The recorder (`../lecture-recorder`) sends audio to n8n, and n8n hands it to this gate.
+The second half of **Ghi bài giảng** (lecture recording). The recorder (`../meeting-lecture-recorder`) sends audio to n8n, and n8n hands it to this gate.
 
 **Audio never goes to Gemini.** Everything below runs on the machine:
 

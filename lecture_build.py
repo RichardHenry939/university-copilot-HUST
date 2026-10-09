@@ -1,4 +1,4 @@
-"""Dựng lại workflow "University — Lecture Analysis" (<lecture_analysis>) theo plan đã chốt 2/10 — Claude.
+"""Dựng lại workflow "University — Lecture Analysis" (EtG8zlgeGNCZnak8) theo plan đã chốt 2/10 — Claude.
 
 AUDIO KHÔNG BAO GIỜ ĐI TỚI GEMINI.
   Phần A (5 phút/lần): phiên Uploaded -> khoá -> tải audio Drive -> gửi cổng âm thanh→chữ→nén (máy, cổng 8340).
@@ -16,7 +16,7 @@ import copy, json, sys, uuid
 from n8napi import api, NOTION, GEMINI, APPKEY, DRIVE
 from exprfix import fix_tree
 
-WID = cfg.n8n_workflow("lecture_analysis")
+WID = "EtG8zlgeGNCZnak8"
 NS = uuid.UUID("2f6c1d7a-0b11-4c1e-8f53-6b1f9d0a3e21")
 SESSIONS_DB = cfg.notion("lecture_sessions")
 NOTES_DB = cfg.notion("lecture_notes")
@@ -169,7 +169,7 @@ const dt = n => (P[n] && P[n].date && P[n].date.start) || '';
 return [{ json: { sessionPageId: p.id, captureId: b.captureId, status: b.status, reason: b.reason || '', stats: b.stats || {},
   compact: b.compact || '', excerpts: b.excerpts || [], transcript: b.transcript || '', slides: b.slides || [],
   audioUrl: (P['Audio URL'] && P['Audio URL'].url) || '', startedAt: dt('Started At') || b.startedAt || '',
-  endedAt: dt('Ended At') || b.endedAt || '' } }];
+  endedAt: dt('Ended At') || b.endedAt || '', kind: b.kind === 'meeting' ? 'meeting' : 'lecture' } }];
 """)
 iff("Audio dùng được?", [660, Y], "={{ $json.status === 'done' }}")
 patch_session("Ghi: audio không dùng được", [880, Y + 200],
@@ -191,10 +191,20 @@ for (const e of ($json.results || [])) {
   if (ov > bestOv) { bestOv = ov; best = e; }
 }
 const title = p => ((p.properties.Event || {}).title || []).map(t => t.plain_text).join('');
-const course = best ? { name: title(best), courseIds: ((best.properties.Course || {}).relation || []).map(r => r.id),
+const meeting = s.kind === 'meeting';   // (7/10) chế độ Họp: không gắn môn, viết biên bản
+const course = (best && !meeting) ? { name: title(best), courseIds: ((best.properties.Course || {}).relation || []).map(r => r.id),
   location: ((best.properties.Location || {}).rich_text || []).map(t => t.plain_text).join(''), overlapMin: Math.round(bestOv / 60000) } : null;
 const st = s.stats || {};
-const instruction = [
+const instruction = meeting ? [
+  'Bạn là thư ký viết BIÊN BẢN CUỘC HỌP tiếng Việt cho một sinh viên HUST (lớp trưởng, CLB, nhóm dự án…).',
+  'Đầu vào KHÔNG phải audio mà là BẢN NÉN từ bản chép lời tự động, mỗi dòng có thể ghi "Người N:" (máy tự phân biệt giọng, KHÔNG biết tên thật — giữ nguyên "Người N", chỉ thay bằng tên khi chính trong hội thoại có người xưng tên rõ ràng).',
+  'TUYỆT ĐỐI không bịa quyết định / việc / hạn không có trong bản nén.',
+  `Chất lượng audio: ${st.speech_min} phút tiếng nói / ${st.duration_min} phút; ${st.speakers || '?'} người nói được phân biệt.`,
+  'is_lecture = true nếu đây là cuộc họp / thảo luận có nội dung; false nếu chỉ là tạp âm, chuyện ngoài lề vô nghĩa.',
+  'Trả về duy nhất một JSON object hợp lệ với các khóa: is_lecture (boolean), title (chủ đề cuộc họp, ngắn), summary, participants (array: "Người N — vai trò/ý chính"),',
+  'important_points (nội dung thảo luận chính, theo thứ tự), decisions (các quyết định đã chốt), action_items (mỗi việc: "Việc — ai nhận — hạn"), deadlines, unclear_points, confidence.',
+  'Mỗi trường danh sách là array chuỗi (tối đa 10 phần tử, mỗi phần tử ≤ 200 ký tự); confidence 0..1. Ngày họp ' + (s.startedAt || '').slice(0, 10) + '.',
+].join('\n') : [
   'Bạn là hệ thống xử lý bài giảng đại học tiếng Việt (sinh viên năm 1 Kỹ thuật Máy tính, HUST).',
   'Đầu vào KHÔNG phải audio mà là BẢN NÉN từ bản chép lời tự động (PhoWhisper chạy trên máy): có thể sai chính tả thuật ngữ',
   '(ví dụ "gắn mác" = "gán max", "ngôn ngữ X" có thể là "ngôn ngữ C"). Sửa theo ngữ cảnh môn học, nhưng TUYỆT ĐỐI không bịa nội dung không có trong bản nén.',
@@ -206,7 +216,7 @@ const instruction = [
   'Mỗi trường danh sách là array chuỗi (tối đa 10 phần tử, mỗi phần tử ≤ 200 ký tự); confidence 0..1. Deadline ghi rõ ngày nếu suy ra được từ ngày học ' + (s.startedAt || '').slice(0, 10) + '.',
   'Các đoạn quanh MARKER do sinh viên bấm trong giờ học là tín hiệu ưu tiên (quan trọng / BTVN / có thể thi).',
 ].join('\n');
-const parts = [{ text: instruction }, { text: '=== BẢN NÉN BÀI GIẢNG ===\n' + s.compact }];
+const parts = [{ text: instruction }, { text: (meeting ? '=== BẢN NÉN CUỘC HỌP ===\n' : '=== BẢN NÉN BÀI GIẢNG ===\n') + s.compact }];
 if (s.excerpts.length) parts.push({ text: '=== ĐOẠN QUANH MARKER (nguyên văn chép lời) ===\n' + s.excerpts.map(x => `[${x.at}] (${x.kind}${x.note ? ': ' + x.note : ''}) ${x.text}`).join('\n') });
 for (const im of s.slides.slice(0, 12)) parts.push({ inline_data: { mime_type: im.mime, data: im.data } });
 if (s.slides.length) parts.push({ text: `(${s.slides.length} ảnh slide/bảng sinh viên chụp trong giờ học ở trên — dùng để kiểm chứng và bổ sung.)` });
@@ -231,7 +241,10 @@ const str = v => v == null ? '' : (typeof v === 'string' ? v : (Array.isArray(v)
 const arr = n => (x && Array.isArray(x[n]) ? x[n] : []).map(str).filter(Boolean).slice(0, 12);
 const s = $('Gom dữ liệu phiên').item.json, req = $('Dựng yêu cầu Gemini (chữ)').item.json;
 const u = $json.usageMetadata || {};
-return { json: { ok: !!x, is_lecture: !!x && x.is_lecture !== false, title: str(x && x.title).slice(0, 180) || ('Bài giảng ' + s.captureId),
+const meeting = s.kind === 'meeting';
+return { json: { ok: !!x, is_lecture: !!x && x.is_lecture !== false, kind: s.kind,
+  title: ((meeting ? 'Biên bản họp: ' : '') + (str(x && x.title) || ((meeting ? 'Cuộc họp ' : 'Bài giảng ') + s.captureId))).slice(0, 180),
+  participants: arr('participants'), decisions: arr('decisions'), action_items: arr('action_items'),
   summary: str(x && x.summary).slice(0, 1900), key_concepts: arr('key_concepts'), definitions: arr('definitions'), formulas: arr('formulas'),
   worked_examples: arr('worked_examples'), important_points: arr('important_points'), unclear_points: arr('unclear_points'),
   homework: arr('homework'), deadlines: arr('deadlines'), next_lecture_preparation: arr('next_lecture_preparation'),
@@ -251,7 +264,7 @@ notion("Tạo Lecture Note", [1980, Y], "POST", "https://api.notion.com/v1/pages
        " 'Lecture Date': { date: { start: $('Gom dữ liệu phiên').item.json.startedAt } },"
        " 'Summary': { rich_text: [{ text: { content: $json.summary } }] },"
        " 'Review Status': { select: { name: 'Needs review' } },"
-       " 'Analysis Key': { rich_text: [{ text: { content: $('Gom dữ liệu phiên').item.json.captureId + ':lecture-v2' } }] } },"
+       " 'Analysis Key': { rich_text: [{ text: { content: $('Gom dữ liệu phiên').item.json.captureId + ($json.kind === 'meeting' ? ':meeting-v1' : ':lecture-v2') } }] } },"
        " $('Gom dữ liệu phiên').item.json.audioUrl ? { 'Source Audio': { url: $('Gom dữ liệu phiên').item.json.audioUrl } } : {},"
        " ($json.course && $json.course.courseIds.length) ? { 'Course': { relation: $json.course.courseIds.map(id => ({ id })) } } : {}) }) }}")
 code("Dựng nội dung ghi chú", [2200, Y], r"""
@@ -263,10 +276,16 @@ const list = (t, a, kind = 'bulleted_list_item') => { if (!a || !a.length) retur
 const st = s.stats || {};
 B.push({ object: 'block', type: 'callout', callout: { icon: { emoji: '🧭' }, rich_text: rt(
   (g.course ? `Môn: ${g.course.name}${g.course.location ? ' · ' + g.course.location : ''}. ` : '') + (g.summary || '')) } });
+if (g.kind === 'meeting') {
+  list('👥 Người tham gia', g.participants); list('🗣️ Nội dung thảo luận', g.important_points);
+  list('✅ Quyết định', g.decisions); list('📝 Việc cần làm', g.action_items, 'to_do'); list('⏰ Mốc thời gian', g.deadlines, 'to_do');
+  list('❓ Chưa rõ — cần kiểm tra lại', g.unclear_points);
+} else {
 list('📌 Ý quan trọng', g.important_points); list('🧠 Khái niệm chính', g.key_concepts); list('📖 Định nghĩa', g.definitions);
 list('∑ Công thức', g.formulas); list('✏️ Ví dụ / bài mẫu', g.worked_examples);
 list('📝 Bài tập về nhà', g.homework, 'to_do'); list('⏰ Deadline được nhắc', g.deadlines, 'to_do');
 list('➡️ Chuẩn bị buổi sau', g.next_lecture_preparation); list('❓ Chưa rõ — cần kiểm tra lại', g.unclear_points);
+}
 const chunks = []; const T = s.transcript || ''; for (let i = 0; i < T.length && chunks.length < 40; i += 1900) chunks.push(T.slice(i, i + 1900));
 if (chunks.length) B.push({ object: 'block', type: 'toggle', toggle: { rich_text: rt('🎧 Bản chép lời đầy đủ (tự động, chạy trên máy — có thể sai chính tả)'),
   children: chunks.map(c => ({ object: 'block', type: 'paragraph', paragraph: { rich_text: rt(c) } })) } });
@@ -280,10 +299,10 @@ notion("Ghi nội dung ghi chú", [2420, Y], "PATCH", "={{ 'https://api.notion.c
        "={{ JSON.stringify({ children: $json.children }) }}", onError="continueRegularOutput")
 notion("Bàn giao University Inbox", [2640, Y], "POST", "https://api.notion.com/v1/pages",
        "={{ (() => { const g = $('Chuẩn hoá kết quả Gemini').item.json; const n = $('Dựng nội dung ghi chú').item.json;"
-       " const ctx = ('Bài giảng: ' + g.title + (g.course ? ' — ' + g.course.name : '') + ' (' + ($('Gom dữ liệu phiên').item.json.startedAt || '').slice(0, 10) + ').'"
+       " const ctx = ((g.kind === 'meeting' ? 'Biên bản cuộc họp (không thuộc môn học nào): ' : 'Bài giảng: ') + g.title + (g.course ? ' — ' + g.course.name : '') + ' (' + ($('Gom dữ liệu phiên').item.json.startedAt || '').slice(0, 10) + ').'"
        " + (g.homework.length ? ' BTVN: ' + g.homework.join('; ') + '.' : '') + (g.deadlines.length ? ' Deadline: ' + g.deadlines.join('; ') + '.' : '')"
        " + ' Ghi chú đầy đủ: ' + n.noteUrl).slice(0, 1990);"
-       " const props = { 'Upload': { title: [{ text: { content: ('Lecture Review — ' + g.title).slice(0, 190) } }] },"
+       " const props = { 'Upload': { title: [{ text: { content: ((g.kind === 'meeting' ? 'Meeting Minutes — ' : 'Lecture Review — ') + g.title).slice(0, 190) } }] },"
        " 'Triage Status': { status: { name: 'Not started' } }, 'Context': { rich_text: [{ text: { content: ctx } }] } };"
        " if (g.course && g.course.courseIds.length) props['Detected Course'] = { relation: g.course.courseIds.map(id => ({ id })) };"
        " return JSON.stringify({ parent: { database_id: '" + INBOX_DB + "' }, properties: props }); })() }}")

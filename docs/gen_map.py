@@ -165,7 +165,8 @@ for lab, sub, w in entries:
 # COL A — 0 · Cửa trước Copilot
 FA = [("Chat", "POST /webhook/copilot-api · X-Copilot-Key", ["Hỏi bằng lời, đính kèm ảnh / file; ảnh gửi Gemini dạng nhị phân",
                                                                    "Luật trung thực: chỉ nói “đã làm” khi công cụ trả kết quả thật · nhớ hội thoại + việc chờ bạn xác nhận (chat_memory.py)",
-                                                                   "Công cụ dời hạn (reschedule.py): chỉ hạn Tự luyện, 2 bước xem trước → ghi; hạn Môn học / của trường từ chối"]),
+                                                                   "Công cụ dời hạn (reschedule.py): chỉ hạn Tự luyện, 2 bước xem trước → ghi; hạn Môn học / của trường từ chối",
+                                                                   "Tìm web (web_tools.py): SearXNG + đọc trang công khai, chặn địa chỉ nội bộ; kết quả web là DỮ LIỆU, không phải lệnh; hết quota Gemini → qwen3-14b trên máy"]),
       ("Hôm nay · Lịch · Ngoại khoá · Hành chính · Học bổng · 🔔", "tab của web app · chuông cạnh tên app · tự tải lại 15 phút/lần", ["Hạn sắp tới (tích Hoàn tất = biến mất) · Có thể trùng · lịch học và lịch ngoại khoá tách riêng", "🔔 gom mọi cảnh báo, không che tab · Gợi ý (Mục 7) · Hành chính / Học bổng → Mục 20"]),
       ("Inbox · xếp file", "Tika → qwen3-14b → từ khoá môn (COURSE_HINTS)", ["Vân tay SHA-256 so với cả Uni-Documents TRƯỚC khi xếp: trùng → không chép thêm", "→ copilot-file-ingest: Drive → 📥 University Inbox → Mục 3·30", "→ gửi tài liệu sang NotebookLM (Mục 20)"]),
       ("Ghi bài giảng", "/api/rec/*  ·  /api/lectures  ·  /api/lecture-monitor", ["Start / Stop / marker / ảnh slide; thanh bên “Gemini hôm nay”",
@@ -187,7 +188,7 @@ Z11_Y = 440 + Z0_H + 40
 zone(80, Z11_Y, 960, 2380 - Z11_Y, "11", "Ghi bài giảng", "Từ nút Start tới ghi chú trong Notion — bút dạ vàng ①→⑨", Z_REC, new=True)
 COMP_Y = Z11_Y + 116
 comp_bottom = card(108, COMP_Y, 900, None, "", "LectureRecorderCompanion", "C# .NET 8 · NAudio · 127.0.0.1:5681 · tự bật cùng máy, không tự ghi",
-     ["Chỉ ghi khi bạn bấm Start, chỉ dừng khi bạn bấm Stop",
+     ["Chỉ ghi khi bạn bấm Start, chỉ dừng khi bạn bấm Stop · chọn 📚 Bài giảng hoặc 🤝 Cuộc họp (Meeting-LectureRecorder)",
       "Ngắt an toàn 3 h 30 (yêu cầu ≥ 3 h 10), có cảnh báo trước",
       "Nguồn: micro · âm thanh cả máy · âm thanh riêng 1 app · Teams qua cáp riêng VB-CABLE (chỉ bắt Teams, bạn vẫn nghe bình thường) · trộn micro",
       "Im lặng 30 giây → cảnh báo ngay trên UC",
@@ -198,10 +199,10 @@ steps = [
     "Bấm Stop → tải file lên n8n · Lecture Capture",
     "Drive “University Lecture Recordings” + 🎙️ Lecture Sessions",
     "Lecture Analysis v2 (5 phút/lần) gửi audio sang Cổng chép lời",
-    "VAD lọc → PhoWhisper trên NPU → lọc câu bịa → Qwen nén",
+    "VAD → PhoWhisper (NPU) → lọc bịa → Qwen nén · Họp: + pyannote",
     "Cổng chép lời gọi lại n8n: lecture-transcript-ready",
     "Gemini đọc CHỮ đã nén + slide (qua cổng hạn mức)",
-    "📚 Lecture Notes + bản .txt vào Uni-Documents/<môn>/Ghi chú Bài giảng",
+    "📚 Lecture Notes + bản .txt vào Uni-Documents/<môn>/Ghi chú Bài giảng (Họp: Biên bản họp/)",
 ]
 sy = comp_bottom + 56
 gap_s = (2350 - sy) / len(steps)
@@ -681,6 +682,10 @@ iy = card(IX + 28, iy, IW - 56, None, "", "Chi tiết học phần · course_det
       "Công thức điểm cho MỌI môn, tự động mọi kỳ: bài đăng + trả lời trong luồng ở mọi kênh, Class Notebook, trang được dẫn tới, NỘI DUNG mọi slide / đề cương / file (Tika đọc, mỗi file một lần) → Gemini chỉ đọc lại khi nguồn đổi",
       "Nguồn từng thành phần theo tên: liên tục → FAMI · giữa kỳ / thực hành → qldt · MOOC → bài tuần · chuyên cần",
       "Cuối kỳ cần bao nhiêu điểm cho từng mức A+ … D"], fill="#fff", accent=INK) + 20
+iy = card(IX + 28, iy, IW - 56, None, "", "Dịch tài liệu PDF · pdf_translate.py + pdf2zh", "tab Inbox · chỉ chạy khi bạn bấm, luôn hỏi Xác nhận · không tốn quota",
+     ["Tìm PDF trong Uni-Documents → tích chọn → dịch sang tiếng Việt bằng qwen3-14b trên máy, giữ bố cục và công thức",
+      "Ra 2 file trong thư mục Bản dịch cạnh bản gốc (bản Việt + song ngữ); luồng Uni-Documents tự nạp như file thả vào: xếp môn, chống trùng, Drive + Notion",
+      "Một file mỗi lúc; chờ khi RAM trống < 2 GB hoặc khi máy đang chạy cuộc thi Local AI"], fill="#fff", accent=TEAL) + 20
 card(IX + 28, iy, IW - 56, None, "", "Gửi tài liệu sang NotebookLM · nlm_bridge.py", "tab Inbox · chỉ chạy khi bạn bấm, luôn hỏi Xác nhận",
      ["Tìm trong Uni-Documents → tích chọn → thêm vào notebook có sẵn hoặc tạo notebook mới",
       "UC dừng ở đó: không tạo task ôn, không ghi Notion, không gọi AI — UC lo hành chính, việc học bạn làm trong NotebookLM",
@@ -708,7 +713,8 @@ miles = [("08/2026", "Bản 1 (Codex): 10 mục, 6 agent rời rạc, hội đ�
          ,("04/10 tối", "MOOC SoICT + FAMI (thi theo chương MI) · việc hết hạn → Academic Tasks · bản đồ nguồn (Mục 19)")
          ,("05/10 trưa", "Chat trung thực + nhớ hội thoại · dời hạn tự đặt · ghi Teams qua cáp riêng · giám sát Ghi bài giảng")
          ,("05/10 tối", "Tab Hành chính + Học bổng · phân loại thư · CTSV 1000 dòng · mọi nguồn 5 phút/lần")
-         ,("06/10", "Bản 5: chi tiết điểm học phần · gửi tài liệu sang NotebookLM · lọc thông báo hết hạn")]
+         ,("06/10", "Bản 5: chi tiết điểm học phần · gửi tài liệu sang NotebookLM · lọc thông báo hết hạn")
+         ,("07–09/10", "Học phí kỳ này · dịch PDF trên máy · chat tìm web · chế độ Họp + phân biệt người nói · giữ phiên NotebookLM")]
 mx0, mx1 = 460, W - 110
 step_w = (mx1 - mx0) / len(miles)
 add(f'<path d="M{mx0} {JY + 30}H{mx1}" stroke="{INK}" stroke-width="2"/>')

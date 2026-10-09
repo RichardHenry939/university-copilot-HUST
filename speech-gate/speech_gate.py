@@ -13,7 +13,7 @@ HTTP (127.0.0.1:8340, n8n trong Docker gọi qua host.docker.internal):
   GET  /jobs/<jobId>            GET /jobs?captureId=<id>        GET /health
   POST /slides?captureId=&name= body = ảnh (Copilot tải lên trong giờ học)
 """
-import base64, io, json, os, queue, re, threading, time, traceback, urllib.request, uuid
+import subprocess, base64, io, json, os, queue, re, threading, time, traceback, urllib.request, uuid
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -193,6 +193,57 @@ def lm(messages, max_tokens=1400):
     return out.split("</think>")[-1].strip()
 
 
+KINDS_FILE = Path(os.environ.get("UC_DIR", Path(__file__).resolve().parent.parent)) / "school" / "capture_kinds.json"   # UC ghi: captureId -> lecture | meeting
+DIARIZE_PY = Path(os.environ.get("DIARIZE_PY", Path(__file__).resolve().parent / "diarize" / ".venv" / "Scripts" / "python.exe")); DIARIZE = Path(__file__).resolve().parent / "diarize" / "diarize.py"
+
+
+def kind_of(cap):
+    try: return json.loads(KINDS_FILE.read_text(encoding="utf-8")).get(cap, "lecture")
+    except Exception: return "lecture"
+
+
+def diarize(jid, audio):
+    """-> (danh sách đoạn {start,end,speaker}, ghi chú). Lỗi / chưa có token -> ([], lý do): biên bản vẫn ra, chỉ thiếu tên người nói."""
+    if not DIARIZE_PY.exists(): return [], "chưa cài pyannote"
+    import wave
+    wav = job_path(jid) / "diarize.wav"; out = job_path(jid) / "diarize.json"
+    with wave.open(str(wav), "wb") as w:   # 16 kHz mono PCM16 (thư viện chuẩn, venv cổng chép lời không có soundfile)
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
+        w.writeframes((np.clip(audio, -1, 1) * 32767).astype("<i2").tobytes())
+    try:
+        p = subprocess.run([str(DIARIZE_PY), str(DIARIZE), str(wav), str(out)], capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=3 * 3600, creationflags=0x08000000)
+    except Exception as e:
+        return [], f"pyannote lỗi {type(e).__name__}"
+    finally:
+        wav.unlink(missing_ok=True)
+    if p.returncode == 3: return [], "chưa có token Hugging Face (chạy hf auth login)"
+    if p.returncode or not out.exists(): return [], "pyannote lỗi: " + (p.stdout + p.stderr)[-200:]
+    return json.loads(out.read_text(encoding="utf-8")), p.stdout.strip()[-120:]
+
+
+def label_speakers(kept, segs):
+    """Gán người nói cho từng câu theo khoảng trùng thời gian lớn nhất; đặt tên Người 1, 2… theo thứ tự lên tiếng."""
+    names = {}
+    for k in kept:
+        best, ov = None, 0.0
+        for d in segs:
+            o = min(k["end"], d["end"]) - max(k["start"], d["start"])
+            if o > ov: best, ov = d["speaker"], o
+        if best is not None:
+            names.setdefault(best, f"Người {len(names) + 1}")
+            k["speaker"] = names[best]
+    return len(names)
+
+
+MEETING_SYS = """/no_think
+Bạn là thư ký NÉN bản chép lời một CUỘC HỌP tiếng Việt (chép tự động, có lỗi nhận dạng; mỗi dòng có thể ghi "Người N:" là người nói).
+Viết lại đoạn được giao thành BIÊN BẢN NGẮN theo thứ tự thời gian, GIỮ tên người nói (Người 1, Người 2…):
+- ai đề xuất / phản đối / đồng ý điều gì; các con số, mốc thời gian, tên việc;
+- QUYẾT ĐỊNH đã chốt (ghi rõ "Quyết định:"); VIỆC CẦN LÀM (ghi "Việc:" + ai nhận + hạn nếu có).
+Không bịa, không thêm ý không có trong bản chép. Bỏ chào hỏi, câu đệm. Chỉ trả về biên bản."""
+
+
 COMPACT_SYS = """/no_think
 Bạn là trợ lý NÉN bản chép lời bài giảng đại học tiếng Việt (chép tự động, có lỗi chính tả/nhận dạng).
 Nhiệm vụ: viết lại đoạn được giao thành GHI CHÚ NGẮN GỌN, giữ đủ ý giảng, theo thứ tự thời gian.
@@ -266,7 +317,12 @@ def process(jid):
         stats.update(stt_min=round((time.time() - t0) / 60, 1), segments=len(kept), dropped_segments=dropped,
                      kept_chars=sum(len(k["text"]) for k in kept),
                      avg_logprob=round(float(np.mean(lp)), 3) if lp else None)
-        lines = [f"[{clock(job['startedAt'], k['start'])}] {k['text']}" for k in kept]
+        job["kind"] = kind_of(job["captureId"]); stats["kind"] = job["kind"]
+        if job["kind"] == "meeting":   # (7/10) chế độ Họp: ai nói câu nào
+            upd(stage="diarize", progress=0.80, stats=stats)
+            t1 = time.time(); dsegs, dnote = diarize(jid, audio)
+            stats.update(speakers=label_speakers(kept, dsegs) if dsegs else 0, diarize_min=round((time.time() - t1) / 60, 1), diarize_note=dnote)
+        lines = [f"[{clock(job['startedAt'], k['start'])}] " + (f"{k['speaker']}: " if k.get("speaker") else "") + k["text"] for k in kept]
         (job_path(jid) / "transcript.txt").write_text("\n".join(lines), encoding="utf-8")
         (job_path(jid) / "kept.json").write_text(json.dumps(kept, ensure_ascii=False), encoding="utf-8")
         if stats["kept_chars"] < MIN_KEPT_CHARS:
@@ -287,7 +343,7 @@ def process(jid):
         parts = []
         for i, ch in enumerate(chunks):
             job["progress"] = round(0.82 + 0.15 * i / max(1, len(chunks)), 3); save_job(job)
-            out = lm([{"role": "system", "content": COMPACT_SYS},
+            out = lm([{"role": "system", "content": MEETING_SYS if job.get("kind") == "meeting" else COMPACT_SYS},
                       {"role": "user", "content": f"Đoạn {i+1}/{len(chunks)} của bản chép lời:\n{ch}"}])
             if out and "không có nội dung giảng" not in out.lower():
                 parts.append(out)
@@ -353,7 +409,7 @@ def compact_step(job, upd):
     parts = []
     for i, ch in enumerate(chunks):
         job["progress"] = round(0.82 + 0.15 * i / max(1, len(chunks)), 3); save_job(job)
-        out = lm([{"role": "system", "content": COMPACT_SYS},
+        out = lm([{"role": "system", "content": MEETING_SYS if kind_of(job["captureId"]) == "meeting" else COMPACT_SYS},
                   {"role": "user", "content": f"Đoạn {i+1}/{len(chunks)} của bản chép lời:\n{ch}"}])
         if out and "không có nội dung giảng" not in out.lower():
             parts.append(out)
@@ -375,7 +431,7 @@ def callback(job, extra):
     if not url:
         return
     body = {"jobId": job["jobId"], "captureId": job["captureId"], "startedAt": job.get("startedAt"),
-            "endedAt": job.get("endedAt"), **extra}
+            "endedAt": job.get("endedAt"), "kind": job.get("kind") or kind_of(job["captureId"]), **extra}
     key = SECRET.read_text(encoding="utf-8").strip() if SECRET.exists() else ""
     for attempt in range(5):
         try:

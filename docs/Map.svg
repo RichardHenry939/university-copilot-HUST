@@ -122,14 +122,14 @@
 <rect x="3470" y="300" width="300" height="64" rx="22" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
 <text x="3620.0" y="328" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#14263A" text-anchor="middle">NotebookLM</text>
 <text x="3620.0" y="351" font-family="'Cascadia Mono', Consolas, monospace" font-size="14" font-weight="400" fill="#7A8A9B" text-anchor="middle">nhận tài liệu khi bạn bấm</text>
-<rect x="80" y="440" width="960" height="1036" rx="0" fill="#F2F5F9" fill-opacity="1" stroke="#14263A" stroke-width="2.4"/>
+<rect x="80" y="440" width="960" height="1098" rx="0" fill="#F2F5F9" fill-opacity="1" stroke="#14263A" stroke-width="2.4"/>
 <rect x="80" y="440" width="588.08" height="56" rx="0" fill="#14263A" fill-opacity="1" stroke="#14263A" stroke-width="0"/>
 <text x="100" y="478" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="1.2">0  ·  CỬA TRƯỚC · UNIVERSITY COPILOT</text>
 <rect x="682.08" y="454" width="74" height="30" rx="0" fill="#fff" fill-opacity="1" stroke="#B3122E" stroke-width="2"/>
 <text x="719.08" y="476" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="17" font-weight="700" fill="#B3122E" text-anchor="middle" letter-spacing="2">MỚI</text>
 <text x="102" y="532" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="19" font-weight="400" fill="#4B5D70" text-anchor="start">copilot_app.py · ui/index.html · 127.0.0.1:8320 — một cửa duy nhất thay cho “buồng lái”</text>
-<rect x="108" y="556" width="900" height="258" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
-<rect x="108" y="556" width="6" height="258" fill="#14263A"/>
+<rect x="108" y="556" width="900" height="320" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
+<rect x="108" y="556" width="6" height="320" fill="#14263A"/>
 <text x="130" y="590" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Chat</text>
 <text x="130" y="616" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">POST /webhook/copilot-api · X-Copilot-Key</text>
 <circle cx="134" cy="636.44" r="2.6" fill="#4B5D70"/>
@@ -140,80 +140,84 @@
 <circle cx="134" cy="731.3800000000001" r="2.6" fill="#4B5D70"/>
 <text x="146" y="738.94" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Công cụ dời hạn (reschedule.py): chỉ hạn Tự luyện, 2 bước xem trước → ghi; hạn Môn</text>
 <text x="146" y="767.9200000000001" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">học / của trường từ chối</text>
-<rect x="108" y="828" width="900" height="196" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
-<rect x="108" y="828" width="6" height="196" fill="#14263A"/>
-<text x="130" y="862" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Hôm nay · Lịch · Ngoại khoá · Hành chính · Học bổng · 🔔</text>
-<text x="130" y="888" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">tab của web app · chuông cạnh tên app · tự tải lại 15 phút/lần</text>
-<circle cx="134" cy="908.44" r="2.6" fill="#4B5D70"/>
-<text x="146" y="916.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Hạn sắp tới (tích Hoàn tất = biến mất) · Có thể trùng · lịch học và lịch ngoại khoá</text>
-<text x="146" y="944.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">tách riêng</text>
-<circle cx="134" cy="970.4000000000001" r="2.6" fill="#4B5D70"/>
-<text x="146" y="977.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">🔔 gom mọi cảnh báo, không che tab · Gợi ý (Mục 7) · Hành chính / Học bổng → Mục 20</text>
-<rect x="108" y="1038" width="900" height="200" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
-<rect x="108" y="1038" width="6" height="200" fill="#14263A"/>
-<text x="130" y="1072" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Inbox · xếp file</text>
-<text x="130" y="1098" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">Tika → qwen3-14b → từ khoá môn (COURSE_HINTS)</text>
-<circle cx="134" cy="1118.44" r="2.6" fill="#4B5D70"/>
-<text x="146" y="1126.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Vân tay SHA-256 so với cả Uni-Documents TRƯỚC khi xếp: trùng → không chép thêm</text>
-<text x="130" y="1158.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="600" fill="#0D7377" text-anchor="start">→ copilot-file-ingest: Drive → 📥 University Inbox → Mục 3·30</text>
-<text x="130" y="1191.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="600" fill="#0D7377" text-anchor="start">→ gửi tài liệu sang NotebookLM (Mục 20)</text>
-<rect x="108" y="1252" width="900" height="196" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
-<rect x="108" y="1252" width="6" height="196" fill="#14263A"/>
-<text x="130" y="1286" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Ghi bài giảng</text>
-<text x="130" y="1312" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">/api/rec/*  ·  /api/lectures  ·  /api/lecture-monitor</text>
-<circle cx="134" cy="1332.44" r="2.6" fill="#4B5D70"/>
-<text x="146" y="1340.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Start / Stop / marker / ảnh slide; thanh bên “Gemini hôm nay”</text>
-<circle cx="134" cy="1365.42" r="2.6" fill="#4B5D70"/>
-<text x="146" y="1372.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">“Đang tải lên”: giám sát từng chặng ①→⑨ mỗi phút, tự ghi lỗi, lỗi tự hết khi chặng</text>
-<text x="146" y="1401.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">chạy lại được · không tốn quota AI (lecture_monitor.py)</text>
-<rect x="80" y="1516" width="960" height="864" rx="0" fill="#FFFBEA" fill-opacity="1" stroke="#14263A" stroke-width="2.4"/>
-<rect x="80" y="1516" width="330.16" height="56" rx="0" fill="#14263A" fill-opacity="1" stroke="#14263A" stroke-width="0"/>
-<text x="100" y="1554" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="1.2">11  ·  GHI BÀI GIẢNG</text>
-<rect x="424.16" y="1530" width="74" height="30" rx="0" fill="#fff" fill-opacity="1" stroke="#B3122E" stroke-width="2"/>
-<text x="461.16" y="1552" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="17" font-weight="700" fill="#B3122E" text-anchor="middle" letter-spacing="2">MỚI</text>
-<text x="102" y="1608" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="19" font-weight="400" fill="#4B5D70" text-anchor="start">Từ nút Start tới ghi chú trong Notion — bút dạ vàng ①→⑨</text>
-<rect x="108" y="1632" width="900" height="295" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
-<rect x="108" y="1632" width="6" height="295" fill="#14263A"/>
-<text x="130" y="1666" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">LectureRecorderCompanion</text>
-<text x="130" y="1692" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">C# .NET 8 · NAudio · 127.0.0.1:5681 · tự bật cùng máy, không tự ghi</text>
-<circle cx="134" cy="1712.44" r="2.6" fill="#4B5D70"/>
-<text x="146" y="1720.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Chỉ ghi khi bạn bấm Start, chỉ dừng khi bạn bấm Stop</text>
-<circle cx="134" cy="1745.42" r="2.6" fill="#4B5D70"/>
-<text x="146" y="1752.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Ngắt an toàn 3 h 30 (yêu cầu ≥ 3 h 10), có cảnh báo trước</text>
-<circle cx="134" cy="1778.4" r="2.6" fill="#4B5D70"/>
-<text x="146" y="1785.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Nguồn: micro · âm thanh cả máy · âm thanh riêng 1 app · Teams qua cáp riêng VB-CABLE</text>
-<text x="146" y="1814.94" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">(chỉ bắt Teams, bạn vẫn nghe bình thường) · trộn micro</text>
-<circle cx="134" cy="1840.3600000000001" r="2.6" fill="#4B5D70"/>
-<text x="146" y="1847.92" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Im lặng 30 giây → cảnh báo ngay trên UC</text>
-<circle cx="134" cy="1873.3400000000001" r="2.6" fill="#4B5D70"/>
-<text x="146" y="1880.9" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">16 kHz mono, bơm theo đồng hồ thật → D:\…\Documents\LectureRecorder</text>
-<circle cx="130" cy="1976" r="19" fill="#14263A"/>
-<text x="130" y="1983" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">1</text>
-<text x="166" y="1983" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Bấm Start ở tab Ghi bài giảng (Copilot)</text>
-<circle cx="130" cy="2016.7777777777778" r="19" fill="#14263A"/>
-<text x="130" y="2023.7777777777778" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">2</text>
-<text x="166" y="2023.7777777777778" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Companion ghi; marker / ảnh slide gửi kèm trong giờ</text>
-<circle cx="130" cy="2057.5555555555557" r="19" fill="#14263A"/>
-<text x="130" y="2064.5555555555557" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">3</text>
-<text x="166" y="2064.5555555555557" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Bấm Stop → tải file lên n8n · Lecture Capture</text>
-<circle cx="130" cy="2098.3333333333335" r="19" fill="#14263A"/>
-<text x="130" y="2105.3333333333335" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">4</text>
-<text x="166" y="2105.3333333333335" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Drive “University Lecture Recordings” + 🎙️ Lecture Sessions</text>
-<circle cx="130" cy="2139.1111111111113" r="19" fill="#14263A"/>
-<text x="130" y="2146.1111111111113" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">5</text>
-<text x="166" y="2146.1111111111113" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Lecture Analysis v2 (5 phút/lần) gửi audio sang Cổng chép lời</text>
-<circle cx="130" cy="2179.888888888889" r="19" fill="#14263A"/>
-<text x="130" y="2186.888888888889" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">6</text>
-<text x="166" y="2186.888888888889" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">VAD lọc → PhoWhisper trên NPU → lọc câu bịa → Qwen nén</text>
-<circle cx="130" cy="2220.666666666667" r="19" fill="#14263A"/>
-<text x="130" y="2227.666666666667" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">7</text>
-<text x="166" y="2227.666666666667" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Cổng chép lời gọi lại n8n: lecture-transcript-ready</text>
-<circle cx="130" cy="2261.444444444445" r="19" fill="#14263A"/>
-<text x="130" y="2268.444444444445" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">8</text>
-<text x="166" y="2268.444444444445" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Gemini đọc CHỮ đã nén + slide (qua cổng hạn mức)</text>
-<circle cx="130" cy="2302.2222222222226" r="19" fill="#14263A"/>
-<text x="130" y="2309.2222222222226" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">9</text>
-<text x="166" y="2309.2222222222226" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">📚 Lecture Notes + bản .txt vào Uni-Documents/&lt;môn&gt;/Ghi chú Bài giảng</text>
+<circle cx="134" cy="793.3400000000001" r="2.6" fill="#4B5D70"/>
+<text x="146" y="800.9000000000001" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Tìm web (web_tools.py): SearXNG + đọc trang công khai, chặn địa chỉ nội bộ; kết quả</text>
+<text x="146" y="829.8800000000001" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">web là DỮ LIỆU, không phải lệnh; hết quota Gemini → qwen3-14b trên máy</text>
+<rect x="108" y="890" width="900" height="196" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
+<rect x="108" y="890" width="6" height="196" fill="#14263A"/>
+<text x="130" y="924" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Hôm nay · Lịch · Ngoại khoá · Hành chính · Học bổng · 🔔</text>
+<text x="130" y="950" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">tab của web app · chuông cạnh tên app · tự tải lại 15 phút/lần</text>
+<circle cx="134" cy="970.44" r="2.6" fill="#4B5D70"/>
+<text x="146" y="978.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Hạn sắp tới (tích Hoàn tất = biến mất) · Có thể trùng · lịch học và lịch ngoại khoá</text>
+<text x="146" y="1006.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">tách riêng</text>
+<circle cx="134" cy="1032.4" r="2.6" fill="#4B5D70"/>
+<text x="146" y="1039.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">🔔 gom mọi cảnh báo, không che tab · Gợi ý (Mục 7) · Hành chính / Học bổng → Mục 20</text>
+<rect x="108" y="1100" width="900" height="200" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
+<rect x="108" y="1100" width="6" height="200" fill="#14263A"/>
+<text x="130" y="1134" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Inbox · xếp file</text>
+<text x="130" y="1160" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">Tika → qwen3-14b → từ khoá môn (COURSE_HINTS)</text>
+<circle cx="134" cy="1180.44" r="2.6" fill="#4B5D70"/>
+<text x="146" y="1188.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Vân tay SHA-256 so với cả Uni-Documents TRƯỚC khi xếp: trùng → không chép thêm</text>
+<text x="130" y="1220.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="600" fill="#0D7377" text-anchor="start">→ copilot-file-ingest: Drive → 📥 University Inbox → Mục 3·30</text>
+<text x="130" y="1253.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="600" fill="#0D7377" text-anchor="start">→ gửi tài liệu sang NotebookLM (Mục 20)</text>
+<rect x="108" y="1314" width="900" height="196" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
+<rect x="108" y="1314" width="6" height="196" fill="#14263A"/>
+<text x="130" y="1348" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Ghi bài giảng</text>
+<text x="130" y="1374" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">/api/rec/*  ·  /api/lectures  ·  /api/lecture-monitor</text>
+<circle cx="134" cy="1394.44" r="2.6" fill="#4B5D70"/>
+<text x="146" y="1402.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Start / Stop / marker / ảnh slide; thanh bên “Gemini hôm nay”</text>
+<circle cx="134" cy="1427.42" r="2.6" fill="#4B5D70"/>
+<text x="146" y="1434.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">“Đang tải lên”: giám sát từng chặng ①→⑨ mỗi phút, tự ghi lỗi, lỗi tự hết khi chặng</text>
+<text x="146" y="1463.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">chạy lại được · không tốn quota AI (lecture_monitor.py)</text>
+<rect x="80" y="1578" width="960" height="802" rx="0" fill="#FFFBEA" fill-opacity="1" stroke="#14263A" stroke-width="2.4"/>
+<rect x="80" y="1578" width="330.16" height="56" rx="0" fill="#14263A" fill-opacity="1" stroke="#14263A" stroke-width="0"/>
+<text x="100" y="1616" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="1.2">11  ·  GHI BÀI GIẢNG</text>
+<rect x="424.16" y="1592" width="74" height="30" rx="0" fill="#fff" fill-opacity="1" stroke="#B3122E" stroke-width="2"/>
+<text x="461.16" y="1614" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="17" font-weight="700" fill="#B3122E" text-anchor="middle" letter-spacing="2">MỚI</text>
+<text x="102" y="1670" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="19" font-weight="400" fill="#4B5D70" text-anchor="start">Từ nút Start tới ghi chú trong Notion — bút dạ vàng ①→⑨</text>
+<rect x="108" y="1694" width="900" height="324" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="1.6"/>
+<rect x="108" y="1694" width="6" height="324" fill="#14263A"/>
+<text x="130" y="1728" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">LectureRecorderCompanion</text>
+<text x="130" y="1754" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">C# .NET 8 · NAudio · 127.0.0.1:5681 · tự bật cùng máy, không tự ghi</text>
+<circle cx="134" cy="1774.44" r="2.6" fill="#4B5D70"/>
+<text x="146" y="1782.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Chỉ ghi khi bạn bấm Start, chỉ dừng khi bạn bấm Stop · chọn 📚 Bài giảng hoặc 🤝 Cuộc</text>
+<text x="146" y="1810.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">họp (Meeting-LectureRecorder)</text>
+<circle cx="134" cy="1836.4" r="2.6" fill="#4B5D70"/>
+<text x="146" y="1843.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Ngắt an toàn 3 h 30 (yêu cầu ≥ 3 h 10), có cảnh báo trước</text>
+<circle cx="134" cy="1869.38" r="2.6" fill="#4B5D70"/>
+<text x="146" y="1876.94" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Nguồn: micro · âm thanh cả máy · âm thanh riêng 1 app · Teams qua cáp riêng VB-CABLE</text>
+<text x="146" y="1905.92" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">(chỉ bắt Teams, bạn vẫn nghe bình thường) · trộn micro</text>
+<circle cx="134" cy="1931.3400000000001" r="2.6" fill="#4B5D70"/>
+<text x="146" y="1938.9" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Im lặng 30 giây → cảnh báo ngay trên UC</text>
+<circle cx="134" cy="1964.3200000000002" r="2.6" fill="#4B5D70"/>
+<text x="146" y="1971.88" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">16 kHz mono, bơm theo đồng hồ thật → D:\…\Documents\LectureRecorder</text>
+<circle cx="130" cy="2067" r="19" fill="#14263A"/>
+<text x="130" y="2074" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">1</text>
+<text x="166" y="2074" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Bấm Start ở tab Ghi bài giảng (Copilot)</text>
+<circle cx="130" cy="2097.6666666666665" r="19" fill="#14263A"/>
+<text x="130" y="2104.6666666666665" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">2</text>
+<text x="166" y="2104.6666666666665" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Companion ghi; marker / ảnh slide gửi kèm trong giờ</text>
+<circle cx="130" cy="2128.333333333333" r="19" fill="#14263A"/>
+<text x="130" y="2135.333333333333" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">3</text>
+<text x="166" y="2135.333333333333" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Bấm Stop → tải file lên n8n · Lecture Capture</text>
+<circle cx="130" cy="2158.9999999999995" r="19" fill="#14263A"/>
+<text x="130" y="2165.9999999999995" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">4</text>
+<text x="166" y="2165.9999999999995" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Drive “University Lecture Recordings” + 🎙️ Lecture Sessions</text>
+<circle cx="130" cy="2189.666666666666" r="19" fill="#14263A"/>
+<text x="130" y="2196.666666666666" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">5</text>
+<text x="166" y="2196.666666666666" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Lecture Analysis v2 (5 phút/lần) gửi audio sang Cổng chép lời</text>
+<circle cx="130" cy="2220.3333333333326" r="19" fill="#14263A"/>
+<text x="130" y="2227.3333333333326" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">6</text>
+<text x="166" y="2227.3333333333326" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">VAD → PhoWhisper (NPU) → lọc bịa → Qwen nén · Họp: + pyannote</text>
+<circle cx="130" cy="2250.999999999999" r="19" fill="#14263A"/>
+<text x="130" y="2257.999999999999" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">7</text>
+<text x="166" y="2257.999999999999" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Cổng chép lời gọi lại n8n: lecture-transcript-ready</text>
+<circle cx="130" cy="2281.6666666666656" r="19" fill="#14263A"/>
+<text x="130" y="2288.6666666666656" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">8</text>
+<text x="166" y="2288.6666666666656" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Gemini đọc CHỮ đã nén + slide (qua cổng hạn mức)</text>
+<circle cx="130" cy="2312.333333333332" r="19" fill="#14263A"/>
+<text x="130" y="2319.333333333332" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">9</text>
+<text x="166" y="2319.333333333332" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">📚 Lecture Notes + bản .txt vào Uni-Documents/&lt;môn&gt;/Ghi chú Bài giảng (Họp: Biên bản họp/)</text>
 <rect x="1080" y="440" width="1940" height="1940" rx="0" fill="#F2F5F9" fill-opacity="1" stroke="#14263A" stroke-width="2.4"/>
 <rect x="1080" y="440" width="555.84" height="56" rx="0" fill="#14263A" fill-opacity="1" stroke="#14263A" stroke-width="0"/>
 <text x="1100" y="478" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="1.2">N8N · DOCKER · LOCALHOST:5678</text>
@@ -1187,14 +1191,24 @@
 <text x="11826" y="1614.92" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Cuối kỳ cần bao nhiêu điểm cho từng mức A+ … D</text>
 <rect x="11788" y="1681" width="1904" height="200" rx="0" fill="#fff" fill-opacity="1" stroke="#0D7377" stroke-width="1.6"/>
 <rect x="11788" y="1681" width="6" height="200" fill="#0D7377"/>
-<text x="11810" y="1715" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Gửi tài liệu sang NotebookLM · nlm_bridge.py</text>
-<text x="11810" y="1741" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">tab Inbox · chỉ chạy khi bạn bấm, luôn hỏi Xác nhận</text>
+<text x="11810" y="1715" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Dịch tài liệu PDF · pdf_translate.py + pdf2zh</text>
+<text x="11810" y="1741" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">tab Inbox · chỉ chạy khi bạn bấm, luôn hỏi Xác nhận · không tốn quota</text>
 <circle cx="11814" cy="1761.44" r="2.6" fill="#4B5D70"/>
-<text x="11826" y="1769.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Tìm trong Uni-Documents → tích chọn → thêm vào notebook có sẵn hoặc tạo notebook mới</text>
+<text x="11826" y="1769.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Tìm PDF trong Uni-Documents → tích chọn → dịch sang tiếng Việt bằng qwen3-14b trên máy, giữ bố cục và công thức</text>
 <circle cx="11814" cy="1794.42" r="2.6" fill="#4B5D70"/>
-<text x="11826" y="1801.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">UC dừng ở đó: không tạo task ôn, không ghi Notion, không gọi AI — UC lo hành chính, việc học bạn làm trong NotebookLM</text>
+<text x="11826" y="1801.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Ra 2 file trong thư mục Bản dịch cạnh bản gốc (bản Việt + song ngữ); luồng Uni-Documents tự nạp như file thả vào: xếp môn, chống trùng, Drive + Notion</text>
 <circle cx="11814" cy="1827.4" r="2.6" fill="#4B5D70"/>
-<text x="11826" y="1834.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Phiên Google: tác vụ “NotebookLM keepalive” 20 phút/lần; Google bắt đăng nhập tay → cửa sổ Chrome ở lại tới khi đăng nhập (đóng là mở lại)</text>
+<text x="11826" y="1834.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Một file mỗi lúc; chờ khi RAM trống &lt; 2 GB hoặc khi máy đang chạy cuộc thi Local AI</text>
+<rect x="11788" y="1901" width="1904" height="200" rx="0" fill="#fff" fill-opacity="1" stroke="#0D7377" stroke-width="1.6"/>
+<rect x="11788" y="1901" width="6" height="200" fill="#0D7377"/>
+<text x="11810" y="1935" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Gửi tài liệu sang NotebookLM · nlm_bridge.py</text>
+<text x="11810" y="1961" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">tab Inbox · chỉ chạy khi bạn bấm, luôn hỏi Xác nhận</text>
+<circle cx="11814" cy="1981.44" r="2.6" fill="#4B5D70"/>
+<text x="11826" y="1989.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Tìm trong Uni-Documents → tích chọn → thêm vào notebook có sẵn hoặc tạo notebook mới</text>
+<circle cx="11814" cy="2014.42" r="2.6" fill="#4B5D70"/>
+<text x="11826" y="2021.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">UC dừng ở đó: không tạo task ôn, không ghi Notion, không gọi AI — UC lo hành chính, việc học bạn làm trong NotebookLM</text>
+<circle cx="11814" cy="2047.4" r="2.6" fill="#4B5D70"/>
+<text x="11826" y="2054.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Phiên Google: tác vụ “NotebookLM keepalive” 20 phút/lần; Google bắt đăng nhập tay → cửa sổ Chrome ở lại tới khi đăng nhập (đóng là mở lại)</text>
 <rect x="80" y="2870" width="13640" height="130" rx="0" fill="#fff" fill-opacity="1" stroke="#14263A" stroke-width="2.4"/>
 <rect x="80" y="2870" width="340" height="130" rx="0" fill="#14263A" fill-opacity="1" stroke="#14263A" stroke-width="0"/>
 <text x="100" y="2914" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="2">HÀNH TRÌNH</text>
@@ -1203,48 +1217,53 @@
 <circle cx="468.0" cy="2900" r="8" fill="#14263A"/>
 <text x="486.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">08/2026</text>
 <text x="468.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Bản 1 (Codex): 10 mục, 6 agent rời rạc, hội đồng 5 ghế có Kimi</text>
-<circle cx="1350.0" cy="2900" r="8" fill="#14263A"/>
-<text x="1368.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">01–02/10</text>
-<text x="1350.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Gộp 16 workflow thành 1 “Copilot hợp nhất” + web app một cửa</text>
-<circle cx="2232.0" cy="2900" r="8" fill="#14263A"/>
-<text x="2250.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">02/10</text>
-<text x="2232.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Kimi rời hội đồng · Local AI (qwen3-14b) vào ghế phản biện · bộ giữ ghế</text>
-<circle cx="3114.0" cy="2900" r="8" fill="#14263A"/>
-<text x="3132.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">02/10</text>
-<text x="3114.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Xoá 8 bản ghi âm tự động · recorder v2 chỉ ghi khi bấm · cổng chép lời + cổng Gemini</text>
-<circle cx="3996.0" cy="2900" r="8" fill="#14263A"/>
-<text x="4014.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">03/10</text>
-<text x="3996.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">PhoWhisper lên NPU (nhanh ~4,6×) · Local AI khung 16k, ngân sách token</text>
-<circle cx="4878.0" cy="2900" r="8" fill="#14263A"/>
-<text x="4896.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">03/10</text>
-<text x="4878.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">AgentChattr một cửa khởi động, chặn server trùng</text>
-<circle cx="5760.0" cy="2900" r="8" fill="#14263A"/>
-<text x="5778.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">03/10</text>
-<text x="5760.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Bản 2: tầng học kỳ, tìm kiếm ngoài n8n, chế độ ngày, đánh giá tuần</text>
-<circle cx="6642.0" cy="2900" r="8" fill="#14263A"/>
-<text x="6660.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">03/10</text>
-<text x="6642.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Theo QCĐT 2025: lần học, học lại / cải thiện, hạng tốt nghiệp, mọi ghi đều hỏi lại</text>
-<circle cx="7524.0" cy="2900" r="8" fill="#14263A"/>
-<text x="7542.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">04/10 sáng</text>
-<text x="7524.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Bản 3: đồng bộ qldt + iCTSV, dữ liệu trường là cao nhất</text>
-<circle cx="8406.0" cy="2900" r="8" fill="#14263A"/>
-<text x="8424.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">04/10 trưa</text>
-<text x="8406.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Đọc thư trường + Teams · đính chính = Trước → Nay · nhắc leo thang, toast + điện thoại</text>
-<circle cx="9288.0" cy="2900" r="8" fill="#14263A"/>
-<text x="9306.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">04/10 chiều</text>
-<text x="9288.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Bản 4: hạn 3 mức · nhắc tiết học · ngoại khoá CTSV · quét trùng · nhắc cả khi laptop ngủ</text>
-<circle cx="10170.0" cy="2900" r="8" fill="#14263A"/>
-<text x="10188.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">04/10 tối</text>
-<text x="10170.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">MOOC SoICT + FAMI (thi theo chương MI) · việc hết hạn → Academic Tasks · bản đồ nguồn (Mục 19)</text>
-<circle cx="11052.0" cy="2900" r="8" fill="#14263A"/>
-<text x="11070.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">05/10 trưa</text>
-<text x="11052.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Chat trung thực + nhớ hội thoại · dời hạn tự đặt · ghi Teams qua cáp riêng · giám sát Ghi bài giảng</text>
-<circle cx="11934.0" cy="2900" r="8" fill="#14263A"/>
-<text x="11952.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">05/10 tối</text>
-<text x="11934.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Tab Hành chính + Học bổng · phân loại thư · CTSV 1000 dòng · mọi nguồn 5 phút/lần</text>
-<circle cx="12816.0" cy="2900" r="8" fill="#B3122E"/>
-<text x="12834.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">06/10</text>
-<text x="12816.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Bản 5: chi tiết điểm học phần · gửi tài liệu sang NotebookLM · lọc thông báo hết hạn</text>
+<circle cx="1294.875" cy="2900" r="8" fill="#14263A"/>
+<text x="1312.875" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">01–02/10</text>
+<text x="1294.875" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Gộp 16 workflow thành 1 “Copilot hợp nhất” + web app một cửa</text>
+<circle cx="2121.75" cy="2900" r="8" fill="#14263A"/>
+<text x="2139.75" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">02/10</text>
+<text x="2121.75" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Kimi rời hội đồng · Local AI (qwen3-14b) vào ghế phản biện · bộ giữ ghế</text>
+<circle cx="2948.625" cy="2900" r="8" fill="#14263A"/>
+<text x="2966.625" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">02/10</text>
+<text x="2948.625" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Xoá 8 bản ghi âm tự động · recorder v2 chỉ ghi khi bấm · cổng chép lời + cổng Gemini</text>
+<circle cx="3775.5" cy="2900" r="8" fill="#14263A"/>
+<text x="3793.5" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">03/10</text>
+<text x="3775.5" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">PhoWhisper lên NPU (nhanh ~4,6×) · Local AI khung 16k, ngân sách token</text>
+<circle cx="4602.375" cy="2900" r="8" fill="#14263A"/>
+<text x="4620.375" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">03/10</text>
+<text x="4602.375" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">AgentChattr một cửa khởi động, chặn server trùng</text>
+<circle cx="5429.25" cy="2900" r="8" fill="#14263A"/>
+<text x="5447.25" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">03/10</text>
+<text x="5429.25" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Bản 2: tầng học kỳ, tìm kiếm ngoài n8n, chế độ ngày, đánh giá tuần</text>
+<circle cx="6256.125" cy="2900" r="8" fill="#14263A"/>
+<text x="6274.125" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">03/10</text>
+<text x="6256.125" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Theo QCĐT 2025: lần học, học lại / cải thiện, hạng tốt nghiệp, mọi ghi đều hỏi lại</text>
+<circle cx="7083.0" cy="2900" r="8" fill="#14263A"/>
+<text x="7101.0" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">04/10 sáng</text>
+<text x="7083.0" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Bản 3: đồng bộ qldt + iCTSV, dữ liệu trường là cao nhất</text>
+<circle cx="7909.875" cy="2900" r="8" fill="#14263A"/>
+<text x="7927.875" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">04/10 trưa</text>
+<text x="7909.875" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Đọc thư trường + Teams · đính chính = Trước → Nay · nhắc leo thang, toast + điện thoại</text>
+<circle cx="8736.75" cy="2900" r="8" fill="#14263A"/>
+<text x="8754.75" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">04/10 chiều</text>
+<text x="8736.75" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Bản 4: hạn 3 mức · nhắc tiết học · ngoại khoá CTSV · quét trùng · nhắc cả khi laptop ngủ</text>
+<circle cx="9563.625" cy="2900" r="8" fill="#14263A"/>
+<text x="9581.625" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">04/10 tối</text>
+<text x="9563.625" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">MOOC SoICT + FAMI (thi theo chương MI) · việc hết hạn → Academic Tasks · bản đồ nguồn (Mục 19)</text>
+<circle cx="10390.5" cy="2900" r="8" fill="#14263A"/>
+<text x="10408.5" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">05/10 trưa</text>
+<text x="10390.5" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Chat trung thực + nhớ hội thoại · dời hạn tự đặt · ghi Teams qua cáp riêng · giám sát Ghi bài</text>
+<text x="10390.5" y="2958.1" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">giảng</text>
+<circle cx="11217.375" cy="2900" r="8" fill="#14263A"/>
+<text x="11235.375" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">05/10 tối</text>
+<text x="11217.375" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Tab Hành chính + Học bổng · phân loại thư · CTSV 1000 dòng · mọi nguồn 5 phút/lần</text>
+<circle cx="12044.25" cy="2900" r="8" fill="#14263A"/>
+<text x="12062.25" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">06/10</text>
+<text x="12044.25" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Bản 5: chi tiết điểm học phần · gửi tài liệu sang NotebookLM · lọc thông báo hết hạn</text>
+<circle cx="12871.125" cy="2900" r="8" fill="#B3122E"/>
+<text x="12889.125" y="2907" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#14263A" text-anchor="start">07–09/10</text>
+<text x="12871.125" y="2936.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">Học phí kỳ này · dịch PDF trên máy · chat tìm web · chế độ Họp + phân biệt người nói · giữ phiên</text>
+<text x="12871.125" y="2958.1" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="17" font-weight="400" fill="#4B5D70" text-anchor="start">NotebookLM</text>
 <rect x="80" y="3020" width="2280" height="300" rx="0" fill="#F6F7F9" fill-opacity="1" stroke="#14263A" stroke-width="2.4"/>
 <rect x="80" y="3020" width="233.44" height="56" rx="0" fill="#14263A" fill-opacity="1" stroke="#14263A" stroke-width="0"/>
 <text x="100" y="3058" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="1.2">13  ·  NỀN MÁY</text>
@@ -1337,18 +1356,18 @@
 <rect x="6980" y="348" width="60" height="26" rx="0" fill="#fff" fill-opacity="1" stroke="#B3122E" stroke-width="2"/>
 <text x="7010" y="367" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="13" font-weight="700" fill="#B3122E" text-anchor="middle">MỚI</text>
 <text x="7052" y="366" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="16" font-weight="400" fill="#14263A" text-anchor="start">phần mới</text>
-<path d="M 1008,1752 L 1048,1752 L 1048,2212.5 L 1104,2212.5" fill="none" stroke="#FFD43B" stroke-opacity="0.62" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1008,1814 L 1048,1814 L 1048,2212.5 L 1104,2212.5" fill="none" stroke="#FFD43B" stroke-opacity="0.62" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 1559,2212.5 L 1579,2212.5" fill="none" stroke="#FFD43B" stroke-opacity="0.62" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 2468,2329 L 2468,2516" fill="none" stroke="#FFD43B" stroke-opacity="0.62" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 2528,2516 L 2528,2329" fill="none" stroke="#FFD43B" stroke-opacity="0.62" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 1739,2329 L 1739,2408 L 528,2408 L 528,2516" fill="none" stroke="#FFD43B" stroke-opacity="0.62" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 2984,2252.5 L 3052,2252.5 L 3052,1253 L 3108,1253" fill="none" stroke="#FFD43B" stroke-opacity="0.62" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M 960,1448 L 960,1632" fill="none" stroke="#FAFBFC" stroke-width="9.4" stroke-linejoin="round"/>
-<path d="M 960,1448 L 960,1632" fill="none" stroke="#14263A" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#a-14263A)"/>
-<rect x="824.0" y="1505.0" width="119.0" height="22" fill="#FAFBFC" fill-opacity="0.92"/>
-<text x="944" y="1520.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="600" fill="#14263A" text-anchor="end">① Start / Stop</text>
-<path d="M 1008,1752 L 1048,1752 L 1048,2212.5 L 1104,2212.5" fill="none" stroke="#FAFBFC" stroke-width="9.4" stroke-linejoin="round"/>
-<path d="M 1008,1752 L 1048,1752 L 1048,2212.5 L 1104,2212.5" fill="none" stroke="#14263A" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#a-14263A)"/>
+<path d="M 960,1510 L 960,1694" fill="none" stroke="#FAFBFC" stroke-width="9.4" stroke-linejoin="round"/>
+<path d="M 960,1510 L 960,1694" fill="none" stroke="#14263A" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#a-14263A)"/>
+<rect x="824.0" y="1567.0" width="119.0" height="22" fill="#FAFBFC" fill-opacity="0.92"/>
+<text x="944" y="1582.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="15" font-weight="600" fill="#14263A" text-anchor="end">① Start / Stop</text>
+<path d="M 1008,1814 L 1048,1814 L 1048,2212.5 L 1104,2212.5" fill="none" stroke="#FAFBFC" stroke-width="9.4" stroke-linejoin="round"/>
+<path d="M 1008,1814 L 1048,1814 L 1048,2212.5 L 1104,2212.5" fill="none" stroke="#14263A" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#a-14263A)"/>
 <rect x="1047" y="2178.5" width="23.0" height="25" fill="#FAFBFC" fill-opacity="0.92"/>
 <text x="1052" y="2196.5" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="18" font-weight="600" fill="#14263A" text-anchor="start">③</text>
 <path d="M 1559,2212.5 L 1579,2212.5" fill="none" stroke="#FAFBFC" stroke-width="9.4" stroke-linejoin="round"/>
