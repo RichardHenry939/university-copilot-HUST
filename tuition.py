@@ -7,8 +7,13 @@
   • Số tín chỉ: các học phần của kỳ đang học (bảng điểm qldt, mục kỳ học) — tự cập nhật mỗi kỳ.
   • Tổng học phí = giá đơn vị × số tín chỉ, ĐỐI CHIẾU với hoá đơn trên trang học phí của trường
     (qldt /students/tuition, api/v1/payment/query — school_fetch đọc mỗi lượt).
-Nút "Nộp học phí tại đây" mở trang học phí của trường (hoá đơn + cách thanh toán của trường)."""
+Nút "Nộp học phí tại đây" mở trang học phí của trường (hoá đơn + cách thanh toán của trường).
+
+(11/10) Có luật của năm học (tuition_rules.py, đọc Quyết định mức học phí trên ctt.hust.edu.vn mỗi năm): đơn giá lấy từ quyết định,
+tổng = đơn giá × Tín chỉ học phí (TCHP) từng môn tính theo Phụ lục II, không còn × số tín chỉ học tập. Môn chưa tính chắc (GDQP, GDTC)
+ghi "chưa rõ" và để hoá đơn của trường cho biết phần đó."""
 import datetime as dt, json, re
+import tuition_rules
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -63,19 +68,36 @@ def view():
     inv_hp = [i for i in inv if not i['loai'] or re.search(r'học phí|hoc phi|tuition', str(i['loai']), re.I)]
     inv_sem = [i for i in inv_hp if not sem or not i['hoc_ky'] or str(sem) in str(i['hoc_ky'])]
     school_total = sum(i['can_dong'] or 0 for i in inv_sem) if inv_sem else None
-    price, src = cfg.get('don_gia'), cfg.get('nguon')
-    if not price and school_total and tc:   # chưa có giá: suy ra từ hoá đơn đầu tiên rồi GIỮ cho các kỳ sau
+    rules = _load(tuition_rules.RULES, {})
+    if rules.get('don_gia') and not cfg.get('ghi_de'):   # (11/10) luật của năm học thắng; bạn nhập tay (ghi_de) thắng luật
+        price, src = rules['don_gia'], f"Quyết định {rules.get('so_qd') or ''} · năm học {rules.get('nam_hoc')} (ctt.hust.edu.vn)"
+    else:
+        price, src = cfg.get('don_gia'), cfg.get('nguon')
+    info = latest.get('course_info') or {}
+    tchp_sum, chua_ro = None, []
+    if rules.get('tchp_lt_bt_15_tiet'):
+        tchp_sum = 0
+        for c in courses:
+            n, how = tuition_rules.tchp(c['code'], info.get(c['code']), rules)
+            c['tchp'], c['cach_tinh'] = n, how
+            if n is None: chua_ro.append(c['code'])
+            else: tchp_sum += n
+    if not price and school_total and tc and tchp_sum is None:   # chưa có giá: suy ra từ hoá đơn đầu tiên rồi GIỮ cho các kỳ sau
         price, src = round(school_total / tc), f'suy ra từ hoá đơn học phí kỳ {sem} của trường ({int(school_total):,} đ ÷ {tc:g} tín chỉ)'.replace(',', '.')
         CFG.parent.mkdir(parents=True, exist_ok=True)
         CFG.write_text(json.dumps({'don_gia': price, 'nguon': src, 'tu_ky': sem, 'at': dt.datetime.now().isoformat(timespec='minutes')}, ensure_ascii=False, indent=1), encoding='utf-8')
-    total = round(price * tc) if price and tc else None
+    base = tchp_sum if tchp_sum is not None else tc
+    total = round(price * base) if price and base else None
     if total is None or school_total is None: check = None
     else:
         diff = school_total - total
-        check = {'khop': abs(diff) < 1000, 'chenh': diff,
-                 'giai_thich': None if abs(diff) < 1000 else 'Số tín chỉ tính học phí của trường có thể khác số tín chỉ học tập (vd học phần GDQP, GDTC, học lại); đợt 2 trường tính lại chính xác.'}
+        if abs(diff) < 1000: why = None
+        elif chua_ro and price: why = f'Chênh ≈ {diff / price:.2f} tín chỉ học phí — nhiều khả năng là phần trường tính cho {", ".join(chua_ro)} (UC chưa tính chắc được).'
+        else: why = 'Số tín chỉ tính học phí của trường có thể khác (vd học lại, môn ngoài khung); đợt 2 trường tính lại chính xác.'
+        check = {'khop': abs(diff) < 1000, 'chenh': diff, 'giai_thich': why}
     return {'ok': True, 'hoc_ky': sem, 'hoc_ky_ten': sem_title, 'don_gia': price, 'don_gia_nguon': src,
-            'so_tin_chi': tc, 'hoc_phan': courses, 'tong_tinh': total,
+            'so_tin_chi': tc, 'so_tchp': tchp_sum, 'chua_ro': chua_ro, 'hoc_phan': courses, 'tong_tinh': total,
+            'luat': {k: rules.get(k) for k in ('so_qd', 'nam_hoc', 'bai_viet', 'pdf', 'tchp_lt_bt_15_tiet', 'tchp_tn_15_tiet', 'tchp_gdtc_moi_tcht')} if rules else None,
             'truong': {'doc_duoc': bool(tu.get('ok')), 'loi': tu.get('error'), 'hoa_don': [{k: v for k, v in i.items() if k != 'raw'} for i in inv],
                        'tong_can_dong': school_total, 'luc': latest.get('at')},
             'doi_chieu': check, 'nop_tai': PAY_URL, 'thong_bao': NOTICE}
@@ -85,7 +107,7 @@ def set_price(v):
     v = int(float(str(v).replace('.', '').replace(',', '')))
     if not (50_000 <= v <= 10_000_000): raise ValueError('giá đơn vị không hợp lý')
     CFG.parent.mkdir(parents=True, exist_ok=True)
-    CFG.write_text(json.dumps({'don_gia': v, 'nguon': 'bạn nhập', 'at': dt.datetime.now().isoformat(timespec='minutes')}, ensure_ascii=False, indent=1), encoding='utf-8')
+    CFG.write_text(json.dumps({'don_gia': v, 'nguon': 'bạn nhập', 'ghi_de': True, 'at': dt.datetime.now().isoformat(timespec='minutes')}, ensure_ascii=False, indent=1), encoding='utf-8')
     return view()
 
 

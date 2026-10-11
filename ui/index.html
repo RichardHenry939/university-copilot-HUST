@@ -2023,7 +2023,10 @@ async function loadFee() {
     let h = '<table class="ctable"><tbody>';
     h += '<tr><th>Giá đơn vị (tín chỉ)</th><td class="n"><b>' + (d.don_gia ? vnd(d.don_gia) : 'chưa có') + '</b></td><td><small>' + esc(d.don_gia_nguon || 'UC tự suy ra khi trường có hoá đơn học phí (từ 12/10), hoặc bạn nhập bên dưới') + '</small></td></tr>';
     h += '<tr><th>Số tín chỉ</th><td class="n"><b>' + (d.so_tin_chi || 0) + '</b></td><td><small>' + esc(d.hoc_ky_ten || ('Kỳ ' + (d.hoc_ky || ''))) + ': ' + (d.hoc_phan || []).map(x => esc(x.code) + ' ' + x.tc).join(' · ') + '</small></td></tr>';
-    h += '<tr><th>Tổng học phí</th><td class="n"><b>' + (d.tong_tinh != null ? vnd(d.tong_tinh) : 'chưa tính được') + '</b></td><td><small>' +
+    /* (11/10) tín chỉ học phí (TCHP) từng môn theo Phụ lục II của quyết định năm học; môn chưa tính chắc ghi "chưa rõ" */
+    if (d.so_tchp != null) h += '<tr><th>Tín chỉ học phí</th><td class="n"><b>' + d.so_tchp + '</b>' + ((d.chua_ro || []).length ? '<br><small>+ ' + d.chua_ro.length + ' môn chưa rõ</small>' : '') + '</td><td><small>' + (d.hoc_phan || []).map(x => '<span title="' + esc(x.cach_tinh || '') + '">' + esc(x.code) + ' ' + (x.tchp != null ? x.tchp : '<i>chưa rõ</i>') + '</span>').join(' · ') +
+      (d.luat ? '<br>Theo <a href="' + esc(d.luat.bai_viet) + '" target="_blank" rel="noopener">Quyết định ' + esc(d.luat.so_qd || '') + '</a>: lý thuyết + bài tập 15 tiết = ' + d.luat.tchp_lt_bt_15_tiet + ' TCHP · thí nghiệm 15 tiết = ' + d.luat.tchp_tn_15_tiet + ' TCHP · tính 15 tuần. Rê chuột lên từng môn để xem cách tính.' : '') + '</small></td></tr>';
+    h += '<tr><th>Tổng học phí</th><td class="n"><b>' + (d.tong_tinh != null ? vnd(d.tong_tinh) : 'chưa tính được') + '</b>' + ((d.chua_ro || []).length && d.tong_tinh != null ? '<br><small>chưa gồm ' + esc(d.chua_ro.join(', ')) + '</small>' : '') + '</td><td><small>' +
       (t.tong_can_dong != null ? 'Trường ghi cần đóng: <b>' + vnd(t.tong_can_dong) + '</b>' + (c ? (c.khop ? ' · <span class="badge ok">khớp</span>' : ' · <span class="badge">chênh ' + vnd(c.chenh) + '</span> ' + esc(c.giai_thich || '')) : '')
         : 'Trang học phí của trường chưa có hoá đơn kỳ này' + (t.doc_duoc ? '' : (t.loi ? ' (lần đọc gần nhất lỗi: ' + esc(t.loi) + ')' : ' (UC đọc ở lượt đồng bộ qldt kế tiếp)')) + '.') +
       '</small></td></tr></tbody></table>';

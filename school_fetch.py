@@ -243,6 +243,18 @@ def fetch_qldt(page, out):
     _open(page, QLDT + "/students/learn/education-program", "/students/", qldt_logged_in)
     page.wait_for_function("document.querySelectorAll('table tbody tr:not(.ant-table-measure-row)').length > 0", timeout=25000); _settle(page, 2000)
     out["program"] = page.evaluate(ROWS_JS)
+    # (11/10) Khối lượng học phần của các môn kỳ này (vd "4(3-2-0-8)") -> tính tín chỉ học phí. API công khai của trang "Xem chi tiết HP",
+    # gọi bằng phiên đang đăng nhập (cookie), CHỈ ĐỌC. Lỗi thì giữ dữ liệu cũ, không làm hỏng lượt đọc.
+    try:
+        codes = sorted({m.group(1) for r in (out.get("tkb") or {}).get("rows") or [] for m in [re.search(r"\b([A-Z]{2,4}\d{4})\b", str(r[1]))] if m})
+        ci = {}
+        for c in codes:
+            r = page.context.request.get(f"https://student.hust.edu.vn/api/v1/courses/{c}", headers={"referer": QLDT + "/"}, timeout=20000)
+            if r.ok:
+                d = r.json(); ci[c] = {k: d.get(k) for k in ("name", "credit", "creditInfo", "gdCreditInfo", "practiceHour", "theoryHour")}
+        out["course_info"] = ci
+    except Exception as e:
+        out["course_info_error"] = f"{type(e).__name__}: {e}"[:200]
     # (6/10) Học phí: trang /students/tuition tự gọi api/v1/payment/query (có checkSum của trang) -> đọc lại đúng phản hồi đó, CHỈ ĐỌC
     try:
         with page.expect_response(lambda r: "/api/v1/payment/query" in r.url, timeout=30000) as rr:

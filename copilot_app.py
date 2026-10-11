@@ -784,6 +784,11 @@ def mail_run(by):
             import course_detail; importlib.reload(course_detail)
             r["grade_rules"] = course_detail.refresh_rules()
         except Exception as e: r["grade_rules"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
+        try:   # 💰 (11/10) Quyết định mức học phí năm học mới trên ctt.hust.edu.vn: tháng 8–11, tối đa 1 lần/ngày, dừng khi đã có
+            import tuition_rules; importlib.reload(tuition_rules)
+            x = tuition_rules.maybe_update()
+            if x is not None: r["tuition_rules"] = {k: v for k, v in x.items() if k != "rules"}
+        except Exception as e: r["tuition_rules"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
         try:   # 🏛️ CTSV nhanh mỗi giờ (5/10): toàn bộ sự kiện (như /danh-sach-su-kien) + Hành chính (thông báo, giấy tờ, đặt vé)
             import ctsv_live; importlib.reload(ctsv_live)
             if ctsv_live.due(): r["ctsv_live"] = ctsv_live.fetch()

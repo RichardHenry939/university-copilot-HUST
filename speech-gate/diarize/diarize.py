@@ -4,10 +4,15 @@ Gọi từ cổng chép lời:  diarize.py <audio> <out.json> [so_nguoi]
 Ra: [{"start": s, "end": s, "speaker": "SPEAKER_00"}, ...]
 Cần token Hugging Face (người dùng tự đăng nhập: .venv\\Scripts\\hf.exe auth login) và đã bấm đồng ý điều khoản
 pyannote/speaker-diarization-community-1 (hoặc 3.1 + segmentation-3.0). Không có token -> thoát mã 3, cổng chép lời bỏ qua bước này."""
-import json, sys, time
+import json, os, sys, time
+
+# (11/10) model tải về ổ D:, không vào C: (luật của chủ: C: chỉ cho hệ điều hành). Token vẫn ở chỗ mặc định của hf auth login.
+os.environ.setdefault('HF_HUB_CACHE', r'D:\AI\Cache\huggingface\hub')
+os.environ.setdefault('HF_HUB_DISABLE_SYMLINKS_WARNING', '1')
 
 
 def main():
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')   # (11/10) dòng OK có tiếng Việt: cp1252 làm script chết SAU khi đã ghi json
     audio, out = sys.argv[1], sys.argv[2]
     n = int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3].isdigit() else None
     try:
