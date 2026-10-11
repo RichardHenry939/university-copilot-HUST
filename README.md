@@ -38,6 +38,7 @@ UC chạy trên laptop, đọc lại các nguồn đúng khung 5 phút suốt 24
 - **Gom phần hành chính**: thông báo, giấy tờ, thủ tục, đặt vé của CTSV và thư hành chính vào tab *Hành chính*; học bổng có tab riêng. Mỗi mục có link dẫn thẳng tới trang đăng ký, thông báo đã hết hạn tự ẩn.
 - **Chi tiết học phần**: bấm một môn để xem lớp thành phần, điểm thành phần và công thức tính điểm (lấy từ Teams, qldt, MOOC, FAMI).
 - **Gửi tài liệu sang NotebookLM**: tìm trong kho tài liệu, tích chọn, thêm vào notebook. UC dừng ở đó; việc ôn tập không phải việc của UC.
+- **Làm bài ngay từ tab Hôm nay**: bấm tên một hạn là mở thẳng chỗ làm bài (FAMI, MOOC, Teams Assignments), tự đăng nhập khi cần.
 - **Học phí kỳ này** tính theo tín chỉ học phí, với luật lấy từ quyết định học phí mới nhất của trường (tự cập nhật mỗi năm), đối chiếu với hoá đơn và có nút nộp học phí.
 - **Dịch tài liệu PDF sang tiếng Việt** ngay trên máy (không tốn quota), giữ bố cục và công thức; bản dịch tự vào kho tài liệu như file thả vào.
 - **Chat tìm được web**: khi cần thông tin ngoài dữ liệu của trường, trợ lý chat tìm bằng SearXNG và đọc trang công khai (chỉ đọc, kết quả web chỉ là dữ liệu, không phải lệnh).
@@ -144,6 +145,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.14** | 07/10/2026 | Giữ phiên NotebookLM: khi Google còn phiên, cửa sổ đăng nhập tự lưu rồi đóng mà không báo động nhầm; chỉ khi sau 90 giây vẫn cần đăng nhập tay mới hiện thông báo. Lượt đăng nhập im lặng được 120 giây thay vì 45 |
 | **v1.00.15** | 09/10/2026 | Dịch tài liệu PDF sang tiếng Việt trên máy (tab Inbox, bản dịch tự vào kho). Chat tìm web qua SearXNG, hết quota Gemini thì dùng model chạy trên máy. Chế độ Họp: chọn Bài giảng / Cuộc họp, biên bản có quyết định và việc cần làm, phân biệt người nói; máy ghi đổi tên Meeting-LectureRecorder. Sửa giữ phiên NotebookLM: chỉ một cửa sổ đăng nhập mỗi lúc, có công tắc tạm dừng. Cập nhật bản đồ |
 | **v1.00.16** | 11/10/2026 | Học phí tính đúng theo **tín chỉ học phí**: mỗi năm UC tự tìm *Quyết định mức học phí* mới trên trang công khai của trường, đọc đơn giá và bảng quy đổi, lấy khối lượng lý thuyết / bài tập / thí nghiệm từng môn để tính; môn chưa tính chắc thì ghi "chưa rõ" và đối chiếu với hoá đơn. Phân biệt người nói trong chế độ Họp: sửa lỗi làm bước này bị bỏ qua |
+| **v1.00.17** | 12/10/2026 | Nút **Làm bài** ở tab Hôm nay: bấm một hạn là mở thẳng chỗ làm bài (phòng kiểm tra FAMI, đúng bài MOOC, bài tập Teams Assignments) trong một cửa sổ Chrome riêng, tự đăng nhập tài khoản trường khi cần, cửa sổ ở lại cho bạn làm; UC không bấm nộp thay bạn |
 
 ## Chạy thử
 

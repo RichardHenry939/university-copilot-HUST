@@ -1248,6 +1248,15 @@ class H(BaseHTTPRequestHandler):
                     return self._send(200, {"ok": False, "loi": f"{type(e).__name__}: {e}"[:300]})
                 if r.get("ok"): _tt_refresh(); phone_refresh()
                 return self._send(200, {**r, "dups": dupscan.load().get("pairs", []), "deadlines": _dls()})
+            if u.path in ("/api/dl-open", "/api/dl-open-status"):   # ✍️ (11/10) "Làm bài": mở thẳng chỗ làm bài (cửa sổ Chrome làm bài riêng, tự đăng nhập)
+                import work_open   # không reload: giữ trạng thái các lần mở đang chạy
+                b = json.loads(self._body(4 * 1024) or b"{}")
+                did = str(b.get("id") or "")
+                if u.path == "/api/dl-open-status": return self._send(200, work_open.status(did))
+                dl = next((x for x in _dls(400) if x.get("id") == did), None)
+                if not dl: return self._send(200, {"ok": False, "error": "không thấy hạn này (đã hoàn tất?)"})
+                try: return self._send(200, work_open.open_dl(dl))
+                except Exception as e: return self._send(200, {"ok": False, "error": f"{type(e).__name__}: {e}"[:300]})
             if u.path == "/api/deadline-done":   # 📋 Hoàn tất một hạn (Status = Submitted) — chỉ khi đã Xác nhận
                 import alerts, timetable, deadlines
                 b = json.loads(self._body(4 * 1024) or b"{}")

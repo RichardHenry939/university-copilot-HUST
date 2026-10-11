@@ -1605,6 +1605,7 @@ function askMode(date, mode, hours) {
   dayAsk = { date, mode, hours: h }; renderDay();
 }
 let dlAsk = null, dupAsk = null;
+const DLO = {};   /* (11/10) ✍️ trạng thái nút Làm bài theo id hạn */
 function renderDay() {
   const body = $('#day-body');
   if (!DAY) { body.innerHTML = '<p class="skeleton">Đang đọc lần đầu…</p>'; return; }
@@ -1637,7 +1638,8 @@ function renderDay() {
   html += '<h2 style="font-size:17px;margin:0 0 8px">Hạn sắp tới</h2><ul class="tasks dls">' + (dls.map(x => {
     const w = new Date(x.due), asking = dlAsk === x.id;
     return '<li class="' + (x.minsLeft < 1440 ? 'soon' : '') + '"><button class="chk dlchk" data-dl="' + x.id + '" aria-label="Hoàn tất ' + esc(x.name) + '"></button>' +
-      '<div><span class="tname">' + esc(x.name) + '</span><small>' + (x.course ? esc(x.course) + ' · ' : '') + '<span class="kind k-' + (x.kind === 'Môn học' ? 'mh' : x.kind === 'Tự luyện cốt lõi' ? 'cl' : 'tl') + '">' + esc(x.kind) + '</span> · hạn ' +
+      '<div><button class="link tname dlopen" data-dlo="' + x.id + '" title="Mở thẳng chỗ làm bài (tự đăng nhập nếu cần)" style="text-align:left;padding:0;font:inherit;font-weight:600">' + esc(x.name) + ' ↗</button>' +
+      (DLO[x.id] ? '<small class="note" style="color:var(--' + (DLO[x.id].bad ? 'red' : 'ink') + ')">' + esc(DLO[x.id].msg) + '</small>' : '') + '<small>' + (x.course ? esc(x.course) + ' · ' : '') + '<span class="kind k-' + (x.kind === 'Môn học' ? 'mh' : x.kind === 'Tự luyện cốt lõi' ? 'cl' : 'tl') + '">' + esc(x.kind) + '</span> · hạn ' +
       String(w.getHours()).padStart(2, '0') + ':' + String(w.getMinutes()).padStart(2, '0') + ' ' + w.getDate() + '/' + (w.getMonth() + 1) + '</small>' +
       (x.review ? '<small style="color:var(--red)">⚠ ' + esc(x.review) + '</small>' : '') +
       (asking ? '<div class="sask" style="margin-top:6px"><b>Đánh dấu hoàn tất?</b> Ghi Submitted vào 📋 Academic Work; hạn biến mất và hết nhắc. <button class="primary" id="dl-ok">Xác nhận</button> <button class="ghost" id="dl-no">Hủy</button><span class="smsg" id="dl-msg"></span></div>' : '') +
@@ -1674,6 +1676,25 @@ function renderDay() {
     dayAsk = null; dayPick = null; renderDay(); };
   body.querySelectorAll('.chk:not(.dlchk)').forEach(b => b.onclick = () => { b.disabled = true; dayPost('/api/daily-done', { id: b.dataset.id, done: b.dataset.done === '1' }); });
   body.querySelectorAll('.dlchk').forEach(b => b.onclick = () => { dlAsk = dlAsk === b.dataset.dl ? null : b.dataset.dl; renderDay(); });
+  /* (11/10) ✍️ Làm bài: UC tìm chỗ làm bài (FAMI / MOOC / Teams), mở trong cửa sổ Chrome làm bài riêng, tự đăng nhập, cửa sổ ở lại */
+  body.querySelectorAll('.dlopen').forEach(b => b.onclick = async () => {
+    const id = b.dataset.dlo;
+    DLO[id] = { msg: 'Đang tìm chỗ làm bài…' }; renderDay();
+    try {
+      const r = await api('/api/dl-open', { id });
+      if (!r.ok) {
+        if (r.khong_ro && r.notion) { DLO[id] = { msg: 'Chưa biết chỗ làm bài này — mở trang Notion của hạn.' }; window.open(r.notion, '_blank', 'noopener'); }
+        else DLO[id] = { msg: 'Chưa mở được: ' + (r.error || ''), bad: true };
+        renderDay(); return;
+      }
+      DLO[id] = { msg: (r.nguon || '') + ' — đang mở cửa sổ…' }; renderDay();
+      for (let i = 0; i < 60; i++) {
+        await new Promise(res => setTimeout(res, 3000));
+        const s = await api('/api/dl-open-status', { id });
+        if (s.state && s.state !== 'dang_mo') { DLO[id] = { msg: s.msg, bad: s.state === 'loi' || s.state === 'can_ban' }; renderDay(); return; }
+      }
+    } catch (e) { DLO[id] = { msg: 'Lỗi: ' + e.message, bad: true }; renderDay(); }
+  });
   body.querySelectorAll('[data-dupdrop]').forEach(b => b.onclick = async () => {
     dupAsk = { pid: b.dataset.dupdrop, id: b.dataset.id, what: null }; renderDay();
     const r = await api('/api/dup-plan', { pid: dupAsk.pid, drop_id: dupAsk.id }).catch(() => null);

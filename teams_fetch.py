@@ -68,7 +68,10 @@ JS = r"""async () => {
           const files = (x.attachments || []).filter(a => a.contentType === 'reference').map(a => a.name);
           res.posts.push({id: x.id, team: t.displayName, teamId: t.id, channel: c.displayName, from, subject: x.subject || '',
                           created: x.createdDateTime, modified: x.lastModifiedDateTime || x.createdDateTime,
-                          body: (text(x.body && x.body.content) + (cards.length ? '\n' + cards.join('\n') : '')).slice(0, 20000), files});
+                          body: (text(x.body && x.body.content) + (cards.length ? '\n' + cards.join('\n') : '')).slice(0, 20000), files,
+                          // (11/10) link mở bài đăng trong Teams + link trong thẻ (thẻ Assignments: mở thẳng bài tập) -> nút "Làm bài" tab Hôm nay
+                          web: x.webUrl || null,
+                          links: [...new Set((x.attachments || []).flatMap(a => (String(a.content || '').split('\\/').join('/').match(/https:\/\/teams\.microsoft\.com\/l\/[^"'\s<>\\]+/g) || [])))].slice(0, 5)});
           for (const y of (x.replies || [])) {
             if (y.messageType !== 'message' || y.deletedDateTime) continue;
             res.replies.push({id: y.id, parent: x.id, team: t.displayName, channel: c.displayName, parentSubject: x.subject || '',
@@ -165,8 +168,11 @@ def fetch():
         new.append({'Id': vid, 'ConversationId': f"teams:{x['id']}", 'Subject': x['subject'] or first,
                     'FromName': x['from'], 'FromAddress': f"{x['team']} › {x['channel']}", 'ReceivedDateTime': x['modified'],
                     'Created': x['created'], 'Edited': x['modified'] != x['created'], 'Body': x['body'], 'Team': x['team'],
-                    'Channel': x['channel'], 'Files': x['files'], 'Source': 'teams',
+                    'Channel': x['channel'], 'Files': x['files'], 'Source': 'teams', 'WebUrl': x.get('web'), 'Links': x.get('links') or [],
                     'fetched_at': dt.datetime.now().isoformat(timespec='seconds')})
+    lk = {f"teams:{x['id']}": (x.get('web'), x.get('links') or []) for x in res['posts']}   # (11/10) điền link cho bài đã lưu từ trước
+    for m in box['items']:
+        if m.get('ConversationId') in lk and not m.get('WebUrl'): m['WebUrl'], m['Links'] = lk[m['ConversationId']]
     box['items'] = sorted(box['items'] + new, key=lambda m: m['ReceivedDateTime'])[-KEEP:]
     box['teams'] = res['teams']; box['last_fetch'] = dt.datetime.now().isoformat(timespec='seconds'); box['errors'] = res['errors']
     POSTS.write_text(json.dumps(box, ensure_ascii=False, indent=1), encoding='utf-8')

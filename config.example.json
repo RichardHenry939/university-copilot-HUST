@@ -49,6 +49,7 @@
   "paths": {
     "uni_documents": "C:/Users/you/Documents/Uni-Documents",
     "chrome_profile": "C:/uc-data/chrome-profile",
+    "chrome_open_profile": "C:/uc-data/chrome-open-profile",
     "n8n_template_dir": "C:/uc-data/n8n-templates"
   }
 }
