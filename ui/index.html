@@ -2041,20 +2041,35 @@ async function loadFee() {
     const d = await api('/api/tuition');
     const vnd = (x) => x == null ? null : Math.round(x).toLocaleString('vi-VN') + ' đ';
     const t = d.truong || {}, c = d.doi_chieu;
-    let h = '<table class="ctable"><tbody>';
-    h += '<tr><th>Giá đơn vị (tín chỉ)</th><td class="n"><b>' + (d.don_gia ? vnd(d.don_gia) : 'chưa có') + '</b></td><td><small>' + esc(d.don_gia_nguon || 'UC tự suy ra khi trường có hoá đơn học phí (từ 12/10), hoặc bạn nhập bên dưới') + '</small></td></tr>';
-    h += '<tr><th>Số tín chỉ</th><td class="n"><b>' + (d.so_tin_chi || 0) + '</b></td><td><small>' + esc(d.hoc_ky_ten || ('Kỳ ' + (d.hoc_ky || ''))) + ': ' + (d.hoc_phan || []).map(x => esc(x.code) + ' ' + x.tc).join(' · ') + '</small></td></tr>';
-    /* (11/10) tín chỉ học phí (TCHP) từng môn theo Phụ lục II của quyết định năm học; môn chưa tính chắc ghi "chưa rõ" */
-    if (d.so_tchp != null) h += '<tr><th>Tín chỉ học phí</th><td class="n"><b>' + d.so_tchp + '</b>' + ((d.chua_ro || []).length ? '<br><small>+ ' + d.chua_ro.length + ' môn chưa rõ</small>' : '') + '</td><td><small>' + (d.hoc_phan || []).map(x => '<span title="' + esc(x.cach_tinh || '') + '">' + esc(x.code) + ' ' + (x.tchp != null ? x.tchp : '<i>chưa rõ</i>') + '</span>').join(' · ') +
-      (d.luat ? '<br>Theo <a href="' + esc(d.luat.bai_viet) + '" target="_blank" rel="noopener">Quyết định ' + esc(d.luat.so_qd || '') + '</a>: lý thuyết + bài tập 15 tiết = ' + d.luat.tchp_lt_bt_15_tiet + ' TCHP · thí nghiệm 15 tiết = ' + d.luat.tchp_tn_15_tiet + ' TCHP · tính 15 tuần. Rê chuột lên từng môn để xem cách tính.' : '') + '</small></td></tr>';
-    h += '<tr><th>Tổng học phí</th><td class="n"><b>' + (d.tong_tinh != null ? vnd(d.tong_tinh) : 'chưa tính được') + '</b>' + ((d.chua_ro || []).length && d.tong_tinh != null ? '<br><small>chưa gồm ' + esc(d.chua_ro.join(', ')) + '</small>' : '') + '</td><td><small>' +
-      (t.tong_can_dong != null ? 'Trường ghi cần đóng: <b>' + vnd(t.tong_can_dong) + '</b>' + (c ? (c.khop ? ' · <span class="badge ok">khớp</span>' : ' · <span class="badge">chênh ' + vnd(c.chenh) + '</span> ' + esc(c.giai_thich || '')) : '')
-        : 'Trang học phí của trường chưa có hoá đơn kỳ này' + (t.doc_duoc ? '' : (t.loi ? ' (lần đọc gần nhất lỗi: ' + esc(t.loi) + ')' : ' (UC đọc ở lượt đồng bộ qldt kế tiếp)')) + '.') +
-      '</small></td></tr></tbody></table>';
-    if ((t.hoa_don || []).length) h += '<details><summary>' + t.hoa_don.length + ' hoá đơn trên trang học phí của trường</summary><ul>' + t.hoa_don.map(i => '<li>' + esc(i.loai || 'Khoản thu') + ' · kỳ ' + esc(i.hoc_ky || '') + ' · cần đóng ' + (vnd(i.can_dong) || '?') + ' · đã đóng ' + (vnd(i.da_dong) || '0 đ') + (i.trang_thai != null ? ' · ' + esc(i.trang_thai) : '') + '</li>').join('') + '</ul></details>';
+    /* (12/10) Số CHUẨN = trang học phí thật của trường (ctt-sis CheckTuition). UC tự tính theo Quyết định chỉ để đối chiếu từng môn. */
+    const s = d.sis || {};
+    let h = '';
+    if (s.doc_duoc) {
+      h += '<p style="font-size:17px;margin:4px 0 8px">Còn phải đóng: <b>' + vnd(s.con_phai_dong) + '</b>' +
+        (s.han ? ' · hạn <b>' + esc(s.han.tu) + ' → ' + esc(s.han.den) + '</b>' : '') + '</p>' +
+        '<p class="meta">Theo trang học phí của trường (kỳ ' + esc(s.hoc_ky || '') + ', UC đọc lúc ' + esc((s.luc || '').replace('T', ' ')) + ')</p>';
+    } else {
+      h += '<p class="note">Chưa đọc được trang học phí của trường' + (s.loi ? ' (lỗi: ' + esc(s.loi) + ')' : ' — UC đọc ở lượt đồng bộ qldt kế tiếp') + '. Bấm nút bên dưới để xem trực tiếp.</p>';
+    }
+    h += '<table class="ctable"><tbody>';
+    h += '<tr><th>Giá đơn vị (tín chỉ học phí)</th><td class="n"><b>' + (d.don_gia ? vnd(d.don_gia) : 'chưa có') + '</b></td><td><small>' + esc(d.don_gia_nguon || '') +
+      (d.luat ? ' · <a href="' + esc(d.luat.bai_viet) + '" target="_blank" rel="noopener">Quyết định ' + esc(d.luat.so_qd || '') + '</a>' : '') + '</small></td></tr>';
+    const lech = d.mon_lech || [];
+    h += '<tr><th>Tín chỉ học phí từng môn</th><td class="n"><b>' + (d.hoc_phan || []).reduce((a, x) => a + (x.tchp_truong != null ? x.tchp_truong : (x.tchp || 0)), 0) + '</b></td><td><small>' +
+      (d.hoc_phan || []).map(x => '<span title="' + esc((x.cach_tinh || '') + (x.tien_truong != null ? ' · trường tính ' + vnd(x.tien_truong) : '')) + '">' + esc(x.code) + ' ' +
+        (x.tchp_truong != null ? x.tchp_truong : (x.tchp != null ? x.tchp : '?')) + (x.lech ? ' <b style="color:var(--red)">(UC tính ' + x.tchp + ')</b>' : '') + '</span>').join(' · ') +
+      '<br>Rê chuột lên từng môn để xem cách tính và số tiền trường tính.</small></td></tr>';
+    const tong = s.doc_duoc ? s.tong_hoc_phi : d.tong_tinh;
+    h += '<tr><th>Học phí kỳ này</th><td class="n"><b>' + (tong != null ? vnd(tong) : 'chưa có') + '</b></td><td><small>' +
+      (s.doc_duoc ? 'Trường tính. UC tự tính theo Quyết định: ' + vnd(d.tong_tinh) + (c ? (c.khop ? ' · <span class="badge ok">khớp</span>' : ' · <span class="badge">chênh ' + vnd(c.chenh) + '</span> ' + esc(c.giai_thich || '')) : '') +
+        (lech.length ? ' · <b style="color:var(--red)">lệch ở ' + esc(lech.join(', ')) + '</b>' : '')
+        : 'UC tự tính theo Quyết định (chưa có số của trường để đối chiếu).') + '</small></td></tr></tbody></table>';
+    if ((s.cong_no || []).length) h += '<details open><summary>Công nợ đầu kỳ (trang của trường)</summary><table class="ctable"><tbody>' +
+      s.cong_no.map(x => '<tr><th>' + esc(x.loai) + '</th><td class="n">' + vnd(x.thuc_dong) + '</td><td><small>' + esc(x.ngay || '') + (x.ghi_chu ? ' · ' + esc(x.ghi_chu) : '') + '</small></td></tr>').join('') +
+      '<tr><th>Còn phải đóng</th><td class="n"><b>' + vnd(s.con_phai_dong) + '</b></td><td></td></tr></tbody></table></details>';
     const n = d.thong_bao || {};
-    h += '<p class="note"><a href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(n.title || 'Thông báo học phí') + '</a> · ' + esc(n.note || '') + '</p>';
-    h += '<p><a class="btn" href="' + esc(d.nop_tai) + '" target="_blank" rel="noopener">Nộp học phí tại đây</a></p>';
+    h += '<p><a class="btn" href="' + esc(d.nop_tai) + '" target="_blank" rel="noopener">Tra và nộp học phí (trang của trường)</a></p>';
+    h += '<p class="note">Thông báo của trường: <a href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(n.title || 'Thông báo học phí') + '</a></p>';
     h += '<details><summary>Sửa giá đơn vị</summary><p class="meta">Chỉ khi trường đổi mức học phí. UC chỉ ghi vào máy bạn, không gửi đi đâu.</p><input type="number" id="fee-price" min="50000" step="1000" placeholder="vd 650000" style="padding:6px 10px;border-radius:8px;border:1.5px solid var(--line)"> <button id="fee-save">Lưu giá đơn vị</button></details>';
     box.innerHTML = h;
     $('#fee-save').onclick = async () => {

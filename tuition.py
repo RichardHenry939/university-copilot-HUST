@@ -11,14 +11,19 @@ Nút "Nộp học phí tại đây" mở trang học phí của trường (hoá 
 
 (11/10) Có luật của năm học (tuition_rules.py, đọc Quyết định mức học phí trên ctt.hust.edu.vn mỗi năm): đơn giá lấy từ quyết định,
 tổng = đơn giá × Tín chỉ học phí (TCHP) từng môn tính theo Phụ lục II, không còn × số tín chỉ học tập. Môn chưa tính chắc (GDQP, GDTC)
-ghi "chưa rõ" và để hoá đơn của trường cho biết phần đó."""
+ghi "chưa rõ" và để hoá đơn của trường cho biết phần đó.
+
+(12/10) SỬA SAI NGHIÊM TRỌNG (chủ dự án báo): tổng UC tự tính thiếu hẳn các môn GDQP / GDTC so với số trường tính, và link "tra cứu" chỉ là một
+trang thông báo. Nay số CHUẨN lấy thẳng từ trang học phí thật của trường ctt-sis.hust.edu.vn/Students/CheckTuition.aspx
+(school_fetch.fetch_sis_tuition: từng môn — TCHP, hệ số lớp, tiền; công nợ — đã nộp, BHYT, phí khám…, CÒN PHẢI ĐÓNG, hạn đóng).
+Luật TCHP tự tính chỉ còn để ĐỐI CHIẾU từng môn (lệch thì ghi rõ). Nút nộp / tra cứu trỏ đúng trang SIS."""
 import datetime as dt, json, re
 import tuition_rules
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CFG = HERE / 'school' / 'tuition.json'
-PAY_URL = 'https://qldt.hust.edu.vn/students/tuition'
+PAY_URL = 'https://ctt-sis.hust.edu.vn/Students/CheckTuition.aspx'   # (12/10) trang học phí THẬT: số tiền, công nợ, cách thanh toán
 NOTICE = {'title': 'THÔNG BÁO VỀ HỌC PHÍ KỲ I NĂM HỌC 2026-2027 – ĐỢT 1', 'url': 'https://ctt.hust.edu.vn/DisplayWeb/DisplayKehoach?kehoach=30245',
           'note': 'Tra cứu từ 12/10/2026 · đóng từ 12/10 đến hết 25/10/2026 · đợt 2 tính lại chính xác'}
 
@@ -88,6 +93,18 @@ def view():
         CFG.write_text(json.dumps({'don_gia': price, 'nguon': src, 'tu_ky': sem, 'at': dt.datetime.now().isoformat(timespec='minutes')}, ensure_ascii=False, indent=1), encoding='utf-8')
     base = tchp_sum if tchp_sum is not None else tc
     total = round(price * base) if price and base else None
+    sis = latest.get('sis_tuition') or {}
+    if sis.get('ok'):   # (12/10) số của TRƯỜNG là chuẩn; UC tự tính chỉ để đối chiếu từng môn
+        by = {x['code']: x for x in sis.get('hoc_phan') or []}
+        for c in courses:
+            s = by.get(c['code'])
+            if not s: continue
+            c['tchp_truong'], c['tien_truong'], c['he_so'] = s.get('tchp'), s.get('tien'), s.get('he_so')
+            c['lech'] = c.get('tchp') is not None and s.get('tchp') is not None and abs(c['tchp'] - s['tchp']) > 0.01
+        extra = [x for x in by.values() if x['code'] not in {c['code'] for c in courses}]   # môn trường tính mà bảng điểm chưa có
+        courses += [{'code': x['code'], 'name': x['name'], 'tc': None, 'tchp': None, 'tchp_truong': x.get('tchp'), 'tien_truong': x.get('tien'),
+                     'he_so': x.get('he_so'), 'lech': False, 'cach_tinh': 'chỉ có trên trang học phí của trường'} for x in extra]
+        school_total = sis.get('tong_hoc_phi')
     if total is None or school_total is None: check = None
     else:
         diff = school_total - total
@@ -100,7 +117,11 @@ def view():
             'luat': {k: rules.get(k) for k in ('so_qd', 'nam_hoc', 'bai_viet', 'pdf', 'tchp_lt_bt_15_tiet', 'tchp_tn_15_tiet', 'tchp_gdtc_moi_tcht')} if rules else None,
             'truong': {'doc_duoc': bool(tu.get('ok')), 'loi': tu.get('error'), 'hoa_don': [{k: v for k, v in i.items() if k != 'raw'} for i in inv],
                        'tong_can_dong': school_total, 'luc': latest.get('at')},
-            'doi_chieu': check, 'nop_tai': PAY_URL, 'thong_bao': NOTICE}
+            'doi_chieu': check, 'nop_tai': PAY_URL, 'thong_bao': NOTICE,
+            'sis': {'doc_duoc': bool(sis.get('ok')), 'loi': sis.get('error'), 'url': sis.get('url') or PAY_URL, 'hoc_ky': sis.get('hoc_ky'),
+                    'tong_hoc_phi': sis.get('tong_hoc_phi'), 'cong_no': sis.get('cong_no') or [], 'con_phai_dong': sis.get('con_phai_dong'),
+                    'han': sis.get('han'), 'luc': sis.get('at')},
+            'mon_lech': [c['code'] for c in courses if c.get('lech')]}
 
 
 def set_price(v):

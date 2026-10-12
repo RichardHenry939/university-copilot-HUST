@@ -157,12 +157,15 @@ CI = re.compile(r'^\s*([\d.]+)\s*\(\s*([\d.]+)\s*-\s*([\d.]+)\s*-\s*([\d.]+)\s*-
 def tchp(code, info, rules):
     """TCHP của 1 học phần. info = courses/<mã> của qldt (creditInfo, gdCreditInfo, credit). Trả (số | None, cách tính)."""
     if not info: return None, 'chưa có khối lượng học phần'
+    # (12/10) Đối chiếu với học phí THẬT trên ctt-sis (kỳ 20261): GDQP = số tín chỉ học tập × 1 (MIL1210 3, MIL1220 2, MIL1230 2,
+    # MIL1240 4 TCHP); GDTC = 1 TCHT × 1,5 dù trường ghi "0 tín chỉ" (PE1014 = 1,5 TCHP). Trước đó UC trả "chưa rõ" -> tổng thiếu hẳn phần GDQP + GDTC.
     if code.startswith('MIL'):
-        return None, 'Giáo dục quốc phòng học dồn, khối lượng trường ghi không theo tuần — chờ hoá đơn để đối chiếu'
-    if code.startswith('PE'):
         tc = info.get('credit') or 0
-        if not tc: return None, f'Giáo dục thể chất ghi 0 tín chỉ ({info.get("creditInfo")}) — chờ hoá đơn để đối chiếu'
-        return round(tc * rules['tchp_gdtc_moi_tcht'], 2), f'{tc:g} TCHT × {rules["tchp_gdtc_moi_tcht"]:g} (GDTC)'
+        if not tc: return None, f'GDQP không có số tín chỉ ({info.get("creditInfo")})'
+        return float(tc), f'GDQP: {tc:g} TCHT × 1 (đối chiếu SIS 12/10)'
+    if code.startswith('PE'):
+        tc = info.get('credit') or 1   # trường ghi 0 tín chỉ (không tính GPA) nhưng tính học phí như 1 TCHT
+        return round(tc * rules['tchp_gdtc_moi_tcht'], 2), f'GDTC: {tc:g} TCHT × {rules["tchp_gdtc_moi_tcht"]:g} (đối chiếu SIS 12/10)'
     m = CI.match(info.get('creditInfo') or '')
     if not m: return None, f'khối lượng không đọc được: {info.get("creditInfo")!r}'
     _, lt, bt, tn, _ = (float(x) for x in m.groups())

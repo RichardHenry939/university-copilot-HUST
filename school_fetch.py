@@ -290,6 +290,47 @@ CTSV_API_JS = """async (user) => {
 }"""
 
 
+SIS_TUITION = "https://ctt-sis.hust.edu.vn/Students/CheckTuition.aspx"
+SIS_ROWS_JS = """() => [...document.querySelectorAll('tr')].map(r => [...r.children].filter(c => c.tagName === 'TD').map(c => c.innerText.trim()))
+  .filter(r => r.length >= 5 && !r.some(x => x.includes('\\n')))"""
+
+
+def _vnd(s):
+    """'3,500,000 đ' / '-1,000,000 đ' -> số (đồng)."""
+    m = re.search(r"-?[\d.,]+", str(s or "").replace(" ", ""))
+    return float(m.group(0).replace(",", "")) if m else None
+
+
+def fetch_sis_tuition(page, out):
+    """(12/10) Học phí THẬT: ctt-sis.hust.edu.vn/Students/CheckTuition.aspx — CHỈ ĐỌC (không bấm thanh toán).
+    Bảng học phần (Số TC học phí, hệ số lớp, tổng tiền từng môn) + bảng công nợ (đã nộp, BHYT, phí khám…, còn phải đóng).
+    Trường đã tính sẵn từng môn -> UC lấy làm chuẩn (luật: dữ liệu trường thắng); luật TCHP tự tính chỉ để đối chiếu."""
+    _goto(page, SIS_TUITION); _settle(page, 3000)
+    if "/Account/Login" in page.url:   # SIS cũ: nút "Đăng nhập bằng tài khoản Office 365" (DevExpress: <div> hiển thị bọc <input> ẩn)
+        page.locator("[id$='btnO365Login']").first.click(); _settle(page, 3000)
+        _through_sso(page, "ctt-sis.hust.edu.vn/Students", deadline=120)
+        _goto(page, SIS_TUITION); _settle(page, 3000)
+    if "CheckTuition" not in page.url: raise NeedLogin(f"không vào được trang học phí SIS (đang ở {page.url[:80]})")
+    body = page.inner_text("body")
+    rows = page.evaluate(SIS_ROWS_JS)
+    courses = [{"code": r[0], "name": r[1], "don_gia": _vnd(r[2]), "tchp": _vnd(r[3]), "he_so": _vnd(r[4]), "tien": _vnd(r[5]),
+                "trang_thai": r[6] if len(r) > 6 else "", "loai": r[7] if len(r) > 7 else "", "ghi_chu": r[8] if len(r) > 8 else ""}
+               for r in rows if re.fullmatch(r"[A-Z]{2,4}\d{4}[A-Z]?", r[0]) and len(r) >= 6]
+    debts = [{"loai": r[0], "so_tien": _vnd(r[1]), "he_so": _vnd(r[2]), "thuc_dong": _vnd(r[3]), "ngay": r[4] if len(r) > 4 else "",
+              "ghi_chu": r[5] if len(r) > 5 else ""}
+             for r in rows if not re.fullmatch(r"[A-Z]{2,4}\d{4}[A-Z]?", r[0]) and re.search(r"\d", r[1] or "") and "đ" in (r[1] or "")
+             and not r[0].startswith(("Count", "Mã HP", "Loại tiền"))]
+    m = re.search(r"Còn phải đóng:\s*([-\d.,]+)\s*đ", body)
+    sem = re.search(r"Học kỳ:\s*(\d{5})", body)
+    han = re.search(r"Đóng học phí từ ngày\s*([\d/]+)\s*đến hết ngày\s*([\d/]+)", body)
+    out["sis_tuition"] = {"ok": bool(courses), "url": SIS_TUITION, "hoc_ky": sem.group(1) if sem else None, "hoc_phan": courses,
+                          "tong_hoc_phi": sum(c["tien"] or 0 for c in courses), "cong_no": debts,
+                          "con_phai_dong": _vnd(m.group(1)) if m else None,
+                          "han": {"tu": han.group(1), "den": han.group(2)} if han else None,
+                          "at": dt.datetime.now().isoformat(timespec="minutes")}
+    log("sis học phí:", len(courses), "môn, tổng", out["sis_tuition"]["tong_hoc_phi"], "· còn phải đóng", out["sis_tuition"]["con_phai_dong"])
+
+
 def fetch_ctsv(page, out):
     _open(page, CTSV + "/cham-diem-ren-luyen", "ctsv.hust.edu.vn/cham-diem", ctsv_logged_in)
     txt = page.inner_text("body")
@@ -317,6 +358,8 @@ def run(headless=True):
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         try:
             fetch_qldt(page, out)
+            try: fetch_sis_tuition(page, out)   # (12/10) học phí THẬT của trường (ctt-sis) — lỗi không làm mất dữ liệu khác
+            except Exception as e: out["sis_tuition"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:300]}
             try: fetch_ctsv(page, out)   # iCTSV lỗi không làm mất dữ liệu qldt đã đọc
             except Exception as e: out["drl_error"] = f"{type(e).__name__}: {e}"[:300]
             out["ok"] = True
