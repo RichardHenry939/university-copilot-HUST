@@ -173,8 +173,22 @@ def clock(start_iso, off):
 LM_FALLBACK = "qwen3-8b"   # nhẹ hơn ~5 GB: dùng khi qwen3-14b không nạp được (thiếu bộ nhớ)
 
 
+def _recording_now():
+    """(12/10) Máy ghi đang ghi? Model chạy GPU tích hợp giành băng thông bộ nhớ -> tiếng Teams vào cáp ảo bị đứt
+    (đo 12/10 09:48: 48% bản ghi là số 0 khi model chạy, 20% khi tạm dừng model). Lỗi đọc -> coi như không ghi."""
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:5681/health", timeout=5) as r:   # hỏi thẳng máy ghi (UC tắt vẫn đúng)
+            return bool(json.loads(r.read()).get("recording"))
+    except Exception:
+        return False
+
+
 def lm(messages, max_tokens=1400):
     """Gọi LM Studio; lỗi (không nạp được model, 400/5xx, mất kết nối) -> chờ rồi thử lại, 2 lần cuối dùng model dự phòng."""
+    if _recording_now():   # đang ghi bài giảng / cuộc họp -> CHỜ tới khi bấm Stop rồi mới nén (không đụng tiếng đang ghi)
+        log("Máy ghi đang ghi -> hoãn nén bằng LM Studio tới khi dừng ghi")
+        while _recording_now(): time.sleep(30)
+        log("Máy ghi đã dừng -> nén tiếp")
     last = None
     for attempt, model in enumerate([LM_MODEL, LM_MODEL, LM_FALLBACK, LM_FALLBACK]):
         body = {"model": model, "messages": messages, "temperature": 0.2, "max_tokens": max_tokens}
@@ -450,6 +464,9 @@ def worker():
     while True:
         jid = _q.get()
         try:
+            if _recording_now():   # (12/10) LUẬT TỐI CAO: đang ghi -> không bắt đầu chép lời / nén (CPU, NPU, GPU nhường cho tiếng CABLE Input)
+                log(f"Máy ghi đang ghi -> hoãn job {jid} tới khi dừng ghi")
+                while _recording_now(): time.sleep(30)
             process(jid)
         finally:
             _q.task_done()

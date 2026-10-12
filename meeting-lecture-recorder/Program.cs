@@ -11,6 +11,7 @@
 //   O6 (Claude 5/10) chế độ "teams": thu CHỈ tiếng Teams qua cáp ảo VB-CABLE (Teams chọn loa = CABLE Input),
 //      tự phát lại ra loa/tai nghe mặc định hiện tại (đổi theo khi tai nghe rớt) — bản ghi không lẫn ứng dụng khác,
 //      không phụ thuộc tai nghe. (Process loopback O4 KHÔNG nhận được tiếng họp Teams: Windows trả toàn 0.)
+//   O8 (Claude 12/10) LUẬT TỐI CAO: tự đặt ưu tiên High; cáp + micro đọc theo sự kiện, đệm 200 ms (bản cũ đánh rơi tiếng khi máy bận)
 //   O7 30 giây đầu toàn im lặng -> báo lỗi rõ ràng (sáng 5/10 mất 7 phút vì file toàn số 0 mà không ai biết)
 // Chỉ nghe 127.0.0.1:5681.
 using System.Diagnostics;
@@ -26,6 +27,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://127.0.0.1:5681");
 builder.Services.AddSingleton<Recorder>();
 var app = builder.Build();
+// LUẬT TỐI CAO (chủ dự án 12/10): tiếng qua cáp CABLE Input được ưu tiên tuyệt đối — GPU có AI chạy hay việc gì cũng phải nhường.
+// Đo 12/10: máy bận -> máy ghi ưu tiên Normal đánh rơi ~48% tiếng; ưu tiên High -> 0 s. Máy ghi lúc rảnh chỉ ngủ, đặt High không tốn gì.
+try { Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High; } catch { }
 
 app.MapGet("/health", (Recorder r) => Results.Ok(r.Status()));
 app.MapGet("/audio-devices", () => Results.Ok(Recorder.Devices()));
@@ -443,7 +447,7 @@ sealed class DeviceSource : ISource
         try { dev = e.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Communications); if (dev.State != DeviceState.Active) throw new Exception(); }
         catch { dev = e.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active).OrderByDescending(d => d.FriendlyName.Contains("Microphone Array", StringComparison.OrdinalIgnoreCase)).First(); }
         name = dev.FriendlyName;
-        return new DeviceSource(new WasapiCapture(dev, false, 100), false, name);
+        return new DeviceSource(new WasapiCapture(dev, true, 200), false, name);   // (12/10) Windows báo có dữ liệu thì đọc ngay, đệm 200 ms (trước: hỏi vòng 100 ms)
     }
     public static DeviceSource Loopback(MMDeviceEnumerator e, out string name)
     {
@@ -458,7 +462,7 @@ sealed class DeviceSource : ISource
                    .FirstOrDefault(d => d.FriendlyName.Contains("CABLE Output", StringComparison.OrdinalIgnoreCase))
                    ?? throw new InvalidOperationException("Chưa có cáp ảo VB-CABLE (thiết bị CABLE Output). Cài VB-CABLE rồi thử lại.");
         name = dev.FriendlyName;
-        return new DeviceSource(new WasapiCapture(dev, false, 50), false, name);
+        return new DeviceSource(new WasapiCapture(dev, true, 200), false, name);   // (12/10) trước: hỏi vòng, đệm 50 ms -> máy bận là lỡ nhịp, mất ~48% tiếng
     }
     public void Start() => capture.StartRecording();
     public void Dispose() { try { capture.StopRecording(); } catch { } capture.Dispose(); }

@@ -870,6 +870,16 @@ def phone_refresh():
     threading.Thread(target=job, daemon=True).start()
 
 
+def _audio_priority_loop():
+    """🎙️ (12/10) Luật tối cao của chủ dự án: đang ghi (Teams qua CABLE Input) -> máy ghi ưu tiên Cao, model AI ưu tiên Thấp nhất.
+    Chi tiết + số đo: audio_priority.py."""
+    import audio_priority
+    while True:
+        try: audio_priority.tick()
+        except Exception as e: print("audio_priority:", e)
+        time.sleep(5)
+
+
 def alert_loop():
     """Mỗi phút: tiết học trước 30/15 phút · hạn nộp mốc 72/48/36/24 giờ · sự kiện leo thang vàng/đỏ/ghim + toast + điện thoại."""
     time.sleep(60)
@@ -1406,6 +1416,7 @@ if __name__ == "__main__":
     threading.Thread(target=uni_sync_loop, daemon=True).start()
     threading.Thread(target=mail_loop, daemon=True).start()    # 📡 mọi nguồn đúng khung 5 phút, 24 giờ
     threading.Thread(target=alert_loop, daemon=True).start()
+    threading.Thread(target=_audio_priority_loop, daemon=True).start()   # 🎙️ (12/10) LUẬT TỐI CAO: tiếng CABLE Input ưu tiên tuyệt đối
     threading.Thread(target=lambda: __import__("lecture_monitor").loop(lambda path: n8n(path, timeout=60)), daemon=True).start()   # 🎙️ giám sát Ghi bài giảng mỗi 60 s (0 AI)
     threading.Thread(target=lambda: __import__('phone_link').listen(_npost), daemon=True).start()   # 📱 lệnh từ điện thoại qua ntfy   # 📡 cảnh báo leo thang + toast
     threading.Thread(target=school_loop, daemon=True).start()   # 🏫 qldt + iCTSV -> Notion (dữ liệu trường là cao nhất)

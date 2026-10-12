@@ -79,6 +79,7 @@ def tick(n8n_get):
         try:
             h = _get(RECORDER + '/health', 5)
             cid = h.get('captureId')
+            if cid and h.get('test'): cid = None   # (12/10) bản ghi KIỂM THỬ (Stop là xoá, không gửi n8n) -> không đưa lên bảng giám sát
             if cid:
                 _cap(st, cid, startedAt=h.get('startedAt'), course=h.get('course'), device=h.get('device'))
                 if h.get('recording'):
