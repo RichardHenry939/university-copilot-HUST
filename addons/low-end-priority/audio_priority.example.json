@@ -1,0 +1,17 @@
+{
+ "_ghi_chu": "Add-on máy yếu — 4 bậc, áp mọi lúc: hoc=HIGH > binh_thuong=NORMAL > homelab=BELOW_NORMAL > ai=IDLE. Thêm tên .exe vào nhóm.",
+ "hoc": [
+  "LectureRecorderCompanion.exe"
+ ],
+ "binh_thuong": [
+  "chrome.exe",
+  "msedge.exe",
+  "ms-teams.exe"
+ ],
+ "homelab": [
+  "vmmemWSL"
+ ],
+ "ai": [
+  "llama-server.exe"
+ ]
+}

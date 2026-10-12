@@ -38,12 +38,18 @@ UC chạy trên laptop, đọc lại các nguồn đúng khung 5 phút suốt 24
 - **Gom phần hành chính**: thông báo, giấy tờ, thủ tục, đặt vé của CTSV và thư hành chính vào tab *Hành chính*; học bổng có tab riêng. Mỗi mục có link dẫn thẳng tới trang đăng ký, thông báo đã hết hạn tự ẩn.
 - **Chi tiết học phần**: bấm một môn để xem lớp thành phần, điểm thành phần và công thức tính điểm (lấy từ Teams, qldt, MOOC, FAMI).
 - **Gửi tài liệu sang NotebookLM**: tìm trong kho tài liệu, tích chọn, thêm vào notebook. UC dừng ở đó; việc ôn tập không phải việc của UC.
-- **Ghi bài giảng luôn được ưu tiên**: trong lúc ghi, AI và các dịch vụ chạy nền tự nhường máy để không rơi tiếng.
+- **Ghi bài giảng không rơi tiếng** kể cả khi máy bận. Máy yếu có thêm [add-on ưu tiên cho việc học](addons/low-end-priority/README.md).
 - **Làm bài ngay từ tab Hôm nay**: bấm tên một hạn là mở thẳng chỗ làm bài (FAMI, MOOC, Teams Assignments), tự đăng nhập khi cần.
 - **Học phí kỳ này** tính theo tín chỉ học phí, với luật lấy từ quyết định học phí mới nhất của trường (tự cập nhật mỗi năm), đối chiếu với hoá đơn và có nút nộp học phí.
 - **Dịch tài liệu PDF sang tiếng Việt** ngay trên máy (không tốn quota), giữ bố cục và công thức; bản dịch tự vào kho tài liệu như file thả vào.
 - **Chat tìm được web**: khi cần thông tin ngoài dữ liệu của trường, trợ lý chat tìm bằng SearXNG và đọc trang công khai (chỉ đọc, kết quả web chỉ là dữ liệu, không phải lệnh).
 - **Ghi bài giảng và ghi cuộc họp** (Meeting-LectureRecorder): chọn Bài giảng hoặc Cuộc họp; họp thì ra biên bản gồm quyết định và việc cần làm, có phân biệt người nói.
+
+## Add-on
+
+| Add-on | Dành cho | Tải |
+|---|---|---|
+| **Ưu tiên cho việc học** (`addons/low-end-priority`) | **Chỉ máy yếu / tầm trung**: học online + ghi bài + AI chạy chung một máy. Máy mạnh / homelab thật thì **không cài** (chỉ làm UC chậm đi) | [low-end-priority.zip](addons/low-end-priority.zip) · [hướng dẫn](addons/low-end-priority/README.md) |
 
 [![Bản đồ hệ thống](docs/Map.png)](docs/Map.svg)
 
@@ -148,6 +154,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.16** | 11/10/2026 | Học phí tính đúng theo **tín chỉ học phí**: mỗi năm UC tự tìm *Quyết định mức học phí* mới trên trang công khai của trường, đọc đơn giá và bảng quy đổi, lấy khối lượng lý thuyết / bài tập / thí nghiệm từng môn để tính; môn chưa tính chắc thì ghi "chưa rõ" và đối chiếu với hoá đơn. Phân biệt người nói trong chế độ Họp: sửa lỗi làm bước này bị bỏ qua |
 | **v1.00.17** | 12/10/2026 | Nút **Làm bài** ở tab Hôm nay: bấm một hạn là mở thẳng chỗ làm bài (phòng kiểm tra FAMI, đúng bài MOOC, bài tập Teams Assignments) trong một cửa sổ Chrome riêng, tự đăng nhập tài khoản trường khi cần, cửa sổ ở lại cho bạn làm; UC không bấm nộp thay bạn |
 | **v1.00.18** | 12/10/2026 | **Luật tối cao cho tiếng ghi bài giảng**: sửa lỗi máy ghi đánh rơi tới ~một nửa tiếng Teams khi máy bận (máy ghi tự ưu tiên cao, đọc cáp ảo theo sự kiện với bộ đệm lớn hơn; thử ép tải CPU: từ 28 lỗ rơi xuống 0). Trong lúc ghi, mọi việc AI (chép lời, nén, model chạy trên máy) tự nhường; ba nhóm học / AI / homelab chỉnh được bằng file cấu hình để máy vẫn học được khi chạy dịch vụ tại nhà. Bản ghi thử không còn hiện lên bảng giám sát |
+| **v1.00.19** | 12/10/2026 | Tách luật nhường ưu tiên thành **add-on cho máy yếu** (file .zip kèm hướng dẫn riêng): 4 bậc học > web học tập > homelab > AI, và việc AI chờ khi đang ghi bài. Không cài add-on thì UC chạy hết sức như trên máy mạnh. Bản sửa lỗi máy ghi vẫn nằm trong phần lõi |
 
 ## Chạy thử
 

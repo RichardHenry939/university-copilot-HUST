@@ -173,9 +173,13 @@ def clock(start_iso, off):
 LM_FALLBACK = "qwen3-8b"   # nhẹ hơn ~5 GB: dùng khi qwen3-14b không nạp được (thiếu bộ nhớ)
 
 
+LOW_END_FLAG = Path(__file__).with_name("low_end.flag")   # add-on "máy yếu" (addons/low-end-priority) đã cài -> có file này
+
+
 def _recording_now():
-    """(12/10) Máy ghi đang ghi? Model chạy GPU tích hợp giành băng thông bộ nhớ -> tiếng Teams vào cáp ảo bị đứt
-    (đo 12/10 09:48: 48% bản ghi là số 0 khi model chạy, 20% khi tạm dừng model). Lỗi đọc -> coi như không ghi."""
+    """(12/10) CHỈ khi cài add-on "máy yếu": máy ghi đang ghi -> hoãn chép lời / nén, nhường máy cho tiếng bài giảng.
+    Máy mạnh (không cài add-on) -> luôn False: cổng chép lời chạy hết sức, không chờ. Lỗi đọc -> coi như không ghi."""
+    if not LOW_END_FLAG.exists(): return False
     try:
         with urllib.request.urlopen("http://127.0.0.1:5681/health", timeout=5) as r:   # hỏi thẳng máy ghi (UC tắt vẫn đúng)
             return bool(json.loads(r.read()).get("recording"))

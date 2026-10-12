@@ -871,9 +871,10 @@ def phone_refresh():
 
 
 def _audio_priority_loop():
-    """🎙️ (12/10) Luật tối cao của chủ dự án: đang ghi (Teams qua CABLE Input) -> máy ghi ưu tiên Cao, model AI ưu tiên Thấp nhất.
-    Chi tiết + số đo: audio_priority.py."""
-    import audio_priority
+    """🎙️ (12/10) ADD-ON "máy yếu" (addons/low-end-priority): 4 bậc ưu tiên học > web học tập > homelab > AI.
+    Không cài add-on (không có audio_priority.py) -> không làm gì: máy mạnh để UC chạy hết sức. Chi tiết: audio_priority.py."""
+    try: import audio_priority
+    except ImportError: return
     while True:
         try: audio_priority.tick()
         except Exception as e: print("audio_priority:", e)
