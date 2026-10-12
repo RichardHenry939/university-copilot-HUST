@@ -108,7 +108,8 @@ patch_session("Khoá phiên (đang chép lời)", [660, Y],
 node("Tải audio từ Drive", "n8n-nodes-base.googleDrive", [880, Y],
      {"resource": "file", "operation": "download", "authentication": "oAuth2",
       "fileId": {"__rl": True, "mode": "id", "value": "={{ $('Chuẩn hoá phiên').item.json.driveFileId }}"}, "options": {}},
-     3, credentials=copy.deepcopy(DRIVE), retryOnFail=True, maxTries=3, waitBetweenTries=5000)
+     3, credentials=copy.deepcopy(DRIVE), retryOnFail=True, maxTries=3, waitBetweenTries=5000,
+     onError="continueErrorOutput")   # (12/10) lỗi tải (vd DNS chập chờn 21:10) -> mở khoá ngay, không treo Processing 6 giờ
 node("Gửi cổng chép lời", "n8n-nodes-base.httpRequest", [1100, Y],
      {"method": "POST",
       "url": "={{ '" + GATE + "/jobs?captureId=' + encodeURIComponent($('Chuẩn hoá phiên').item.json.captureId)"
@@ -124,6 +125,11 @@ patch_session("Mở khoá khi cổng lỗi", [1320, Y + 180],
               page_expr="={{ 'https://api.notion.com/v1/pages/' + $('Chuẩn hoá phiên').item.json.sessionPageId }}")
 chain("Mỗi 5 phút", "Tìm phiên đã upload", "Chuẩn hoá phiên", "Khoá phiên (đang chép lời)", "Tải audio từ Drive", "Gửi cổng chép lời")
 link("Gửi cổng chép lời", "Mở khoá khi cổng lỗi", 1)
+patch_session("Mở khoá khi tải Drive lỗi", [1100, Y + 360],
+              "={{ JSON.stringify({ properties: { State: { select: { name: 'Uploaded' } }, 'Analysis Key': { rich_text: [] },"
+              " 'Processing Notes': { rich_text: [{ text: { content: 'Tải audio từ Drive lỗi lúc ' + $now.setZone('Asia/Ho_Chi_Minh').toFormat('dd/MM HH:mm') + ' (mạng / Drive) — tự thử lại lượt sau.' } }] } } }) }}",
+              page_expr="={{ 'https://api.notion.com/v1/pages/' + $('Chuẩn hoá phiên').item.json.sessionPageId }}")
+link("Tải audio từ Drive", "Mở khoá khi tải Drive lỗi", 1)
 
 # --- cứu hộ: Processing > 6 giờ và cổng không còn xử lý -> xếp hàng lại / Needs review
 Y = 360
@@ -138,17 +144,24 @@ return ($json.results || []).map(p => ({ json: { sessionPageId: p.id,
 node("Hỏi cổng còn xử lý?", "n8n-nodes-base.httpRequest", [660, Y],
      {"method": "GET", "url": "={{ '" + GATE + "/jobs?captureId=' + encodeURIComponent($json.captureId) }}",
       "options": {"response": {"response": {"neverError": True}}}}, 4.2, onError="continueRegularOutput", alwaysOutputData=True)
+# (12/10) SỬA: bản cũ đặt "chạy cho TỪNG mục" nhưng trả về MẢNG ([] / [{json}]) -> n8n báo "A 'json' property isn't an object"
+# ngay lần đầu có phiên kẹt (18:00 12/10, phiên Giải tích) -> CẢ luồng phân tích mỗi 5 phút lỗi theo -> không phiên nào được chép lời.
+# Nay chạy MỘT LẦN cho cả danh sách, ghép phiên kẹt i với câu trả lời của cổng chép lời i (nút HTTP trả đúng 1 mục / phiên, theo thứ tự).
 code("Quyết định cứu hộ", [880, Y], r"""
-const s = $('Tách phiên kẹt').item.json, g = $json || {};
-if (g.status === 'queued' || g.status === 'running') return [];                  // cổng còn đang chép lời: để yên
-const m = s.notes.match(/lần thử (\d+)/); const tries = m ? Number(m[1]) : 1;
+const ss = $('Tách phiên kẹt').all(), gs = $input.all(), out = [];
 const stamp = $now.setZone('Asia/Ho_Chi_Minh').toFormat('dd/MM HH:mm');
-const props = tries >= 3
-  ? { State: { select: { name: 'Needs review' } }, 'Processing Notes': { rich_text: [{ text: { content: `Xử lý lỗi ${tries} lần (${stamp}) — cần xem lại.` } }] } }
-  : { State: { select: { name: 'Uploaded' } }, 'Analysis Key': { rich_text: [] },
-      'Processing Notes': { rich_text: [{ text: { content: `Xử lý bị treo/lỗi — xếp hàng chạy lại (lần thử ${tries + 1}) lúc ${stamp}.` } }] } };
-return [{ json: { sessionPageId: s.sessionPageId, body: { properties: props } } }];
-""", each=True)
+for (let i = 0; i < ss.length; i++) {
+  const s = ss[i].json, g = (gs[i] && gs[i].json) || {};
+  if (g.status === 'queued' || g.status === 'running') continue;                 // cổng còn đang chép lời: để yên
+  const m = (s.notes || '').match(/lần thử (\d+)/); const tries = m ? Number(m[1]) : 1;
+  const props = tries >= 3
+    ? { State: { select: { name: 'Needs review' } }, 'Processing Notes': { rich_text: [{ text: { content: `Xử lý lỗi ${tries} lần (${stamp}) — cần xem lại.` } }] } }
+    : { State: { select: { name: 'Uploaded' } }, 'Analysis Key': { rich_text: [] },
+        'Processing Notes': { rich_text: [{ text: { content: `Xử lý bị treo/lỗi — xếp hàng chạy lại (lần thử ${tries + 1}) lúc ${stamp}.` } }] } };
+  out.push({ json: { sessionPageId: s.sessionPageId, body: { properties: props } } });
+}
+return out;
+""")
 patch_session("Xếp hàng lại", [1100, Y], "={{ JSON.stringify($json.body) }}")
 link("Mỗi 5 phút", "Tìm phiên kẹt")
 chain("Tìm phiên kẹt", "Tách phiên kẹt", "Hỏi cổng còn xử lý?", "Quyết định cứu hộ", "Xếp hàng lại")
@@ -169,7 +182,8 @@ const dt = n => (P[n] && P[n].date && P[n].date.start) || '';
 return [{ json: { sessionPageId: p.id, captureId: b.captureId, status: b.status, reason: b.reason || '', stats: b.stats || {},
   compact: b.compact || '', excerpts: b.excerpts || [], transcript: b.transcript || '', slides: b.slides || [],
   audioUrl: (P['Audio URL'] && P['Audio URL'].url) || '', startedAt: dt('Started At') || b.startedAt || '',
-  endedAt: dt('Ended At') || b.endedAt || '', kind: b.kind === 'meeting' ? 'meeting' : 'lecture' } }];
+  endedAt: dt('Ended At') || b.endedAt || '', kind: b.kind === 'meeting' ? 'meeting' : 'lecture',
+  notes: ((P['Processing Notes'] || {}).rich_text || []).map(t => t.plain_text).join('') } }];   // (12/10) đếm lần thử khi Gemini trả JSON lỗi
 """)
 iff("Audio dùng được?", [660, Y], "={{ $json.status === 'done' }}")
 patch_session("Ghi: audio không dùng được", [880, Y + 200],
@@ -242,7 +256,8 @@ const arr = n => (x && Array.isArray(x[n]) ? x[n] : []).map(str).filter(Boolean)
 const s = $('Gom dữ liệu phiên').item.json, req = $('Dựng yêu cầu Gemini (chữ)').item.json;
 const u = $json.usageMetadata || {};
 const meeting = s.kind === 'meeting';
-return { json: { ok: !!x, is_lecture: !!x && x.is_lecture !== false, kind: s.kind,
+// (12/10) JSON đọc lỗi -> is_lecture = null (KHÔNG phải "không phải bài giảng": bản 08/10 bị gán sai như vậy, độ tin cậy 0%, tiêu đề = mã bản ghi)
+return { json: { ok: !!x, is_lecture: x ? x.is_lecture !== false : null, kind: s.kind,
   title: ((meeting ? 'Biên bản họp: ' : '') + (str(x && x.title) || ((meeting ? 'Cuộc họp ' : 'Bài giảng ') + s.captureId))).slice(0, 180),
   participants: arr('participants'), decisions: arr('decisions'), action_items: arr('action_items'),
   summary: str(x && x.summary).slice(0, 1900), key_concepts: arr('key_concepts'), definitions: arr('definitions'), formulas: arr('formulas'),
@@ -253,9 +268,16 @@ return { json: { ok: !!x, is_lecture: !!x && x.is_lecture !== false, kind: s.kin
 """, each=True)
 iff("Có nội dung bài giảng?", [1760, Y],
     "={{ $json.ok && $json.is_lecture && $json.confidence >= 0.35 && !!($json.summary || $json.key_concepts.length || $json.important_points.length) }}")
+# (12/10) Gemini trả JSON không đọc được -> nói ĐÚNG lý do + tự xếp hàng chạy lại (tối đa 3 lần, đếm trong Processing Notes); chỉ khi
+# Gemini đọc được và thật sự chấm không phải bài giảng mới ghi "không có nội dung bài giảng".
 patch_session("Ghi: không phải bài giảng", [1980, Y + 200],
-              "={{ JSON.stringify({ properties: { State: { select: { name: 'Needs review' } },"
-              " 'Processing Notes': { rich_text: [{ text: { content: ('Gemini (đọc bản nén chữ) đánh giá KHÔNG có nội dung bài giảng rõ ràng: ' + $json.title + ' (độ tin cậy ' + Math.round($json.confidence * 100) + '%). ' + $json.unclear_points.join('; ')).slice(0, 1900) } }] } } }) }}",
+              "={{ (() => { const prev = String($('Gom dữ liệu phiên').item.json.notes || ''); const m = prev.match(/JSON lỗi lần (\\d+)/);"
+              " const n = (m ? Number(m[1]) : 0) + 1; const stamp = $now.setZone('Asia/Ho_Chi_Minh').toFormat('dd/MM HH:mm');"
+              " if (!$json.ok && n <= 3) return JSON.stringify({ properties: { State: { select: { name: 'Uploaded' } }, 'Analysis Key': { rich_text: [] },"
+              " 'Processing Notes': { rich_text: [{ text: { content: 'Gemini trả kết quả KHÔNG đọc được (lỗi định dạng, không phải do nội dung) — JSON lỗi lần ' + n + ' lúc ' + stamp + ', tự chạy lại.' } }] } } });"
+              " return JSON.stringify({ properties: { State: { select: { name: 'Needs review' } },"
+              " 'Processing Notes': { rich_text: [{ text: { content: (!$json.ok ? ('Gemini trả kết quả không đọc được ' + (n - 1) + ' lần — cần xem lại (bản chép lời vẫn còn trong cổng chép lời).')"
+              " : ('Gemini (đọc bản nén chữ) đánh giá KHÔNG có nội dung bài giảng rõ ràng: ' + $json.title + ' (độ tin cậy ' + Math.round($json.confidence * 100) + '%). ' + $json.unclear_points.join('; '))).slice(0, 1900) } }] } } }); })() }}",
               page_expr="={{ 'https://api.notion.com/v1/pages/' + $('Gom dữ liệu phiên').item.json.sessionPageId }}")
 notion("Tạo Lecture Note", [1980, Y], "POST", "https://api.notion.com/v1/pages",
        "={{ JSON.stringify({ parent: { database_id: '" + NOTES_DB + "' }, properties: Object.assign({"
