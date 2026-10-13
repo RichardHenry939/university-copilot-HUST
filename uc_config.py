@@ -38,3 +38,10 @@ def n8n_cred(kind, name):
 def n8n_workflow(key):
     """ID workflow n8n trên máy (copilot | lecture_capture | lecture_analysis)."""
     return _load()["n8n_workflows"][key]
+
+
+def n8n_legacy(key, default=None):
+    """ID workflow n8n CŨ (đã gộp / lưu trữ) theo tên logic (A1…S6, lecture_recorder_v1, archive_1…).
+    Thiếu khoá -> trả default (None nếu không đưa); build.py cần khoá A1…S6 để mở file mẫu <ID>.json."""
+    v = _load().get("n8n_legacy_workflows", {}).get(key)
+    return v if v and not v.startswith("<") else default

@@ -1,10 +1,11 @@
+import os
 import sys   # đối số 1: đường dẫn một bản ghi bài giảng (mp3/wav)
 from datetime import datetime, timedelta
 from faster_whisper import WhisperModel
 from audio_io import load
 T0 = datetime(2026, 9, 24, 8, 24, 29); sr = 16000
 a = load(sys.argv[1])
-m = WhisperModel(r"D:\AI\models\phowhisper-large-ct2", device="cpu", compute_type="int8", cpu_threads=8)
+m = WhisperModel(os.environ.get("PHOWHISPER_CT2_DIR") or os.path.join(os.environ.get("UC_AI_DIR") or os.path.join(os.path.expanduser("~"), "AI"), "models", "phowhisper-large-ct2"), device="cpu", compute_type="int8", cpu_threads=8)
 for hh, mm in ((9, 20), (10, 20), (10, 52), (11, 4)):
     off = int((datetime(2026, 9, 24, hh, mm) - T0).total_seconds())
     segs, _ = m.transcribe(a[off*sr:(off+300)*sr], language="vi", beam_size=5, vad_filter=True,

@@ -46,6 +46,22 @@
     "googleDriveOAuth2Api": "<n8n-credential-id>",
     "openAiApi": "<n8n-credential-id>"
   },
+  "n8n_workflows": {
+    "copilot": "<n8n-workflow-id>",
+    "lecture_capture": "<n8n-workflow-id>",
+    "lecture_analysis": "<n8n-workflow-id>"
+  },
+  "n8n_legacy_workflows": {
+    "A1": "<n8n-workflow-id>",
+    "A2": "<n8n-workflow-id>",
+    "A3": "<n8n-workflow-id>",
+    "A4": "<n8n-workflow-id>",
+    "S5": "<n8n-workflow-id>",
+    "S6": "<n8n-workflow-id>",
+    "lecture_recorder_v1": "<n8n-workflow-id>",
+    "archive_1": "<n8n-workflow-id>",
+    "archive_2": "<n8n-workflow-id>"
+  },
   "paths": {
     "uni_documents": "C:/Users/you/Documents/Uni-Documents",
     "chrome_profile": "C:/uc-data/chrome-profile",

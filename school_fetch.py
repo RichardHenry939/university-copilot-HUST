@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Đọc dữ liệu chính thức của trường (Claude 2026-10-03) — qldt.hust.edu.vn (eHUST web) + ctsv.hust.edu.vn (iCTSV).
 
-Chạy Chrome thật trên máy với hồ sơ RIÊNG D:\\Tools\\uc-sync\\chrome-profile (không đụng hồ sơ Chrome chính).
+Chạy Chrome thật trên máy với hồ sơ RIÊNG (config.json → paths.chrome_profile) (không đụng hồ sơ Chrome chính).
   python school_fetch.py --login   mở cửa sổ Chrome để BẠN tự đăng nhập Office 365 một lần ("Duy trì đăng nhập": Có)
   python school_fetch.py           đọc ngầm (headless), ghi school/latest.json
 

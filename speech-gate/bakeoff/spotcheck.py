@@ -1,9 +1,10 @@
+import os
 import sys
 from faster_whisper import WhisperModel
 from audio_io import load
 a = load(sys.argv[1])
 print("duration min", round(len(a)/16000/60,1))
-m = WhisperModel(r"D:\AI\models\phowhisper-large-ct2", device="cpu", compute_type="int8", cpu_threads=8)
+m = WhisperModel(os.environ.get("PHOWHISPER_CT2_DIR") or os.path.join(os.environ.get("UC_AI_DIR") or os.path.join(os.path.expanduser("~"), "AI"), "models", "phowhisper-large-ct2"), device="cpu", compute_type="int8", cpu_threads=8)
 for start_min in (30, 90, 150):
     seg = a[start_min*60*16000:(start_min*60+60)*16000]
     segs, _ = m.transcribe(seg, language="vi", beam_size=5, vad_filter=True, vad_parameters={"threshold":0.3})

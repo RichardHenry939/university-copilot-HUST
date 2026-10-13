@@ -70,7 +70,7 @@ sealed class StartRequest
 sealed class Recorder
 {
     public const int Rate = 16000;
-    static readonly string Root = Environment.GetEnvironmentVariable("LRC_RECORDING_DIR") is { Length: > 0 } d ? d : @"D:\Data\LectureRecorder";
+    static readonly string Root = Environment.GetEnvironmentVariable("LRC_RECORDING_DIR") is { Length: > 0 } d ? d : Path.Combine(Environment.GetEnvironmentVariable("UC_DATA_DIR") is { Length: > 0 } u ? u : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "uc-data"), "LectureRecorder");
     static readonly string ConfigPath = Path.Combine(Root, "config.json");
     const string CaptureUrl = "http://localhost:5678/webhook/lecture-capture-upload";
     const int MinCapMinutes = 190;            // 3h10 — người dùng chốt

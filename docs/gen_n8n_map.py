@@ -173,13 +173,18 @@ ORPHAN_NOTE = {
     "Lecture Recorder Control": "bảng cũ — companion v2 thay thế",
     "🤖 Agent Suggestions": "chạy thử đã vô hiệu theo ý bạn",
 }
+# ID workflow cũ lấy từ config.json → n8n_legacy_workflows (không viết ID thật vào code); khoá thiếu thì bỏ qua.
+_LEGACY_WHY = {
+    "A1": "→ gộp thành A1", "A2": "→ gộp thành A2", "A3": "→ gộp thành A3",
+    "A4": "→ gộp thành A4", "S5": "→ gộp thành S5", "S6": "→ gộp thành S6",
+    "lecture_recorder_v1": "thay bằng companion v2 + tab Ghi bài giảng",
+    "archive_1": "lưu trữ", "archive_2": "lưu trữ",
+}
 OFF_WHY = {
-    "jJEKXFiaNFd5658j": "→ gộp thành A1", "nnIyFww4eY5qdSgM": "→ gộp thành A2", "WyAsZmZOXqR8yibs": "→ gộp thành A3",
-    "VsytHV7Cuy21P66F": "→ gộp thành A4", "i1DOTALMrMxYwJOI": "→ gộp thành S5", "7fD3LcYmOr3KMDvx": "→ gộp thành S6",
+    **{cfg.n8n_legacy(k): why for k, why in _LEGACY_WHY.items() if cfg.n8n_legacy(k)},
     "phaseICouncilBridge": "→ gộp thành C9", "phaseHHealthPing1": "→ gộp thành H10", "phaseHRecon00001": "→ gộp thành R10",
     "phaseB0000000001": "→ gộp thành QU", "phaseJConductor001": "thay bằng lịch trong workflow hợp nhất",
-    "FEsOtrkuJMkhHXem": "thay bằng companion v2 + tab Ghi bài giảng", "proxyBridge0000001": "thay bằng Cổng Notion",
-    "cbTbVGMIeTFytToa": "lưu trữ", "klp1BO7fDUx6cXox": "lưu trữ",
+    "proxyBridge0000001": "thay bằng Cổng Notion",
     "phaseEConverter01": "⚠ CHƯA GỘP — đề xuất đã duyệt không được chuyển",
 }
 

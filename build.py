@@ -61,13 +61,13 @@ def sid(*parts):
 
 # --------------------------------------------------------------------------- merge
 SECTIONS = [
-    # prefix, source id, title, {old trigger name: new cron or None to keep}, run-now webhook
-    ("A1", "jJEKXFiaNFd5658j", "Mục 2 · Intake: TKB / Deadline (Codex)", {"Every 15 Minutes": "0 0/15 * * * *"}, True),
-    ("A2", "nnIyFww4eY5qdSgM", "Mục 3·30 · University Inbox: tài liệu (Codex)", {"Every 15 Minutes": "0 5/15 * * * *"}, True),
-    ("A3", "WyAsZmZOXqR8yibs", "Mục 3·40 · Coursework Breakdown (Codex)", {"Every 15 Minutes": "0 10/15 * * * *"}, True),
-    ("A4", "VsytHV7Cuy21P66F", "Mục 6 · Dynamic Daily Planning (Codex)", {}, True),
-    ("S5", "i1DOTALMrMxYwJOI", "Mục 5 · Progress Recorder (Codex)", {"Every 30 Minutes": "0 20/30 * * * *"}, True),
-    ("S6", "7fD3LcYmOr3KMDvx", "Mục 7 · Material Recommendations (Codex)", {}, True),
+    # prefix, source id (ID workflow n8n gốc = tên file mẫu <ID>.json; A1…S6 lấy từ config.json → n8n_legacy_workflows), title, {old trigger name: new cron or None to keep}, run-now webhook
+    ("A1", cfg.n8n_legacy("A1"), "Mục 2 · Intake: TKB / Deadline (Codex)", {"Every 15 Minutes": "0 0/15 * * * *"}, True),
+    ("A2", cfg.n8n_legacy("A2"), "Mục 3·30 · University Inbox: tài liệu (Codex)", {"Every 15 Minutes": "0 5/15 * * * *"}, True),
+    ("A3", cfg.n8n_legacy("A3"), "Mục 3·40 · Coursework Breakdown (Codex)", {"Every 15 Minutes": "0 10/15 * * * *"}, True),
+    ("A4", cfg.n8n_legacy("A4"), "Mục 6 · Dynamic Daily Planning (Codex)", {}, True),
+    ("S5", cfg.n8n_legacy("S5"), "Mục 5 · Progress Recorder (Codex)", {"Every 30 Minutes": "0 20/30 * * * *"}, True),
+    ("S6", cfg.n8n_legacy("S6"), "Mục 7 · Material Recommendations (Codex)", {}, True),
     ("C9", "phaseICouncilBridge", "Mục 9 · Council Bridge (Freebuff)", {}, False),
     ("H10", "phaseHHealthPing1", "Mục 10 · Health Ping (Freebuff)", {"Health Ping · 6h": "0 0 */6 * * *"}, False),
     ("R10", "phaseHRecon00001", "Mục 10 · Reconciliation (Freebuff)", {"Reconcile · 6h": "0 30 */6 * * *"}, False),
@@ -96,6 +96,8 @@ def rename_refs(value, names):
     return value
 
 def merge_section(prefix, src_id, title, retime, run_now, y_off):
+    if not src_id:
+        raise SystemExit(f"Thiếu config.json → n8n_legacy_workflows.{prefix} (ID workflow gốc = tên file mẫu trong n8n_template_dir)")
     w = json.load(open(os.path.join(SRC, src_id + ".json"), encoding="utf-8-sig"))
     nodes = [n for n in w["nodes"] if n["type"] not in DROP_TYPES and not n["name"].startswith("DR ")]
     keep = {n["name"] for n in nodes}

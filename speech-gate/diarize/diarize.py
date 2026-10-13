@@ -6,8 +6,8 @@ Cần token Hugging Face (người dùng tự đăng nhập: .venv\\Scripts\\hf.
 pyannote/speaker-diarization-community-1 (hoặc 3.1 + segmentation-3.0). Không có token -> thoát mã 3, cổng chép lời bỏ qua bước này."""
 import json, os, sys, time
 
-# (11/10) model tải về ổ D:, không vào C: (luật của chủ: C: chỉ cho hệ điều hành). Token vẫn ở chỗ mặc định của hf auth login.
-os.environ.setdefault('HF_HUB_CACHE', r'D:\AI\Cache\huggingface\hub')
+# (11/10) model tải về thư mục AI riêng (UC_AI_DIR), không vào ổ hệ điều hành. Token vẫn ở chỗ mặc định của hf auth login.
+os.environ.setdefault('HF_HUB_CACHE', os.path.join(os.environ.get('UC_AI_DIR') or os.path.join(os.path.expanduser('~'), 'AI'), 'Cache', 'huggingface', 'hub'))
 os.environ.setdefault('HF_HUB_DISABLE_SYMLINKS_WARNING', '1')
 
 

@@ -192,7 +192,7 @@ comp_bottom = card(108, COMP_Y, 900, None, "", "LectureRecorderCompanion", "C# .
       "Ngắt an toàn 3 h 30 (yêu cầu ≥ 3 h 10), có cảnh báo trước",
       "Nguồn: micro · âm thanh cả máy · âm thanh riêng 1 app · Teams qua cáp riêng VB-CABLE (chỉ bắt Teams, bạn vẫn nghe bình thường) · trộn micro",
       "Im lặng 30 giây → cảnh báo ngay trên UC",
-      "16 kHz mono, bơm theo đồng hồ thật → D:\\…\\Documents\\LectureRecorder"])
+      "16 kHz mono, bơm theo đồng hồ thật → %UC_DATA_DIR%\\LectureRecorder"])
 steps = [
     "Bấm Start ở tab Ghi bài giảng (Copilot)",
     "Companion ghi; marker / ảnh slide gửi kèm trong giờ",
@@ -250,7 +250,7 @@ e4 = row(R4, [
     (X[0], CW * 2 + GAP, "", "Webhook cho web app", "đều cần header X-Copilot-Key",
      ["copilot-suggest · copilot-file-ingest · copilot-lectures · copilot-lecture-reanalyze · copilot-brief",
       "Mỗi agent có thêm webhook “chạy ngay”: copilot-run-a1 … a4, s5, s6"], INK),
-    (X[2], CW * 2 + GAP, "", "Đã tắt, giữ làm bản lưu", "16 workflow · sao lưu D:\\Tools\\n8n-temp",
+    (X[2], CW * 2 + GAP, "", "Đã tắt, giữ làm bản lưu", "16 workflow · sao lưu <thư mục mã nguồn>\\n8n-temp",
      ["Agent 2/3/4, Service 5/6, Conductor, Council Bridge, Quick Upload, Reconciliation, Health Ping, Suggestion Converter, Create Deadline, TEMP Proxy, 2 bản ARCHIVED",
       "Lecture Recorder Control Bridge — tắt hẳn để chặn tự ghi âm"], INK3)])
 # --- Nhịp chạy trong ngày (trục 24 h) trong vùng n8n
@@ -361,25 +361,25 @@ para(3908, yb + 20, "Chủ tọa là bạn: AI chỉ đề xuất, quyết đị
 AIW = 690
 AX = [108 + i * (AIW + 20) for i in range(4)]
 AI_Y = 2516
-AI_H = max(card_h(AIW, m_, l_) for m_, l_ in [("gemini_gate.py · :8350 · D:/Data/GeminiGate", ["Đếm token theo ngày (giờ PT, reset 14:00 VN), theo model và theo nơi gọi", "Ưu tiên theo việc; chạm 80 % thì hạ cấp", "Flash ↔ Flash-Lite → LM Studio (chỉ văn bản); tool-call nhận 429 để n8n tự lùi"]),("lms · :1234 · model trên D:/AI/Models", ["qwen3-14b trên GPU Arc 140V · khung 16k token", "Dùng cho: xếp file, nén bài giảng, bản tin, ghế Local AI, dự phòng của cổng", "qwen3-8b: dự phòng não Copilot"])])
+AI_H = max(card_h(AIW, m_, l_) for m_, l_ in [("gemini_gate.py · :8350 · %UC_DATA_DIR%/GeminiGate", ["Đếm token theo ngày (giờ PT, reset 14:00 VN), theo model và theo nơi gọi", "Ưu tiên theo việc; chạm 80 % thì hạ cấp", "Flash ↔ Flash-Lite → LM Studio (chỉ văn bản); tool-call nhận 429 để n8n tự lùi"]),("lms · :1234 · model trên D:/AI/Models", ["qwen3-14b trên GPU Arc 140V · khung 16k token", "Dùng cho: xếp file, nén bài giảng, bản tin, ghế Local AI, dự phòng của cổng", "qwen3-8b: dự phòng não Copilot"])])
 Z12H = AI_Y - 2440 + AI_H + 70
 zone(80, 2440, 2940, Z12H, "12", "Tầng AI · cổng hạn mức", "Gemini miễn phí là tài nguyên khan hiếm: mọi lời gọi đi qua cổng; việc nặng chạy trên máy", Z_AI, new=True, inline=True)
 AIW = 690
 AX = [108 + i * (AIW + 20) for i in range(4)]
 AI_Y = 2516
 AI_BOT = row(AI_Y, [
-    (AX[0], AIW, "", "Cổng Gemini", "gemini_gate.py · :8350 · D:\\Data\\GeminiGate",
+    (AX[0], AIW, "", "Cổng Gemini", "gemini_gate.py · :8350 · %UC_DATA_DIR%\\GeminiGate",
      ["Đếm token theo ngày (giờ PT, reset 14:00 VN), theo model và theo nơi gọi",
       "Ưu tiên theo việc; chạm 80 % thì hạ cấp",
       "Flash ↔ Flash-Lite → LM Studio (chỉ văn bản); tool-call nhận 429 để n8n tự lùi"], RED),
     (AX[1], AIW, "", "Gemini API (miễn phí)", "3.5 Flash · 3.5 Flash-Lite",
      ["Gọi bởi: A1, A3, H10, não Copilot, Lecture Analysis", "Chỉ nhận chữ và ảnh slide — không nhận audio",
       "Ghế Gemini trong hội đồng dùng khoá riêng"], TEAL),
-    (AX[2], AIW, "", "LM Studio", "lms · :1234 · model trên D:\\AI\\Models",
+    (AX[2], AIW, "", "LM Studio", "lms · :1234 · model trên %UC_AI_DIR%\\Models",
      ["qwen3-14b trên GPU Arc 140V · khung 16k token",
       "Dùng cho: xếp file, nén bài giảng, bản tin, ghế Local AI, dự phòng của cổng",
       "qwen3-8b: dự phòng não Copilot"], TEAL),
-    (AX[3], AIW, "", "Cổng chép lời", "speech_gate.py · :8340 · D:\\Data\\SpeechGate",
+    (AX[3], AIW, "", "Cổng chép lời", "speech_gate.py · :8340 · %UC_DATA_DIR%\\SpeechGate",
      ["VAD: ≥ 3 phút tiếng nói và ≥ 5 % thời lượng; không đạt → unusable",
       "PhoWhisper-large INT8 trên NPU (~4,5× thời gian thực); NPU lỗi → CPU",
       "Lọc câu bịa, nén bằng Qwen theo đoạn 8 phút"], TEAL)])
@@ -392,8 +392,8 @@ row(2526, [
       "Ảnh TKB / tài liệu thả vào được Mục 1, 2, 3·30 đọc"], INK),
     (3918, 774, "", "Ổ D: (C: chỉ cho Windows)", "mọi công cụ, model, cache, dữ liệu",
      ["Uni-Documents — tài liệu đã xếp theo môn", "Documents\\LectureRecorder — file ghi âm",
-      "D:\\Tools — mã nguồn: university-copilot, agentchattr, speech-gate, gemini-gate",
-      "D:\\AI — model + cache (LM Studio, PhoWhisper, OpenVINO)"], INK)])
+      "<thư mục mã nguồn> — mã nguồn: university-copilot, agentchattr, speech-gate, gemini-gate",
+      "%UC_AI_DIR% — model + cache (LM Studio, PhoWhisper, OpenVINO)"], INK)])
 
 
 
@@ -471,7 +471,7 @@ row(fy, [
 # COL F — 16 · Đồng bộ trường (qldt + iCTSV → Notion)
 FX, FW = 6360, 1560
 zone(FX, 440, FW, 1940, "16", "Đồng bộ trường", "qldt (eHUST web) + iCTSV → Notion · không còn nhập tay TKB, vắng, điểm, rèn luyện", "#F3F6F2", new=True)
-gy_ = card(FX + 28, 556, FW - 56, None, "", "Đọc trường · school_fetch.py", "Playwright · Chrome thật · hồ sơ riêng D:\\Tools\\uc-sync\\chrome-profile (không đụng Chrome chính)",
+gy_ = card(FX + 28, 556, FW - 56, None, "", "Đọc trường · school_fetch.py", "Playwright · Chrome thật · hồ sơ riêng (paths.chrome_profile) (không đụng Chrome chính)",
      ["qldt: TKB chi tiết (tuần, tiết, phòng, online), vắng theo điểm danh, bảng điểm chi tiết + tổng hợp, khung CTĐT 8 kỳ",
       "iCTSV: điểm rèn luyện + hoạt động ngoại khoá đã đăng ký, hạn nộp minh chứng, đang mở, học bổng (API JSON của chính trang, chỉ đọc) → Mục 17",
       "qldt: chỉ đọc bảng trang hiển thị — API qldt đã mã hoá, không phá lớp mã hoá",

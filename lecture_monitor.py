@@ -6,7 +6,7 @@ cổng chép lời :8340 (chép lời, nén bằng LM Studio) -> n8n "Lecture An
 Ra: school/lecture_pipeline.json (từng buổi: 8 bước) + school/lecture_errors.log (mọi lỗi, mỗi lỗi 1 lần,
 đủ để đem đi sửa mà không phải đọc lại nhật ký n8n). Tab Ghi bài giảng → mục "Đang tải lên" đọc /api/lecture-monitor."""
 import uc_config as cfg
-import datetime as dt, json, re, threading, time, urllib.parse, urllib.request
+import datetime as dt, json, os, re, threading, time, urllib.parse, urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -14,7 +14,7 @@ OUT = HERE / 'school' / 'lecture_pipeline.json'
 ERRLOG = HERE / 'school' / 'lecture_errors.log'
 RECORDER = 'http://127.0.0.1:5681'
 GATE = 'http://127.0.0.1:8340'
-GATE_LOG = Path(r'D:\Data\SpeechGate\speech-gate.log')
+GATE_LOG = Path(os.environ.get('SPEECH_GATE_DIR') or Path(os.environ.get('UC_DATA_DIR') or Path.home() / 'uc-data') / 'SpeechGate') / 'speech-gate.log'
 WF_CAPTURE, WF_ANALYSIS = cfg.n8n_workflow("lecture_capture"), cfg.n8n_workflow("lecture_analysis")
 TZ = dt.timezone(dt.timedelta(hours=7))
 STEPS = [('rec', 'Ghi âm'), ('upload', 'Gửi n8n'), ('drive', 'Lưu Drive'), ('session', 'Phiên Notion'),
