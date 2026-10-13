@@ -171,7 +171,7 @@ def apply(post, snap):
         groups = " · ".join(p["groups"])
         if groups != (cprop(c, "Nhóm HP (trường)") or ""):
             patch(c, "Nhóm HP (trường)", rt(groups), f"{code}: nhóm HP “{groups[:60]}”")
-        m = re.search(r"\b([ABCD]\+?|F)\b", p["grade"] or "")
+        m = re.search(r"\b([ABCD]\+?|F)(?!\w)", p["grade"] or "")   # (?!\w) thay \b: sau "+" không có ranh giới từ -> "B+" từng bị đọc thành "B"
         if m and not c.get("improve"):
             g4, res = G4[m.group(1)], ("Fail" if m.group(1) == "F" else "Pass")
             if (c["gpa4"], c["result"]) != (g4, res):
