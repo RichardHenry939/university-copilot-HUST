@@ -60,6 +60,8 @@ def keep(at, *texts, now=None):
     y = _year_of(at)
     if y:
         for m in DM.finditer(re.sub(r'\d{1,2}[/.\-]\d{1,2}[/.\-]20\d{2}', ' ', txt)):
+            # "3.2", "8.5" là điểm số (CPA, rèn luyện…), không phải ngày: dạng chấm chỉ nhận khi ngày có 2 chữ số ("24.10")
+            if m.group(0)[len(m.group(1))] == '.' and len(m.group(1)) < 2: continue
             try: ds.append(dt.date(y, int(m.group(2)), int(m.group(1))))
             except ValueError: pass
     if ds: return any(d >= now.date() for d in ds)

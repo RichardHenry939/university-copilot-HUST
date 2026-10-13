@@ -198,3 +198,14 @@ def test_split_counts_hidden():
     items = [{'at': '2026-10-01', 't': 'hạn 20/10/2026'}, {'at': '2025-01-01', 't': 'cũ'}, {'at': '2026-10-10', 't': None}]
     kept, hidden = sf.split(items, 'at', ['t'], now=NOW)
     assert [i['at'] for i in kept] == ['2026-10-01', '2026-10-10'] and hidden == 1
+
+
+@pytest.mark.parametrize('text', ['Học bổng KKHT: CPA từ 3.2 trở lên', 'Điểm rèn luyện từ 8.5', 'GPA ≥ 2.5, điểm TOEIC 4.5'])
+def test_keep_decimal_scores_are_not_dates(text):
+    # "3.2" là điểm số, không phải ngày 03/02: thông báo mới gửi không ghi ngày nào -> phải được giữ
+    assert sf.keep('2026-10-10', text, now=NOW) is True
+
+
+@pytest.mark.parametrize('text, kept', [('Nộp trước 24.10', True), ('Nộp trước 24.09', False), ('Hạn 05.11', True)])
+def test_keep_dotted_day_month_still_dates(text, kept):
+    assert sf.keep('2026-10-01', text, now=NOW) is kept
