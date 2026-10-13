@@ -1,5 +1,13 @@
 # University Copilot (UC)
 
+| 🇻🇳 Tổng quan | 🇬🇧 Overview |
+|---|---|
+| Trợ lý học tập chạy **trên laptop Windows** của một sinh viên HUST: **chỉ đọc** 6 hệ thống của trường, gộp lịch / hạn / sự kiện vào Notion và nhắc đúng mốc lên máy tính và điện thoại. | A study assistant that runs **on a HUST student's Windows laptop**: it **reads** six university systems (read-only), merges schedules / deadlines / events into Notion, and sends reminders at exact times to the laptop and the phone. |
+| Thành phần: web app Python (`127.0.0.1:8320`), n8n trong Docker (`:5678`), LM Studio, cổng chép lời (`:8340`), máy ghi bài giảng .NET 8 (`:5681`). | Components: a Python web app (`127.0.0.1:8320`), n8n in Docker (`:5678`), LM Studio, a speech gate (`:8340`), a .NET 8 lecture recorder (`:5681`). |
+| Đây là công cụ cá nhân: một số phần (mẫu workflow n8n, cấu trúc Notion, cổng Gemini) **chưa có trong repo**. | This is a personal tool: some parts (n8n workflow templates, the Notion schema, the Gemini gate) are **not in this repo yet**. |
+
+**Tài liệu · Docs:** [Cài đặt / Install](docs/CAI-DAT.md) · [Kiến trúc / Architecture](docs/KIEN-TRUC.md) · [Hỏi đáp / FAQ](docs/HOI-DAP.md) *(tiếng Việt)*
+
 > **EN summary:** a personal "copilot" for a HUST student. It reads six official university systems (Outlook mail, Microsoft Teams, eHUST/qldt, iCTSV, the SoICT MOOC and FAMI) in **read-only** mode. It merges everything into one Notion workspace and pushes **time-precise reminders** to the laptop and the phone. AI (Gemini + a local LLM) extracts events from emails and classifies deadlines; n8n orchestrates the Notion side. Built by orchestrating several AIs in phases, each taking over when the previous one hit its limits (Notion AI → ChatGPT → Codex → Freebuff + Codex → Claude Code): I defined the problem, designed the architecture and rules, coordinated the agents, and tested everything on my own semester.
 
 ---
@@ -163,6 +171,8 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 ## Chạy thử
 
 > Đây là công cụ cá nhân, gắn với tài khoản sinh viên HUST và workspace Notion của tôi. Repo này để tham khảo cách làm, chưa phải sản phẩm cài một lần là chạy.
+>
+> Hướng dẫn chi tiết từng bước (kèm những phần còn thiếu trong repo): [docs/CAI-DAT.md](docs/CAI-DAT.md). Lỗi thường gặp: [docs/HOI-DAP.md](docs/HOI-DAP.md).
 
 1. Cài Python 3.12+ và `pip install playwright keyring`, rồi `playwright install chrome`.
 2. Sao chép `config.example.json` thành `config.json`, điền ID database Notion, ID credential n8n, ID workflow n8n (`n8n_workflows`, `n8n_legacy_workflows`) và các đường dẫn.
