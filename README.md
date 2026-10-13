@@ -169,6 +169,18 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 4. Cất tài khoản trường: `python school_cred.py`. Mật khẩu gõ vào ô ẩn và được lưu trong Windows Credential Manager.
 5. Sinh workflow n8n: `python build.py`. Mở giao diện: `open_copilot.ps1`.
 
+## Chạy test
+
+Bộ test nằm trong `tests/` và chỉ kiểm phần logic thuần: học phí (`tuition_rules`, `tuition`), luật ưu tiên tiến trình của add-on máy yếu (`audio_priority`, Windows API được giả lập), hạn nộp / dời hạn / việc hết hạn, lịch học kỳ, TKB, lọc thông báo cũ.
+Không cần mạng, Windows, Notion, n8n hay LM Studio: mọi lời gọi ra ngoài đều được giả, cấu hình lấy từ `config.example.json`.
+
+```
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+GitHub Actions (`.github/workflows/tests.yml`) chạy bộ test này trên mỗi PR (Ubuntu + Windows, Python 3.12 / 3.13).
+
 ## Quyền riêng tư
 
 Repo **không** chứa dữ liệu cá nhân nào: mail, điểm, lịch, ID Notion, ID workflow n8n, đường dẫn máy cá nhân, kênh ntfy, khoá API hay mật khẩu đều không có. Mọi giá trị riêng nằm trong `config.json`, biến môi trường hoặc Credential Manager, và đều đã nằm trong `.gitignore`.
