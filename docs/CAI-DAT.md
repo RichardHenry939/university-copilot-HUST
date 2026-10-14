@@ -10,7 +10,7 @@ README đã nói rõ đây là công cụ cá nhân, "chưa phải sản phẩm 
 
 | Thiếu | Vì sao cần | Bằng chứng |
 |---|---|---|
-| **File mẫu workflow n8n** (`<n8n_template_dir>/<ID>.json`) | `python build.py` ghép workflow hợp nhất từ 10 workflow cũ, đọc từng file `<ID>.json` trong thư mục `paths.n8n_template_dir`. Thiếu file thì `build.py` dừng | `build.py:17`, `build.py:63-74`, `build.py:99`, `build.py:1356-1358` |
+| **File mẫu workflow n8n** (`<n8n_template_dir>/<ID>.json`) | `python build.py` ghép workflow hợp nhất từ 10 workflow cũ, đọc từng file `<ID>.json` trong thư mục `paths.n8n_template_dir` (ID lấy từ `n8n_legacy_workflows` A1…S6 trong `config.json`). Thiếu file thì `build.py` dừng | `build.py:17`, `build.py:63-74`, `build.py:98-101`, `build.py:1358-1360` |
 | **Workflow "Lecture Capture"** | Không có script nào trong repo tạo workflow nhận audio (`lecture-capture-upload`); `lecture_build.py` chỉ **sửa lại** workflow "Lecture Analysis" đã có sẵn (đọc nó bằng `GET /workflows/<id>`) | `meeting-lecture-recorder/Program.cs:75`, `lecture_build.py:19`, `lecture_build.py:362-375` |
 | **Cấu trúc 38 database Notion** (tên cột, kiểu cột) | Code đọc/ghi theo tên cột cụ thể (vd `Entry Kind`, `Due`, `Loại hạn`, `Sync Key`…) nhưng repo không có bản xuất / mẫu workspace | `config.example.json:2-41`, vd `deadlines.py:70-75` |
 | **Cổng Gemini `gemini_gate.py` (:8350)** | Mọi lời gọi Gemini của UC (đọc thư, phân loại hạn, phân tích bài giảng) đi qua cổng này | `mail_events.py:18`, `lecture_build.py:27`, `open_copilot.ps1:3` |
@@ -45,7 +45,7 @@ py -m playwright install chrome
 ```powershell
 Copy-Item config.example.json config.json
 ```
-Mở `config.json` và điền (`uc_config.py:24-40` đọc đúng các khối này):
+Mở `config.json` và điền (`uc_config.py:24-47` đọc đúng các khối này):
 
 | Khối | Điền gì | Ai đọc |
 |---|---|---|
@@ -54,16 +54,11 @@ Mở `config.json` và điền (`uc_config.py:24-40` đọc đúng các khối n
 | `paths.uni_documents` | Thư mục tài liệu học tập của bạn | `copilot_app.py:22`, `teams_files.py:16`, `nlm_bridge.py:11` |
 | `paths.chrome_profile` | Thư mục **trống** cho hồ sơ Chrome riêng đọc dữ liệu trường | `school_fetch.py:20` |
 | `paths.chrome_open_profile` | Thư mục **trống** cho cửa sổ Chrome "Làm bài" | `work_open.py:22` |
+| `n8n_workflows` | ID 3 workflow đang chạy: `copilot` (University — Copilot), `lecture_capture`, `lecture_analysis` | `uc_config.py:38-40`, `lecture_monitor.py:18`, `lecture_build.py:19` |
+| `n8n_legacy_workflows` | ID các workflow cũ: `A1`…`S6` là tên file mẫu mà `build.py` ghép lại (xem §0); các khoá còn lại (`lecture_recorder_v1`, `archive_*`) chỉ dùng cho sơ đồ tài liệu. Còn để `<…>` thì coi như chưa điền | `uc_config.py:43-47`, `build.py:65-70`, `build.py:98-101` |
 | `paths.n8n_template_dir` | Thư mục chứa các file mẫu workflow (xem §0) | `build.py:17` |
 
-**Bắt buộc thêm tay trên `main`:** file mẫu **chưa có** khối `n8n_workflows`, nhưng `lecture_monitor.py` đọc nó ngay khi được nạp (`lecture_monitor.py:18`, `uc_config.py:38-40`). Thêm vào `config.json`:
-```json
-"n8n_workflows": {
-  "copilot": "<id workflow University — Copilot>",
-  "lecture_capture": "<id workflow Lecture Capture>",
-  "lecture_analysis": "<id workflow Lecture Analysis>"
-}
-```
+`lecture_monitor.py` đọc `n8n_workflows` ngay khi được nạp (`lecture_monitor.py:18`). Thiếu khối này thì phần giám sát Ghi bài giảng lỗi `KeyError` (xem [HOI-DAP](HOI-DAP.md#khởi-động)).
 
 ## 4. Khoá chung `.copilot-secret` và biến môi trường
 
@@ -71,7 +66,7 @@ Mở `config.json` và điền (`uc_config.py:24-40` đọc đúng các khối n
    ```powershell
    [guid]::NewGuid().ToString('N') + [guid]::NewGuid().ToString('N') | Set-Content -NoNewline -Encoding ascii .copilot-secret
    ```
-   (Web app đọc file bằng mã hoá mặc định của Windows, còn cổng chép lời đọc bằng UTF-8: `copilot_app.py:25` và `speech-gate/speech_gate.py:453`. Dùng ASCII thì hai bên luôn đọc ra cùng một khoá.)
+   (Web app đọc file bằng mã hoá mặc định của Windows, còn cổng chép lời đọc bằng UTF-8: `copilot_app.py:25` và `speech-gate/speech_gate.py:457`. Dùng ASCII thì hai bên luôn đọc ra cùng một khoá.)
 2. **Biến môi trường User** (UC đọc cả từ registry nếu tiến trình mở trước khi đặt biến, `mail_events.py:54-57`, `n8napi.py:5-8`):
    ```powershell
    [Environment]::SetEnvironmentVariable('GEMINI_API_KEY', '<khoá Gemini của bạn>', 'User')
@@ -85,8 +80,8 @@ Mở `config.json` và điền (`uc_config.py:24-40` đọc đúng các khối n
    ```powershell
    docker run -d --name n8n --restart unless-stopped -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n
    ```
-   ⚠️ cần chủ repo xác nhận: phiên bản n8n và các biến môi trường n8n đang dùng. Workflow tự đặt múi giờ `Asia/Ho_Chi_Minh` (`build.py:21`, `build.py:1376`).
-2. n8n trong Docker gọi ngược về máy qua `host.docker.internal` (`build.py:441-489`, `lecture_build.py:25-27`). Docker Desktop có sẵn tên này.
+   ⚠️ cần chủ repo xác nhận: phiên bản n8n và các biến môi trường n8n đang dùng. Workflow tự đặt múi giờ `Asia/Ho_Chi_Minh` (`build.py:21`, `build.py:1378`).
+2. n8n trong Docker gọi ngược về máy qua `host.docker.internal` (`build.py:443-491`, `lecture_build.py:25-27`). Docker Desktop có sẵn tên này.
 3. Trong n8n: **Settings → n8n API** tạo API key, rồi đặt vào `N8N_API_KEY` (bước 4).
 4. Tạo **5 credential** rồi chép ID của từng cái vào `config.json → n8n_credentials` (`n8napi.py:22-26`):
 
@@ -94,16 +89,16 @@ Mở `config.json` và điền (`uc_config.py:24-40` đọc đúng các khối n
 |---|---|---|---|
 | `notionApi` | Notion API | `Notion account` | Integration Notion phải được **share** vào các database |
 | `googlePalmApi` | Google Gemini (PaLM) API | `Google Gemini(PaLM) Api account` | |
-| `httpHeaderAuth` | Header Auth | `Copilot web app key` | Suy ra từ code: Name = `X-Copilot-Key`, Value = nội dung `.copilot-secret` (`copilot_app.py:160`, `speech-gate/speech_gate.py:457`, `build.py:359-360`) |
+| `httpHeaderAuth` | Header Auth | `Copilot web app key` | Suy ra từ code: Name = `X-Copilot-Key`, Value = nội dung `.copilot-secret` (`copilot_app.py:160`, `speech-gate/speech_gate.py:461`, `build.py:361-362`) |
 | `googleDriveOAuth2Api` | Google Drive OAuth2 | `Google Drive account` | |
-| `openAiApi` | OpenAI API trỏ tới LM Studio | `LM Studio (local)` | ⚠️ cần chủ repo xác nhận Base URL (dự đoán `http://host.docker.internal:1234/v1`, xem `build.py:512`) |
+| `openAiApi` | OpenAI API trỏ tới LM Studio | `LM Studio (local)` | ⚠️ cần chủ repo xác nhận Base URL (dự đoán `http://host.docker.internal:1234/v1`, xem `build.py:514`) |
 
-5. Sinh workflow hợp nhất (cần các file mẫu ở §0): `py build.py`, rồi `py build.py --activate` để bật (`build.py:8-9`, `:1379-1397`). Lệnh in ra ID workflow và lưu ID vào `state.json` (`build.py:1393-1395`).
+5. Sinh workflow hợp nhất (cần các file mẫu ở §0): `py build.py`, rồi `py build.py --activate` để bật (`build.py:8-9`, `:1381-1399`). Lệnh in ra ID workflow và lưu ID vào `state.json` (`build.py:1395-1397`).
 
 ## 6. LM Studio
 
 - Bật **server** của LM Studio ở cổng **1234** (`copilot_app.py:27`).
-- Model mà code gọi theo tên: **`qwen3-14b`** (xếp tài liệu `copilot_app.py:29`, nén bản chép lời `speech-gate/speech_gate.py:34`, dịch PDF `pdf_translate.py:61`, não dự phòng của chat `build.py:412`) và **`qwen3-8b`** (dự phòng khi thiếu bộ nhớ `speech-gate/speech_gate.py:173`).
+- Model mà code gọi theo tên: **`qwen3-14b`** (xếp tài liệu `copilot_app.py:29`, nén bản chép lời `speech-gate/speech_gate.py:38`, dịch PDF `pdf_translate.py:61`, não dự phòng của chat `build.py:414`) và **`qwen3-8b`** (dự phòng khi thiếu bộ nhớ `speech-gate/speech_gate.py:177`).
 - Dịch PDF còn gọi lệnh `lms` (CLI của LM Studio) để kiểm tra model đang nạp; đổi đường dẫn bằng biến `LMS_EXE` (`pdf_translate.py:17`, `:33`).
 
 > Ghi chú: README ghi model xếp tài liệu là `qwen3-8b` (`README.md:81`), còn code hiện dùng `qwen3-14b` (`copilot_app.py:29`). Tài liệu này theo code.
@@ -146,13 +141,15 @@ powershell -ExecutionPolicy Bypass -File .\open_copilot.ps1
 ## 11. Thành phần tuỳ chọn
 
 ### 11.1. Cổng chép lời (`speech-gate/`, cổng 8340)
-- Chạy: `py speech-gate\speech_gate.py` (`speech-gate/speech_gate.py:560-567`).
-- **Trên `main`, thư mục dữ liệu và đường dẫn model đang viết cứng theo máy của chủ repo** (`speech-gate/speech_gate.py:25-30`):
-  - thư mục dữ liệu: đặt biến `SPEECH_GATE_DIR` (`:25`);
-  - model PhoWhisper (CPU / NPU) và cache OpenVINO (`:27-30`): hiện **phải sửa trong code** cho đúng máy bạn. ⚠️ cần chủ repo xác nhận (PR #1 đổi sang biến môi trường).
-- Chép lời mặc định chạy trên **NPU** (OpenVINO INT8), đặt `SPEECH_GATE_STT=cpu` để dùng CPU (`speech-gate/speech_gate.py:28`, `:31`). Chuyển model sang OpenVINO bằng `export_ov.py` + `quantize_ov.py` (`speech-gate/README.md:31-33`).
+- Chạy: `py speech-gate\speech_gate.py` (`speech-gate/speech_gate.py:564-571`).
+- Đường dẫn đọc từ biến môi trường, có mặc định (`speech-gate/speech_gate.py:26-34`):
+  - `UC_DATA_DIR` (mặc định `%USERPROFILE%\uc-data`) và `UC_AI_DIR` (mặc định `%USERPROFILE%\AI`) là hai thư mục gốc (`:27-28`);
+  - thư mục dữ liệu cổng: `SPEECH_GATE_DIR`, mặc định `<UC_DATA_DIR>\SpeechGate` (`:29`);
+  - model PhoWhisper CPU: `PHOWHISPER_CT2_DIR`, mặc định `<UC_AI_DIR>\models\phowhisper-large-ct2` (`:31`);
+  - model NPU: `PHOWHISPER_OV_DIR`, mặc định `<UC_AI_DIR>\models\phowhisper-large-ov-int8` (`:33`); cache OpenVINO: `OPENVINO_CACHE_DIR` (`:34`).
+- Chép lời mặc định chạy trên **NPU** (OpenVINO INT8), đặt `SPEECH_GATE_STT=cpu` để dùng CPU (`speech-gate/speech_gate.py:32`, `:35`). Chuyển model sang OpenVINO bằng `export_ov.py` + `quantize_ov.py` (`speech-gate/README.md:31-33`).
 - Thư viện: `numpy`, `faster-whisper`, `openvino-genai`, `Pillow`, `av` (theo `import` trong `speech-gate/speech_gate.py`, `speech-gate/audio_io.py`). ⚠️ cần chủ repo xác nhận danh sách phiên bản.
-- Phân biệt người nói (chế độ Họp): chạy `diarize/diarize.py` bằng một venv riêng, mặc định `speech-gate/diarize/.venv/Scripts/python.exe`, đổi bằng `DIARIZE_PY` (`speech-gate/speech_gate.py:215`). Cần token Hugging Face (`hf auth login`) và đồng ý điều khoản model pyannote (`speech-gate/diarize/diarize.py:5-6`).
+- Phân biệt người nói (chế độ Họp): chạy `diarize/diarize.py` bằng một venv riêng, mặc định `speech-gate/diarize/.venv/Scripts/python.exe`, đổi bằng `DIARIZE_PY` (`speech-gate/speech_gate.py:219`). Cần token Hugging Face (`hf auth login`) và đồng ý điều khoản model pyannote (`speech-gate/diarize/diarize.py:5-6`).
 
 ### 11.2. Máy ghi bài giảng / cuộc họp (`meeting-lecture-recorder/`, cổng 5681)
 - Cần **.NET 8 SDK** (`LectureRecorderCompanion.csproj:3`, gói `NAudio 2.2.1` `:14`). Build:
@@ -161,7 +158,7 @@ powershell -ExecutionPolicy Bypass -File .\open_copilot.ps1
   dotnet build -c Release
   ```
   `Start-LectureRecorder.ps1` chạy file `bin\Release\net8.0-windows\LectureRecorderCompanion.exe` (`Start-LectureRecorder.ps1:4`, `:14-16`).
-- Thư mục lưu bản ghi: đặt `LRC_RECORDING_DIR`, nếu không thì dùng mặc định viết cứng trong code (`Program.cs:73`).
+- Thư mục lưu bản ghi: `LRC_RECORDING_DIR`; nếu không đặt thì dùng `<UC_DATA_DIR>\LectureRecorder`, với `UC_DATA_DIR` mặc định là `%USERPROFILE%\uc-data` (`Program.cs:73`).
 - Chế độ Teams cần **VB-CABLE**: trong Teams chọn loa = `CABLE Input`, máy ghi thu `CABLE Output` (`meeting-lecture-recorder/README.md:31-35`).
 
 ### 11.3. Các dịch vụ ngoài khác
@@ -171,24 +168,33 @@ powershell -ExecutionPolicy Bypass -File .\open_copilot.ps1
 | Chat tìm web, Research Hub | SearXNG ở `127.0.0.1:8888` (Docker "university-searxng") | `web_tools.py:13`, `research.py:97` |
 | Dịch PDF | `pdf2zh` cài bằng `uv tool` (`%APPDATA%\uv\tools\pdf2zh\...`) | `pdf_translate.py:15` |
 | Gửi tài liệu sang NotebookLM | `notebooklm-py` cài bằng `uv tool`; giữ phiên bằng `notebooklm-keepalive/refresh.vbs`. ⚠️ cần chủ repo xác nhận lịch chạy `refresh.vbs` | `nlm_bridge.py:12`, `notebooklm-keepalive/refresh.vbs:4` |
-| Hội đồng AI | AgentChattr (:8300) + `council_relay.py` (:8310), không có trong repo | `ui/index.html:555`, `build.py:775` |
+| Hội đồng AI | AgentChattr (:8300) + `council_relay.py` (:8310), không có trong repo | `ui/index.html:555`, `build.py:777` |
 
 ## 12. Add-on "máy yếu" (`addons/low-end-priority`)
 
-Chỉ cài khi máy yếu / tầm trung (học online + ghi bài + AI cùng máy). Máy mạnh thì **không cài** (`addons/low-end-priority/README.md:3-4`). Các bước (`addons/low-end-priority/README.md:36-40`):
+Chỉ cài khi máy yếu / tầm trung (học online + ghi bài + AI cùng máy). Máy mạnh thì **không cài** (`addons/low-end-priority/README.md:3-4`). Các bước (`addons/low-end-priority/README.md:41-45`):
 1. Giải nén `addons/low-end-priority.zip`.
 2. Chép `audio_priority.py` vào thư mục UC (cạnh `copilot_app.py`).
 3. Chép `audio_priority.example.json` thành `school/audio_priority.json` (sửa danh sách tiến trình nếu muốn).
 4. Tạo file rỗng `speech-gate/low_end.flag`.
 5. Khởi động lại UC và cổng chép lời.
 
-Cách hoạt động: UC thấy `audio_priority.py` thì cứ 5 giây đặt 4 bậc ưu tiên CPU: học = HIGH, web học tập = NORMAL, homelab = BELOW_NORMAL, AI = IDLE (`copilot_app.py:873-881`, `addons/low-end-priority/audio_priority.py:15-18`, `:24-27`). Cổng chép lời thấy `low_end.flag` thì hoãn bước nén trong lúc máy ghi đang ghi (`speech-gate/speech_gate.py:176-195`). Gỡ: xoá hai file đó rồi khởi động lại (`addons/low-end-priority/README.md:44-47`).
+Cách hoạt động: UC thấy `audio_priority.py` thì cứ 5 giây đặt 4 bậc ưu tiên CPU: học = HIGH, web học tập = NORMAL, homelab = BELOW_NORMAL; riêng AI = IDLE khi máy ghi đang ghi (và thêm 2 phút sau khi dừng), lúc khác = BELOW_NORMAL (`copilot_app.py:881-889`, `addons/low-end-priority/audio_priority.py:15-18`, `:24-27`, `:75`, `:80-85`). Cổng chép lời thấy `low_end.flag` thì hoãn bước nén trong lúc máy ghi đang ghi (`speech-gate/speech_gate.py:180-199`). Gỡ: xoá hai file đó rồi khởi động lại (`addons/low-end-priority/README.md:49-52`).
+
+### Add-on "mạng chập chờn" (`addons/network-guard`)
+
+Dành cho máy học bằng wifi hay rớt (`addons/network-guard/README.md:3`). Không cài thì UC chạy như cũ (`copilot_app.py:739-742`).
+- `netguard.py` chạy mỗi phút bằng Task Scheduler, kiểm mạng bằng `https://www.google.com/generate_204` (`addons/network-guard/netguard.py:33-36`; lệnh tạo task: `addons/network-guard/README.md:20-29`).
+- Mất mạng 3 phút liên tiếp → đặt cờ `OFFLINE.flag` cạnh `copilot_app.py` và `docker pause n8n` (`addons/network-guard/netguard.py:21`, `:25`, `:71`). Khi có cờ, UC bỏ qua các lượt đồng bộ trường / mail / tài liệu (`copilot_app.py:755`, `:849`, `:912`).
+- Có mạng lại → gỡ cờ, `docker unpause n8n`; dịch vụ nào ở các cổng 8320 / 5678 / 8340 / 5681 / 8350 đang tắt thì chạy `open_copilot.ps1 -NoBrowser`, tối đa 1 lần / 5 phút (`addons/network-guard/netguard.py:24-25`, `:59`, `:62-65`).
+- Lệnh `docker pause/unpause n8n` cần container tên **`n8n`**, đúng như lệnh `docker run --name n8n` ở bước 5. Đổi vị trí cờ bằng `UC_OFFLINE_FLAG`, đặt giống nhau cho UC và task (`addons/network-guard/README.md:44`).
 
 ## 13. Kiểm tra nhanh
 
 | Kiểm | Cách | Mong đợi |
 |---|---|---|
-| Web app | mở `http://127.0.0.1:8320/api/health` | `{"ok": true, "queue": …}` (`copilot_app.py:969-970`) |
+| Web app | mở `http://127.0.0.1:8320/api/health` | `{"ok": true, "queue": …}` (`copilot_app.py:978-979`) |
 | Cổng chép lời | `http://127.0.0.1:8340/health` | JSON trạng thái (`speech-gate/README.md:28`) |
 | Máy ghi | `http://127.0.0.1:5681/health` | JSON trạng thái (`meeting-lecture-recorder/README.md:14`) |
 | Tài khoản trường | `py school_cred.py --status` | "Đã có tài khoản …" (`school_cred.py:26-30`) |
+| Bộ test (không cần mạng, Notion, n8n) | `py -m pip install -r requirements-dev.txt` rồi `py -m pytest` | tất cả test xanh (`pytest.ini:2`, `.github/workflows/tests.yml`) |

@@ -16,7 +16,7 @@ py copilot_app.py
 Chưa có `config.json`. Sao chép `config.example.json` thành `config.json` rồi điền (`uc_config.py:18-19`; [CAI-DAT §3](CAI-DAT.md#3-configjson)).
 
 **`KeyError: 'n8n_workflows'`, tab giám sát Ghi bài giảng trống**
-Trên `main`, `config.example.json` thiếu khối `n8n_workflows`, nhưng `lecture_monitor.py` đọc nó ngay khi được nạp (`lecture_monitor.py:18`, `uc_config.py:38-40`). Luồng giám sát chạy trong một thread riêng (`copilot_app.py:1421`) nên web app vẫn lên, chỉ phần giám sát chết. Thêm khối này theo [CAI-DAT §3](CAI-DAT.md#3-configjson).
+`config.json` thiếu khối `n8n_workflows` (thường gặp khi `config.json` được chép từ bản mẫu cũ), nhưng `lecture_monitor.py` đọc nó ngay khi được nạp (`lecture_monitor.py:18`, `uc_config.py:38-40`). Luồng giám sát chạy trong một thread riêng (`copilot_app.py:1430`) nên web app vẫn lên, chỉ phần giám sát chết. Chép khối này từ `config.example.json` (`config.example.json:49-53`) rồi điền ID, xem [CAI-DAT §3](CAI-DAT.md#3-configjson).
 
 **`FileNotFoundError: … .copilot-secret`**
 Web app và kênh điện thoại đọc khoá ngay khi khởi động (`copilot_app.py:25`, `phone_link.py:17`). Tạo file theo [CAI-DAT §4](CAI-DAT.md#4-khoá-chung-copilot-secret-và-biến-môi-trường).
@@ -29,10 +29,10 @@ Web app và kênh điện thoại đọc khoá ngay khi khởi động (`copilot
 In ra từ `open_copilot.ps1:13` khi cổng 5678 không mở. Bật Docker Desktop và container n8n.
 
 **Giao diện báo `{"error": "cross-origin blocked"}` (403)**
-Web app chỉ nhận yêu cầu ghi từ chính nó: Origin phải là `http://127.0.0.1:8320` hoặc `http://localhost:8320` (`copilot_app.py:932-934`, `:1196-1197`). Mở giao diện đúng một trong hai địa chỉ này.
+Web app chỉ nhận yêu cầu ghi từ chính nó: Origin phải là `http://127.0.0.1:8320` hoặc `http://localhost:8320` (`copilot_app.py:941-943`, `:1087-1088`). Mở giao diện đúng một trong hai địa chỉ này.
 
 **n8n gọi công cụ của UC bị `{"error": "forbidden"}` (403)**
-Header `X-Copilot-Key` mà n8n gửi khác nội dung `.copilot-secret` (`copilot_app.py:1103-1104` và các endpoint tương tự tới `:1186`). Kiểm tra credential Header Auth "Copilot web app key" trong n8n ([CAI-DAT §5](CAI-DAT.md#5-docker--n8n)). Nếu bạn vừa đổi `.copilot-secret` thì phải cập nhật cả credential.
+Header `X-Copilot-Key` mà n8n gửi khác nội dung `.copilot-secret` (`copilot_app.py:1114-1115` và các endpoint tương tự tới `:1197`). Kiểm tra credential Header Auth "Copilot web app key" trong n8n ([CAI-DAT §5](CAI-DAT.md#5-docker--n8n)). Nếu bạn vừa đổi `.copilot-secret` thì phải cập nhật cả credential.
 
 ## Đăng nhập trường
 
@@ -58,8 +58,8 @@ Agent xếp tài liệu không gọi được LM Studio ở `127.0.0.1:1234` (`c
 
 ## Ghi bài giảng
 
-**Cổng chép lời không khởi động (lỗi đường dẫn / ổ đĩa)**
-Trên `main`, thư mục dữ liệu và đường dẫn model của cổng chép lời viết cứng theo máy của chủ repo (`speech-gate/speech_gate.py:25-30`), và thư mục được tạo ngay khi nạp (`:49-50`). Đặt `SPEECH_GATE_DIR` tới một thư mục có thật; đường dẫn model (`:27-30`) hiện phải sửa trong code. ⚠️ cần chủ repo xác nhận.
+**Cổng chép lời không khởi động / không thấy model**
+Thư mục dữ liệu được tạo ngay khi nạp (`speech-gate/speech_gate.py:53-54`), còn model đọc theo biến môi trường, mặc định nằm dưới `%USERPROFILE%\AI\models` (`speech-gate/speech_gate.py:27-34`). Nếu model để chỗ khác thì đặt `PHOWHISPER_CT2_DIR` / `PHOWHISPER_OV_DIR` (hoặc `UC_AI_DIR`), xem [CAI-DAT §11.1](CAI-DAT.md#111-cổng-chép-lời-speech-gate-cổng-8340).
 
 **`Start-LectureRecorder.ps1` báo không thấy file `.exe`**
 Chưa build máy ghi. Chạy `dotnet build -c Release` trong `meeting-lecture-recorder/` (cần .NET 8 SDK); script chạy `bin\Release\net8.0-windows\LectureRecorderCompanion.exe` (`Start-LectureRecorder.ps1:4`).
@@ -68,7 +68,7 @@ Chưa build máy ghi. Chạy `dotnet build -c Release` trong `meeting-lecture-re
 Teams chưa phát ra cáp ảo. Trong Teams chọn loa = `CABLE Input` (VB-CABLE); máy ghi thu `CABLE Output` (`meeting-lecture-recorder/README.md:33-35`).
 
 **Biên bản họp không phân biệt người nói, báo "chưa có token Hugging Face"**
-Bước pyannote thoát mã 3 khi chưa đăng nhập Hugging Face (`speech-gate/speech_gate.py:238`, `speech-gate/diarize/diarize.py:5-6`). Chạy `hf auth login` trong venv của `diarize` và đồng ý điều khoản model.
+Bước pyannote thoát mã 3 khi chưa đăng nhập Hugging Face (`speech-gate/speech_gate.py:242`, `speech-gate/diarize/diarize.py:5-6`). Chạy `hf auth login` trong venv của `diarize` và đồng ý điều khoản model.
 
 ## Thông báo, điện thoại
 
@@ -100,7 +100,7 @@ UC chỉ tự tìm *Quyết định mức học phí* từ tháng 8 tới tháng
 ## Mã hoá tiếng Việt
 
 - File `.ps1` có tiếng Việt trong repo đều lưu **UTF-8 có BOM** (3 byte đầu `EF BB BF`, vd `open_copilot.ps1`). Windows PowerShell 5.1 cần BOM để đọc đúng chữ Việt, nên khi sửa hãy giữ "UTF-8 with BOM".
-- `.copilot-secret` nên là **ASCII thuần, không BOM**: web app và cổng chép lời đọc file này theo hai kiểu mã hoá khác nhau (`copilot_app.py:25` và `speech-gate/speech_gate.py:453`).
+- `.copilot-secret` nên là **ASCII thuần, không BOM**: web app và cổng chép lời đọc file này theo hai kiểu mã hoá khác nhau (`copilot_app.py:25` và `speech-gate/speech_gate.py:457`).
 
 ## Dữ liệu của tôi nằm ở đâu? Có lên Git không?
 
