@@ -168,6 +168,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.22** | 14/10/2026 | Add-on "máy yếu": AI chỉ xuống ưu tiên thấp nhất khi đang ghi bài (và 2 phút sau), lúc khác dưới bình thường — chép lời không còn bị đói CPU; thêm gợi ý giới hạn RAM Docker/WSL. Add-on mới **network-guard** (`addons/network-guard.zip`): mất mạng 3 phút thì tạm dừng đồng bộ và đóng băng n8n, có mạng lại thì chạy tiếp và tự bật lại dịch vụ UC đã tắt |
 | **v1.00.23** | 14/10/2026 | Gộp PR #1 và #2: gỡ ID n8n và đường dẫn máy cá nhân khỏi mã nguồn (cấu hình qua `config.json` / biến môi trường), bộ 264 test tự động + CI; sửa 4 lỗi thật — thông báo kiểu "CPA từ 3.2" bị ẩn nhầm, điểm B+/C+/D+ bị hạ thành B/C/D, giờ khoá MOOC lệch 7 tiếng, trang web lạ có thể ra lệnh cho UC (CSRF) |
 | **v1.00.24** | 14/10/2026 | Tab Lịch có **kế hoạch tự học** (giờ tự học theo khối lượng của trường, ví dụ 4(3-0-2-8) = 8 giờ/tuần, chia đều vào giờ trống, tránh ngày nghỉ và hoạt động bạn đã chọn "Sẽ đi") và **xuất Google Calendar (.ics) / Excel**. Sửa 5 lỗi từ đợt đánh giá: cổng chép lời không còn gửi khoá tới địa chỉ lạ; file trạng thái ghi an toàn khi tắt máy đột ngột; TKB / CTĐT đổi định dạng không còn xoá nhầm buổi học hay ghi 0 tín; năm nhập học đặt được (`UC_INTAKE_YEAR`) cho mọi khoá |
+| **v1.00.25** | 14/10/2026 | Kế hoạch tự học tránh cả **giờ thực tập hè**: đọc cột Work Hours của ☀️ Kỳ hè (vd "T2-T6 8:00-17:00", "T2,T4 13h-17h"), áp đúng khoảng hè đó, ca thực tập có trong file Google Calendar; giờ ghi không đọc được thì báo rõ |
 
 ## Chạy thử
 

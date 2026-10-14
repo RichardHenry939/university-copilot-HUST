@@ -806,8 +806,9 @@ async function planLoad() {
     if (miss.length) h += '<p class="warn">Không đủ giờ trống cho: ' + miss.map(([c, v]) => esc(c) + ' (thiếu ' + v + ' giờ)').join(', ') + '. Thử mục tiêu thấp hơn hoặc tự thêm giờ.</p>';
     const byDay = {}; for (const b of d.blocks) (byDay[b.thu] = byDay[b.thu] || []).push(esc(b.start + '–' + b.end + ' ' + b.name));
     h += '<ul class="plan-week">' + Object.entries(byDay).map(([t, xs]) => '<li><b>' + esc(t) + ':</b> ' + xs.join(' · ') + '</li>').join('') + '</ul>';
+    if ((d.ghi_chu || []).length) h += '<p class="warn">' + d.ghi_chu.map(esc).join('<br>') + '</p>';
     if ((d.tuan_nay_bo || []).length) h += '<p><b>Tuần này bỏ ' + d.tuan_nay_bo.length + ' khối tự học:</b> ' + d.tuan_nay_bo.map(x => esc(x.thu + ' ' + x.ngay + ' ' + x.start + ' ' + x.name + ' (' + x.vi + ')')).join(' · ') + '</p>';
-    h += '<p class="cal-sync">Ngày 💤 Rest ở tab Hôm nay và hoạt động bạn đã bấm "Sẽ đi" được tránh khi xuất Google Calendar; hoạt động "Sẽ đi" cũng có trong file.</p>';
+    h += '<p class="cal-sync">Ngày 💤 Rest ở tab Hôm nay, hoạt động bạn đã bấm "Sẽ đi" và giờ thực tập hè (☀️ Kỳ hè) được tránh khi xuất Google Calendar; hoạt động và ca thực tập cũng có trong file.</p>';
     out.innerHTML = h;
   } catch (e) { out.innerHTML = '<p>Lỗi: ' + esc(e.message) + '</p>'; }
 }

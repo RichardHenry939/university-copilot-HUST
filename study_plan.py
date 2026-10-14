@@ -53,6 +53,12 @@ def plan(pct=100, d=None, post=None):
     d = d or data()
     busy = {i: [] for i in range(7)}
     nweeks = len({w for c in d['classes'] for w in c['tuan']}) or 1
+    if post is not None:   # đang trong kỳ thực tập hè -> tuần mẫu né luôn giờ làm
+        today = dt.datetime.now(TZ).date()
+        for it in extra(post).get('intern', []):
+            if it['from'] <= today <= it['to']:
+                for days, a, b in it['slots']:
+                    for dd in days: busy[dd].append((a, b))
     for c in d['classes']:   # tuần MẪU: chỉ né lớp học >= nửa số tuần (lớp thí nghiệm vài tuần không chặn cả kỳ); .ics tự bỏ khối trùng từng tuần
         if len(c['tuan']) * 2 >= nweeks: busy[THU[c['thu']]].append((_m(c['bat_dau']), _m(c['ket_thuc'])))
     free = {i: [] for i in range(7)}   # các khối 60 phút còn trống
@@ -79,15 +85,16 @@ def plan(pct=100, d=None, post=None):
     summary = [{'code': c, 'name': d['req'][c]['name'], 'info': d['req'][c]['info'], 'yeu_cau_h': d['req'][c]['hours'],
                 'muc_tieu_h': need[c], 'da_xep_h': need[c] - left[c]} for c in order]
     week = []
+    notes = []
     if post is not None and d['week1']:
-        x = extra(post); mon = dt.datetime.now(TZ).date(); mon -= dt.timedelta(days=mon.weekday())
+        x = extra(post); notes = x.get('notes', []); mon = dt.datetime.now(TZ).date(); mon -= dt.timedelta(days=mon.weekday())
         taken = {}
         for g in x['going']: taken.setdefault(g['day'], []).append((g['start'], g['end'], g['title']))
         for bl in out:
             day = mon + dt.timedelta(days=bl['day'])
             why = 'nghỉ (Rest)' if day in x['rest'] else next((t for st, e, t in taken.get(day, []) if _m(bl['start']) < e and _m(bl['end']) > st), None)
             if why: week.append({'ngay': f'{day:%d/%m}', 'thu': bl['thu'], 'start': bl['start'], 'name': bl['name'], 'vi': why})
-    return {'sem': d['sem'], 'pct': pct, 'blocks': out, 'summary': summary, 'thieu_cho': {c: v for c, v in left.items() if v}, 'tuan_nay_bo': week,
+    return {'sem': d['sem'], 'pct': pct, 'blocks': out, 'summary': summary, 'thieu_cho': {c: v for c, v in left.items() if v}, 'tuan_nay_bo': week, 'ghi_chu': notes,
             'probs': d['probs']}
 
 
@@ -96,7 +103,8 @@ def extra(post=None):
       • 💤 Rest (tab Hôm nay, bảng 🌗 Chế độ ngày) -> ngày đó KHÔNG xếp tự học.
       • Hoạt động bạn đã bấm "Sẽ đi" (school/events.json, mỗi chặng có ngày + giờ bắt đầu) -> bỏ khối tự học trùng giờ, và đưa vào .ics.
         Chỉ có giờ bắt đầu -> coi như 2 tiếng; không có giờ -> cả ngày (07:00–22:00); "00:00"/"23:59" là hạn chót, không phải giờ diễn ra -> bỏ qua.
-    Làm thêm: chủ dự án đã rào (không làm thêm) -> không có nguồn riêng."""
+      • 💼 Thực tập hè (☀️ Summer Planning, Choice = Internship): giờ "Work Hours" trong đúng khoảng hè đó = giờ bận (+ đưa vào .ics).
+    Làm thêm khác: chủ dự án đã rào -> không có nguồn riêng."""
     rest, going = set(), []
     if post:
         try:
@@ -118,7 +126,57 @@ def extra(post=None):
             if m and (m.group(1), m.group(2)) in (('00', '00'), ('23', '59')): continue
             a, b = ((int(m.group(1)) * 60 + int(m.group(2)), int(m.group(1)) * 60 + int(m.group(2)) + 120) if m else (_m('07:00'), _m('22:00')))
             going.append({'day': day, 'start': a, 'end': min(b, 24 * 60 - 1), 'title': f"{e.get('ten', '')} · {ch.get('ten', '')}", 'where': ch.get('dia_diem') or ''})
-    return {'rest': rest, 'going': going}
+    notes, intern = [], []
+    if post:   # 💼 thực tập hè (☀️ Summer Planning): mỗi ca làm trong khoảng hè = giờ bận, cũng đưa vào .ics
+        try:
+            for it in _internships(post):
+                intern.append(it)
+                if it['note']: notes.append(it['note'])
+                day = it['from']
+                while day <= it['to']:
+                    for days, a, b in it['slots']:
+                        if day.weekday() in days: going.append({'day': day, 'start': a, 'end': b, 'title': it['title'], 'where': '', 'kind': 'intern'})
+                    day += dt.timedelta(days=1)
+        except Exception as e: print('study_plan: không đọc được thực tập hè:', e)
+    return {'rest': rest, 'going': going, 'intern': intern, 'notes': notes}
+
+
+def parse_work_hours(text):
+    """(14/10) Cột "Work Hours" (☀️ Summer Planning, chữ tự do) -> [(tập thứ 0..6, phút bắt đầu, phút kết thúc)].
+    Hiểu: "T2-T6 8:00-17:00", "T2,T4,T6 13h-17h30", "thứ 2 - thứ 6, 8h30-12h", "CN 8-12"; nhiều đoạn cách nhau bằng ; hoặc xuống dòng.
+    Trả ([], lý do) nếu không đọc được."""
+    out = []
+    for seg in re.split(r'[;\n]+', str(text or '')):
+        s = seg.lower().replace('thứ', 't').replace('–', '-').replace('—', '-')
+        tm = re.search(r'(\d{1,2})(?:[:h](\d{2})?)?\s*(?:h)?\s*-\s*(\d{1,2})(?:[:h](\d{2})?)?', s)
+        if not tm: continue
+        a = int(tm.group(1)) * 60 + int(tm.group(2) or 0); b = int(tm.group(3)) * 60 + int(tm.group(4) or 0)
+        dpart = s[:tm.start()] + ' ' + s[tm.end():]
+        days = set()
+        for m in re.finditer(r't\s*([2-8])\s*-\s*t?\s*([2-8])|t\s*([2-8])|\bcn\b|chủ nhật', dpart):
+            if m.group(1): days |= set(range(int(m.group(1)) - 2, int(m.group(2)) - 1))
+            elif m.group(3): days.add(int(m.group(3)) - 2)
+            else: days.add(6)
+        if not days: days = set(range(5))   # chỉ ghi giờ -> coi như T2–T6
+        if b > a: out.append((days, a, b))
+    return out
+
+
+def _internships(post):
+    """Thực tập hè (☀️ Summer Planning, Choice = Internship, chưa xong) -> [{'from','to','slots','title','note'}] theo đúng khoảng hè."""
+    import academic, program, semester
+    nt = academic.Notion(post); c = semester.cal(); res = []
+    for r in nt.query(program.SUMMER):
+        if academic.P(r, 'Choice') != 'Internship' or academic.P(r, 'Status') == 'Done': continue
+        m = re.match(r'Hè sau S(\d)', academic.P(r, 'Plan') or '')
+        if not m: continue
+        y = int(c.get('first_year', 2026)) + int(m.group(1)) // 2
+        start = semester._d(y, c['summer_start'], c, 'summer_start'); end = semester._d(y, c['odd_start'], c, 'odd_start') - dt.timedelta(days=1)
+        wh = academic.P(r, 'Work Hours') or ''
+        slots = parse_work_hours(wh); note = ''
+        if not slots: slots = [(set(range(5)), _m('08:00'), _m('17:00'))]; note = f'không đọc được giờ thực tập “{wh[:40]}” -> tạm coi T2–T6 08:00–17:00'
+        res.append({'from': start, 'to': end, 'slots': slots, 'title': 'Thực tập: ' + (academic.P(r, 'Company') or '') + (' · ' + academic.P(r, 'Position') if academic.P(r, 'Position') else ''), 'note': note})
+    return res
 
 
 def _sessions(d):
@@ -156,7 +214,9 @@ def ics(pct=100, post=None):
             L += ev(f'self-{d["sem"]}-{b["code"]}-{day:%Y%m%d}-{b["start"].replace(":", "")}', day, b['start'], b['end'],
                     f'Tự học: {b["name"]}', '', f'{b["code"]} · kế hoạch tự học UC ({pct}% yêu cầu)')
     for i, g in enumerate(x['going']):
-        L += ev(f'going-{g["day"]:%Y%m%d}-{g["start"]}-{i}', g['day'], _hm(g['start']), _hm(g['end']), 'Hoạt động: ' + g['title'], g['where'], 'Bạn đã chọn "Sẽ đi" trong UC')
+        L += ev(f'going-{g["day"]:%Y%m%d}-{g["start"]}-{i}', g['day'], _hm(g['start']), _hm(g['end']),
+                g['title'] if g.get('kind') == 'intern' else 'Hoạt động: ' + g['title'], g['where'],
+                'Thực tập hè (☀️ Summer Planning)' if g.get('kind') == 'intern' else 'Bạn đã chọn "Sẽ đi" trong UC')
     L.append('END:VCALENDAR')
     return ('\r\n'.join(L) + '\r\n').encode('utf-8')
 
