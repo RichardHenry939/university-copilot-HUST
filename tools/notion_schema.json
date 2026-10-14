@@ -1,0 +1,3084 @@
+{
+ "_ghi_chu": "Schema Notion của University Copilot, rút ra từ code v1.00.28 (xem docs/NOTION-SCHEMA.md). certainty: CODE = code ghi/lọc đúng kiểu này; INFERRED = suy ra (đọc qua hàm chung hoặc đoán).",
+ "databases": [
+  {
+   "key": "academic_tasks",
+   "name": "Academic Tasks",
+   "icon": "✅",
+   "role": "Việc con chia nhỏ từ Academic Work (A3) và bản ghi việc của trường đã hết hạn; A4 xếp vào Daily Task.",
+   "icon_evidence": "expired.py:2; docs/gen_map.py:311; docs/gen_n8n_map.py:159",
+   "properties": [
+    {
+     "name": "Task",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "semester.py:137; expired.py:77",
+     "note": "build.py:240 cũng đọc .title"
+    },
+    {
+     "name": "Status",
+     "type": "status",
+     "certainty": "CODE",
+     "options": [
+      "To do",
+      "Doing",
+      "Done"
+     ],
+     "evidence": "build.py:300 (lọc status does_not_equal Done); build.py:433 mô tả công cụ 'To do | Doing | Done'; semester.py:137 'To do'; expired.py:77 'Done'",
+     "note": "\"Done\" thuộc nhóm Complete (expired.py:5)"
+    },
+    {
+     "name": "Due",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "build.py:299 sắp xếp; semester.py:137; deadlines.py:193; reschedule.py:72",
+     "note": "ngày có giờ"
+    },
+    {
+     "name": "Priority",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Medium"
+     ],
+     "evidence": "semester.py:138",
+     "note": "A3/A4 (mẫu ngoài repo) có thể dùng High / Medium / Low — suy ra"
+    },
+    {
+     "name": "Task Kind",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Admin",
+      "Academic"
+     ],
+     "evidence": "semester.py:138; expired.py:77"
+    },
+    {
+     "name": "Estimate (hrs)",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "semester.py:138; expired.py:78; đọc, kiểm kiểu số build.py:214,253"
+    },
+    {
+     "name": "Course",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "courses",
+     "evidence": "expired.py:80; build.py:253 R(p,'Course')",
+     "note": "không rõ quan hệ một chiều hay hai chiều"
+    },
+    {
+     "name": "Academic Work",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "academic_work",
+     "evidence": "deadlines.py:190 lọc relation contains; reschedule.py:57; build.py:248",
+     "note": "không rõ quan hệ một chiều hay hai chiều"
+    },
+    {
+     "name": "Breakdown Key",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "expired.py:72 (lọc rich_text starts_with 'het-han|'); expired.py:78",
+     "note": "khoá chống trùng; A3 (mẫu ngoài repo) cũng dùng"
+    },
+    {
+     "name": "Kết quả hạn",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Đã làm",
+      "Bỏ lỡ",
+      "Không rõ"
+     ],
+     "evidence": "expired.py:79; expired.py:36,62,70"
+    },
+    {
+     "name": "Nguồn hạn",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "expired.py:79"
+    },
+    {
+     "name": "Blocked Reason",
+     "type": "rich_text",
+     "certainty": "INFERRED",
+     "evidence": "weekly.py:51",
+     "note": "đọc qua P(); A3 cũ ghi giá trị bắt đầu bằng \"superseded\" / \"invalid automation\""
+    },
+    {
+     "name": "Actual Time (hrs)",
+     "type": "number",
+     "certainty": "INFERRED",
+     "evidence": "weekly.py:57,105",
+     "note": "đọc qua P() rồi float()"
+    }
+   ],
+   "readers": [
+    "build.py:snapshot_chain ('Task chưa xong')",
+    "weekly.py:build/done_hours",
+    "dupscan.py:plan_drop",
+    "deadlines.py:fix_due",
+    "reschedule.py:run",
+    "expired.py:record"
+   ],
+   "writers": [
+    "semester.py:khai_xuan",
+    "expired.py:record",
+    "deadlines.py:fix_due",
+    "reschedule.py:run",
+    "build.py:chat tool cap_nhat_task_goc (L431-433)",
+    "n8n cũ A3/A4 (mẫu ngoài repo)"
+   ]
+  },
+  {
+   "key": "academic_work",
+   "name": "Academic Work",
+   "icon": "📋",
+   "role": "Hạn nộp / bài thi (của trường và tự đặt), có 3 mức \"Loại hạn\"; là cha của Academic Tasks.",
+   "icon_evidence": "build.py:41; reschedule.py:46; docs/gen_n8n_map.py:159",
+   "properties": [
+    {
+     "name": "Name",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "academic.py:462; deadlines.py:169; fami.py:111"
+    },
+    {
+     "name": "Type",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Midterm",
+      "Final",
+      "Quiz",
+      "Lab",
+      "Homework"
+     ],
+     "evidence": "academic.py:462; deadlines.py:172; mooc.py:114; checks.py:52 (lọc select is_not_empty)",
+     "note": "test dùng thêm \"Assignment\" (tests/test_deadlines.py:122); A1 cũ có thể ghi giá trị khác"
+    },
+    {
+     "name": "Due",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "academic.py:462; deadlines.py:71 (lọc date is_not_empty); deadlines.py:186"
+    },
+    {
+     "name": "Loại hạn",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Môn học",
+      "Tự luyện cốt lõi",
+      "Tự luyện"
+     ],
+     "evidence": "academic.py:463; deadlines.py:27-30,91; reschedule.py:16"
+    },
+    {
+     "name": "Course",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "courses",
+     "evidence": "academic.py:464; deadlines.py:173",
+     "note": "không rõ quan hệ một chiều hay hai chiều"
+    },
+    {
+     "name": "Entry Kind",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Deadline"
+     ],
+     "evidence": "academic.py:464; deadlines.py:70 (lọc select)",
+     "note": "A1 cũ có thể ghi giá trị khác"
+    },
+    {
+     "name": "Status",
+     "type": "status",
+     "certainty": "CODE",
+     "options": [
+      "Not started",
+      "Submitted",
+      "Graded"
+     ],
+     "evidence": "academic.py:464; deadlines.py:22,135; build.py:302 (lọc status)",
+     "note": "Submitted / Graded = đã xong (deadlines.py:22); nhóm Complete — suy ra"
+    },
+    {
+     "name": "Location",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "academic.py:465; fami.py:114"
+    },
+    {
+     "name": "Workload Status",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Needs review"
+     ],
+     "evidence": "deadlines.py:171; fami.py:112; mooc.py:115"
+    },
+    {
+     "name": "Submission/Repo",
+     "type": "url",
+     "certainty": "CODE",
+     "evidence": "fami.py:113; mooc.py:115; reschedule.py:50"
+    },
+    {
+     "name": "Weight %",
+     "type": "number",
+     "certainty": "INFERRED",
+     "evidence": "deadlines.py:81 (P()); tests/test_deadlines.py:122 dữ liệu test ('number')"
+    }
+   ],
+   "readers": [
+    "build.py:snapshot_chain ('Bài chưa nộp')",
+    "deadlines.py:_fetch",
+    "reschedule.py:run",
+    "checks.py:run",
+    "weekly.py:build",
+    "dupscan.py",
+    "phone_page.py (link_to_page L147)",
+    "council N9 (Source Work snapshot)"
+   ],
+   "writers": [
+    "academic.py:record (loai=thi)",
+    "deadlines.py:_fetch/complete/upsert_teams/fix_due",
+    "reschedule.py:run",
+    "fami.py:sync",
+    "mooc.py:sync",
+    "n8n cũ A1"
+   ]
+  },
+  {
+   "key": "attempts",
+   "name": "Lần học",
+   "icon": "🔁",
+   "role": "Lịch sử các lần học một môn (trượt trước khi học lại, đạt trước khi học cải thiện).",
+   "icon_evidence": "build.py:51; academic.py:19; docs/gen_n8n_map.py:162",
+   "properties": [
+    {
+     "name": "Lần",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "academic.py:193"
+    },
+    {
+     "name": "Course",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "courses",
+     "evidence": "academic.py:193; program.py:442 (lọc relation contains)"
+    },
+    {
+     "name": "Semester",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8"
+     ],
+     "evidence": "academic.py:194",
+     "note": "S1…S8"
+    },
+    {
+     "name": "GPA 4",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "academic.py:194"
+    },
+    {
+     "name": "Tín",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "academic.py:194"
+    },
+    {
+     "name": "Loại",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Lần đầu",
+      "Học lại",
+      "Cải thiện",
+      "Đã huỷ"
+     ],
+     "evidence": "academic.py:191,195; program.py:452"
+    },
+    {
+     "name": "Ghi lúc",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "academic.py:195"
+    },
+    {
+     "name": "Kết quả",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Pass",
+      "Fail"
+     ],
+     "evidence": "academic.py:196"
+    }
+   ],
+   "readers": [
+    "academic.py:Notion.attempts/attempts_by_course",
+    "program.py:build, undo-improve (L442)"
+   ],
+   "writers": [
+    "academic.py:record_attempt (gọi từ semester.py:close_out, program.py)",
+    "program.py (L452 Loại=Đã huỷ)"
+   ]
+  },
+  {
+   "key": "attendance",
+   "name": "Attendance",
+   "icon": "🧑‍🏫",
+   "role": "Mỗi dòng là một buổi vắng / muộn / có phép do bạn báo.",
+   "icon_evidence": "build.py:37; docs/gen_n8n_map.py:162",
+   "properties": [
+    {
+     "name": "Session",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "academic.py:504"
+    },
+    {
+     "name": "Course",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "courses",
+     "evidence": "academic.py:505"
+    },
+    {
+     "name": "Date",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "academic.py:505"
+    },
+    {
+     "name": "Status",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Absent",
+      "Late",
+      "Excused"
+     ],
+     "evidence": "academic.py:506; build.py:1035",
+     "note": "kiểu select, KHÔNG phải status"
+    },
+    {
+     "name": "Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "academic.py:506"
+    }
+   ],
+   "readers": [
+    "academic.py:course_status",
+    "program.py:build",
+    "weekly.py:build",
+    "build.py:academic_section ('Học kỳ · Chuyên cần')"
+   ],
+   "writers": [
+    "academic.py:record (loai=vang)"
+   ]
+  },
+  {
+   "key": "backup",
+   "name": "Backup & Drive Sync",
+   "icon": "💾",
+   "role": "Sổ sao lưu tài liệu lên Drive: mã băm SHA-256, link Drive, trạng thái trùng / cập nhật.",
+   "icon_evidence": "build.py:47; copilot_app.py:366",
+   "properties": [
+    {
+     "name": "Item",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "copilot_app.py:388"
+    },
+    {
+     "name": "Type",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Course Material"
+     ],
+     "evidence": "copilot_app.py:389"
+    },
+    {
+     "name": "Status",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Synced",
+      "Needs review",
+      "Duplicate",
+      "Superseded",
+      "Updated"
+     ],
+     "evidence": "copilot_app.py:389,501,529,549,573,592",
+     "note": "kiểu select, KHÔNG phải status"
+    },
+    {
+     "name": "SHA-256",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "copilot_app.py:390"
+    },
+    {
+     "name": "Drive URL",
+     "type": "url",
+     "certainty": "CODE",
+     "evidence": "copilot_app.py:391"
+    },
+    {
+     "name": "Source URL",
+     "type": "url",
+     "certainty": "CODE",
+     "evidence": "copilot_app.py:391",
+     "note": "dạng file:///"
+    },
+    {
+     "name": "Last Sync",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "copilot_app.py:392"
+    },
+    {
+     "name": "Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "copilot_app.py:393"
+    }
+   ],
+   "readers": [],
+   "writers": [
+    "copilot_app.py:backup_log",
+    "copilot_app.py:backup_patch"
+   ]
+  },
+  {
+   "key": "calendar_events",
+   "name": "Academic Timetable Events",
+   "icon": "🗓️",
+   "role": "Lịch học, lịch thi và sự kiện theo giờ (UC ghi từ TKB qldt, lịch thi, thư).",
+   "icon_evidence": "docs/gen_n8n_map.py:159; extracurricular.py:9",
+   "properties": [
+    {
+     "name": "Event",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "tkb.py:137; academic.py:466; build.py:1057 (lọc title does_not_contain)"
+    },
+    {
+     "name": "Kind",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Class",
+      "Deadline",
+      "Event"
+     ],
+     "evidence": "tkb.py:126,137; academic.py:466; mail_events.py:413; build.py:1127"
+    },
+    {
+     "name": "When",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "tkb.py:138 (start+end); build.py:295 (lọc/sắp xếp)",
+     "note": "khoảng ngày giờ, múi +07:00"
+    },
+    {
+     "name": "Course",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "courses",
+     "evidence": "tkb.py:137; academic.py:467"
+    },
+    {
+     "name": "Location",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "tkb.py:138; academic.py:467"
+    },
+    {
+     "name": "Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "tkb.py:138; academic.py:468"
+    },
+    {
+     "name": "Sync Key",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "tkb.py:139; deadlines.py:188 (lọc rich_text equals 'deadline|<work_id>'); mail_events.py:406 (starts_with 'mail|')",
+     "note": "khoá chống trùng: \"<kỳ>|<mã>|<loại>|<ngày>|<giờ>\", \"exam|…\", \"deadline|<id>\", \"mail|…\""
+    }
+   ],
+   "readers": [
+    "build.py:snapshot_chain ('Lịch 7 ngày'), academic_section ('Lịch ·'), cổng copilot-tkb-archive",
+    "timetable.py",
+    "tkb.py:run",
+    "dupscan.py",
+    "mail_events.py:patch_classes",
+    "lecture_build.py ('Tìm tiết học trùng giờ')",
+    "phone_page.py"
+   ],
+   "writers": [
+    "tkb.py:run",
+    "academic.py:record (thi)",
+    "mail_events.py:sync_notion/patch_classes",
+    "deadlines.py:fix_due",
+    "reschedule.py:run",
+    "n8n cũ A1"
+   ]
+  },
+  {
+   "key": "cert_catalog",
+   "name": "Danh mục chứng chỉ ngoại ngữ (ĐHBK công nhận)",
+   "icon": "📚",
+   "role": "Danh mục chứng chỉ ngoại ngữ trường công nhận (dữ liệu tham chiếu, bạn tự nhập).",
+   "icon_evidence": "certs.py:5; docs/gen_n8n_map.py:164",
+   "properties": [
+    {
+     "name": "Band",
+     "type": "title",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:40",
+     "note": "giá trị dạng \"<Chứng chỉ> · <band>\"; chọn làm cột tiêu đề là giả định"
+    },
+    {
+     "name": "Chứng chỉ",
+     "type": "select",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:40,54,58",
+     "note": "đọc qua P(); có thể là rich_text. Code chỉ biết dòng TOEIC 4 kỹ năng có tên bắt đầu \"TOEIC 4 kỹ năng · \" (certs.py:20, :54); không có danh sách lựa chọn — bạn tự nhập"
+    },
+    {
+     "name": "Ngôn ngữ",
+     "type": "select",
+     "certainty": "INFERRED",
+     "options": [
+      "Tiếng Anh"
+     ],
+     "evidence": "certs.py:40,70"
+    },
+    {
+     "name": "Bậc",
+     "type": "rich_text",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:41",
+     "note": "có thể là select"
+    },
+    {
+     "name": "Bậc số",
+     "type": "number",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:41,79",
+     "note": "so sánh số (min, >=)"
+    },
+    {
+     "name": "CEFR",
+     "type": "select",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:41",
+     "note": "có thể là rich_text"
+    },
+    {
+     "name": "Hiệu lực (tháng)",
+     "type": "number",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:41,84 int(months)"
+    },
+    {
+     "name": "Xét chuẩn đầu ra",
+     "type": "checkbox",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:42 bool(P())"
+    },
+    {
+     "name": "Thứ tự",
+     "type": "number",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:42,44 sắp xếp"
+    },
+    {
+     "name": "Ghi chú",
+     "type": "rich_text",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:42"
+    },
+    {
+     "name": "Nguồn",
+     "type": "rich_text",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:42",
+     "note": "có thể là url"
+    }
+   ],
+   "readers": [
+    "certs.py:catalog"
+   ],
+   "writers": [
+    "certs_setup.py (nhắc ở certs.py:4, KHÔNG có trong repo)"
+   ]
+  },
+  {
+   "key": "cert_rules",
+   "name": "Quy định miễn học phần ngoại ngữ (K70)",
+   "icon": "📏",
+   "role": "Quy định miễn học phần ngoại ngữ theo bậc (dữ liệu tham chiếu, bạn tự nhập).",
+   "icon_evidence": "certs.py:6",
+   "properties": [
+    {
+     "name": "Mã",
+     "type": "title",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:45,88",
+     "note": "Chọn \"Mã\" làm cột tiêu đề (code đọc qua P() nên title hay rich_text đều được); giả định."
+    },
+    {
+     "name": "Học phần",
+     "type": "rich_text",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:45",
+     "note": "cũng có thể là cột tiêu đề"
+    },
+    {
+     "name": "Miễn từ bậc",
+     "type": "number",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:45,88-89 (lvn >= r['lv']; mặc định 3.1)"
+    },
+    {
+     "name": "Xếp lớp / đăng ký",
+     "type": "rich_text",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:45"
+    },
+    {
+     "name": "Điều kiện",
+     "type": "rich_text",
+     "certainty": "INFERRED",
+     "evidence": "certs.py:46"
+    }
+   ],
+   "readers": [
+    "certs.py:catalog",
+    "program.py:build (qua certs)"
+   ],
+   "writers": [
+    "certs_setup.py (ngoài repo)"
+   ]
+  },
+  {
+   "key": "cert_mine",
+   "name": "Chứng chỉ ngoại ngữ của tôi",
+   "icon": "🎫",
+   "role": "Chứng chỉ ngoại ngữ của bạn (mục tiêu / đã có / hết hạn); UC tính bậc, miễn học phần, chuẩn đầu ra.",
+   "icon_evidence": "certs.py:7",
+   "properties": [
+    {
+     "name": "Tên",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "certs.py:175"
+    },
+    {
+     "name": "Mục",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Mục tiêu",
+      "Đã có",
+      "Đã hết hạn",
+      "Đã xoá"
+     ],
+     "evidence": "certs.py:124,147,175"
+    },
+    {
+     "name": "Chứng chỉ",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "TOEIC 4 kỹ năng"
+     ],
+     "evidence": "certs.py:175",
+     "note": "lựa chọn = tên chứng chỉ trong danh mục"
+    },
+    {
+     "name": "Ngôn ngữ",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Tiếng Anh"
+     ],
+     "evidence": "certs.py:176"
+    },
+    {
+     "name": "Band",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "certs.py:176"
+    },
+    {
+     "name": "Chi tiết",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "certs.py:176",
+     "note": "JSON điểm từng phần TOEIC"
+    },
+    {
+     "name": "Ngày cấp",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "certs.py:177"
+    },
+    {
+     "name": "Ngày hết hạn",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "certs.py:126,177"
+    },
+    {
+     "name": "Quên ngày cấp",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "certs.py:178"
+    },
+    {
+     "name": "Ghi chú",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "certs.py:178"
+    },
+    {
+     "name": "Bậc",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "certs.py:124",
+     "note": "vd \"Bậc 3\""
+    },
+    {
+     "name": "Bậc số",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "certs.py:124"
+    },
+    {
+     "name": "Miễn học phần",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "certs.py:125"
+    },
+    {
+     "name": "Đạt chuẩn đầu ra",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "certs.py:125"
+    }
+   ],
+   "readers": [
+    "certs.py:_mine/build",
+    "program.py:build"
+   ],
+   "writers": [
+    "certs.py:build (sync), certs.py:save",
+    "semester.py:tick (calls certs.build)"
+   ]
+  },
+  {
+   "key": "conduct",
+   "name": "Điểm rèn luyện",
+   "icon": "🏅",
+   "role": "Điểm rèn luyện theo kỳ (S1…S8).",
+   "icon_evidence": "build.py:38; school_sync.py:11; docs/gen_n8n_map.py:162; build.py:38 — chọn 🏅 theo build.py:38 (school_sync.py:11 ghi ⭐)",
+   "properties": [
+    {
+     "name": "Kỳ",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "academic.py:369; school_sync.py:222"
+    },
+    {
+     "name": "Semester",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8"
+     ],
+     "evidence": "academic.py:368 (lọc select),369"
+    },
+    {
+     "name": "Điểm",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "academic.py:369; school_sync.py:223",
+     "note": "0–100"
+    },
+    {
+     "name": "Ghi chú",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "academic.py:370"
+    }
+   ],
+   "readers": [
+    "academic.py:summary",
+    "program.py:build",
+    "school_sync.py:apply"
+   ],
+   "writers": [
+    "academic.py:record (ren_luyen)",
+    "school_sync.py:apply"
+   ]
+  },
+  {
+   "key": "control",
+   "name": "University Control",
+   "icon": "🎛️",
+   "role": "Một dòng điều khiển: chế độ hôm nay (Camp / Rest) cho bộ xếp lịch A4.",
+   "icon_evidence": "build.py:46; daymode.py:6",
+   "properties": [
+    {
+     "name": "Name",
+     "type": "title",
+     "certainty": "INFERRED",
+     "evidence": "",
+     "note": "Code không đọc cột tiêu đề của DB này; tên \"Name\" là giả định (đổi tên không ảnh hưởng code)."
+    },
+    {
+     "name": "Camp Mode",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "daymode.py:48,51; build.py:1311"
+    },
+    {
+     "name": "Rest Mode",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "daymode.py:48,51; build.py:1312"
+    },
+    {
+     "name": "Chế độ hôm nay",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "daymode.py:48,51"
+    },
+    {
+     "name": "Camp Hours",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "daymode.py:49,51; daymode.py:38",
+     "note": "mặc định 6"
+    }
+   ],
+   "readers": [
+    "daymode.py:camp_default/sync_control",
+    "weekly.py:build",
+    "legacy A4 template"
+   ],
+   "writers": [
+    "daymode.py:sync_control",
+    "H10 Health Ping cũ (không rõ cột)"
+   ],
+   "seed": [
+    {
+     "Name": "University Control",
+     "Camp Mode": false,
+     "Rest Mode": false,
+     "Camp Hours": 6
+    }
+   ],
+   "seed_evidence": "daymode.py:37,44 (next(iter(nt.query(CONTROL))) — không có dòng thì bỏ qua)"
+  },
+  {
+   "key": "council_sessions",
+   "name": "Council Sessions",
+   "icon": "🏛️",
+   "role": "Phiên \"Hội đồng AI\" (AgentChattr): đề bài, bản ghi thảo luận, kết luận.",
+   "icon_evidence": "build.py:776; agentchattr/council_relay.py:6",
+   "properties": [
+    {
+     "name": "Session",
+     "type": "title",
+     "certainty": "INFERRED",
+     "evidence": "build.py:788 (đọc rich_text||title)",
+     "note": "C9 gửi \"session\" (agentchattr/council_relay.py:234); đọc qua hàm rich_text||title"
+    },
+    {
+     "name": "Status",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Draft",
+      "Convened",
+      "In council",
+      "Awaiting Chair",
+      "Finalized"
+     ],
+     "evidence": "build.py:785,793-795,834,842,860,1328",
+     "note": "kiểu select, KHÔNG phải status"
+    },
+    {
+     "name": "Convene",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "build.py:887 (lọc checkbox); build.py:831"
+    },
+    {
+     "name": "Chair Prompt",
+     "type": "rich_text",
+     "certainty": "INFERRED",
+     "evidence": "build.py:786",
+     "note": "đọc qua hàm rich_text||title"
+    },
+    {
+     "name": "Final Decision",
+     "type": "rich_text",
+     "certainty": "INFERRED",
+     "evidence": "build.py:787"
+    },
+    {
+     "name": "Source Work",
+     "type": "relation",
+     "certainty": "INFERRED",
+     "relation_to": "academic_work",
+     "evidence": "build.py:789 (.relation)",
+     "note": "DB đích không ghi rõ trong code; suy ra Academic Work từ tên."
+    },
+    {
+     "name": "Session Key",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "build.py:834; build.py:923 (lọc rich_text equals)",
+     "note": "dạng \"CS-YYYYMMDD-HHMMSS\""
+    },
+    {
+     "name": "Snapshot",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "build.py:834"
+    },
+    {
+     "name": "Transcript",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "build.py:859",
+     "note": "tối đa 100 đoạn"
+    }
+   ],
+   "readers": [
+    "build.py:council_section (N9)"
+   ],
+   "writers": [
+    "build.py:council_section (N9)",
+    "legacy C9 template (council-convene/finalize; patched build.py:1323-1331)"
+   ]
+  },
+  {
+   "key": "courses",
+   "name": "Courses",
+   "icon": "2️⃣",
+   "role": "Danh sách môn học: mã, tín, kỳ, trạng thái, kết quả, luật môn, điểm của trường.",
+   "icon_evidence": "docs/gen_map.py:311; docs/gen_n8n_map.py:161",
+   "properties": [
+    {
+     "name": "Name",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:170; build.py:225 (T)",
+     "note": "lecture_export.py:66 đọc nhầm như rich_text (lỗi nhỏ của app, tên môn ra rỗng) — đừng tạo Name kiểu rich_text"
+    },
+    {
+     "name": "Code",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:170; build.py:225 (X)",
+     "note": "vd MI1111"
+    },
+    {
+     "name": "Credits",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:170,182"
+    },
+    {
+     "name": "Status",
+     "type": "status",
+     "certainty": "CODE",
+     "options": [
+      "Planned",
+      "Taking",
+      "Completed"
+     ],
+     "evidence": "build.py:293 (lọc status equals Taking); semester.py:103,107; tkb.py:142",
+     "note": "nhóm — suy ra: Planned = To-do, Taking = In progress, Completed = Complete"
+    },
+    {
+     "name": "Semester",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8"
+     ],
+     "evidence": "semester.py:106; build.py:1063 (lọc select)",
+     "note": "có thể để trống (program.py:326)"
+    },
+    {
+     "name": "Result",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Unknown",
+      "Pass",
+      "Fail",
+      "Miễn (R)",
+      "Not Taken - Other Module"
+     ],
+     "evidence": "school_sync.py:171; academic.py:317,442; semester.py:258"
+    },
+    {
+     "name": "Category",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Môn Đại cương",
+      "Chính trị",
+      "Thể chất",
+      "Cử nhân",
+      "Thực hành",
+      "Kỹ năng mềm",
+      "Môn Cơ sở ngành",
+      "Môn Chuyên ngành"
+     ],
+     "evidence": "school_sync.py:56-58,171"
+    },
+    {
+     "name": "Nhóm HP (trường)",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:172,185"
+    },
+    {
+     "name": "Kỳ gợi ý",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:175",
+     "note": "số ghi dạng chữ, vd \"3\""
+    },
+    {
+     "name": "Nhóm tự chọn",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "GDTC"
+     ],
+     "evidence": "school_sync.py:176; program.py:52"
+    },
+    {
+     "name": "Course Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:173; semester.py:108"
+    },
+    {
+     "name": "Retake",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "semester.py:106; program.py:402"
+    },
+    {
+     "name": "Học cải thiện",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "program.py:429,449"
+    },
+    {
+     "name": "Remaining Credits",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "semester.py:107; program.py:405"
+    },
+    {
+     "name": "Current GPA 4",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "academic.py:317; school_sync.py:190",
+     "note": "có thể trống"
+    },
+    {
+     "name": "GPA 4 lần trước",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "semester.py:109; program.py:406"
+    },
+    {
+     "name": "Original Semester",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8"
+     ],
+     "evidence": "semester.py:110; tkb.py:145"
+    },
+    {
+     "name": "Luật môn",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "academic.py:387"
+    },
+    {
+     "name": "Trọng số QT (%)",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "academic.py:390"
+    },
+    {
+     "name": "Vắng tối đa",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "academic.py:392"
+    },
+    {
+     "name": "Attendance Risk",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "OK",
+      "Watch",
+      "At Risk"
+     ],
+     "evidence": "academic.py:511-512"
+    },
+    {
+     "name": "Vắng (trường)",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:142"
+    },
+    {
+     "name": "Điểm thành phần (trường)",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:151"
+    },
+    {
+     "name": "Module/Track",
+     "type": "select",
+     "certainty": "INFERRED",
+     "options": [
+      "Module 1",
+      "Module 2",
+      "Module 3"
+     ],
+     "evidence": "academic.py:142; semester.py:156,257",
+     "note": "so với \"Module N\"; code không ghi — suy ra từ phép so"
+    }
+   ],
+   "readers": [
+    "academic.py:Notion.courses/course_view (used by nearly all modules)",
+    "build.py:snapshot_chain, academic_section",
+    "program.py",
+    "school_sync.py",
+    "tkb.py",
+    "research.py",
+    "checks.py",
+    "deadlines.py",
+    "lecture_export.py",
+    "fami.py",
+    "mooc.py",
+    "expired.py"
+   ],
+   "writers": [
+    "academic.py:record/apply_overall",
+    "semester.py:close_out/answer/tick",
+    "program.py (retake/improve/undo)",
+    "school_sync.py:apply",
+    "tkb.py:run"
+   ]
+  },
+  {
+   "key": "credit_tracker",
+   "name": "Semester Credit Tracker",
+   "icon": null,
+   "role": "Tín chỉ theo kỳ (Semester 1…8): kế hoạch, đã xong, GPA / CPA của trường.",
+   "icon_evidence": "build.py:35; docs/gen_n8n_map.py:161",
+   "properties": [
+    {
+     "name": "Semester",
+     "type": "title",
+     "certainty": "INFERRED",
+     "evidence": "semester.py:160; program.py:85; school_sync.py:199",
+     "note": "giá trị phải kết thúc bằng \" <n>\", vd \"Semester 1\" (code lấy \"S\" + từ cuối)"
+    },
+    {
+     "name": "Order",
+     "type": "number",
+     "certainty": "INFERRED",
+     "evidence": "build.py:1027-1028 (sắp xếp)"
+    },
+    {
+     "name": "Required Credits",
+     "type": "number",
+     "certainty": "INFERRED",
+     "evidence": "semester.py:161; build.py:1027",
+     "note": "code chỉ đọc; bạn tự điền theo CTĐT"
+    },
+    {
+     "name": "Planned Credits",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "semester.py:170,173"
+    },
+    {
+     "name": "Completed Credits",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "semester.py:170,173"
+    },
+    {
+     "name": "Tín chỉ chung",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "semester.py:170,173"
+    },
+    {
+     "name": "Tín chỉ Module",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "semester.py:163,170,173",
+     "note": "chuỗi"
+    },
+    {
+     "name": "Đối soát",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "semester.py:170,173"
+    },
+    {
+     "name": "GPA (trường)",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:210,214"
+    },
+    {
+     "name": "CPA (trường)",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:210,214"
+    },
+    {
+     "name": "TC tích luỹ (trường)",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:210,214"
+    },
+    {
+     "name": "TC nợ (trường)",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:211,214"
+    },
+    {
+     "name": "Cảnh báo (trường)",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:216"
+    },
+    {
+     "name": "ĐRL đang chấm (trường)",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:229"
+    }
+   ],
+   "readers": [
+    "program.py:build",
+    "build.py:academic_section ('Học kỳ · Tín chỉ')",
+    "semester.py:credit_sync",
+    "school_sync.py:apply"
+   ],
+   "writers": [
+    "semester.py:credit_sync",
+    "school_sync.py:apply"
+   ],
+   "seed": [
+    {
+     "Semester": "Semester 1",
+     "Order": 1
+    },
+    {
+     "Semester": "Semester 2",
+     "Order": 2
+    },
+    {
+     "Semester": "Semester 3",
+     "Order": 3
+    },
+    {
+     "Semester": "Semester 4",
+     "Order": 4
+    },
+    {
+     "Semester": "Semester 5",
+     "Order": 5
+    },
+    {
+     "Semester": "Semester 6",
+     "Order": 6
+    },
+    {
+     "Semester": "Semester 7",
+     "Order": 7
+    },
+    {
+     "Semester": "Semester 8",
+     "Order": 8
+    }
+   ],
+   "seed_evidence": "semester.py:160 ('S' + Semester.split()[-1]); Required Credits để trống — tự điền theo CTĐT"
+  },
+  {
+   "key": "daily_brief",
+   "name": "Bản tin Copilot",
+   "icon": "🗞️",
+   "role": "Bản tin sáng / tối do n8n viết (model LM Studio).",
+   "icon_evidence": "build.py:617; docs/gen_n8n_map.py:169",
+   "properties": [
+    {
+     "name": "Bản tin",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "build.py:561",
+     "note": "\"Bản tin sáng|tối YYYY-MM-DD\"; biểu tượng trang ☀️/🌙"
+    },
+    {
+     "name": "Loại",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Sáng",
+      "Tối"
+     ],
+     "evidence": "build.py:561; build.py:202"
+    },
+    {
+     "name": "Ngày",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "build.py:562"
+    },
+    {
+     "name": "Model",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "build.py:562"
+    }
+   ],
+   "readers": [
+    "ui/index.html:557 (chỉ mở link)"
+   ],
+   "writers": [
+    "build.py:brief_section ('Bản tin · Lưu vào Notion')"
+   ]
+  },
+  {
+   "key": "daily_plan",
+   "name": "Daily Task",
+   "icon": "📅",
+   "role": "Việc theo ngày (A4 xếp từ Academic Tasks).",
+   "icon_evidence": "docs/gen_n8n_map.py:159; weekly.py:39",
+   "properties": [
+    {
+     "name": "Task",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "build.py:240 (T đọc .title); daymode.py:95",
+     "note": "A4 cũ ghi"
+    },
+    {
+     "name": "Status",
+     "type": "status",
+     "certainty": "CODE",
+     "options": [
+      "Not started",
+      "In progress",
+      "Done"
+     ],
+     "evidence": "build.py:428-430; daymode.py:116"
+    },
+    {
+     "name": "Date",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "build.py:297 (lọc date equals); daymode.py:94"
+    },
+    {
+     "name": "Estimate (hrs)",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "build.py:240 (N kiểm kiểu số)"
+    },
+    {
+     "name": "Priority",
+     "type": "select",
+     "certainty": "INFERRED",
+     "options": [
+      "High",
+      "Medium",
+      "Low"
+     ],
+     "evidence": "build.py:211,240 (S nhận select hoặc status); daymode.py:97",
+     "note": "select hay status chưa chắc (build.py:211 đọc được cả hai)"
+    },
+    {
+     "name": "Source Task",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "academic_tasks",
+     "evidence": "dupscan.py:135 (lọc relation contains); weekly.py:46"
+    },
+    {
+     "name": "Planner Notes",
+     "type": "rich_text",
+     "certainty": "INFERRED",
+     "evidence": "daymode.py:96"
+    }
+   ],
+   "readers": [
+    "build.py:snapshot_chain ('Việc hôm nay')",
+    "daymode.py:today_view",
+    "weekly.py:build",
+    "dupscan.py:plan_drop"
+   ],
+   "writers": [
+    "daymode.py:mark_daily",
+    "build.py chat tool cap_nhat_viec_hom_nay (L428-430)",
+    "legacy A4"
+   ]
+  },
+  {
+   "key": "day_modes",
+   "name": "Chế độ ngày",
+   "icon": "🌗",
+   "role": "Chế độ của từng ngày (Bình thường / Camp / Rest) do bạn hoặc Copilot đặt.",
+   "icon_evidence": "build.py:44; daymode.py:2",
+   "properties": [
+    {
+     "name": "Ngày",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "daymode.py:61",
+     "note": "dạng \"Thứ Hai dd/mm/yyyy\""
+    },
+    {
+     "name": "Date",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "daymode.py:25 (lọc date), 61"
+    },
+    {
+     "name": "Chế độ",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Bình thường",
+      "Camp",
+      "Rest"
+     ],
+     "evidence": "daymode.py:18,62"
+    },
+    {
+     "name": "Giờ",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "daymode.py:62"
+    },
+    {
+     "name": "Nguồn",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Bạn",
+      "Copilot"
+     ],
+     "evidence": "daymode.py:54,63; academic.py:353"
+    },
+    {
+     "name": "Ghi chú",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "daymode.py:63"
+    }
+   ],
+   "readers": [
+    "daymode.py:get_modes",
+    "checks.py (qua daymode)",
+    "weekly.py"
+   ],
+   "writers": [
+    "daymode.py:set_mode"
+   ]
+  },
+  {
+   "key": "events_track",
+   "name": "Sự kiện theo dõi",
+   "icon": "📡",
+   "role": "Sự kiện theo dõi từ thư / Teams: các chặng, thay đổi gần nhất, lựa chọn \"Sẽ đi / Bỏ / Đã nộp\".",
+   "icon_evidence": "build.py:53; mail_events.py:9; docs/gen_n8n_map.py:168",
+   "properties": [
+    {
+     "name": "Sự kiện",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "mail_events.py:391"
+    },
+    {
+     "name": "Trạng thái",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Đang theo dõi",
+      "Đã xong",
+      "Bỏ"
+     ],
+     "evidence": "mail_events.py:391; mail_events.py:239,309,385"
+    },
+    {
+     "name": "Chặng tới",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "mail_events.py:392"
+    },
+    {
+     "name": "Chặng tới (mô tả)",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "mail_events.py:393"
+    },
+    {
+     "name": "Chặng (JSON)",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "mail_events.py:394"
+    },
+    {
+     "name": "Thay đổi gần nhất",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "mail_events.py:395"
+    },
+    {
+     "name": "Lúc thay đổi",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "mail_events.py:396"
+    },
+    {
+     "name": "Người gửi",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "mail_events.py:397"
+    },
+    {
+     "name": "Khoá chủ đề",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "mail_events.py:397"
+    },
+    {
+     "name": "Mail nguồn",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "mail_events.py:398"
+    },
+    {
+     "name": "Xác nhận",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Sẽ đi",
+      "Bỏ",
+      "Đã nộp"
+     ],
+     "evidence": "mail_events.py:400"
+    }
+   ],
+   "readers": [
+    "phone_page.py (link_to_page)"
+   ],
+   "writers": [
+    "mail_events.py:sync_notion"
+   ]
+  },
+  {
+   "key": "exam_questions",
+   "name": "Exception Queue",
+   "icon": "⚠️",
+   "role": "Hàng đợi ngoại lệ (⚠️ Exception Queue) cho bạn xem lại. Tên khoá cấu hình \"exam_questions\" là tên cũ, không phải ngân hàng câu hỏi.",
+   "icon_evidence": "docs/gen_n8n_map.py:169; build.py:333; semester.py:10; build.py:29",
+   "properties": [
+    {
+     "name": "Issue",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "semester.py:92; build.py:262"
+    },
+    {
+     "name": "Review Key",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "semester.py:90 (lọc rich_text equals), 92",
+     "note": "khoá chống trùng \"semester:…\""
+    },
+    {
+     "name": "Reason",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "semester.py:92; build.py:436"
+    },
+    {
+     "name": "Reason Type",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Chuyển kỳ"
+     ],
+     "evidence": "semester.py:92,115",
+     "note": "R10 / S5 / A1 cũ thêm giá trị khác (không rõ)"
+    },
+    {
+     "name": "Source Agent",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Semester"
+     ],
+     "evidence": "semester.py:93"
+    },
+    {
+     "name": "Severity",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Medium",
+      "High"
+     ],
+     "evidence": "semester.py:89,93,126"
+    },
+    {
+     "name": "Status",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Open",
+      "Resolved"
+     ],
+     "evidence": "build.py:305 (lọc select),436; semester.py:93,228",
+     "note": "kiểu select, KHÔNG phải status"
+    },
+    {
+     "name": "Source Workflow",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "semester.py:94"
+    },
+    {
+     "name": "Detected At",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "semester.py:95"
+    }
+   ],
+   "readers": [
+    "build.py:snapshot_chain ('Cần hỏi bạn')",
+    "semester.py:eq_item/_close_eq"
+   ],
+   "writers": [
+    "semester.py:eq_item/_close_eq (cả qua program.py:save_summer)",
+    "build.py chat tool dong_ngoai_le (L434-436)",
+    "legacy R10/S5"
+   ]
+  },
+  {
+   "key": "exam_revision",
+   "name": "Exam Revision",
+   "icon": "📝",
+   "role": "Mục ôn thi theo môn: chủ đề, ngày thi, mức tự tin.",
+   "icon_evidence": "build.py:42",
+   "properties": [
+    {
+     "name": "Revision Item",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "academic.py:483"
+    },
+    {
+     "name": "Exam Date",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "academic.py:483"
+    },
+    {
+     "name": "Exam Type",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Midterm",
+      "Final",
+      "Quiz",
+      "Other"
+     ],
+     "evidence": "academic.py:484,474"
+    },
+    {
+     "name": "Topic",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "academic.py:484"
+    },
+    {
+     "name": "Status",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Not started",
+      "Reviewing",
+      "Ready"
+     ],
+     "evidence": "academic.py:479,484",
+     "note": "kiểu select, KHÔNG phải status"
+    },
+    {
+     "name": "Confidence",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Weak",
+      "Medium",
+      "Strong"
+     ],
+     "evidence": "academic.py:481,485"
+    },
+    {
+     "name": "Estimated Hours",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "academic.py:486"
+    }
+   ],
+   "readers": [
+    "checks.py:run",
+    "academic.py:record (on_thi)"
+   ],
+   "writers": [
+    "academic.py:record (on_thi)"
+   ]
+  },
+  {
+   "key": "extracurricular",
+   "name": "Hoạt động ngoại khoá",
+   "icon": "🎯",
+   "role": "Hoạt động ngoại khoá (iCTSV, thư, Teams): đã đăng ký, hạn nộp minh chứng, đang mở.",
+   "icon_evidence": "build.py:55; extracurricular.py:2",
+   "properties": [
+    {
+     "name": "Hoạt động",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "extracurricular.py:179"
+    },
+    {
+     "name": "Loại",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Đã đăng ký",
+      "Hạn nộp minh chứng",
+      "Đang mở",
+      "Học bổng",
+      "Sự kiện (mail/Teams)",
+      "Thông báo (mail/Teams)"
+     ],
+     "evidence": "extracurricular.py:179; giá trị ở dòng 47,52,59,65,104,135",
+     "note": "\"Học bổng\" chỉ có trong một vòng lặp không còn chạy"
+    },
+    {
+     "name": "Bắt đầu",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "extracurricular.py:180"
+    },
+    {
+     "name": "Kết thúc",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "extracurricular.py:181"
+    },
+    {
+     "name": "Hạn",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "extracurricular.py:182"
+    },
+    {
+     "name": "Địa điểm",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "extracurricular.py:183"
+    },
+    {
+     "name": "Đơn vị",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "extracurricular.py:183"
+    },
+    {
+     "name": "Hình thức",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "extracurricular.py:183"
+    },
+    {
+     "name": "Trạng thái của tôi",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Chờ xác nhận",
+      "Đã xác nhận",
+      "Không đạt",
+      "Chưa đăng ký",
+      "Đang học",
+      "Quan tâm",
+      "Đã đăng ký",
+      "Đã nộp hồ sơ"
+     ],
+     "evidence": "extracurricular.py:184; giá trị ở dòng 21,61,79,107,66",
+     "note": "iCTSV có thể đưa nguyên chữ trạng thái gốc (extracurricular.py:46)"
+    },
+    {
+     "name": "Nguồn",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "CTSV",
+      "Mail",
+      "Teams"
+     ],
+     "evidence": "extracurricular.py:185; L99,137"
+    },
+    {
+     "name": "Link",
+     "type": "url",
+     "certainty": "CODE",
+     "evidence": "extracurricular.py:185"
+    },
+    {
+     "name": "Ghi chú",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "extracurricular.py:185"
+    },
+    {
+     "name": "Sync Key",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "extracurricular.py:176,185",
+     "note": "\"ctsv|mine|id\", \"mail|…\", \"thu|…\", \"mooc|…\""
+    }
+   ],
+   "readers": [
+    "extracurricular.py:sync_notion",
+    "phone_page.py (link_to_page)"
+   ],
+   "writers": [
+    "extracurricular.py:sync_notion"
+   ]
+  },
+  {
+   "key": "grades",
+   "name": "Grades & Transcript",
+   "icon": "📊",
+   "role": "Điểm thành phần và điểm tổng kết từng môn.",
+   "icon_evidence": "build.py:36",
+   "properties": [
+    {
+     "name": "Record",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "academic.py:309,415"
+    },
+    {
+     "name": "Course",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "courses",
+     "evidence": "academic.py:309; academic.py:313 (lọc relation)"
+    },
+    {
+     "name": "Semester",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5",
+      "S6",
+      "S7",
+      "S8"
+     ],
+     "evidence": "academic.py:309; build.py:1066 (lọc select)"
+    },
+    {
+     "name": "Component",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Attendance",
+      "Assignment",
+      "Lab",
+      "Midterm",
+      "Final",
+      "Quá trình",
+      "Overall"
+     ],
+     "evidence": "academic.py:27-35,310,314"
+    },
+    {
+     "name": "Score 10",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "academic.py:310,417"
+    },
+    {
+     "name": "Letter Grade",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "A+",
+      "A",
+      "B+",
+      "B",
+      "C+",
+      "C",
+      "D+",
+      "D",
+      "F"
+     ],
+     "evidence": "academic.py:25-26,311"
+    },
+    {
+     "name": "GPA 4",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "academic.py:311"
+    },
+    {
+     "name": "Credits",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "academic.py:312"
+    },
+    {
+     "name": "Passed",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "academic.py:312"
+    },
+    {
+     "name": "Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "academic.py:312"
+    },
+    {
+     "name": "Weight %",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "academic.py:418"
+    }
+   ],
+   "readers": [
+    "academic.py:course_status",
+    "program.py:build",
+    "weekly.py:build",
+    "build.py:academic_section"
+   ],
+   "writers": [
+    "academic.py:apply_overall/record (diem)"
+   ]
+  },
+  {
+   "key": "graduation",
+   "name": "Xét tốt nghiệp",
+   "icon": "🎓",
+   "role": "Một dòng tổng hợp xét tốt nghiệp do UC tính (tín, CPA, ngoại ngữ, hạng dự kiến).",
+   "icon_evidence": "build.py:49",
+   "properties": [
+    {
+     "name": "Name",
+     "type": "title",
+     "certainty": "INFERRED",
+     "evidence": "",
+     "note": "Code không đọc cột tiêu đề của DB này; tên \"Name\" là giả định (đổi tên không ảnh hưởng code)."
+    },
+    {
+     "name": "Tín tích luỹ",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "program.py:281,284",
+     "note": "kiểu chọn theo giá trị: bool → checkbox, chuỗi → rich_text, còn lại → number (program.py:284)"
+    },
+    {
+     "name": "CPA",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "program.py:281,284",
+     "note": "có thể trống"
+    },
+    {
+     "name": "Đủ tín",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "program.py:281,284"
+    },
+    {
+     "name": "Đủ ngoại ngữ",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "program.py:281,284"
+    },
+    {
+     "name": "Đủ CPA",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "program.py:281,284"
+    },
+    {
+     "name": "Kết luận",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "program.py:281,284"
+    },
+    {
+     "name": "Tín phải học lại",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "program.py:282,284"
+    },
+    {
+     "name": "Ngưỡng 5% (tín)",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "program.py:282,284"
+    },
+    {
+     "name": "Bị hạ hạng",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "program.py:282,284"
+    },
+    {
+     "name": "Hạng tốt nghiệp dự kiến",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "program.py:282,284"
+    },
+    {
+     "name": "Cập nhật",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "program.py:285"
+    },
+    {
+     "name": "Kỷ luật từ cảnh cáo",
+     "type": "checkbox",
+     "certainty": "INFERRED",
+     "evidence": "program.py:233 bool(P())",
+     "note": "bạn tự đánh dấu"
+    }
+   ],
+   "readers": [
+    "program.py:build"
+   ],
+   "writers": [
+    "program.py:_sync_grad_row"
+   ],
+   "seed": [
+    {
+     "Name": "Xét tốt nghiệp"
+    }
+   ],
+   "seed_evidence": "program.py:222 (dòng đầu tiên; không có thì không ghi kết quả)"
+  },
+  {
+   "key": "inbox",
+   "name": "University Inbox",
+   "icon": "📥",
+   "role": "Hộp tài liệu tải lên (từ máy / Teams / NotebookLM) chờ A2 phân loại.",
+   "icon_evidence": "build.py:755,771; research.py:10",
+   "properties": [
+    {
+     "name": "Upload",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "build.py:686; research.py:189; lecture_build.py:327"
+    },
+    {
+     "name": "Context",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "build.py:687; research.py:189",
+     "note": "có thể chứa \"Môn: <MÃ>\" để A2 đọc (build.py:1285)"
+    },
+    {
+     "name": "Files",
+     "type": "files",
+     "certainty": "CODE",
+     "evidence": "build.py:688 (file ngoài)",
+     "note": "teams_files.py:180 đọc mọi cột kiểu files"
+    },
+    {
+     "name": "Triage Status",
+     "type": "status",
+     "certainty": "CODE",
+     "options": [
+      "Not started",
+      "In progress"
+     ],
+     "evidence": "build.py:689; copilot_app.py:605 (lọc status); build.py:1294 ('In progress')",
+     "note": "A2 (mẫu ngoài repo) đặt thêm giá trị khác"
+    },
+    {
+     "name": "Triage Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "build.py:1273 (.rich_text)",
+     "note": "A2 \"Lock Inbox\" ghi (mẫu ngoài repo)"
+    },
+    {
+     "name": "Detected Course",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "courses",
+     "evidence": "lecture_build.py:329; teams_files.py:181"
+    }
+   ],
+   "readers": [
+    "copilot_app.py:a2_pump",
+    "teams_files.py:sync_notion",
+    "legacy A2"
+   ],
+   "writers": [
+    "build.py:ingest_section",
+    "research.py:save",
+    "lecture_build.py ('Bàn giao University Inbox')",
+    "legacy QU/A2"
+   ]
+  },
+  {
+   "key": "intake",
+   "name": "Academic Intake",
+   "icon": "➕",
+   "role": "Yêu cầu nhập liệu cho A1 (dán TKB / hạn nộp dạng chữ).",
+   "icon_evidence": "docs/gen_n8n_map.py:159; docs/gen_map.py:312",
+   "properties": [
+    {
+     "name": "Request",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "build.py:426"
+    },
+    {
+     "name": "Input",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "build.py:426"
+    },
+    {
+     "name": "Input Type",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Auto",
+      "Deadline",
+      "Class"
+     ],
+     "evidence": "build.py:426"
+    },
+    {
+     "name": "Status",
+     "type": "status",
+     "certainty": "CODE",
+     "options": [
+      "Not started"
+     ],
+     "evidence": "build.py:426",
+     "note": "A1 (mẫu ngoài repo) đặt thêm giá trị khác"
+    }
+   ],
+   "readers": [
+    "legacy A1"
+   ],
+   "writers": [
+    "build.py chat tool them_vao_he_thong"
+   ]
+  },
+  {
+   "key": "lecture_notes",
+   "name": "Lecture Notes",
+   "icon": "📚",
+   "role": "Ghi chú bài giảng do pipeline Ghi bài giảng viết.",
+   "icon_evidence": "lecture_export.py:14; build.py:1074",
+   "properties": [
+    {
+     "name": "Lecture",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:284; lecture_export.py:71"
+    },
+    {
+     "name": "Session",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "lecture_sessions",
+     "evidence": "lecture_build.py:285"
+    },
+    {
+     "name": "Lecture Date",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:286"
+    },
+    {
+     "name": "Summary",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:287"
+    },
+    {
+     "name": "Review Status",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Needs review"
+     ],
+     "evidence": "lecture_build.py:288"
+    },
+    {
+     "name": "Analysis Key",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:289",
+     "note": "\"<captureId>:lecture-v2\" hoặc \":meeting-v1\""
+    },
+    {
+     "name": "Source Audio",
+     "type": "url",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:290"
+    },
+    {
+     "name": "Course",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "courses",
+     "evidence": "lecture_build.py:291"
+    }
+   ],
+   "readers": [
+    "lecture_export.py:run"
+   ],
+   "writers": [
+    "lecture_build.py ('Tạo Lecture Note', 'Ghi nội dung ghi chú')"
+   ]
+  },
+  {
+   "key": "lecture_sessions",
+   "name": "Lecture Sessions",
+   "icon": "🎙️",
+   "role": "Phiên ghi âm bài giảng / cuộc họp: trạng thái xử lý, bản chép lời.",
+   "icon_evidence": "build.py:942",
+   "properties": [
+    {
+     "name": "Session",
+     "type": "title",
+     "certainty": "INFERRED",
+     "evidence": "build.py:947 (đọc rich_text||title)",
+     "note": "dòng do workflow Lecture Capture tạo (ngoài repo)"
+    },
+    {
+     "name": "Capture ID",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:175 (lọc rich_text equals)",
+     "note": "\"lecture-<ms>\""
+    },
+    {
+     "name": "State",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Uploaded",
+      "Processing",
+      "Needs review",
+      "Completed"
+     ],
+     "evidence": "lecture_build.py:91,105,158,332; build.py:970",
+     "note": "workflow Lecture Capture có thể đặt thêm giá trị (không rõ)"
+    },
+    {
+     "name": "Drive File ID",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:92 (lọc rich_text)"
+    },
+    {
+     "name": "Analysis Key",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:93,106"
+    },
+    {
+     "name": "Audio URL",
+     "type": "url",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:101 (.url)"
+    },
+    {
+     "name": "Markers",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:101 (.rich_text)",
+     "note": "JSON"
+    },
+    {
+     "name": "Started At",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:102"
+    },
+    {
+     "name": "Ended At",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:102"
+    },
+    {
+     "name": "Processing Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:107; build.py:971"
+    },
+    {
+     "name": "Processed Note",
+     "type": "url",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:333"
+    },
+    {
+     "name": "University Inbox Item",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "inbox",
+     "evidence": "lecture_build.py:334"
+    },
+    {
+     "name": "Transcript",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "lecture_build.py:335"
+    }
+   ],
+   "readers": [
+    "lecture_build.py",
+    "build.py:lecture_section"
+   ],
+   "writers": [
+    "lecture_build.py",
+    "build.py:lecture_section (reanalyze)",
+    "workflow Lecture Capture (ngoài repo)"
+   ]
+  },
+  {
+   "key": "materials",
+   "name": "Course Materials",
+   "icon": "📚",
+   "role": "Tài liệu môn học (A2 tạo từ University Inbox; S6 gợi ý mỗi ngày).",
+   "icon_evidence": "build.py:755; research.py:10",
+   "properties": [
+    {
+     "name": "Material",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "build.py:439 (lọc title contains)"
+    },
+    {
+     "name": "Keywords",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "build.py:439 (lọc rich_text)"
+    },
+    {
+     "name": "Summary",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "build.py:439 (lọc rich_text)"
+    },
+    {
+     "name": "Suggested Today",
+     "type": "checkbox",
+     "certainty": "CODE",
+     "evidence": "build.py:660 (lọc checkbox)",
+     "note": "S6 cũ đặt"
+    },
+    {
+     "name": "Suggestion Reason",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "build.py:644 (.rich_text)"
+    },
+    {
+     "name": "Type",
+     "type": "select",
+     "certainty": "CODE",
+     "evidence": "build.py:645 (.select)",
+     "note": "giá trị do A2 đặt (không rõ)"
+    },
+    {
+     "name": "Course",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "courses",
+     "evidence": "build.py:646 (.relation)"
+    },
+    {
+     "name": "Source Upload",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "inbox",
+     "evidence": "copilot_app.py:565 (lọc relation contains)"
+    },
+    {
+     "name": "Drive Backup URL",
+     "type": "url",
+     "certainty": "INFERRED",
+     "evidence": "build.py:331,437 (chỉ có tên trong lời nhắc AI)",
+     "note": "chỉ thấy tên trong lời nhắc AI; kiểu đoán"
+    }
+   ],
+   "readers": [
+    "build.py chat tool tim_tai_lieu, suggest_section",
+    "copilot_app.py:retire_item"
+   ],
+   "writers": [
+    "legacy A2/S6",
+    "build.py 'Gỡ tài liệu' (chỉ lưu trữ)"
+   ]
+  },
+  {
+   "key": "milestones",
+   "name": "Mốc năm học",
+   "icon": "⚙️",
+   "role": "Mốc năm học (bắt đầu kỳ, Tết, hè, tuần 1) — ghi đè semester_calendar.json; bạn tự nhập.",
+   "icon_evidence": "build.py:48; semester.py:27",
+   "properties": [
+    {
+     "name": "Năm học",
+     "type": "title",
+     "certainty": "INFERRED",
+     "evidence": "semester.py:51",
+     "note": "vd \"2026–2027\" (4 ký tự đầu là năm)"
+    },
+    {
+     "name": "Bắt đầu kỳ lẻ",
+     "type": "date",
+     "certainty": "INFERRED",
+     "evidence": "semester.py:54,58",
+     "note": "đọc 10 ký tự đầu như ngày ISO"
+    },
+    {
+     "name": "Bắt đầu nghỉ Tết",
+     "type": "date",
+     "certainty": "INFERRED",
+     "evidence": "semester.py:54"
+    },
+    {
+     "name": "Bắt đầu kỳ chẵn",
+     "type": "date",
+     "certainty": "INFERRED",
+     "evidence": "semester.py:55"
+    },
+    {
+     "name": "Bắt đầu hè",
+     "type": "date",
+     "certainty": "INFERRED",
+     "evidence": "semester.py:55"
+    },
+    {
+     "name": "Tuần 1 (thứ Hai)",
+     "type": "date",
+     "certainty": "INFERRED",
+     "evidence": "semester.py:61"
+    }
+   ],
+   "readers": [
+    "semester.py:sync_from_notion"
+   ],
+   "writers": [
+    "user (manual)"
+   ]
+  },
+  {
+   "key": "notebooklm_inbox",
+   "name": "NotebookLM Inbox",
+   "icon": "🧠",
+   "role": "Tài liệu gửi sang NotebookLM qua Google Drive.",
+   "icon_evidence": "build.py:40",
+   "properties": [
+    {
+     "name": "Item",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "build.py:478"
+    },
+    {
+     "name": "Context",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "build.py:478"
+    },
+    {
+     "name": "Drive URL",
+     "type": "url",
+     "certainty": "CODE",
+     "evidence": "build.py:478"
+    },
+    {
+     "name": "Upload Method",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Google Drive"
+     ],
+     "evidence": "build.py:478"
+    },
+    {
+     "name": "NotebookLM",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "In Drive"
+     ],
+     "evidence": "build.py:478"
+    },
+    {
+     "name": "NotebookLM Source Status",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Ready in Drive"
+     ],
+     "evidence": "build.py:478"
+    },
+    {
+     "name": "Status",
+     "type": "status",
+     "certainty": "CODE",
+     "options": [
+      "Not started"
+     ],
+     "evidence": "build.py:478"
+    }
+   ],
+   "readers": [],
+   "writers": [
+    "build.py chat tool gui_notebooklm"
+   ]
+  },
+  {
+   "key": "research_requests",
+   "name": "Research Requests",
+   "icon": "🔍",
+   "role": "Yêu cầu tìm tài liệu (Research Hub).",
+   "icon_evidence": "build.py:39; research.py:4",
+   "properties": [
+    {
+     "name": "Query",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "research.py:39"
+    },
+    {
+     "name": "Sources",
+     "type": "multi_select",
+     "certainty": "CODE",
+     "options": [
+      "Google Scholar",
+      "Studocu",
+      "Microsoft Learn",
+      "Python Docs",
+      "Stack Overflow"
+     ],
+     "evidence": "research.py:21,39"
+    },
+    {
+     "name": "Status",
+     "type": "status",
+     "certainty": "CODE",
+     "options": [
+      "Not started",
+      "In progress",
+      "Done"
+     ],
+     "evidence": "research.py:40,50,62,64"
+    },
+    {
+     "name": "Search Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "research.py:40",
+     "note": "chứa bộ đếm \"[thử N]\""
+    },
+    {
+     "name": "Results Found",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "research.py:198"
+    },
+    {
+     "name": "Results",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "research_results",
+     "evidence": "research.py:199",
+     "note": "có thể là cặp hai chiều với Research Results.Request (không rõ)"
+    }
+   ],
+   "readers": [
+    "research.py:next_job"
+   ],
+   "writers": [
+    "research.py:create_request/next_job/save"
+   ]
+  },
+  {
+   "key": "research_results",
+   "name": "Research Results",
+   "icon": "🌐",
+   "role": "Kết quả tìm được cho từng yêu cầu.",
+   "icon_evidence": "build.py:56; research.py:9",
+   "properties": [
+    {
+     "name": "Result",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "research.py:178"
+    },
+    {
+     "name": "URL",
+     "type": "url",
+     "certainty": "CODE",
+     "evidence": "research.py:178"
+    },
+    {
+     "name": "Type",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Paper",
+      "Study material",
+      "Official docs",
+      "Q&A",
+      "Tutorial",
+      "Other"
+     ],
+     "evidence": "research.py:22,178"
+    },
+    {
+     "name": "Relevance",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "research.py:179",
+     "note": "0–100"
+    },
+    {
+     "name": "Why Relevant",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "research.py:179"
+    },
+    {
+     "name": "Request",
+     "type": "relation",
+     "certainty": "CODE",
+     "relation_to": "research_requests",
+     "evidence": "research.py:179",
+     "note": "có thể là cặp hai chiều với Results"
+    },
+    {
+     "name": "Source",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Google Scholar",
+      "Studocu",
+      "Microsoft Learn",
+      "Python Docs",
+      "Stack Overflow"
+     ],
+     "evidence": "research.py:23-24,181"
+    }
+   ],
+   "readers": [
+    "build.py chat tool doc_ket_qua_nghien_cuu (sort created_time)"
+   ],
+   "writers": [
+    "research.py:save"
+   ]
+  },
+  {
+   "key": "school_log",
+   "name": "Đồng bộ trường",
+   "icon": "🏫",
+   "role": "Nhật ký mỗi lượt đồng bộ dữ liệu trường.",
+   "icon_evidence": "build.py:52; school_sync.py:30; docs/gen_n8n_map.py:170",
+   "properties": [
+    {
+     "name": "Lần",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:239"
+    },
+    {
+     "name": "Lúc",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:239"
+    },
+    {
+     "name": "Trạng thái",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Đã đồng bộ",
+      "Không đổi",
+      "Lỗi",
+      "Cần đăng nhập"
+     ],
+     "evidence": "school_sync.py:240; L269,277,281; deadlines.py:197"
+    },
+    {
+     "name": "Số thay đổi",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:240"
+    },
+    {
+     "name": "Thay đổi",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:241"
+    },
+    {
+     "name": "Cần bạn xem",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "school_sync.py:242"
+    }
+   ],
+   "readers": [],
+   "writers": [
+    "school_sync.py:_log",
+    "deadlines.py:fix_due (qua school_sync._log)"
+   ]
+  },
+  {
+   "key": "semester_state",
+   "name": "Semester State",
+   "icon": null,
+   "role": "Trạng thái học kỳ hiện tại (dòng \"Current\": kỳ số mấy, đang học / Tết / hè).",
+   "icon_evidence": "build.py:34; docs/gen_n8n_map.py:161",
+   "properties": [
+    {
+     "name": "State",
+     "type": "title",
+     "certainty": "CODE",
+     "options": [
+      "Current"
+     ],
+     "evidence": "build.py:1009 (.title); academic.py:220",
+     "note": "dòng có tiêu đề \"Current\" là kỳ hiện tại"
+    },
+    {
+     "name": "Semester No.",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "evidence": "semester.py:204; build.py:1011 (.select)"
+    },
+    {
+     "name": "Period",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Semester",
+      "Tết",
+      "Hè"
+     ],
+     "evidence": "semester.py:204; semester.py:73 ('Done' tính ra nhưng không ghi)"
+    },
+    {
+     "name": "Updated By",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "semester.py:205"
+    },
+    {
+     "name": "Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "semester.py:205"
+    }
+   ],
+   "readers": [
+    "academic.py:current_sem",
+    "program.py:build",
+    "semester.py:tick",
+    "build.py:academic_section"
+   ],
+   "writers": [
+    "semester.py:tick"
+   ],
+   "seed": [
+    {
+     "State": "Current",
+     "Semester No.": "1",
+     "Period": "Semester"
+    }
+   ],
+   "seed_evidence": "semester.py:184-185 (cần dòng 'Current'); academic.py:220"
+  },
+  {
+   "key": "summer",
+   "name": "Summer Planning",
+   "icon": "☀️",
+   "role": "Kế hoạch hè sau mỗi năm (học hè / nghỉ / thực tập).",
+   "icon_evidence": "build.py:50; program.py:18",
+   "properties": [
+    {
+     "name": "Plan",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "semester.py:142; program.py:385",
+     "note": "\"Hè sau S{k}\""
+    },
+    {
+     "name": "Status",
+     "type": "status",
+     "certainty": "CODE",
+     "options": [
+      "Not started",
+      "In progress",
+      "Done"
+     ],
+     "evidence": "semester.py:142,241; program.py:379"
+    },
+    {
+     "name": "Choice",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Study Summer",
+      "Relax",
+      "Internship"
+     ],
+     "evidence": "semester.py:241; program.py:359,379"
+    },
+    {
+     "name": "Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "semester.py:143; program.py:381"
+    },
+    {
+     "name": "Company",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "program.py:380"
+    },
+    {
+     "name": "Position",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "program.py:380"
+    },
+    {
+     "name": "Work Hours",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "program.py:380"
+    },
+    {
+     "name": "Credits",
+     "type": "number",
+     "certainty": "CODE",
+     "evidence": "program.py:381"
+    },
+    {
+     "name": "Course Search",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "program.py:381"
+    }
+   ],
+   "readers": [
+    "program.py:build",
+    "study_plan.py (L183-192)"
+   ],
+   "writers": [
+    "semester.py:summer/answer",
+    "program.py:save_summer"
+   ]
+  },
+  {
+   "key": "weekly_reviews",
+   "name": "Weekly Reviews",
+   "icon": "📅",
+   "role": "Tổng kết tuần do UC viết.",
+   "icon_evidence": "build.py:45",
+   "properties": [
+    {
+     "name": "Week",
+     "type": "title",
+     "certainty": "CODE",
+     "evidence": "weekly.py:181"
+    },
+    {
+     "name": "Week Start",
+     "type": "date",
+     "certainty": "CODE",
+     "evidence": "weekly.py:181"
+    },
+    {
+     "name": "Completed",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "weekly.py:182"
+    },
+    {
+     "name": "At Risk Courses",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "weekly.py:182"
+    },
+    {
+     "name": "Attendance Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "weekly.py:183"
+    },
+    {
+     "name": "GPA Notes",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "weekly.py:184"
+    },
+    {
+     "name": "Upcoming Deadlines",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "weekly.py:185"
+    },
+    {
+     "name": "Carry Over",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "weekly.py:186"
+    },
+    {
+     "name": "Next Week Focus",
+     "type": "rich_text",
+     "certainty": "CODE",
+     "evidence": "weekly.py:186"
+    },
+    {
+     "name": "Status",
+     "type": "select",
+     "certainty": "CODE",
+     "options": [
+      "Draft"
+     ],
+     "evidence": "weekly.py:186"
+    }
+   ],
+   "readers": [
+    "weekly.py (dedupe by Week Start)"
+   ],
+   "writers": [
+    "weekly.py:save (qua /api/weekly; n8n Chủ nhật 21:00, build.py:1212-1214)"
+   ]
+  }
+ ],
+ "pages": [
+  {
+   "key": "phone_page",
+   "name": "University Copilot (điện thoại)",
+   "icon": "📱",
+   "role": "Trang tổng hợp cho điện thoại; cổng n8n copilot-phone-page thay toàn bộ nội dung trang này.",
+   "evidence": "build.py:54,1144-1169; phone_page.py:17-20,147"
+  },
+  {
+   "key": "home_dashboard",
+   "name": "Home Dashboard",
+   "icon": null,
+   "role": "Trang chủ (giao diện chỉ mở link). Theo chú thích trong code, 🎓 Xét tốt nghiệp và 🎫 Chứng chỉ ngoại ngữ của tôi nằm trên trang này.",
+   "evidence": "ui/index.html:556; build.py:49; certs.py:7"
+  }
+ ]
+}

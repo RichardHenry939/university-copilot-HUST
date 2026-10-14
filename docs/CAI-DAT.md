@@ -12,7 +12,7 @@ README đã nói rõ đây là công cụ cá nhân, "chưa phải sản phẩm 
 |---|---|---|
 | **File mẫu workflow n8n** (`<n8n_template_dir>/<ID>.json`) | `python build.py` ghép workflow hợp nhất từ 10 workflow cũ, đọc từng file `<ID>.json` trong thư mục `paths.n8n_template_dir` (ID lấy từ `n8n_legacy_workflows` A1…S6 trong `config.json`). Thiếu file thì `build.py` dừng | `build.py:17`, `build.py:63-74`, `build.py:98-101`, `build.py:1358-1360` |
 | **Workflow "Lecture Capture"** | Không có script nào trong repo tạo workflow nhận audio (`lecture-capture-upload`); `lecture_build.py` chỉ **sửa lại** workflow "Lecture Analysis" đã có sẵn (đọc nó bằng `GET /workflows/<id>`) | `meeting-lecture-recorder/Program.cs:75`, `lecture_build.py:19`, `lecture_build.py:362-375` |
-| **Cấu trúc 38 database Notion** (tên cột, kiểu cột) | Code đọc/ghi theo tên cột cụ thể (vd `Entry Kind`, `Due`, `Loại hạn`, `Sync Key`…) nhưng repo không có bản xuất / mẫu workspace | `config.example.json:2-41`, vd `deadlines.py:70-75` |
+| **Cấu trúc database Notion** (tên cột, kiểu cột) | Đã rút ra từ code: [NOTION-SCHEMA.md](NOTION-SCHEMA.md) + bộ dựng `tools/notion_setup.py`. Còn thiếu các cột chỉ workflow n8n cũ (mẫu ngoài repo) ghi | `config.example.json:2-41`, vd `deadlines.py:70-75` |
 | **Cổng Gemini `gemini_gate.py` (:8350)** | Mọi lời gọi Gemini của UC (đọc thư, phân loại hạn, phân tích bài giảng) đi qua cổng này | `mail_events.py:18`, `lecture_build.py:27`, `open_copilot.ps1:3` |
 
 ⚠️ **cần chủ repo xác nhận**: cách lấy 4 thứ trên (đưa vào repo, hay mô tả cách tạo).
@@ -104,8 +104,8 @@ Mở `config.json` và điền (`uc_config.py:24-47` đọc đúng các khối n
 ## 7. Notion
 
 1. Tạo integration Notion, nối nó vào n8n (credential `notionApi` ở bước 5).
-2. Tạo các database tương ứng với **38 khoá** trong `config.example.json:2-41` và share chúng cho integration. ⚠️ cần chủ repo xác nhận: cấu trúc cột của từng database (xem §0).
-3. Lấy ID database (32 ký tự hex trong URL) và điền vào `config.json → notion`.
+2. Dựng 36 database + 2 trang theo [NOTION-SCHEMA.md](NOTION-SCHEMA.md) bằng `py tools\notion_setup.py <ID-trang-cha>` (cần `NOTION_TOKEN`; thử trước với `--dry-run`). Công cụ in sẵn khối `"notion": {…}` để dán vào `config.json`.
+3. Làm các bước "Việc phải làm tay" trong NOTION-SCHEMA.md (thuộc tính kiểu Status, dữ liệu tham chiếu). Một số cột do workflow n8n cũ (mẫu ngoài repo) ghi vẫn ⚠️ cần chủ repo xác nhận (xem §0).
 
 ## 8. Tài khoản trường và lần đăng nhập đầu
 

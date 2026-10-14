@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""🧱 Dựng lại workspace Notion cho University Copilot từ schema rút ra từ code (tools/notion_schema.py).
+"""🧱 Dựng lại workspace Notion cho University Copilot từ schema rút ra từ code (tools/notion_schema.json).
 
 Cách dùng (PowerShell):
     $env:NOTION_TOKEN = "<token integration Notion của bạn>"
@@ -10,15 +10,19 @@ Trang cha phải được share cho integration (••• → Connections). Cô
   1. đọc các database / trang con ĐÃ CÓ trên trang cha (dò theo tên) -> chạy lại không tạo trùng;
   2. tạo database còn thiếu (đủ thuộc tính, trừ quan hệ); DB đã có thì chỉ THÊM thuộc tính còn thiếu, không sửa / xoá gì;
   3. khi đã đủ database: thêm các thuộc tính quan hệ (relation);
-  4. tạo các trang thường (không phải database) còn thiếu;
-  5. in khối "notion": {...} để dán vào config.json, kèm danh sách việc phải làm tay
+  4. tạo "dòng mồi" mà code cần sẵn (vd dòng 'Current' của Semester State) — CHỈ khi database đó đang trống;
+  5. tạo các trang thường (không phải database) còn thiếu;
+  6. in khối "notion": {...} để dán vào config.json, kèm danh sách việc phải làm tay
      (thuộc tính Status, formula / rollup, nhóm của Status…).
 Chỉ dùng thư viện chuẩn. Không ghi file nào; ID chỉ in ra màn hình."""
 import argparse, json, os, sys, time, urllib.error, urllib.request
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import notion_schema  # noqa: E402
+SCHEMA_FILE = Path(__file__).resolve().parent / 'notion_schema.json'
+
+
+def load_schema(path=SCHEMA_FILE):
+    return json.loads(Path(path).read_text(encoding='utf-8'))
 
 API = 'https://api.notion.com/v1'
 VERSION = '2022-06-28'   # bản API mà n8n / UC đang dùng: ID database (không phải data source)
@@ -67,6 +71,22 @@ def prop_payload(p, ids=None):
     return None
 
 
+def value_payload(p, v):
+    """Giá trị của một ô trong dòng mồi -> payload API."""
+    t = p['type']
+    if t in ('title', 'rich_text'): return {t: [{'type': 'text', 'text': {'content': str(v)}}]}
+    if t == 'select': return {'select': {'name': str(v)}}
+    if t in ('number', 'checkbox', 'url'): return {t: v}
+    if t == 'date': return {'date': {'start': v}}
+    raise ValueError(f"dòng mồi không hỗ trợ kiểu {t} ({p['name']})")
+
+
+def seed_payload(db, dbid, row):
+    props = {p['name']: p for p in db['properties']}
+    return {'parent': {'type': 'database_id', 'database_id': dbid},
+            'properties': {k: value_payload(props[k], v) for k, v in row.items()}}
+
+
 def db_payload(db, parent):
     props = {p['name']: prop_payload(p) for p in db['properties'] if p['type'] not in MANUAL | {'relation'}}
     body = {'parent': {'type': 'page_id', 'page_id': parent}, 'title': [{'type': 'text', 'text': {'content': db['name']}}],
@@ -108,6 +128,8 @@ def plan(schema):
         rels = [f"{p['name']}→{p['relation_to']}" for p in db['properties'] if p['type'] == 'relation']
         lines.append(f"[DB] {db.get('icon') or ''} {db['name']} (notion.{db['key']}): {len(db['properties'])} thuộc tính "
                      f"({', '.join(f'{k} {v}' for k, v in sorted(kinds.items()))})" + (f"; quan hệ: {', '.join(rels)}" if rels else ''))
+    for db in schema['databases']:
+        if db.get('seed'): lines.append(f"[Dòng mồi] {db['name']}: {len(db['seed'])} dòng (chỉ khi DB trống)")
     for pg in schema.get('pages', []):
         lines.append(f"[Trang] {pg.get('icon') or ''} {pg['name']} (notion.{pg['key']})")
     return lines
@@ -154,7 +176,15 @@ def setup(call, parent, schema, log=print):
         if add:
             call('PATCH', f"/databases/{ids[db['key']]}", {'properties': add}); report['added_props'] += [f"{db['name']}.{k}" for k in add]
             log(f"~ {db['name']}: thêm {len(add)} quan hệ")
-    # 3) trang thường
+    # 3) dòng mồi — chỉ khi database đang trống (chạy lại không tạo trùng)
+    report['seeded'] = []
+    for db in schema['databases']:
+        if not db.get('seed'): continue
+        if call('POST', f"/databases/{ids[db['key']]}/query", {'page_size': 1}).get('results'): continue
+        for row in db['seed']:
+            call('POST', '/pages', seed_payload(db, ids[db['key']], row))
+        report['seeded'].append(f"{db['name']} ({len(db['seed'])} dòng)"); log(f"+ {db['name']}: tạo {len(db['seed'])} dòng mồi")
+    # 4) trang thường
     for pg in schema.get('pages', []):
         if pg['name'] in pages_have:
             ids[pg['key']] = pages_have[pg['name']]; report['reused_page'].append(pg['key']); continue
@@ -176,7 +206,7 @@ def main(argv=None):
     ap.add_argument('parent', nargs='?', help='ID (hoặc URL) trang Notion cha, đã share cho integration')
     ap.add_argument('--dry-run', action='store_true', help='chỉ in kế hoạch, không gọi mạng')
     a = ap.parse_args(argv)
-    schema = notion_schema.SCHEMA
+    schema = load_schema()
     if a.dry_run:
         print('KẾ HOẠCH (không gọi mạng):'); print('\n'.join(plan(schema)))
         print('\nViệc phải làm tay sau khi tạo:'); print('\n'.join('  - ' + x for x in manual_steps(schema)) or '  (không có)')
