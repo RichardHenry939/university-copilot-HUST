@@ -214,7 +214,7 @@ def _mooc_weekly(code, now):
         except Exception: start = None
         rows = []
         for it in c.get('items') or []:
-            if (it.get('type') or '').lower() not in ('homework', 'bài tập') and 'bài tập' not in (it.get('name') or '').lower(): continue
+            if (it.get('format') or it.get('type') or '').lower() not in ('homework', 'bài tập') and 'bài tập' not in (it.get('name') or '').lower(): continue
             due = it.get('due')
             try: due = dt.datetime.fromisoformat(due.replace('Z', '+00:00')) if due else None
             except Exception: due = None

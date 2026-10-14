@@ -57,6 +57,10 @@ def fetch():
     try: old = json.loads(OUT.read_text(encoding='utf-8'))
     except Exception: old = {}
     out['missed_notified'] = old.get('missed_notified', [])
+    # (v1.00.27, R-3) nguồn trả RỖNG hợp lệ (đổi khoá JSON / 403) mà lần trước có dữ liệu -> KHÔNG ghi đè, giữ bản cũ, báo lỗi rõ
+    if not out['lops'] and old.get('lops'):
+        import uc_state; uc_state._err('fami.json: lượt mới 0 lớp (lần trước %d) -> giữ bản cũ' % len(old['lops']))
+        return {'ok': False, 'error': 'FAMI trả 0 lớp — giữ dữ liệu lần trước'}
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding='utf-8')
     return {'ok': True, 'lops': len(out['lops']), 'chuongs': sum(len(x['chuongs']) for x in out['lops'])}
 
@@ -76,7 +80,8 @@ def items(now=None):
             opn = dt.datetime.strptime(ex['ngay_mo_thi'], '%d/%m/%Y').replace(tzinfo=TZ) if ex.get('ngay_mo_thi') else None
             sc = scores.get(c['id'])
             out.append({'code': l['ma_hp'], 'stt': c['stt'], 'name': f"{l['ma_hp']} CĐ{c['stt']} — {c['ten']} (FAMI)", 'topic': c['ten'],
-                        'open': opn, 'due': close - dt.timedelta(minutes=1), 'done': bool(ex.get('da_co_diem')), 'score': sc,
+                        'open': opn, 'due': close - dt.timedelta(minutes=1), 'done': ex.get('da_co_diem') in (True, 1, '1', 'true', 'True'),   # (v1.00.27, R-3) bool("0") từng = True -> bài chưa làm bị ghi Submitted
+                        'score': sc,
                         'can_exam': bool(ex.get('can_exam')), 'mins': c.get('thoi_gian_thi'), 'n_q': c.get('so_cau_hoi'), 'max': c.get('diem_toi_da'),
                         'url': f"{BASE}/phong-hoc/kiem-tra/{l['id']}"})
     return out

@@ -58,3 +58,13 @@ def save_json(path, obj, indent=1):
 def _copy(src, dst):
     tmp = dst.with_name(dst.name + '.tmp')
     tmp.write_bytes(src.read_bytes()); os.replace(tmp, dst)
+
+
+_locks = {}
+
+
+def lock(name):
+    """(v1.00.27, D-3/D-5) Khoá dùng chung theo tên file trạng thái. Đặt ở đây vì uc_state KHÔNG bị importlib.reload
+    (alerts / mail_events bị reload mỗi lượt nên khoá đặt trong chúng sẽ bị tạo lại). RLock: lồng nhau trong cùng luồng được."""
+    with _nlock:
+        return _locks.setdefault(name, threading.RLock())

@@ -174,6 +174,10 @@ def fetch():
     for m in box['items']:
         if m.get('ConversationId') in lk and not m.get('WebUrl'): m['WebUrl'], m['Links'] = lk[m['ConversationId']]
     box['items'] = sorted(box['items'] + new, key=lambda m: m['ReceivedDateTime'])[-KEEP:]
+    # (v1.00.27, R-3) nguồn trả RỖNG hợp lệ (đổi khoá JSON / 403) mà lần trước có dữ liệu -> KHÔNG ghi đè, giữ bản cũ, báo lỗi rõ
+    if not res['teams'] and box.get('teams'):   # joinedTeams 403 / đổi khoá -> đừng ghi đè file / phản hồi / OneNote bằng rỗng
+        import uc_state; uc_state._err('teams: lượt mới 0 nhóm (lần trước %d) -> giữ bản cũ' % len(box['teams']))
+        return {'ok': False, 'error': 'Teams trả 0 nhóm — giữ dữ liệu lần trước', 'errors': res['errors'][:5]}
     box['teams'] = res['teams']; box['last_fetch'] = dt.datetime.now().isoformat(timespec='seconds'); box['errors'] = res['errors']
     POSTS.write_text(json.dumps(box, ensure_ascii=False, indent=1), encoding='utf-8')
     FILES.write_text(json.dumps({'at': box['last_fetch'], 'items': res['files'], 'tabs': res.get('tabs', [])}, ensure_ascii=False, indent=1), encoding='utf-8')

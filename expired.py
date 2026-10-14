@@ -45,6 +45,7 @@ def collect(now=None):
             k = _key(mc.group(1), due)
             k2 = next((x for x in out if x.startswith(f"het-han|{mc.group(1)}|") and abs((out[x]['due'] - due).total_seconds()) <= 7200), k)
             done = (it.get('earned') or 0) > 0
+            if not done and (out.get(k2) or {}).get('ket_qua') == 'Đã làm': continue   # (v1.00.27, R-3) KHÔNG hạ "Đã làm" -> "Bỏ lỡ" (MOOC mất điểm tạm thời)
             out.pop(k2, None)
             out[k] = {'name': it['name'], 'code': mc.group(1), 'due': due, 'ket_qua': 'Đã làm' if done else 'Bỏ lỡ',
                       'nguon': f"MOOC {it.get('earned', 0):g}/{it.get('possible', 0):g}"}

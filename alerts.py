@@ -23,7 +23,12 @@ def _load():   # (v1.00.24, D-1) ghi nguyên tử + .bak; đọc hỏng -> .bak 
 
 
 def _save(s):
-    import uc_state; uc_state.save_json(STATE, s)
+    import uc_state
+    with uc_state.lock('alerts'):   # (v1.00.27, D-5) tick giữ s cả phút (toast / ntfy) -> gộp "Tắt nhắc" bạn vừa bấm từ bản trên đĩa rồi mới ghi
+        disk = uc_state.load_json(STATE, {})
+        for key in ('dl_mute', 'cls_ack'):
+            for k, v in (disk.get(key) or {}).items(): s.setdefault(key, {}).setdefault(k, v)
+        uc_state.save_json(STATE, s)
 
 
 def left(w, now):
@@ -156,15 +161,17 @@ def ack(eid, choice, stage=None, change_at=None, post=None):
     if eid.startswith('cls|'):   # tiết học: chỉ ẩn nhắc của buổi này
         s = _load(); s.setdefault('cls_ack', {})[eid] = dt.datetime.now(TZ).isoformat(timespec='minutes'); _save(s)
         return {'ok': True}
-    st = me.load(); e = st['events'][eid]
-    now = dt.datetime.now(TZ).isoformat(timespec='minutes')
-    if change_at:
-        for ch in e['changes']:
-            if ch['at'] == change_at: ch['ack'] = now
-    elif stage:
-        lvl = next((a.get('stage_level') for a in active() if a.get('eid') == eid and a.get('stage') == stage), None)
-        e.setdefault('ack', {})[stage] = {'choice': choice, 'level': lvl, 'at': now}
-    me.save(st)
+    import uc_state
+    with uc_state.lock('events'):   # (v1.00.27, D-3) đọc–sửa–ghi trong khoá chung với luồng mail (mail_events.save gộp lại phần bạn bấm)
+        st = me.load(); e = st['events'][eid]
+        now = dt.datetime.now(TZ).isoformat(timespec='minutes')
+        if change_at:
+            for ch in e['changes']:
+                if ch['at'] == change_at: ch['ack'] = now
+        elif stage:
+            lvl = next((a.get('stage_level') for a in active() if a.get('eid') == eid and a.get('stage') == stage), None)
+            e.setdefault('ack', {})[stage] = {'choice': choice, 'level': lvl, 'at': now}
+        me.save(st)
     if post and stage and choice in ('Sẽ đi', 'Bỏ', 'Đã nộp'):
         me.sync_notion(post, st, only=eid)   # ghi "Xác nhận" lên 📡 Sự kiện theo dõi
     return {'ok': True}

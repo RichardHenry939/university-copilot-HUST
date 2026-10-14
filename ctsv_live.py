@@ -90,6 +90,15 @@ def fetch():
         except Exception:
             OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding='utf-8')
         return {'ok': False, 'error': out.get('error')}
+    # (v1.00.27, R-3) nguồn trả RỖNG hợp lệ (đổi khoá JSON / 403) mà lần trước có dữ liệu -> KHÔNG ghi đè, giữ bản cũ, báo lỗi rõ
+    try: _old = json.loads(OUT.read_text(encoding='utf-8'))
+    except Exception: _old = {}
+    _n = lambda d: len((d.get('ctsv') or {}).get('mine') or []) + len((d.get('ctsv') or {}).get('open') or [])
+    if _n(out) == 0 and _n(_old) > 0:
+        import uc_state; uc_state._err('ctsv_live.json: lượt mới 0 hoạt động (lần trước %d) -> giữ bản cũ' % _n(_old))
+        _old['lastError'] = 'iCTSV trả 0 hoạt động'; _old['lastTry'] = out['at']
+        OUT.write_text(json.dumps(_old, ensure_ascii=False, indent=1), encoding='utf-8')
+        return {'ok': False, 'error': 'iCTSV trả 0 hoạt động — giữ dữ liệu lần trước'}
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding='utf-8')
     a = out.get('admin') or {}
     return {'ok': True, 'events': len(out['ctsv'].get('open') or []), 'messages': len(a.get('messages') or []),

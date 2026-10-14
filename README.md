@@ -170,6 +170,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.24** | 14/10/2026 | Tab Lịch có **kế hoạch tự học** (giờ tự học theo khối lượng của trường, ví dụ 4(3-0-2-8) = 8 giờ/tuần, chia đều vào giờ trống, tránh ngày nghỉ và hoạt động bạn đã chọn "Sẽ đi") và **xuất Google Calendar (.ics) / Excel**. Sửa 5 lỗi từ đợt đánh giá: cổng chép lời không còn gửi khoá tới địa chỉ lạ; file trạng thái ghi an toàn khi tắt máy đột ngột; TKB / CTĐT đổi định dạng không còn xoá nhầm buổi học hay ghi 0 tín; năm nhập học đặt được (`UC_INTAKE_YEAR`) cho mọi khoá |
 | **v1.00.25** | 14/10/2026 | Kế hoạch tự học tránh cả **giờ thực tập hè**: đọc cột Work Hours của ☀️ Kỳ hè (vd "T2-T6 8:00-17:00", "T2,T4 13h-17h"), áp đúng khoảng hè đó, ca thực tập có trong file Google Calendar; giờ ghi không đọc được thì báo rõ |
 | **v1.00.26** | 14/10/2026 | Tab Học kỳ có thêm **kỳ hè 2026.3 / 2027.3 / 2028.3** xen giữa các năm (như kỳ hè của trường: không hiện CTĐT, không hiện trạng thái; tới hè mới hỏi học hè / nghỉ / thực tập). Kế hoạch tự học tránh cả **giờ làm thêm trong năm** (school/part_time.json, dùng chung bộ đọc giờ với thực tập hè) |
+| **v1.00.27** | 14/10/2026 | Sửa lỗi dữ liệu: bấm "Sẽ đi / Bỏ" hoặc "Tắt nhắc" đúng lúc UC đang đọc thư không còn bị mất; một kết quả AI lạ không còn làm tắc vĩnh viễn việc đọc thư (thư lỗi 3 lần được bỏ qua, ghi lý do); MOOC / FAMI / iCTSV / Teams trả rỗng không còn xoá dữ liệu cũ; FAMI không còn đánh "đã nộp" bài chưa làm; bài MOOC "Đã làm" không còn bị hạ thành "Bỏ lỡ" |
 
 ## Chạy thử
 

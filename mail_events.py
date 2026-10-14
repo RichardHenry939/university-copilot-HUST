@@ -39,8 +39,28 @@ def load():   # (v1.00.24, D-1) ghi nguyên tử + .bak; đọc hỏng -> .bak +
     import uc_state; return uc_state.load_json(STORE, {'events': {}, 'processed': []})
 
 
+def _merge_user(st, disk):
+    """(v1.00.27, D-3) Trước khi ghi: gộp phần BẠN bấm (Sẽ đi / Bỏ / Đã biết, đã xem thay đổi) và thư đã xử lý từ bản trên đĩa vào bản đang
+    giữ — luồng mail giữ st cả phút (chờ Gemini) nên bấm nút giữa chừng từng bị ghi đè mất. Lựa chọn mới hơn (theo 'at'; bằng nhau thì bản trên đĩa — mới ghi hơn — thắng)."""
+    for eid, de in (disk.get('events') or {}).items():
+        se = st.setdefault('events', {}).get(eid)
+        if se is None: st['events'][eid] = de; continue
+        for k, v in (de.get('ack') or {}).items():
+            sv = (se.get('ack') or {}).get(k)
+            if isinstance(v, dict) and (not isinstance(sv, dict) or str(v.get('at', '')) >= str(sv.get('at', ''))): se.setdefault('ack', {})[k] = v
+        seen = {c.get('at'): c.get('ack') for c in de.get('changes') or [] if isinstance(c, dict) and c.get('ack')}
+        for c in se.get('changes') or []:
+            if isinstance(c, dict) and not c.get('ack') and seen.get(c.get('at')): c['ack'] = seen[c.get('at')]
+    have = set(st.setdefault('processed', []))
+    st['processed'] += [x for x in disk.get('processed') or [] if x not in have]
+
+
 def save(st):
-    import uc_state; uc_state.save_json(STORE, st)
+    import uc_state
+    with uc_state.lock('events'):   # (v1.00.27, D-3) khoá -> đọc lại bản trên đĩa -> gộp phần bạn bấm -> ghi
+        disk = uc_state.load_json(STORE, None)
+        if disk and disk is not st: _merge_user(st, disk)
+        uc_state.save_json(STORE, st)
 
 
 def done_ids(st): return set(st['processed'])
@@ -70,6 +90,26 @@ def gemini(prompt, model='gemini-3.5-flash-lite', caller='mail'):
 def stage_key(name): return norm(name) or 'chang'
 
 
+def _sane(x):
+    """(v1.00.27, D-4) Đầu ra Gemini đôi khi lạ: bọc trong mảng, `chang` là mảng chuỗi, ngày/giờ là chuỗi "null" hoặc sai dạng.
+    -> dict sạch: chang = list[dict] có 'ten'; ngay đúng YYYY-MM-DD, gio đúng HH:MM (sai -> None); huy là bool."""
+    if isinstance(x, list): x = next((y for y in x if isinstance(y, dict)), {})   # đôi khi AI bọc trong mảng
+    if not isinstance(x, dict): return {}
+    out = []
+    for sg in x.get('chang') if isinstance(x.get('chang'), list) else []:
+        if not isinstance(sg, dict) or not isinstance(sg.get('ten'), str) or not sg['ten'].strip(): continue
+        sg = dict(sg)
+        if not (isinstance(sg.get('ngay'), str) and re.fullmatch(r'\d{4}-\d{2}-\d{2}', sg['ngay'])): sg['ngay'] = None
+        else:
+            try: dt.date.fromisoformat(sg['ngay'])
+            except ValueError: sg['ngay'] = None
+        g = sg.get('gio'); g = g.replace('h', ':') if isinstance(g, str) else None
+        sg['gio'] = g if g and re.fullmatch(r'([01]?\d|2[0-3]):[0-5]\d', g) else None
+        sg['huy'] = bool(sg.get('huy')) and sg.get('huy') not in ('false', 'False', '0')
+        out.append(sg)
+    return {**x, 'chang': out}
+
+
 def when_of(sg):
     if not sg.get('ngay'): return None
     try:
@@ -82,7 +122,8 @@ def when_of(sg):
 
 def fmt(sg):
     d = sg.get('ngay'); g = sg.get('gio')
-    ds = f"{int(d[8:10])}/{int(d[5:7])}" if d else 'chưa rõ ngày'
+    try: ds = f"{int(d[8:10])}/{int(d[5:7])}" if d else 'chưa rõ ngày'
+    except (ValueError, TypeError): ds = 'chưa rõ ngày'   # (v1.00.27, D-4) dữ liệu cũ lưu ngay = "null" từng làm tắc cả hàng đợi thư
     return ds + (f' {g}' if g else '') + (f", {sg['dia_diem']}" if sg.get('dia_diem') else '')
 
 
@@ -162,7 +203,7 @@ def tracked_text(st):
     for eid, e in st['events'].items():
         if e.get('status') != 'Đang theo dõi': continue
         ch = sorted(e['chang'].values(), key=lambda s: s.get('ngay') or '')[-8:]   # lớp học có nhiều buổi: chỉ đưa các chặng gần nhất
-        rows.append(f"{eid}: {e['ten']} — " + '; '.join(f"{s['ten']} {fmt(s)}" for s in ch))
+        rows.append(f"{eid}: {e.get('ten', '')} — " + '; '.join(f"{s.get('ten', '')} {fmt(s)}" for s in ch if isinstance(s, dict)))
     return '\n'.join(rows) or '(chưa có)'
 
 
@@ -225,12 +266,20 @@ def process(post=None, backfill=False):
                      f"Bài tập / quiz / hạn nộp -> su_kien_id = bt-{code}, mỗi bài là 1 chặng tên đúng tên bài (loai_chang han_nop, ngay/gio = hạn nộp).\n")
         # mốc để hiểu "ngày mai / tuần sau" = lúc ĐĂNG gốc (bài Teams sửa sau vẫn giữ lời lẽ của ngày đăng)
         recv = dt.datetime.fromisoformat((m.get('Created') or m['ReceivedDateTime']).replace('Z', '+00:00')).astimezone(TZ)
+        tries = st.setdefault('fail', {}).get(m['Id'], 0)
         try:
             x = gemini(PROMPT.format(received=recv.strftime('%H:%M %d/%m/%Y'), year=recv.year, tracked=tracked_text(st), hint=hint,
                                      sender=sender, subject=m['Subject'], body=clean(m['Body'])[:6000]))
         except Exception as e:
-            st['processed'].pop(); print('gemini lỗi', m['Subject'][:60], e); break   # để lần sau thử lại, giữ thứ tự thư
-        if isinstance(x, list): x = next((y for y in x if isinstance(y, dict)), {})   # đôi khi AI bọc trong mảng
+            # (v1.00.27, D-4) trước đây MỌI lỗi -> trả thư về hàng chờ + dừng: lỗi lặp lại (không phải mạng) làm tắc vĩnh viễn mọi thư sau.
+            # Nay đếm theo từng thư: 3 lần vẫn lỗi -> bỏ qua thư đó (ghi lý do vào 'skipped'), đọc tiếp thư sau.
+            st['fail'][m['Id']] = tries + 1
+            if tries + 1 < 3: st['processed'].pop(); print('gemini lỗi', m['Subject'][:60], e); break   # để lần sau thử lại, giữ thứ tự thư
+            st.setdefault('skipped', []).append({'id': m['Id'], 'subject': m['Subject'][:120], 'loi': f'{type(e).__name__}: {e}'[:200],
+                                                 'at': dt.datetime.now(TZ).isoformat(timespec='minutes')}); st['fail'].pop(m['Id'], None)
+            print('BỎ QUA thư sau 3 lần lỗi:', m['Subject'][:60], e); continue
+        st['fail'].pop(m['Id'], None)
+        x = _sane(x)   # (v1.00.27, D-4) kiểm hình dạng đầu ra Gemini trước khi dùng
         if not x.get('lien_quan') or not x.get('chang'): continue
         eid = x.get('su_kien_id') if x.get('su_kien_id') in st['events'] else likely
         for s in x['chang']:   # AI hay lấy nhầm giờ gửi thư làm giờ diễn ra

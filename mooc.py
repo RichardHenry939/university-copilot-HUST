@@ -61,6 +61,10 @@ def fetch():
     if not r.get('ok'): return r
     try: old = json.loads(OUT.read_text(encoding='utf-8'))
     except Exception: old = {}
+    # (v1.00.27, R-3) nguồn trả RỖNG hợp lệ (đổi khoá JSON / 403) mà lần trước có dữ liệu -> KHÔNG ghi đè, giữ bản cũ, báo lỗi rõ
+    if not r.get('courses') and old.get('courses'):
+        import uc_state; uc_state._err('mooc.json: lượt mới 0 khoá (lần trước %d) -> giữ bản cũ' % len(old['courses']))
+        return {'ok': False, 'error': 'MOOC trả 0 khoá — giữ dữ liệu lần trước'}
     r['at'] = dt.datetime.now(TZ).isoformat(timespec='minutes'); r['missed_notified'] = old.get('missed_notified', [])
     OUT.write_text(json.dumps(r, ensure_ascii=False, indent=1), encoding='utf-8')
     return {'ok': True, 'courses': len(r['courses']), 'graded': sum(len(c['items']) for c in r['courses'].values())}
