@@ -71,7 +71,9 @@ def build(now=None):
         for cid, c in mo.get('courses', {}).items():
             if re.search(r'\+[A-Z]{2,4}\d{4}\+', cid): continue
             todo = [i for i in c['items'] if not (i.get('earned') or 0)]
-            st = _t((c.get('start') or '').replace('Z', '').replace('T', ' ')[:19])
+            try:   # course_start của Open edX là giờ UTC ("…Z") -> đổi sang giờ VN, không gắn nhãn +07:00 lên giờ UTC
+                st = dt.datetime.fromisoformat(c['start'].replace('Z', '+00:00')).astimezone(TZ) if c.get('start') else None
+            except Exception: st = None
             items.append({'key': f"mooc|{cid}", 'name': c['name'], 'loai': 'Đã đăng ký', 'start': st and st.isoformat(),
                           'end': None, 'han': None, 'place': 'MOOC soict.daotao.ai', 'org': 'SoICT', 'type': 'Khoá học MOOC',
                           'status': 'Đang học', 'src': 'CTSV', 'url': f"https://soict.daotao.ai/courses/{cid}/course/",

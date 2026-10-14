@@ -1084,6 +1084,8 @@ class H(BaseHTTPRequestHandler):
 
     def do_POST(self):
         u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query)
+        if not self._same_origin():   # chặn trước MỌI endpoint ghi: trang web lạ không được POST thay bạn (n8n / curl không gửi Origin)
+            return self._send(403, {"error": "cross-origin blocked"})
         # (Claude 2026-10-03) công cụ ghi_hoc_tap của não Copilot (n8n trong Docker) -> logic điểm/luật môn/chuyên cần
         # (Claude 2026-10-05) công cụ doi_han: dời hạn TỰ ĐẶT (Tự luyện / cốt lõi); hạn Môn học của trường bị từ chối
         if u.path == "/api/translate":   # 📄 bạn bấm (đã xác nhận) -> dịch PDF trên máy, bản dịch vào thư mục "Bản dịch" cạnh bản gốc
@@ -1202,8 +1204,6 @@ class H(BaseHTTPRequestHandler):
                 return self._send(200, semester.tick(lambda path, body: n8n(path, body, timeout=180), dry=dry, today=args.get("today") or None))
             except Exception as e:
                 return self._send(200, {"ok": False, "loi": f"{type(e).__name__}: {e}"[:400]})
-        if not self._same_origin():
-            return self._send(403, {"error": "cross-origin blocked"})
         try:
             if u.path == "/api/chat-file":
                 name = safe_name(q.get("name", ["file"])[0])
