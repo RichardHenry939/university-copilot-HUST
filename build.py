@@ -279,11 +279,44 @@ facts.courses = courses.map(c => ({ id: c.id, code: X(c.properties, 'Code'), nam
 const hm = (s) => s && s.length > 10 ? new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit' }).format(new Date(s)) : '';
 facts.todaySlots = ev.filter(e => S(e.properties, 'Kind') !== 'Deadline' && day(D(e.properties, 'When')) === dates.today)
   .map(e => ({ time: hm(D(e.properties, 'When')), title: T(e.properties, 'Event'), room: X(e.properties, 'Location'), course: cn(R(e.properties, 'Course')) }));
+// (14/10) 🎯 HOẠT ĐỘNG NGOẠI KHOÁ / CTSV — đã đăng ký (15 ngày tới, gồm đang diễn ra) + đang mở đăng ký sắp hết hạn.
+// Trước đây ngữ cảnh KHÔNG đọc bảng này -> chat nói "hôm nay không có hoạt động ngoại khoá" dù đang có (Cuộc thi tìm hiểu pháp luật 2026.1).
+const ex = rows('Ngoại khoá'); const exNow = new Date(); const exEnd = new Date(exNow.getTime() + 15 * 864e5);
+const exAt = (s) => s ? new Date(s.length <= 10 ? s + 'T23:59:00+07:00' : s) : null;
+const exFrom = (s) => s ? new Date(s.length <= 10 ? s + 'T00:00:00+07:00' : s) : null;
+const mine = [], open = [], news = [];
+for (const r of ex) {
+  const p = r.properties; const st = exFrom(D(p, 'Bắt đầu')), en = exAt(D(p, 'Kết thúc')), hn = exAt(D(p, 'Hạn'));
+  const loai = S(p, 'Loại'), me = S(p, 'Trạng thái của tôi');
+  const line = T(p, 'Hoạt động') + ' · ' + (st ? fmt(D(p, 'Bắt đầu')) : 'chưa rõ ngày') + (en ? ' → ' + fmt(D(p, 'Kết thúc')) : '') +
+    (hn ? ' · hạn ' + fmt(D(p, 'Hạn')) : '') + (X(p, 'Địa điểm') ? ' · ' + X(p, 'Địa điểm') : '') +
+    (X(p, 'Hình thức') ? ' · ' + X(p, 'Hình thức') : '') + (me ? ' · ' + me : '');
+  const going = /đã đăng ký|xác nhận|sẽ đi/i.test(loai + ' ' + me) && !/chưa đăng ký/i.test(me);   // "Chưa đăng ký" cũng chứa "đăng ký"
+  const live = st && st <= exNow && (!en || en >= exNow);
+  const endsToday = en && day(D(p, 'Kết thúc')) === dates.today;
+  const tag = live ? (endsToday ? '[ĐANG DIỄN RA · HÔM NAY KẾT THÚC] ' : '[ĐANG DIỄN RA] ') : endsToday ? '[ĐÃ KẾT THÚC HÔM NAY] ' : (st && day(D(p, 'Bắt đầu')) === dates.today ? '[HÔM NAY] ' : '');
+  if (going && (live || endsToday || (st && st >= exNow && st <= exEnd) || (hn && hn >= exNow && hn <= exEnd))) mine.push(tag + line);
+  else if (!going && /mở/i.test(loai) && hn && hn <= exEnd) open.push([T(p, 'Hoạt động'), tag + line]);
+  // (14/10) sự kiện trường / thông báo (mail, Teams, web) bạn chưa đăng ký — trước bị bỏ hẳn (vd Lễ mít tinh 70 năm 15/10)
+  else if (!going && !/mở/i.test(loai) && (live || endsToday || (st && st >= new Date(exNow.getTime() - 864e5) && st <= exEnd))) news.push(tag + line);
+}
+// bảng 🎯 có thể có 2 dòng cùng tên (bản 'Đang mở' từ CTSV + bản 'Đã đăng ký' của bạn) -> bỏ bản 'mở' nếu bạn đã đăng ký
+const mineNames = new Set(mine.map(m => m.replace(/^\[[^\]]*\] /, '').split(' · ')[0].trim().toLowerCase()));
+const openOk = open.filter(([n]) => !mineNames.has(n.trim().toLowerCase())).map(([, l]) => l);
+L.push('');
+L.push('HOẠT ĐỘNG NGOẠI KHOÁ / CTSV BẠN ĐÃ ĐĂNG KÝ (15 ngày tới, gồm cả đang diễn ra) (' + mine.length + '):');
+for (const m of mine) L.push('- ' + m);
+if (!mine.length) L.push('- (không có)');
+L.push('ĐANG MỞ ĐĂNG KÝ, SẮP HẾT HẠN (' + Math.min(openOk.length, 10) + '/' + openOk.length + '):');
+for (const o of openOk.slice(0, 10)) L.push('- ' + o);
+L.push('SỰ KIỆN TRƯỜNG / THÔNG BÁO (chưa đăng ký, 15 ngày tới) (' + Math.min(news.length, 12) + '/' + news.length + '):');
+for (const o of news.slice(0, 12)) L.push('- ' + o);
+facts.extra = mine;
 return [{ json: { facts, context: L.join('\n'), today: dates.today, kind: dates.kind, counts: { courses: courses.length, events: ev.length, daily: daily.length, tasks: tasks.length, eq: eq.length } } }];
 """
 
 def snapshot_chain(prefix, x, y):
-    """Dates -> 5 Notion queries -> context text. Returns (nodes, conns, first, last)."""
+    """Dates -> Notion queries (môn, lịch, việc, task, bài, câu hỏi, ngoại khoá) -> context text. Returns (nodes, conns, first, last)."""
     nm = lambda s: prefix + s
     today = "$('" + nm("Ngày giờ") + "').first().json"
     nodes = [
@@ -303,6 +336,10 @@ def snapshot_chain(prefix, x, y):
                                                                     {"property": "Status", "status": {"does_not_equal": "Graded"}}]}})),
         notion_http(nm("Cần hỏi bạn"), [x + 1100, y], f"https://api.notion.com/v1/databases/{DB['eq']}/query",
                     json.dumps({"page_size": 20, "filter": {"property": "Status", "select": {"equals": "Open"}}})),
+        # (14/10) không viết "}}" liền nhau trong biểu thức (n8n báo invalid syntax) -> "} }"
+        # (14/10) chat từng trả lời "hôm nay không có hoạt động ngoại khoá" vì ngữ cảnh KHÔNG đọc bảng 🎯 (vd Cuộc thi tìm hiểu pháp luật 2026.1)
+        notion_http(nm("Ngoại khoá"), [x + 1210, y + 160], f"https://api.notion.com/v1/databases/{EXTRA_DB}/query",
+                    "={{ JSON.stringify({page_size:80, sorts:[{property:'Bắt đầu',direction:'ascending'}], filter:{or:[{property:'Kết thúc',date:{on_or_after:" + today + ".today} },{property:'Hạn',date:{on_or_after:" + today + ".today} },{and:[{property:'Kết thúc',date:{is_empty:true} },{property:'Bắt đầu',date:{on_or_after:" + today + ".today} }]}] } }) }}"),
         {"id": sid("node", nm("Tổng hợp ngữ cảnh")), "name": nm("Tổng hợp ngữ cảnh"), "type": "n8n-nodes-base.code", "typeVersion": 2,
          "position": [x + 1320, y], "parameters": {"jsCode": CONTEXT_JS.replace("__PREFIX__", prefix).strip()}},
     ]

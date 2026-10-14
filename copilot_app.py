@@ -723,6 +723,7 @@ def school_start(by):
         try:
             import school_sync
             school_sync.run(_npost)
+            _safe(lambda: __import__("class_override").apply(_npost))   # (14/10) luật: đính chính Teams/mail thắng TKB (sau khi nạp lại TKB)
             extra_refresh()
             phone_refresh()
             _safe(lambda: __import__("timetable").refresh(_npost))
@@ -809,6 +810,11 @@ def mail_run(by):
         try: r["notion_files"] = teams_files.sync_notion(_npost)["items"]   # 📥 file chỉ có trên Notion -> về máy
         except Exception as e: r["notion_files"] = f"{type(e).__name__}: {e}"[:200]
         if r.get("ok") or (r.get("teams") or {}).get("ok"): r["events"] = mail_events.process(_npost)
+        try:   # (14/10) luật của chủ: TKB KHÔNG thắng thông báo đính chính trên Teams/mail -> áp lên dòng TKB rồi làm mới tab Lịch
+            import class_override; importlib.reload(class_override)
+            r["class_override"] = class_override.apply(_npost)
+            if r["class_override"].get("patched"): _tt_refresh()
+        except Exception as e: r["class_override"] = f"{type(e).__name__}: {e}"[:200]
         try:   # bài tập Teams -> 📋 Academic Work (Môn học) nếu chưa có
             import deadlines; importlib.reload(deadlines)
             r["deadlines"] = deadlines.upsert_teams(_npost, mail_events.load())
