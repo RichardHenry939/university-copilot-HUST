@@ -15,7 +15,7 @@ sửa trong school/audio_priority.json (không cần sửa code):
   hoc          (cao nhất)          -> HIGH          máy ghi bài giảng
   binh_thuong  (học trên web)      -> NORMAL        Chrome (MOOC, FAMI…), Edge, Teams — giữ đúng mức bình thường, không bị hạ
   homelab      (nhường đường)      -> BELOW_NORMAL  Docker/WSL (vmmemWSL). Thêm máy chủ homelab mới vào đây
-  ai           (thấp nhất)         -> IDLE          llama-server (LM Studio: UC, cuộc thi, Qwen)
+  ai           (thấp nhất)         -> IDLE khi đang ghi (+2 phút), lúc khác BELOW_NORMAL (13/10)   llama-server (LM Studio: UC, cuộc thi, Qwen)
 Tiến trình hệ thống từ chối đổi ưu tiên -> bỏ qua, không lỗi."""
 import ctypes, json, urllib.request
 from ctypes import wintypes
@@ -72,9 +72,18 @@ def recording():
         return False
 
 
+HOLD_S = 120   # bộ chuyển: dừng ghi xong vẫn giữ AI ở IDLE thêm 2 phút, tránh bật/tắt liên tục khi máy ghi ngắt quãng
+
+
 def tick():
-    """Áp 4 bậc MỌI LÚC (12/10, chủ dự án). Mỗi vòng áp lại: tiến trình mới mở cũng vào đúng bậc ngay."""
+    """Áp 4 bậc MỌI LÚC (12/10, chủ dự án). Mỗi vòng áp lại: tiến trình mới mở cũng vào đúng bậc ngay.
+    (13/10, chủ dự án) BỘ CHUYỂN cho bậc AI: đang ghi (hoặc vừa dừng < HOLD_S) -> IDLE; còn lại -> BELOW_NORMAL (ngang homelab),
+    vì IDLE cả ngày làm chép lời bị đói CPU (0,02 token/s). Máy ghi tự lên HIGH ngay lúc mở, nên 5 giây chờ vòng lặp không mất tiếng."""
+    import time
+    rec = recording(); now = time.monotonic()
+    if rec: _state['last_rec'] = now
+    ai_cls = IDLE if rec or now - _state.get('last_rec', -1e9) < HOLD_S else BELOW
     g = groups()
-    for name, cls in GROUPS: _set(_procs(g.get(name, set())), cls)
-    rec = recording(); _state['recording'] = rec
+    for name, cls in GROUPS: _set(_procs(g.get(name, set())), ai_cls if name == 'ai' else cls)
+    _state['recording'] = rec; _state['ai'] = 'IDLE' if ai_cls == IDLE else 'BELOW_NORMAL'
     return rec

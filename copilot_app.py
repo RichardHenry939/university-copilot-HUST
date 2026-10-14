@@ -736,6 +736,12 @@ def school_start(by):
     threading.Thread(target=job, daemon=True).start()
     return True
 
+def _offline():
+    """🌐 (v1.00.22) add-on network-guard đặt cờ này khi mất mạng >= 3 phút -> bỏ qua các lượt cần mạng, có mạng lại tự chạy tiếp.
+    Không cài add-on thì cờ không bao giờ có, UC chạy như cũ."""
+    return os.path.exists(os.environ.get("UC_OFFLINE_FLAG") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "OFFLINE.flag"))
+
+
 def school_loop():
     """qldt + iCTSV đúng khung 5 phút suốt 24 giờ (6/10). Máy tắt / ngủ đúng khung -> bỏ khung đó, không chạy bù."""
     import datetime as dt
@@ -746,6 +752,7 @@ def school_loop():
         slot = _slot_now(now)
         if slot and slot != done: pending = slot   # máy thức đúng khung -> khung này phải chạy
         if pending and (now - pending).total_seconds() > 280: pending = None   # lượt mail chiếm hết khung -> khung sau
+        if pending and _offline(): pending = None   # 🌐 mất mạng -> bỏ khung này (giống máy ngủ), có mạng lại chạy khung sau
         if pending and not _school["running"] and not _mail["running"]:
             done, pending = pending, None; school_start(f"lịch {done:%H:%M}")
         time.sleep(15)
@@ -839,6 +846,7 @@ def mail_loop():
         s = _slot_now(now)
         if s and s != done: pending = s   # máy thức đúng khung -> khung này phải chạy
         if pending and (now - pending).total_seconds() > 280: pending = None   # chờ qldt quá lâu -> nhường khung sau
+        if pending and _offline(): pending = None   # 🌐 mất mạng -> bỏ khung này
         if pending and not _school["running"] and not _mail["running"]:
             done, pending = pending, None; mail_run(f"lịch {done:%H:%M}")
         time.sleep(15)
@@ -900,7 +908,8 @@ def alert_loop():
 def uni_sync_loop():
     time.sleep(20)
     while True:
-        try: uni_sync_once()
+        try:
+            if not _offline(): uni_sync_once()   # 🌐 mất mạng -> chờ vòng sau
         except Exception as e: print("uni_sync:", e)
         time.sleep(SYNC_EVERY)
 

@@ -22,9 +22,14 @@ Add-on này thêm một lớp "nhường đường" nữa, dành riêng cho máy
 | Học | Cao nhất | máy ghi bài giảng |
 | Học trên trình duyệt / học online | Bình thường | Chrome (MOOC, FAMI…), Edge, Teams |
 | Homelab | Dưới bình thường | Docker / WSL |
-| AI | Thấp nhất | model chạy trên máy (LM Studio `llama-server`) |
+| AI | Thấp nhất **khi đang ghi bài** (và 2 phút sau khi dừng); lúc khác Dưới bình thường | model chạy trên máy (LM Studio `llama-server`) |
 
 Thêm / bớt tên tiến trình (`.exe`) trong `school/audio_priority.json` — không cần sửa code.
+
+**Bộ chuyển cho bậc AI (v1.00.22):** để AI ở "Thấp nhất" cả ngày làm việc chép lời / nén ghi chú bị đói CPU (đo được có lúc chỉ còn
+0,02 token/giây, model báo lỗi giữa chừng). Nay AI chỉ xuống "Thấp nhất" khi máy ghi **đang ghi** và giữ thêm 2 phút sau khi dừng
+(tránh bật/tắt liên tục); lúc khác ở "Dưới bình thường" — vẫn nhường Chrome học tập, Teams và máy ghi, nhưng không đứng hẳn.
+Máy ghi tự lên ưu tiên Cao ngay lúc mở, nên vài giây chờ vòng kiểm tra không làm mất tiếng.
 
 **2. Việc AI nặng nhường khi đang ghi bài:** cổng chép lời (speech gate) không bắt đầu chép lời / nén bằng model trong lúc máy ghi đang ghi;
 bấm Stop thì chạy tiếp. Ghi chú bài giảng vì vậy có muộn hơn một chút.
@@ -39,7 +44,7 @@ Không tắt, không tạm dừng tiến trình nào — chỉ đổi mức ưu 
 4. Tạo file rỗng tên `low_end.flag` trong thư mục `speech-gate/` (cạnh `speech_gate.py`).
 5. Khởi động lại UC và cổng chép lời.
 
-Kiểm tra: trong Task Manager → Details, cột "Base priority": máy ghi = High, `llama-server` = Low.
+Kiểm tra: trong Task Manager → Details, cột "Base priority": máy ghi = High; `llama-server` = Low khi đang ghi, Below normal lúc khác.
 
 ## Gỡ
 
@@ -53,3 +58,20 @@ Các tiến trình sẽ về ưu tiên mặc định khi chúng khởi động l
 - Một số tiến trình được Windows bảo vệ (vd máy ảo WSL `vmmemWSL`) từ chối đổi ưu tiên — add-on bỏ qua, không báo lỗi.
 - Đo kiểm của tác giả: bíp liên tục vào cáp ảo + ép mọi lõi CPU: máy ghi cũ rơi 28 lỗ (~9–13 s / 36 s); bản lõi v1.00.18 rơi 0,0 s.
   Add-on là lớp an toàn thêm cho máy yếu khi tải thật nặng hơn bài thử.
+
+## Gợi ý thêm cho máy yếu: giới hạn RAM của Docker / WSL (không bắt buộc)
+
+n8n và các dịch vụ Docker của UC chạy trong máy ảo WSL. Mặc định WSL giữ lại bộ đệm file và không trả RAM cho Windows — trên máy
+32 GB của tác giả, `vmmemWSL` chiếm ~6,9 GB dù các dịch vụ chỉ thật sự dùng ~2 GB, khiến model AI trên máy hết chỗ và treo.
+Tạo file `%USERPROFILE%\.wslconfig`:
+
+```
+[wsl2]
+memory=4GB
+
+[experimental]
+autoMemoryReclaim=dropcache
+```
+
+rồi chạy `wsl --shutdown` (Docker / n8n tắt ~1 phút rồi chạy lại). Đo của tác giả: RAM trống của Windows từ 1,8 GB lên 6,8 GB.
+Đừng đặt dưới ~3 GB: Tika đọc PDF lớn có thể bị Linux dừng giữa chừng. Gỡ: xoá file đó rồi `wsl --shutdown`.

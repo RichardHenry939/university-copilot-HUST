@@ -157,6 +157,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.19** | 12/10/2026 | Tách luật nhường ưu tiên thành **add-on cho máy yếu** (file .zip kèm hướng dẫn riêng): 4 bậc học > web học tập > homelab > AI, và việc AI chờ khi đang ghi bài. Không cài add-on thì UC chạy hết sức như trên máy mạnh. Bản sửa lỗi máy ghi vẫn nằm trong phần lõi |
 | **v1.00.20** | 12/10/2026 | **Sửa học phí tính sai nghiêm trọng**: UC đọc thẳng trang học phí thật của trường (ctt-sis, "Thông tin học phí"): số tín chỉ học phí và tiền từng môn, công nợ (đã nộp, bảo hiểm y tế, phí khám sức khoẻ), **số còn phải đóng** và hạn đóng; số của trường là chuẩn, phần UC tự tính chỉ để đối chiếu từng môn. Sửa quy tắc tự tính cho Giáo dục quốc phòng và Giáo dục thể chất (trước đó ghi "chưa rõ"); nút tra / nộp học phí trỏ đúng trang của trường |
 | **v1.00.21** | 12/10/2026 | Sửa luồng phân tích bài giảng bị kẹt: bước cứu hộ phiên treo bị lỗi làm cả luồng dừng; khi Gemini trả kết quả không đọc được thì trước đây bị ghi nhầm "không phải bài giảng", nay ghi đúng lý do và tự chạy lại (tối đa 3 lần); tải audio từ Drive lỗi thì tự mở khoá phiên thay vì treo 6 giờ |
+| **v1.00.22** | 14/10/2026 | Add-on "máy yếu": AI chỉ xuống ưu tiên thấp nhất khi đang ghi bài (và 2 phút sau), lúc khác dưới bình thường — chép lời không còn bị đói CPU; thêm gợi ý giới hạn RAM Docker/WSL. Add-on mới **network-guard** (`addons/network-guard.zip`): mất mạng 3 phút thì tạm dừng đồng bộ và đóng băng n8n, có mạng lại thì chạy tiếp và tự bật lại dịch vụ UC đã tắt |
 
 ## Chạy thử
 
