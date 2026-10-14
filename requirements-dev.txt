@@ -1,0 +1,2 @@
+# Chỉ để chạy bộ test (tests/). Ứng dụng chính không cần.
+pytest==8.3.4

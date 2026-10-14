@@ -164,13 +164,26 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 > Đây là công cụ cá nhân, gắn với tài khoản sinh viên HUST và workspace Notion của tôi. Repo này để tham khảo cách làm, chưa phải sản phẩm cài một lần là chạy.
 
 1. Cài Python 3.12+ và `pip install playwright keyring`, rồi `playwright install chrome`.
-2. Sao chép `config.example.json` thành `config.json`, điền ID database Notion, ID credential n8n và các đường dẫn.
+2. Sao chép `config.example.json` thành `config.json`, điền ID database Notion, ID credential n8n, ID workflow n8n (`n8n_workflows`, `n8n_legacy_workflows`) và các đường dẫn.
+   Thư mục dữ liệu / model trên máy đặt bằng biến môi trường `UC_DATA_DIR` (mặc định `~/uc-data`: SpeechGate, LectureRecorder) và `UC_AI_DIR` (mặc định `~/AI`: model PhoWhisper, cache Hugging Face / OpenVINO); ghi đè riêng từng mục bằng `SPEECH_GATE_DIR`, `LRC_RECORDING_DIR`, `PHOWHISPER_CT2_DIR`, `PHOWHISPER_OV_DIR`, `OPENVINO_CACHE_DIR`.
 3. Đặt biến môi trường `GEMINI_API_KEY` và `N8N_API_KEY`. Tạo file `.copilot-secret` chứa một chuỗi ngẫu nhiên, dùng để ký các liên kết nội bộ.
 4. Cất tài khoản trường: `python school_cred.py`. Mật khẩu gõ vào ô ẩn và được lưu trong Windows Credential Manager.
 5. Sinh workflow n8n: `python build.py`. Mở giao diện: `open_copilot.ps1`.
 
+## Chạy test
+
+Bộ test nằm trong `tests/` và chỉ kiểm phần logic thuần: học phí (`tuition_rules`, `tuition`), luật ưu tiên tiến trình của add-on máy yếu (`audio_priority`, Windows API được giả lập), hạn nộp / dời hạn / việc hết hạn, lịch học kỳ, TKB, lọc thông báo cũ.
+Không cần mạng, Windows, Notion, n8n hay LM Studio: mọi lời gọi ra ngoài đều được giả, cấu hình lấy từ `config.example.json`.
+
+```
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+GitHub Actions (`.github/workflows/tests.yml`) chạy bộ test này trên mỗi PR (Ubuntu + Windows, Python 3.12 / 3.13).
+
 ## Quyền riêng tư
 
-Repo **không** chứa dữ liệu cá nhân nào: mail, điểm, lịch, ID Notion, kênh ntfy, khoá API hay mật khẩu đều không có. Mọi giá trị riêng nằm trong `config.json`, biến môi trường hoặc Credential Manager, và đều đã nằm trong `.gitignore`.
+Repo **không** chứa dữ liệu cá nhân nào: mail, điểm, lịch, ID Notion, ID workflow n8n, đường dẫn máy cá nhân, kênh ntfy, khoá API hay mật khẩu đều không có. Mọi giá trị riêng nằm trong `config.json`, biến môi trường hoặc Credential Manager, và đều đã nằm trong `.gitignore`.
 
 Đây là công cụ cá nhân, **không liên kết hay được bảo trợ bởi Đại học Bách khoa Hà Nội**. Công cụ chỉ đọc dữ liệu mà chính tài khoản sinh viên của người dùng được phép xem.

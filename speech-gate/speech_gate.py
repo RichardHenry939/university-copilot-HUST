@@ -22,12 +22,16 @@ from urllib.parse import urlparse, parse_qs
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
-ROOT = Path(os.environ.get("SPEECH_GATE_DIR", r"D:\Data\SpeechGate"))
+# Đường dẫn trên máy lấy từ biến môi trường (không viết cứng ổ đĩa của người dùng):
+#   UC_DATA_DIR (mặc định ~/uc-data), UC_AI_DIR (mặc định ~/AI); từng mục có thể ghi đè riêng bên dưới.
+DATA_DIR = Path(os.environ.get("UC_DATA_DIR") or Path.home() / "uc-data")
+AI_DIR = Path(os.environ.get("UC_AI_DIR") or Path.home() / "AI")
+ROOT = Path(os.environ.get("SPEECH_GATE_DIR") or DATA_DIR / "SpeechGate")
 JOBS, SLIDES = ROOT / "jobs", ROOT / "slides"
-MODEL_DIR = r"D:\AI\models\phowhisper-large-ct2"
+MODEL_DIR = os.environ.get("PHOWHISPER_CT2_DIR") or str(AI_DIR / "models" / "phowhisper-large-ct2")
 # (Claude 2026-10-03) PhoWhisper tren NPU: IR tao boi export_ov.py + quantize_ov.py (.venv-ov). SPEECH_GATE_STT=cpu de tat.
-OV_MODEL_DIR = r"D:\AI\models\phowhisper-large-ov-int8"
-OV_CACHE = r"D:\AI\Cache\openvino"          # ban bien dich cho NPU: lan dau ~4.5 phut, sau do ~10 s
+OV_MODEL_DIR = os.environ.get("PHOWHISPER_OV_DIR") or str(AI_DIR / "models" / "phowhisper-large-ov-int8")
+OV_CACHE = os.environ.get("OPENVINO_CACHE_DIR") or str(AI_DIR / "Cache" / "openvino")          # ban bien dich cho NPU: lan dau ~4.5 phut, sau do ~10 s
 STT_DEVICE = os.environ.get("SPEECH_GATE_STT", "NPU").upper()
 OV_WIN_SEC = 28.0                              # Whisper xu ly cua so 30 s; ghep cac doan VAD toi da 28 s
 LMSTUDIO = "http://127.0.0.1:1234/v1/chat/completions"

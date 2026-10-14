@@ -190,7 +190,7 @@
 <circle cx="134" cy="1931.3400000000001" r="2.6" fill="#4B5D70"/>
 <text x="146" y="1938.9" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Im lặng 30 giây → cảnh báo ngay trên UC</text>
 <circle cx="134" cy="1964.3200000000002" r="2.6" fill="#4B5D70"/>
-<text x="146" y="1971.88" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">16 kHz mono, bơm theo đồng hồ thật → D:\…\Documents\LectureRecorder</text>
+<text x="146" y="1971.88" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">16 kHz mono, bơm theo đồng hồ thật → %UC_DATA_DIR%\LectureRecorder</text>
 <circle cx="130" cy="2067" r="19" fill="#14263A"/>
 <text x="130" y="2074" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#FFD43B" text-anchor="middle">1</text>
 <text x="166" y="2074" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="20" font-weight="400" fill="#14263A" text-anchor="start">Bấm Start ở tab Ghi bài giảng (Copilot)</text>
@@ -328,7 +328,7 @@
 <rect x="2054" y="1266" width="930" height="196" rx="0" fill="#fff" fill-opacity="1" stroke="#7A8A9B" stroke-width="1.6"/>
 <rect x="2054" y="1266" width="6" height="196" fill="#7A8A9B"/>
 <text x="2076" y="1300" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Đã tắt, giữ làm bản lưu</text>
-<text x="2076" y="1326" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">16 workflow · sao lưu D:\Tools\n8n-temp</text>
+<text x="2076" y="1326" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">16 workflow · sao lưu &lt;thư mục mã nguồn&gt;\n8n-temp</text>
 <circle cx="2080" cy="1346.44" r="2.6" fill="#4B5D70"/>
 <text x="2092" y="1354.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Agent 2/3/4, Service 5/6, Conductor, Council Bridge, Quick Upload, Reconciliation,</text>
 <text x="2092" y="1382.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Health Ping, Suggestion Converter, Create Deadline, TEMP Proxy, 2 bản ARCHIVED</text>
@@ -538,7 +538,7 @@
 <rect x="108" y="2516" width="690" height="258" rx="0" fill="#fff" fill-opacity="1" stroke="#B3122E" stroke-width="1.6"/>
 <rect x="108" y="2516" width="6" height="258" fill="#B3122E"/>
 <text x="130" y="2550" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Cổng Gemini</text>
-<text x="130" y="2576" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">gemini_gate.py · :8350 · D:\Data\GeminiGate</text>
+<text x="130" y="2576" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">gemini_gate.py · :8350 · %UC_DATA_DIR%\GeminiGate</text>
 <circle cx="134" cy="2596.44" r="2.6" fill="#4B5D70"/>
 <text x="146" y="2604.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Đếm token theo ngày (giờ PT, reset 14:00 VN), theo model và theo</text>
 <text x="146" y="2632.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">nơi gọi</text>
@@ -560,7 +560,7 @@
 <rect x="1528" y="2516" width="690" height="258" rx="0" fill="#fff" fill-opacity="1" stroke="#0D7377" stroke-width="1.6"/>
 <rect x="1528" y="2516" width="6" height="258" fill="#0D7377"/>
 <text x="1550" y="2550" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">LM Studio</text>
-<text x="1550" y="2576" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">lms · :1234 · model trên D:\AI\Models</text>
+<text x="1550" y="2576" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">lms · :1234 · model trên %UC_AI_DIR%\Models</text>
 <circle cx="1554" cy="2596.44" r="2.6" fill="#4B5D70"/>
 <text x="1566" y="2604.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">qwen3-14b trên GPU Arc 140V · khung 16k token</text>
 <circle cx="1554" cy="2629.42" r="2.6" fill="#4B5D70"/>
@@ -571,7 +571,7 @@
 <rect x="2238" y="2516" width="690" height="258" rx="0" fill="#fff" fill-opacity="1" stroke="#0D7377" stroke-width="1.6"/>
 <rect x="2238" y="2516" width="6" height="258" fill="#0D7377"/>
 <text x="2260" y="2550" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Cổng chép lời</text>
-<text x="2260" y="2576" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">speech_gate.py · :8340 · D:\Data\SpeechGate</text>
+<text x="2260" y="2576" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">speech_gate.py · :8340 · %UC_DATA_DIR%\SpeechGate</text>
 <circle cx="2264" cy="2596.44" r="2.6" fill="#4B5D70"/>
 <text x="2276" y="2604.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">VAD: ≥ 3 phút tiếng nói và ≥ 5 % thời lượng; không đạt →</text>
 <text x="2276" y="2632.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">unusable</text>
@@ -602,10 +602,10 @@
 <circle cx="3944" cy="2639.42" r="2.6" fill="#4B5D70"/>
 <text x="3956" y="2646.98" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">Documents\LectureRecorder — file ghi âm</text>
 <circle cx="3944" cy="2672.4" r="2.6" fill="#4B5D70"/>
-<text x="3956" y="2679.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">D:\Tools — mã nguồn: university-copilot, agentchattr, speech-gate,</text>
-<text x="3956" y="2708.94" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">gemini-gate</text>
+<text x="3956" y="2679.96" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">&lt;thư mục mã nguồn&gt; — mã nguồn: university-copilot, agentchattr,</text>
+<text x="3956" y="2708.94" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">speech-gate, gemini-gate</text>
 <circle cx="3944" cy="2734.36" r="2.6" fill="#4B5D70"/>
-<text x="3956" y="2741.92" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">D:\AI — model + cache (LM Studio, PhoWhisper, OpenVINO)</text>
+<text x="3956" y="2741.92" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">%UC_AI_DIR% — model + cache (LM Studio, PhoWhisper, OpenVINO)</text>
 <rect x="4780" y="440" width="1540" height="1180" rx="0" fill="#F6F4EE" fill-opacity="1" stroke="#14263A" stroke-width="2.4"/>
 <rect x="4780" y="440" width="459.12" height="56" rx="0" fill="#14263A" fill-opacity="1" stroke="#14263A" stroke-width="0"/>
 <text x="4800" y="478" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="26" font-weight="600" fill="#fff" text-anchor="start" letter-spacing="1.2">14  ·  CHƯƠNG TRÌNH · HỌC KỲ</text>
@@ -765,7 +765,7 @@
 <rect x="6388" y="556" width="1504" height="299" rx="0" fill="#fff" fill-opacity="1" stroke="#0D7377" stroke-width="1.6"/>
 <rect x="6388" y="556" width="6" height="299" fill="#0D7377"/>
 <text x="6410" y="590" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#14263A" text-anchor="start">Đọc trường · school_fetch.py</text>
-<text x="6410" y="616" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">Playwright · Chrome thật · hồ sơ riêng D:\Tools\uc-sync\chrome-profile (không đụng Chrome chính)</text>
+<text x="6410" y="616" font-family="'Cascadia Mono', Consolas, monospace" font-size="15" font-weight="400" fill="#7A8A9B" text-anchor="start">Playwright · Chrome thật · hồ sơ riêng (paths.chrome_profile) (không đụng Chrome chính)</text>
 <circle cx="6414" cy="636.44" r="2.6" fill="#4B5D70"/>
 <text x="6426" y="644.0" font-family="'Segoe UI', 'Segoe UI Emoji', sans-serif" font-size="21" font-weight="400" fill="#14263A" text-anchor="start">qldt: TKB chi tiết (tuần, tiết, phòng, online), vắng theo điểm danh, bảng điểm chi tiết + tổng hợp, khung CTĐT 8 kỳ</text>
 <circle cx="6414" cy="669.4200000000001" r="2.6" fill="#4B5D70"/>
