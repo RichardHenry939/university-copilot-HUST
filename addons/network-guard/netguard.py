@@ -21,7 +21,7 @@ STATE, LOG = UC / 'school' / 'netguard.json', UC / 'school' / 'netguard.log'
 FLAG = Path(os.environ.get('UC_OFFLINE_FLAG') or UC / 'OFFLINE.flag')
 DOCKER = os.environ.get('DOCKER_EXE') or shutil.which('docker') or 'docker'
 LAUNCHER = UC / 'open_copilot.ps1'
-PORTS = {8320: 'UC', 5678: 'n8n', 8340: 'cổng chép lời', 5681: 'máy ghi', 8350: 'cổng Gemini'}   # thêm cổng dịch vụ của bạn nếu có
+PORTS = {8320: 'UC', 5678: 'n8n', 8340: 'cổng chép lời', 5681: 'máy ghi', 8350: 'cổng Gemini', 8300: 'phòng họp AI', 8310: 'relay hội đồng'}   # thêm cổng dịch vụ của bạn nếu có
 FAIL_LIMIT, RESTART_COOLDOWN = 3, 300
 
 
@@ -51,6 +51,23 @@ def docker(*a):
     except Exception: return False
 
 
+AC = Path(os.environ.get("AC_DIR") or UC.parent / "agentchattr")   # phòng họp 4 ghế AI (thư mục agentchattr/ của repo)
+
+
+def keeper_alive():
+    """(v1.00.28) Bộ giữ ghế AgentChattr từng chết im lặng -> mỗi phút: có AgentChattr mà không thấy seat_keeper thì bật lại (--kick)."""
+    if not (AC / "seat_keeper.py").exists(): return
+    try:
+        r = subprocess.run(["powershell.exe", "-NoProfile", "-Command",
+                            "@(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'seat_keeper[.]py' -and $_.CommandLine -notmatch '--once|--kick' }).Count"],
+                           capture_output=True, text=True, timeout=60, creationflags=0x08000000)
+        if r.stdout.strip() == "0":
+            log("bộ giữ ghế AgentChattr không chạy -> bật lại (--kick)")
+            py = AC / ".venv" / "Scripts" / "pythonw.exe"
+            subprocess.Popen([str(py) if py.exists() else "pythonw", str(AC / "seat_keeper.py"), "--kick"], cwd=str(AC), creationflags=0x08000000)
+    except Exception as e: log(f"không kiểm được bộ giữ ghế: {type(e).__name__}")
+
+
 def main():
     try: st = json.loads(STATE.read_text(encoding='utf-8-sig'))
     except Exception: st = {'mode': 'online', 'fails': 0, 'last_restart': 0}
@@ -59,6 +76,7 @@ def main():
             FLAG.unlink(missing_ok=True); ok = docker('unpause', 'n8n')
             log(f'CÓ MẠNG lại sau {st["fails"]} phút mất -> gỡ cờ OFFLINE, n8n chạy tiếp ({"ok" if ok else "không cần/không được"})')
         st.update(mode='online', fails=0)
+        keeper_alive()
         dead = [n for p, n in PORTS.items() if not up(p)]
         if dead and LAUNCHER.exists() and time.time() - st.get('last_restart', 0) > RESTART_COOLDOWN:
             st['last_restart'] = time.time()

@@ -1,0 +1,537 @@
+diff --git a/agents.py b/agents.py
+index ca7e2a8..b19e07b 100644
+--- a/agents.py
++++ b/agents.py
+@@ -18,7 +18,7 @@ class AgentTrigger:
+     def get_status(self) -> dict:
+         from mcp_bridge import is_online, is_active, get_role
+         instances = self._registry.get_all()
+-        return {
++        status = {
+             name: {
+                 "available": is_online(name),
+                 "busy": is_active(name),
+@@ -28,6 +28,56 @@ class AgentTrigger:
+             }
+             for name, info in instances.items()
+         }
++        # (Claude 2026-10-02) Ghe hoi dong co dinh: luon co mat, tat thi hien OFF kem ly do.
++        seats = self._seat_file()
++        notes = seats.get("notes", {})
++        for name, info in status.items():
++            base = instances[name].get("base", name)
++            info["base"] = base
++            note = notes.get(base) or {}
++            if note.get("state") in ("quota", "login"):
++                info["available"] = False
++                info["busy"] = False
++            if note:
++                info["seat_state"] = note.get("state", "")
++                info["note"] = note.get("note", "")
++        for base, cfg in self.seat_placeholders().items():
++            note = notes.get(base) or {}
++            status[base] = {
++                "available": False, "busy": False, "placeholder": True, "base": base,
++                "label": cfg["label"], "color": cfg["color"], "role": "",
++                "seat_state": note.get("state", "off"),
++                "note": note.get("note", "Ghế đang tắt"),
++            }
++        return status
++
++    # --- Ghe hoi dong co dinh (luon hien pill ke ca khi wrapper khong chay) ---
++
++    def _seat_file(self) -> dict:
++        try:
++            return json.loads((self._data_dir / "seat_status.json").read_text(encoding="utf-8"))
++        except Exception:
++            return {}
++
++    def seat_placeholders(self) -> dict:
++        """{base: {color, label, base, state:'seat'}} cho cac ghe co dinh chua co instance nao."""
++        seats = self._seat_file().get("seats", ["claude", "codex", "gemini", "local"])
++        bases = self._registry.get_bases()
++        taken = {i.get("base") for i in self._registry.get_all().values()}
++        out = {}
++        for base in seats:
++            if base in taken or base not in bases:
++                continue
++            cfg = bases[base]
++            out[base] = {"color": cfg.get("color", "#888"), "label": cfg.get("label", base.capitalize()),
++                         "base": base, "state": "seat"}
++        return out
++
++    def agent_config_with_seats(self) -> dict:
++        cfg = self._registry.get_agent_config()
++        for base, ph in self.seat_placeholders().items():
++            cfg.setdefault(base, ph)
++        return cfg
+ 
+     async def trigger(self, agent_name: str, message: str = "", channel: str = "general",
+                       job_id: int | None = None, **kwargs):
+diff --git a/app.py b/app.py
+index d595bad..191ddcc 100644
+--- a/app.py
++++ b/app.py
+@@ -37,6 +37,7 @@ jobs: JobStore | None = None
+ schedules: ScheduleStore | None = None
+ router: Router | None = None
+ agents: AgentTrigger | None = None
++_seat_file_mtime = 0  # (Claude 2026-10-02) theo doi data/seat_status.json
+ registry: RuntimeRegistry | None = None
+ session_store: SessionStore | None = None
+ session_engine: SessionEngine | None = None
+@@ -468,6 +469,18 @@ def configure(cfg: dict, session_token: str = ""):
+                     if stale_active:
+                         currently_active -= set(stale_active)
+ 
++                # (Claude 2026-10-02) seat_status.json doi (ghe het quota / can login) -> phat lai trang thai
++                global _seat_file_mtime
++                try:
++                    _sm = (Path(agents._data_dir) / "seat_status.json").stat().st_mtime
++                except OSError:
++                    _sm = 0
++                if _sm != _seat_file_mtime:
++                    _seat_file_mtime = _sm
++                    if _event_loop:
++                        asyncio.run_coroutine_threadsafe(broadcast_agents(), _event_loop)
++                        asyncio.run_coroutine_threadsafe(broadcast_status(), _event_loop)
++
+                 # Broadcast status on any change (online set or activity set)
+                 if currently_active != _known_active or _known_online != currently_online:
+                     _known_active.clear()
+@@ -1039,7 +1052,7 @@ async def broadcast_hats():
+ 
+ async def broadcast_agents():
+     """Send updated agent config (from registry) to all WebSocket clients."""
+-    agent_cfg = registry.get_agent_config() if registry else {}
++    agent_cfg = (agents.agent_config_with_seats() if agents else registry.get_agent_config()) if registry else {}
+     data = json.dumps({"type": "agents", "data": agent_cfg})
+     dead = set()
+     for client in list(ws_clients):
+@@ -1085,7 +1098,7 @@ async def websocket_endpoint(websocket: WebSocket):
+     await websocket.send_text(json.dumps({"type": "settings", "data": room_settings}))
+ 
+     # Send registered instances (used for pills/mentions)
+-    agent_cfg = registry.get_agent_config() if registry else {}
++    agent_cfg = (agents.agent_config_with_seats() if agents else registry.get_agent_config()) if registry else {}
+     await websocket.send_text(json.dumps({"type": "agents", "data": agent_cfg}))
+ 
+     # Send base agent colors (used for message coloring, no pills)
+diff --git a/config.toml b/config.toml
+index 4788f4c..c85ad55 100644
+--- a/config.toml
++++ b/config.toml
+@@ -18,12 +18,26 @@ command = "codex"
+ cwd = ".."
+ color = "#10a37f"
+ label = "Codex"
++# (Claude 2026-10-02) Cua so ghe bi day ra ngoai man hinh (khong focus) -> Codex nhan chu nhung bo qua Enter.
++# wm_setfocus gui WM_SETFOCUS gia truoc Enter (cung cach AgentChattr dung cho Copilot CLI).
++enter_backend = "wm_setfocus"
++# Codex coi chuoi phim go nhanh la "dan" (paste burst) -> Enter di ngay sau thanh xuong dong, khong gui.
++# Cho lau hon truoc khi bam Enter de Codex ket thuc che do dan.
++inject_delay = 1.5
+ 
+ [agents.gemini]
+ command = "gemini"
+ cwd = ".."
+ color = "#4285f4"
+ label = "Gemini"
++# Dung settings_file thay vi env-mode: gemini-cli tu choi file 'system settings' o
++# trong D:\ (owner khong phai Administrators + Users co Write) — bao
++# "Security Warning: Skipping system settings file" -> mat MCP. File user
++# ~/.gemini/settings.json khong bi check ACL nen MCP cau AgentChattr luon duoc nap.
++mcp_inject = "settings_file"
++mcp_settings_path = "~/.gemini/settings.json"
++mcp_transport = "http"
++mcp_http_key = "httpUrl"
+ 
+ # Antigravity CLI (agy) — Google's agentic CLI, successor to the deprecated
+ # Gemini CLI. It reads MCP servers from ~/.gemini/config/mcp_config.json (a
+@@ -46,6 +60,13 @@ command = "kimi"
+ cwd = ".."
+ color = "#1783ff"
+ label = "Kimi"
++# Kimi Code CLI (Node, v2.1.1) KHONG ho tro flag --mcp-config-file (cua kimi-cli Python cu)
++# -> crash loop. MCP cua no la mcp.json JSON schema {mcpServers:{name:{url,headers}}} —
++# trung khop voi JSON ma wrapper ghi o settings_file mode (mcp_http_key="url").
++mcp_inject = "settings_file"
++mcp_settings_path = "~/.kimi-code/mcp.json"
++mcp_transport = "http"
++mcp_http_key = "url"
+ 
+ [agents.qwen]
+ command = "qwen"
+diff --git a/run.py b/run.py
+index b14bc75..762c343 100644
+--- a/run.py
++++ b/run.py
+@@ -54,6 +54,22 @@ def main():
+ 
+     config = load_config(ROOT)
+ 
++    # (Claude 2026-10-03) Chi 1 server mot luc: khi khoi dong may 2 script cung bat server, ban thu 2 khong chiem
++    # duoc cong nhung van in "Session token" SAU CUNG vao log -> keeper/relay doc nham token cua server da chet
++    # (403 mai). Giu khoa doc quyen tren data/server.lock suot doi tien trinh; khong lay duoc khoa -> thoat im lang.
++    import msvcrt
++    lock_path = Path(config.get("server", {}).get("data_dir", ROOT / "data"))
++    if not lock_path.is_absolute():
++        lock_path = ROOT / lock_path
++    lock_path.mkdir(parents=True, exist_ok=True)
++    global _server_lock
++    _server_lock = open(lock_path / "server.lock", "a+")
++    try:
++        msvcrt.locking(_server_lock.fileno(), msvcrt.LK_NBLCK, 1)
++    except OSError:
++        logging.getLogger("run").info("Server da chay o tien trinh khac (data/server.lock) -> thoat.")
++        sys.exit(0)
++
+     # --- Security: generate a random session token (in-memory only) ---
+     session_token = secrets.token_hex(32)
+ 
+diff --git a/static/chat.js b/static/chat.js
+index 2bafed5..a6bd94a 100644
+--- a/static/chat.js
++++ b/static/chat.js
+@@ -1309,6 +1309,7 @@ function buildStatusPills() {
+         // Left-click to toggle pill popover (rename + role + color)
+         pill.addEventListener('click', (e) => {
+             e.stopPropagation();
++            if (cfg.state === 'seat') return;  // ghe co dinh chua chay: khong co gi de doi ten
+             // Toggle: close if this pill's popover is already open
+             const existing = document.querySelector(`.pill-popover[data-agent="${name}"]`);
+             if (existing) { existing.remove(); return; }
+@@ -1856,7 +1857,11 @@ function updateStatus(data) {
+         const pill = document.getElementById(`status-${name}`);
+         if (!pill) continue;
+ 
+-        pill.classList.remove('available', 'working', 'offline');
++        pill.classList.remove('available', 'working', 'offline', 'seat-quota', 'seat-login');
++        // (Claude 2026-10-02) Ghe hoi dong co dinh: ly do OFF (het quota / can login) hien o tooltip
++        if (info.seat_state === 'quota') pill.classList.add('seat-quota');
++        if (info.seat_state === 'login') pill.classList.add('seat-login');
++        pill.title = `@${name}` + (info.note ? ` — ${info.note}` : (info.available ? '' : ' — đang tắt'));
+         // Pending pills keep their pending animation (set in buildStatusPills)
+         if (!pill.classList.contains('pending')) {
+             if (info.busy && info.available) {
+diff --git a/static/style.css b/static/style.css
+index 4183d99..86bfaaa 100644
+--- a/static/style.css
++++ b/static/style.css
+@@ -265,6 +265,12 @@ header h1 {
+     opacity: 0.4;
+ }
+ 
++/* (Claude 2026-10-02) ghe hoi dong: het quota = cham cam, can dang nhap = cham do; van ro hon OFF thuong */
++.status-pill.offline.seat-quota,
++.status-pill.offline.seat-login { opacity: 0.75; }
++.status-pill.seat-quota .status-dot { background: #f59e0b; }
++.status-pill.seat-login .status-dot { background: #ef4444; }
++
+ .status-pill.pending {
+     border-style: dashed;
+     border-color: var(--agent-color, #888);
+diff --git a/windows/start_claude.bat b/windows/start_claude.bat
+index bff10e3..31d296f 100644
+--- a/windows/start_claude.bat
++++ b/windows/start_claude.bat
+@@ -2,6 +2,7 @@
+ REM agentchattr — starts server (if not running) + Claude wrapper
+ cd /d "%~dp0.."
+ 
++set "PATH=%PATH%;%USERPROFILE%\.local\bin;%APPDATA%\npm;%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links;C:\Program Files\nodejs"
+ REM Auto-create venv and install deps on first run
+ if not exist ".venv" (
+     python -m venv .venv
+diff --git a/windows/start_codex.bat b/windows/start_codex.bat
+index a76f741..dbc2350 100644
+--- a/windows/start_codex.bat
++++ b/windows/start_codex.bat
+@@ -2,6 +2,7 @@
+ REM agentchattr — starts server (if not running) + Codex wrapper
+ cd /d "%~dp0.."
+ 
++set "PATH=%PATH%;%USERPROFILE%\.local\bin;%APPDATA%\npm;%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links;C:\Program Files\nodejs"
+ REM Auto-create venv and install deps on first run
+ if not exist ".venv" (
+     python -m venv .venv
+@@ -32,7 +33,11 @@ if %errorlevel% neq 0 (
+     goto :wait_server
+ )
+ 
+-python wrapper.py codex
++REM (Claude 2026-10-02) Ghe hoi dong chay khong nguoi trong: khong hoi duyet (-a never) nhung VAN trong sandbox
++REM workspace-write (chi ghi duoc trong thu muc lam viec). Khong dung --dangerously-bypass-approvals-and-sandbox.
++REM Cong cu MCP cua phong hop (server "agentchattr") duoc tu duyet; MCP khac van theo mac dinh.
++REM (Claude 2026-10-02) Ghe hoi dong chi noi chuyen -> KHOA model gpt-6-luna (re, nhanh) de khong dot quota tuan.
++python wrapper.py codex -- -m gpt-6-luna -a never -s workspace-write -c mcp_servers.agentchattr.default_tools_approval_mode=approve
+ if %errorlevel% neq 0 (
+     echo.
+     echo   Agent exited unexpectedly. Check the output above.
+diff --git a/windows/start_gemini.bat b/windows/start_gemini.bat
+index 49e0702..d24b60b 100644
+--- a/windows/start_gemini.bat
++++ b/windows/start_gemini.bat
+@@ -1,7 +1,15 @@
+ @echo off
+-REM agentchattr — starts server (if not running) + Gemini wrapper
++title Gemini LOGIN (AgentChattr)
++REM agentchattr — Gemini seat v3
++REM Luat: CHI 1 instance gemini tai mot thoi diem (nhieu instance cung luc
++REM ghi de ~/.gemini/google_accounts.json -> tu logout: "active": null).
++REM Flow: kill instance cu -> check login (active) -> TUI login neu can -> wrapper nen.
++
+ cd /d "%~dp0.."
+ 
++REM Dam bao resolve CLI du moi truong PATH cu
++set "PATH=%PATH%;%USERPROFILE%\.local\bin;%APPDATA%\npm;%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links;C:\Program Files\nodejs"
++
+ REM Auto-create venv and install deps on first run
+ if not exist ".venv" (
+     python -m venv .venv
+@@ -20,17 +28,6 @@ if %errorlevel% neq 0 (
+     exit /b 1
+ )
+ 
+-REM Warn if ripgrep is missing (Gemini CLI can hang on init - upstream bug)
+-where rg >nul 2>&1
+-if %errorlevel% neq 0 (
+-    echo.
+-    echo   Warning: ripgrep (rg) not found on PATH.
+-    echo   Gemini CLI can hang on "Initializing..." for several minutes.
+-    echo   Fix: choco install ripgrep  or  winget install BurntSushi.ripgrep
+-    echo   See: https://github.com/google-gemini/gemini-cli/issues/13986
+-    echo.
+-)
+-
+ REM Start server if not already running, then wait for it
+ netstat -ano | findstr :8300 | findstr LISTENING >nul 2>&1
+ if %errorlevel% neq 0 (
+@@ -43,9 +40,36 @@ if %errorlevel% neq 0 (
+     goto :wait_server
+ )
+ 
+-python wrapper.py gemini
++REM Kill instance gemini con sot (CLI node + wrapper python) — tranh 2 instance
++REM cung ghi de state login cua nhau
++powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process | Where-Object { ($_.Name -eq 'node.exe' -and $_.CommandLine -like '*gemini*') -or ($_.Name -like 'python*' -and $_.CommandLine -like '*wrapper.py gemini*') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
++
++REM Dang nhap chua? gemini moi luu tai google_accounts.json .active (KHONG phai oauth_creds.json)
++.venv\Scripts\python.exe -c "import json,os,sys;e=os.environ.get('GEMINI_API_KEY');p=os.path.expanduser('~/.gemini/google_accounts.json');d=json.load(open(p,encoding='utf-8')) if os.path.exists(p) else {};sys.exit(0 if (e or d.get('active')) else 1)"
+ if %errorlevel% neq 0 (
+     echo.
+-    echo   Agent exited unexpectedly. Check the output above.
+-    pause
++    echo   Chua login Gemini. Trong cua so duoi day:
++    echo   - Chon "Login with Google", bam Y de mo trinh duyet, dang nhap.
++    echo   - Login xong thi go /quit — ghe se tu bat chay nen.
++    echo   - KHONG dong cua so trong luc dang login.
++    echo.
++    gemini
++    if errorlevel 1 (
++        echo.
++        echo   gemini thoat som voi loi — doc thong bao phia tren.
++        pause
++    )
+ )
++
++REM Wrapper chay nen — ghe ON ke ca khi cua so nay dong
++REM (Claude 2026-10-02) Wrapper PHAI chay trong console that: AgentChattr go phim vao console (WriteConsoleInput).
++REM Chay nen + redirect log lam CLI mat stdin -> "No input provided via stdin" -> ghe diec.
++REM (Claude 2026-10-02) KHOA model gemini-3.7-flash: CLI tu doi 3.5-flash -> 3.8-flash (het quota 2/10); 2.5-flash da bi go.
++REM 3.7-flash khong bi doi ten, khong trung model voi n8n (3.5-flash / 3.5-flash-lite) -> khong gianh quota cua nhau.
++start "Ghe gemini" /min cmd /c "cd /d %~dp0.. && .venv\Scripts\python.exe wrapper.py gemini -- -m gemini-3.7-flash"
++
++echo.
++echo   Ghe gemini da bat trong cua so thu nho "Ghe gemini" - dung dong cua so do.
++echo   Bam phim bat ky de dong cua so nay.
++echo.
++pause >nul
+diff --git a/windows/start_kimi.bat b/windows/start_kimi.bat
+index 5c657af..7bc24bc 100644
+--- a/windows/start_kimi.bat
++++ b/windows/start_kimi.bat
+@@ -2,6 +2,7 @@
+ REM agentchattr — starts server (if not running) + Kimi wrapper
+ cd /d "%~dp0.."
+ 
++set "PATH=%PATH%;%USERPROFILE%\.local\bin;%APPDATA%\npm;%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links;C:\Program Files\nodejs"
+ REM Auto-create venv and install deps on first run
+ if not exist ".venv" (
+     python -m venv .venv
+diff --git a/wrapper.py b/wrapper.py
+index 1e9ea5f..fd5d20b 100644
+--- a/wrapper.py
++++ b/wrapper.py
+@@ -526,9 +526,9 @@ def _queue_watcher(get_identity_fn, inject_fn, *, is_multi_instance: bool = Fals
+                     if custom_prompt:
+                         prompt = custom_prompt
+                     elif job_id:
+-                        prompt = f"use mcp to read job_id={job_id} - you're mentioned in a job thread, take appropriate action and respond"
++                        prompt = f"use the agentchattr MCP tools (chat_read, NOT Slack) to read job_id={job_id} - you're mentioned in a job thread, take appropriate action and respond with agentchattr chat_send"
+                     else:
+-                        prompt = f"use mcp to read #{channel} - you're mentioned, take appropriate action and respond"
++                        prompt = f"use the agentchattr MCP tools (chat_read, NOT Slack) to read #{channel} - you're mentioned, take appropriate action and respond with agentchattr chat_send"
+ 
+                     # Use current identity (may have changed via rename)
+                     current_name, _ = get_identity_fn()
+diff --git a/wrapper_api.py b/wrapper_api.py
+index 824a88e..3d04150 100644
+--- a/wrapper_api.py
++++ b/wrapper_api.py
+@@ -94,6 +94,21 @@ def main():
+         if temperature > 2.0:
+             temperature = 2.0
+     context_messages = int(agent_cfg.get("context_messages", 20))
++    # (Claude 2026-10-02) context_messages = so tin TOI DA doc ve; so tin thuc dua vao model do ngan sach token quyet dinh
++    context_token_budget = int(agent_cfg.get("context_token_budget", 7000))
++    max_message_tokens = int(agent_cfg.get("max_message_tokens", 2000))
++    request_timeout = int(agent_cfg.get("request_timeout", 300))
++    CHARS_PER_TOKEN = 3.0  # tieng Viet ~3.6 ky tu/token voi Qwen3 (do 2026-10-02) -> uoc luong than trong
++    DOSSIER_MARK = "📋 HỒ SƠ HỘI ĐỒNG"
++
++    def _est_tokens(text):
++        return int(len(text) / CHARS_PER_TOKEN) + 1
++
++    def _clip(text, max_tok):
++        if _est_tokens(text) <= max_tok:
++            return text
++        keep = int(max_tok * CHARS_PER_TOKEN)
++        return text[:keep * 2 // 3] + "\n[… đã lược bớt phần giữa …]\n" + text[-(keep // 3):]
+     system_prompt = agent_cfg.get("system_prompt",
+         f"You are {agent_cfg.get('label', agent)}, a helpful AI assistant participating "
+         "in a developer chat room. Keep responses concise and relevant. "
+@@ -239,7 +254,7 @@ def main():
+             headers["Authorization"] = f"Bearer {api_key}"
+ 
+         req = urllib.request.Request(url, method="POST", data=body, headers=headers)
+-        with urllib.request.urlopen(req, timeout=120) as resp:
++        with urllib.request.urlopen(req, timeout=request_timeout) as resp:
+             data = json.loads(resp.read())
+         return data["choices"][0]["message"]["content"]
+ 
+@@ -263,14 +278,52 @@ def main():
+                      "messages with your own name.")
+ 
+         messages = [{"role": "system", "content": " ".join(parts)}]
+-        for msg in chat_msgs:
+-            sender = msg.get("sender", "")
+-            text = msg.get("text", "")
+-            if sender == "system":
++        last_for_me = None
++        # (Claude 2026-10-02) bo dong he thong / "x disconnected" / join-leave: model nho tuong cac ghe mat ket noi
++        chat_only = [m for m in chat_msgs
++                     if m.get("sender", "") != "system" and m.get("type", "chat") == "chat"]
++        for msg in chat_only:
++            if msg.get("sender", "") != my_name and f"@{my_name}" in msg.get("text", ""):
++                last_for_me = (msg.get("sender", ""), msg.get("text", ""))
++
++        # (Claude 2026-10-02) Ngan sach token thay vi "N tin cuoi": lay tu moi ve cu den khi het ngan sach,
++        # tin qua dai giu dau + cuoi; trong #council luon giu ho so phien dang hop (du da troi xa).
++        dossier = next((m for m in reversed(chat_only)
++                        if m.get("text", "").lstrip().startswith(DOSSIER_MARK)), None)
++        budget = context_token_budget
++        if dossier is not None:
++            budget -= _est_tokens(_clip(dossier.get("text", ""), max_message_tokens))
++        picked = []
++        for m in reversed(chat_only):
++            if m is dossier:
+                 continue
++            t = _clip(m.get("text", ""), max_message_tokens)
++            cost = _est_tokens(t) + 8
++            if picked and cost > budget:
++                break
++            budget -= cost
++            picked.append((m, t))
++        if dossier is not None:
++            picked.append((dossier, _clip(dossier.get("text", ""), max_message_tokens)))
++        picked.sort(key=lambda p: p[0].get("id", 0) or 0)
++        dropped = len(chat_only) - len(picked)
++        if dropped > 0:
++            messages.append({"role": "system", "content":
++                f"(Đã lược {dropped} tin nhắn cũ hơn vì giới hạn bộ nhớ; nếu bị hỏi chi tiết cũ không còn thấy thì nói rõ là không còn thấy.)"})
++        for msg, text in picked:
++            sender = msg.get("sender", "")
+             role = "assistant" if sender == my_name else "user"
+             messages.append({"role": role, "content": f"{sender}: {text}"})
+-        return messages
++        # (Claude 2026-10-02) model nho hay chep lai cau tra loi cu -> chi ro tin nhan can tra loi
++        if last_for_me:
++            # KHONG trich nguyen van tin nhan vao day: model nho se chep lai nguyen cau (loi 19:00 ngay 2026-10-02)
++            messages.append({"role": "system", "content":
++                f"Hãy phản hồi tin nhắn gần nhất mà {last_for_me[0]} gửi tới bạn, bằng LỜI CỦA CHÍNH BẠN "
++                "(xác nhận, trả lời câu hỏi hoặc nêu ý kiến), tiếng Việt, ngắn gọn. TUYỆT ĐỐI không chép lại hay "
++                "nhắc lại câu của người gửi; không lặp lại câu trả lời cũ của bạn; không liệt kê @tên.\n"
++                "Ví dụ: người gửi viết \"OK vậy là cả ba bạn đều đọc được tin nhắn\" -> bạn trả lời "
++                "\"Đã rõ, Local AI sẵn sàng cho việc tiếp theo.\" (KHÔNG trả lời \"OK vậy là cả ba bạn đều đọc được tin nhắn\")."})
++        return messages, last_for_me
+ 
+     # Handle a trigger — read context, call model, respond
+     def handle_trigger(channel="general"):
+@@ -281,13 +334,61 @@ def main():
+             if not chat_msgs:
+                 return
+ 
+-            messages = format_messages(chat_msgs)
++            messages, last_for_me = format_messages(chat_msgs)
+             print(f"  [{channel}] Calling model with {len(messages)} messages...")
+ 
+-            response = call_model(messages)
+-            response = response.strip()
+-            if not response:
+-                return
++            response = call_model(messages) or ""
++            # (Claude 2026-10-02) model suy luan (qwen3...) co the tra ve khoi <think>...</think> -> bo di
++            import re as _re
++            response = _re.sub(r"<think>.*?</think>", "", response, flags=_re.S)
++            response = response.split("</think>")[-1].strip()
++            # (Claude 2026-10-02) model nho hay bat chuoc lich su chat va @ nham ghe khong ton tai (vd @kimi)
++            # -> chi giu @ ghe hoi dong (data/seat_status.json) va @user. (Token cua wrapper khong doc duoc
++            # /api/status nen KHONG dung get_online_agents() o day — tra ve rong se xoa het @, lam dut chuoi hoi dong.)
++            try:
++                _seats = json.loads((data_dir / "seat_status.json").read_text("utf-8")).get("seats", [])
++            except Exception:
++                _seats = []
++            # Ngoai phien hoi dong (#council) thi khong @ ai ca -> tranh goi ghe khac mot luot vo ich
++            _allowed = ({s.lower() for s in _seats} | {"user"}) if channel == "council" else set()
++
++            def _clean(text):
++                return _re.sub(r"(?<![\w@])@([A-Za-z][\w-]*)",
++                               lambda m: m.group(0) if m.group(1).lower() in _allowed else "", text).strip()
++
++            response = _clean(response)
++            # Model chi lap lai danh sach @ten (khong co noi dung) -> hoi lai 1 lan, yeu cau tra loi that
++            if not _re.sub(r"@[\w-]+|\s", "", response):
++                print(f"  [{channel}] Model chỉ trả về danh sách @tên -> hỏi lại")
++                messages.append({"role": "system", "content": "Câu trả lời vừa rồi chỉ là danh sách @tên. Hãy trả "
++                                 "lời NỘI DUNG bằng câu tiếng Việt hoàn chỉnh cho tin nhắn gần nhất gửi tới bạn."})
++                response = call_model(messages) or ""
++                response = _clean(response.split("</think>")[-1])
++                if not _re.sub(r"@[\w-]+|\s", "", response):
++                    print(f"  [{channel}] Vẫn không có nội dung -> bỏ qua")
++                    return
++
++            # (Claude 2026-10-02) Chan "vet lai loi" (echo): cau tra loi gan giong tin nhan vua nhan -> hoi lai 1 lan,
++            # van giong -> khong gui (thieu 1 cau tra loi con hon nhai lai chu toa).
++            def _norm(t):
++                return " ".join(_re.sub(r"@[\w-]+|[^\w\s]", " ", t.lower()).split())
++
++            def _is_echo(resp):
++                if not last_for_me:
++                    return False
++                import difflib
++                a, b = _norm(resp), _norm(last_for_me[1])
++                return bool(a) and (difflib.SequenceMatcher(None, a, b).ratio() >= 0.7 or (len(a) > 15 and a in b))
++
++            if _is_echo(response):
++                print(f"  [{channel}] Model nhắc lại lời người gửi -> hỏi lại")
++                messages.append({"role": "assistant", "content": response})
++                messages.append({"role": "system", "content": "Câu vừa rồi chỉ CHÉP LẠI lời người gửi — sai. Viết "
++                                 "phản hồi KHÁC bằng lời của bạn (ví dụ: xác nhận đã rõ, trả lời, hoặc nêu ý kiến)."})
++                response = _clean((call_model(messages) or "").split("</think>")[-1])
++                if _is_echo(response) or not response:
++                    print(f"  [{channel}] Vẫn nhắc lại -> bỏ qua, không gửi")
++                    return
+ 
+             # Strip self-prefix if the model echoes its own name
+             prefixes = [f"{my_name}: ", f"{my_name}:"]

@@ -171,6 +171,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.25** | 14/10/2026 | Kế hoạch tự học tránh cả **giờ thực tập hè**: đọc cột Work Hours của ☀️ Kỳ hè (vd "T2-T6 8:00-17:00", "T2,T4 13h-17h"), áp đúng khoảng hè đó, ca thực tập có trong file Google Calendar; giờ ghi không đọc được thì báo rõ |
 | **v1.00.26** | 14/10/2026 | Tab Học kỳ có thêm **kỳ hè 2026.3 / 2027.3 / 2028.3** xen giữa các năm (như kỳ hè của trường: không hiện CTĐT, không hiện trạng thái; tới hè mới hỏi học hè / nghỉ / thực tập). Kế hoạch tự học tránh cả **giờ làm thêm trong năm** (school/part_time.json, dùng chung bộ đọc giờ với thực tập hè) |
 | **v1.00.27** | 14/10/2026 | Sửa lỗi dữ liệu: bấm "Sẽ đi / Bỏ" hoặc "Tắt nhắc" đúng lúc UC đang đọc thư không còn bị mất; một kết quả AI lạ không còn làm tắc vĩnh viễn việc đọc thư (thư lỗi 3 lần được bỏ qua, ghi lý do); MOOC / FAMI / iCTSV / Teams trả rỗng không còn xoá dữ liệu cũ; FAMI không còn đánh "đã nộp" bài chưa làm; bài MOOC "Đã làm" không còn bị hạ thành "Bỏ lỡ" |
+| **v1.00.28** | 14/10/2026 | **Phòng họp 4 ghế AI (AgentChattr) vào repo** (`agentchattr/`: bản vá trên agentchattr MIT + bộ giữ ghế, relay hội đồng). Bền hơn: bộ giữ ghế không còn chết im lặng; phòng chat treo được tự phát hiện và bật lại (thử: hồi phục sau 105 s); network-guard giữ bộ giữ ghế luôn chạy; đọc lại được trạng thái "hết quota / cần đăng nhập" của từng ghế |
 
 ## Chạy thử
 
