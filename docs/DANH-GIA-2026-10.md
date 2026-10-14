@@ -2,6 +2,12 @@
 
 > Báo cáo review toàn repo theo góc nhìn reviewer cấp cao. **Không sửa dòng code nào**: chỉ có file này.
 > Đối chiếu tại commit `da7a3a0` (v1.00.23, `main` ngày 14/10/2026). Mọi `file:dòng` đều theo commit này.
+>
+> **Cập nhật 14/10/2026 — đối chiếu lại với v1.00.28 (`40aa404`).**
+> - Mỗi vấn đề có thêm dòng **Trạng thái (v1.00.28)**: ✅ ĐÃ SỬA / 🟡 SỬA MỘT PHẦN / ❌ CHƯA SỬA. Bảng top 10 và bảng mục 8 có thêm cột trạng thái.
+> - `file:dòng` **trong dòng trạng thái** theo v1.00.28; phần thân báo cáo giữ nguyên theo v1.00.23.
+> - Cuối báo cáo có mục **"Còn mở"** xếp theo mức độ.
+> - Các bản sửa nằm ở v1.00.24 (`7c2d56c`) và v1.00.27 (`1f2bd16`); v1.00.25, v1.00.26 và v1.00.28 không chạm các mục trong báo cáo.
 
 ## Cách đọc báo cáo
 
@@ -31,18 +37,18 @@
 
 Thứ tự = mức độ × khả năng xảy ra ÷ công sức. Hai mục đầu rẻ và nên làm ngay.
 
-| # | Mã | Vấn đề | Mức | Nhãn | Công sức |
-|---|---|---|---|---|---|
-| 1 | B-1 | Cổng chép lời :8340 gửi khoá `X-Copilot-Key` tới **bất kỳ URL `callback`** nào người gọi đưa vào, không cần xác thực | Cao* | [Đọc] | 1–2 h |
-| 2 | D-2 | `copilot_app` bị **nạp hai lần** (chạy dưới tên `__main__`, nơi khác `import copilot_app`): hai khoá `lock`, hai hàng đợi `jobs` → file kéo từ 📥 Notion kẹt "queued", ghi `inbox_state.json` không được bảo vệ | Vừa→Cao | [Chạy] | 0,5 h |
-| 3 | D-1 | ~25 file trạng thái JSON ghi **không nguyên tử**, và `load()` gặp file hỏng thì **lặng lẽ trả trạng thái rỗng** → gửi lại toàn bộ thư cho Gemini, nhân đôi trang Notion, mất mọi lựa chọn "Sẽ đi / Bỏ" | Cao | [Chạy] | 4–6 h |
-| 4 | R-1 | TKB qldt đổi định dạng **một ô** → môn đó bị đưa buổi học vào thùng rác Notion và hạ về *Planned*, không báo lỗi rõ | Cao | [Chạy] | 3 h |
-| 5 | D-3 | Mất cập nhật giữa `mail_events.process` (luồng mail) và `alerts.ack` (nút bấm): lựa chọn "Sẽ đi / Bỏ" của bạn có thể biến mất, hoặc thư đã xử lý bị xử lý lại | Vừa | [Chạy] | 4–6 h |
-| 6 | M-1 | Năm nhập học **2026 viết cứng** khi đổi mã kỳ sang S1–S8 → sinh viên khoá khác bị xếp sai kỳ toàn bộ | Vừa→Cao | [Đọc] | 1–2 h |
-| 7 | R-2 | Bảng CTĐT qldt chèn thêm một cột → **mọi môn Credits = 0**, rơi khỏi GPA / tín tích luỹ; điểm có thể đọc nhầm cột | Cao | [Chạy] | 2 h |
-| 8 | D-4 | Một câu trả lời Gemini "lạ" (ngày `"null"`, `chang` là mảng chuỗi) **chặn vĩnh viễn** việc đọc mọi thư sau đó, không ai thấy | Vừa | [Chạy] | 2–3 h |
-| 9 | R-3 | MOOC / FAMI / iCTSV / Teams / Outlook đổi khoá JSON → trả `ok:true` với danh sách rỗng, **ghi đè** dữ liệu tốt; FAMI cờ `"0"` → bài bị đánh *Submitted*; MOOC mất điểm → "Đã làm" bị hạ thành "Bỏ lỡ" | Vừa→Cao | [Chạy] | 8 h |
-| 10 | H-1 | Tới **~1.700 lần mở Chrome headless/ngày**, cộng LM Studio giữ 14B (và 8B) thường trú không hạn giờ → đỉnh RAM có thể vượt 32 GB | Vừa | [Đọc] + [Suy luận] | 4–8 h |
+| # | Mã | Vấn đề | Mức | Nhãn | Công sức | Trạng thái (v1.00.28) |
+|---|---|---|---|---|---|---|
+| 1 | B-1 | Cổng chép lời :8340 gửi khoá `X-Copilot-Key` tới **bất kỳ URL `callback`** nào người gọi đưa vào, không cần xác thực | Cao* | [Đọc] | 1–2 h | ✅ Đã sửa (v1.00.24) |
+| 2 | D-2 | `copilot_app` bị **nạp hai lần** (chạy dưới tên `__main__`, nơi khác `import copilot_app`): hai khoá `lock`, hai hàng đợi `jobs` → file kéo từ 📥 Notion kẹt "queued", ghi `inbox_state.json` không được bảo vệ | Vừa→Cao | [Chạy] | 0,5 h | ✅ Đã sửa (v1.00.24) |
+| 3 | D-1 | ~25 file trạng thái JSON ghi **không nguyên tử**, và `load()` gặp file hỏng thì **lặng lẽ trả trạng thái rỗng** → gửi lại toàn bộ thư cho Gemini, nhân đôi trang Notion, mất mọi lựa chọn "Sẽ đi / Bỏ" | Cao | [Chạy] | 4–6 h | 🟡 Một phần (v1.00.24) |
+| 4 | R-1 | TKB qldt đổi định dạng **một ô** → môn đó bị đưa buổi học vào thùng rác Notion và hạ về *Planned*, không báo lỗi rõ | Cao | [Chạy] | 3 h | ✅ Đã sửa (v1.00.24) |
+| 5 | D-3 | Mất cập nhật giữa `mail_events.process` (luồng mail) và `alerts.ack` (nút bấm): lựa chọn "Sẽ đi / Bỏ" của bạn có thể biến mất, hoặc thư đã xử lý bị xử lý lại | Vừa | [Chạy] | 4–6 h | ✅ Đã sửa (v1.00.27) |
+| 6 | M-1 | Năm nhập học **2026 viết cứng** khi đổi mã kỳ sang S1–S8 → sinh viên khoá khác bị xếp sai kỳ toàn bộ | Vừa→Cao | [Đọc] | 1–2 h | 🟡 Một phần (v1.00.24) |
+| 7 | R-2 | Bảng CTĐT qldt chèn thêm một cột → **mọi môn Credits = 0**, rơi khỏi GPA / tín tích luỹ; điểm có thể đọc nhầm cột | Cao | [Chạy] | 2 h | 🟡 Một phần (v1.00.24) |
+| 8 | D-4 | Một câu trả lời Gemini "lạ" (ngày `"null"`, `chang` là mảng chuỗi) **chặn vĩnh viễn** việc đọc mọi thư sau đó, không ai thấy | Vừa | [Chạy] | 2–3 h | ✅ Đã sửa (v1.00.27) |
+| 9 | R-3 | MOOC / FAMI / iCTSV / Teams / Outlook đổi khoá JSON → trả `ok:true` với danh sách rỗng, **ghi đè** dữ liệu tốt; FAMI cờ `"0"` → bài bị đánh *Submitted*; MOOC mất điểm → "Đã làm" bị hạ thành "Bỏ lỡ" | Vừa→Cao | [Chạy] | 8 h | 🟡 Một phần (v1.00.27) |
+| 10 | H-1 | Tới **~1.700 lần mở Chrome headless/ngày**, cộng LM Studio giữ 14B (và 8B) thường trú không hạn giờ → đỉnh RAM có thể vượt 32 GB | Vừa | [Đọc] + [Suy luận] | 4–8 h | ❌ Chưa sửa |
 
 \* B-1 là **Cao** nếu một trang web có thể gửi yêu cầu tới 127.0.0.1 (phụ thuộc trình duyệt, xem chi tiết); với tiến trình cục bộ thì không thêm rủi ro, vì tiến trình đó vốn đọc được file khoá.
 
@@ -66,6 +72,8 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### B-1. Cổng chép lời gửi khoá chung tới URL do người gọi chọn — **Cao\*** · [Đọc] · 1–2 h
 
+> **Trạng thái (v1.00.28):** ✅ **ĐÃ SỬA** — v1.00.24 (`7c2d56c`). `callback_ok()` chỉ nhận `http://127.0.0.1|localhost|host.docker.internal:5678/webhook/...` (`speech-gate/speech_gate.py:451-457`), kiểm cả lúc nhận job lẫn lúc gửi. `do_POST` chặn Origin lạ (`:521-525`) [Đọc]. Còn lại (thấp): `POST /jobs` vẫn không đòi khoá, và Origin `localhost` ở **mọi cổng** đều được nhận.
+
 - **Bằng chứng:**
   - `POST /jobs` nhận `callback` từ query string và lưu nguyên vào job, không kiểm tra gì (`speech-gate/speech_gate.py:523-540`). Endpoint không đòi khoá, không kiểm Origin (`:508-557`).
   - Khi job xong **hoặc lỗi** (`:389`, `:447`), hàm `callback` đọc `.copilot-secret` và gửi nó trong header `X-Copilot-Key` tới đúng URL đó (`:451-461`).
@@ -83,6 +91,8 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### B-2. Máy ghi :5681 không xác thực — **Thấp** (phần lớn lý thuyết) · [Đọc] + [Suy luận] · 1 h
 
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — `meeting-lecture-recorder/Program.cs:34-44` không đổi [Đọc].
+
 - **Bằng chứng:**
   - `/start`, `/stop`, `/marker`, `/extend`, `/retry-upload`, `/command` không kiểm tra gì (`meeting-lecture-recorder/Program.cs:34-44`).
   - Các endpoint có body JSON kiểu (`StartRequest`…) cần `Content-Type: application/json`, nên từ trình duyệt phải qua preflight, mà máy ghi không bật CORS → bị chặn.
@@ -92,6 +102,8 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### B-3. Kiểm tra CSRF sau v1.00.23 — **không còn endpoint POST nào lọt** · [Đọc] + [Chạy]
 
+> **Trạng thái (v1.00.28):** Kết luận vẫn đúng: kiểm tra Origin đứng đầu `do_POST` (`copilot_app.py:1095`) [Đọc].
+
 - `_same_origin()` đứng **đầu** `do_POST` (`copilot_app.py:1087-1088`). Mình đã duyệt mọi nhánh POST bên dưới: không nhánh nào đứng trước nó.
 - `Origin: None` (không có header) vẫn được nhận (`copilot_app.py:941-943`). Điều này cố ý, cho n8n/curl. Trình duyệt luôn gửi Origin trên POST khác nguồn, nên không mở lỗ hổng từ web. Chuỗi `"null"` (Origin từ iframe sandbox) **không** bằng `None`, nên bị chặn.
 - `do_GET` không kiểm Origin. Các GET hầu hết chỉ đọc (`copilot_app.py:951-1083`). Không có CORS header nên trang lạ không đọc được kết quả.
@@ -99,11 +111,15 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### B-4. DNS rebinding đọc được dữ liệu GET — **Thấp, lý thuyết** · [Suy luận] · 1 h
 
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — không cổng nào kiểm header `Host` [Đọc].
+
 - **Bằng chứng [Đọc]:** không cổng nào kiểm header `Host`. ASP.NET mặc định nhận mọi host.
 - **Kịch bản:** một trang trỏ tên miền của nó sang 127.0.0.1 sau khi tải xong. Khi đó trình duyệt coi đó là cùng nguồn và đọc được `/api/study`, `/api/tuition`, `/api/inbox`… (điểm, học phí). POST vẫn bị chặn vì Origin là tên miền lạ.
 - **Đề xuất:** từ chối mọi request có `Host` khác `127.0.0.1:<cổng>` / `localhost:<cổng>`. Chỉ cần vài dòng cho mỗi cổng.
 
 ### B-5. Chặn `..` trong đường dẫn chỉ tách theo `\` — **Vừa/Thấp** · [Chạy] · 1 h
+
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — vẫn `".." in folder.split("\\")` (`copilot_app.py:1409`) [Đọc].
 
 - **Bằng chứng:**
   - `POST /api/inbox/<id>/assign` kiểm `".." in folder.split("\\")` (`copilot_app.py:1400`).
@@ -115,6 +131,8 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### B-6. Tải trang web cho não chat: chặn địa chỉ nội bộ chưa kín — **Thấp** · [Chạy] + [Đọc] · 1–2 h
 
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — `web_tools.py:50` không đổi [Đọc].
+
 - **Bằng chứng:**
   - `web_tools.read` kiểm host bằng `_private()` **trước** khi gửi (`web_tools.py:31-49`).
   - urllib tự theo chuyển hướng. Kiểm tra URL sau chuyển hướng (`web_tools.py:50`) chạy **sau** khi request tới đích cuối đã được gửi.
@@ -125,6 +143,8 @@ Cách mỗi cổng chặn người gọi lạ:
 - **Đề xuất:** tự xử lý chuyển hướng (`HTTPRedirectHandler` kiểm từng bước); kết nối tới IP đã kiểm; thêm 100.64.0.0/10.
 
 ### B-7. Lưu bí mật — **Vừa** (gộp) · [Đọc] + [Chạy]
+
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** (B-7a) — vẫn hai kiểu đọc khoá: `copilot_app.py:25`, `phone_link.py:17` (mã hoá mặc định) và `speech-gate/speech_gate.py:468` (utf-8). `uc_state` đọc `utf-8-sig` nhưng chỉ cho file trạng thái, không cho khoá [Đọc].
 
 | Bí mật | Nơi lưu | Nhận xét |
 |---|---|---|
@@ -146,6 +166,8 @@ Cách mỗi cổng chặn người gọi lạ:
 - **Đề xuất:** một hàm đọc chung `read_bytes().decode("utf-8-sig").strip()`, báo lỗi rõ nếu không phải ASCII.
 
 ### B-8. XSS trong giao diện — **chưa thấy lỗi**, kiểm chưa hết · [Đọc] (một phần)
+
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA / chưa kiểm lại** — các commit v1.00.24–26 có thêm giao diện mới (tab Lịch, kỳ hè), mình chưa duyệt lại toàn bộ `innerHTML` [Đọc, một phần].
 
 - `ui/index.html:781` có `esc()`, được gọi 185 lần.
 - Mình soát 6 chỗ ghép chuỗi "đáng ngờ" (`:1200`, `:1422`, `:1760`, `:1822`, `:1878`, `:2152`). Chỗ nào ghép dữ liệu từ thư / Notion vào HTML đều đã `esc()`, hoặc chỉ dùng trong `alert()`.
@@ -175,6 +197,8 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### R-1. TKB đổi định dạng một ô → buổi học của môn đó vào thùng rác Notion — **Cao** · [Chạy] · 3 h
 
+> **Trạng thái (v1.00.28):** ✅ **ĐÃ SỬA** — v1.00.24. Có ô TKB không đọc được thì **không ghi** lượt đó (`school_sync.py:124-126`) [Đọc]. Còn lại (thấp): `tkb.run` vẫn chưa có ngưỡng "từ chối lưu trữ > 20% số buổi" (`tkb.py:126-135`), nên một lớp **biến mất hẳn** khỏi bảng qldt vẫn bị lưu trữ. Trường hợp này đúng ý đồ nếu trường thật sự bỏ lớp.
+
 - **Bằng chứng:**
   - `parse_tkb` bỏ qua lớp có ô lịch không khớp regex, chỉ ghi một dòng `probs` (`school_sync.py:82-86`).
   - Điều kiện chạy chỉ là `if lop and sem` (`school_sync.py:121`), tức **có ít nhất một lớp** đọc được. Sau đó `tkb.run(... "buoc": "ghi" ...)` chạy luôn (`:126-127`).
@@ -192,6 +216,8 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### R-2. Bảng CTĐT lệch cột → mọi môn Credits = 0 — **Cao** · [Chạy] · 2 h
 
+> **Trạng thái (v1.00.28):** 🟡 **SỬA MỘT PHẦN** — v1.00.24. CTĐT dò cột theo tên tiêu đề, thiếu cột thì bỏ bước (`school_sync.py:157-161`); môn đã có không bị ghi 0 tín (`:180`) [Đọc]; có test hồi quy (`tests/test_school_sync.py`). Còn lại (thấp): **môn mới tạo** từ khung vẫn nhận `Credits = 0` khi ô tín không phải số (`school_sync.py:169`).
+
 - **Bằng chứng:** chương trình đào tạo đọc theo chỉ số cột cố định `r[1]`…`r[9]` (`school_sync.py:151-153`).
   - Tín không phải số thì ghi 0 (`school_sync.py:168-170`).
   - Điểm đọc ở `r[8]` (`:174`).
@@ -203,6 +229,19 @@ Cách mỗi cổng chặn người gọi lạ:
 - **Đề xuất:** dò cột theo tên tiêu đề (như `:190`); thiếu cột thì dừng với trạng thái "Lỗi"; tín không phải số thì **bỏ qua**, đừng ghi 0.
 
 ### R-3. Các nguồn API trả "rỗng hợp lệ" và ghi đè — **Vừa→Cao** · [Chạy] · 8 h
+
+> **Trạng thái (v1.00.28):** 🟡 **SỬA MỘT PHẦN** — v1.00.27 (`1f2bd16`) [Đọc].
+> - **Đã sửa:**
+>   - cờ FAMI chỉ nhận giá trị đúng thật (`fami.py:83`);
+>   - chặn ghi đè N→0 cho FAMI (`fami.py:61`), MOOC (`mooc.py:65`), iCTSV (`ctsv_live.py:97`), Teams (`teams_fetch.py:178`);
+>   - `expired` không hạ "Đã làm" (`expired.py:48`);
+>   - `course_detail` đọc khoá `format` (`course_detail.py:217`).
+> - **Chưa sửa:**
+>   - Outlook REST v2.0 / khoá `value` (`school_mail.py:28`);
+>   - `_vnd` (`school_fetch.py:298-301`);
+>   - nhãn ĐRL (`school_fetch.py:337`);
+>   - năm của luật học phí (`tuition.py:76-78`);
+>   - `health.json` theo nguồn và cảnh báo lên giao diện. Lỗi nguồn rỗng hiện chỉ vào `school/state_errors.log` (`uc_state.py:18-23`).
 
 | Nguồn | Điểm phụ thuộc | Đổi thì sao | Hậu quả |
 |---|---|---|---|
@@ -234,6 +273,17 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### D-1. Ghi trạng thái không nguyên tử + đọc lỗi thì lặng lẽ về rỗng — **Cao** · [Chạy] · 4–6 h
 
+> **Trạng thái (v1.00.28):** 🟡 **SỬA MỘT PHẦN** — v1.00.24 [Đọc].
+> - **Đã có `uc_state.py`:** file tạm tên riêng + fsync + `.bak` + thử lại `os.replace` + log lỗi rõ (`uc_state.py:26-56`).
+> - **File đã dùng nó:** `events.json`, `alerts.json`, `inbox_state.json`, trạng thái lệnh điện thoại, `latest.json` / `fetch_last.json`. Có test `tests/test_uc_state.py`.
+> - **Còn ~40 chỗ `write_text(json.dumps(...))` trực tiếp.** Đáng kể:
+>   - lịch hẹn ntfy (`phone_sched.py:25`);
+>   - `lecture_export.py:106`;
+>   - `dupscan.py:106`, `:117`, `:149`;
+>   - trạng thái đồng bộ trường (`school_sync.py:285`);
+>   - `extracurricular.py:162`;
+>   - hộp Teams / mail (`teams_fetch.py:182-185`, `school_mail.py:115`).
+
 - **Bằng chứng:**
   - Khoảng 25 file JSON ghi bằng `write_text` thẳng, không qua file tạm, không fsync. Ví dụ:
     - `mail_events.py:43-44` (`school/events.json`)
@@ -254,6 +304,8 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### D-2. `copilot_app` bị nạp hai lần — **Vừa** (luôn xảy ra) / tác hại **Cao** khi trùng thời điểm · [Chạy] · 0,5 h
 
+> **Trạng thái (v1.00.28):** ✅ **ĐÃ SỬA** — v1.00.24. `sys.modules.setdefault("copilot_app", sys.modules["__main__"])` (`copilot_app.py:1428`) [Đọc].
+
 - **Bằng chứng:**
   - App chạy bằng `python copilot_app.py` (`open_copilot.ps1:10`), tức module tên `__main__`.
   - `teams_files.py:60`, `:94`, `:136`, `lecture_export.py:112`, `phone_page.py:152` lại `import copilot_app as app`. Python tạo **bản thứ hai** của module, với `lock` và `jobs` mới (`copilot_app.py:56-57`).
@@ -264,6 +316,11 @@ Cách mỗi cổng chặn người gọi lạ:
 - **Đề xuất:** dòng đầu khối `if __name__ == "__main__":` thêm `sys.modules.setdefault("copilot_app", sys.modules["__main__"])`, hoặc tách phần dùng chung ra module riêng.
 
 ### D-3. `mail_events.process` và `alerts.ack` ghi đè nhau (lỗi "mất Sẽ đi / Bỏ") — **Vừa** · [Chạy] · 4–6 h
+
+> **Trạng thái (v1.00.28):** ✅ **ĐÃ SỬA** — v1.00.27 [Đọc].
+> - Khoá dùng chung `uc_state.lock("events")`, đặt trong module không bị reload (`uc_state.py:66`).
+> - `mail_events.save` khoá → đọc lại đĩa → gộp lựa chọn bạn bấm (`mail_events.py:42-64`); `alerts.ack` đọc–sửa–ghi trong khoá (`alerts.py:165`).
+> - Test tranh ghi: `tests/test_mail_events_state.py`.
 
 - **Bằng chứng:**
   - `process` (luồng mail) `load()` ở `mail_events.py:206`, gọi Gemini cho từng thư, rồi `save` ở `:269`, `:271`, `:372-373`.
@@ -282,6 +339,11 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### D-4. Dữ liệu Gemini lạ làm tắc vĩnh viễn hàng đợi thư — **Vừa** · [Chạy] · 2–3 h
 
+> **Trạng thái (v1.00.28):** ✅ **ĐÃ SỬA** — v1.00.27 [Đọc].
+> - `_sane()` kiểm đầu ra Gemini (`mail_events.py:93`, gọi ở `:282`).
+> - Thư lỗi 3 lần thì bỏ qua kèm lý do (`:277`).
+> - `fmt` chịu được dữ liệu cũ hỏng.
+
 - **Bằng chứng:**
   - Một chặng đã lưu có `ngay = "null"` (chuỗi) làm `fmt()` (`mail_events.py:87`) ném lỗi trong `tracked_text`. Lỗi này bị bắt như "gemini lỗi" (`:230-234`), nên thư bị trả lại hàng chờ và vòng lặp `break`.
   - Lượt sau gặp lại đúng lỗi đó, tức **mọi thư sau đó không bao giờ được đọc**. Không có báo lỗi lên giao diện.
@@ -289,6 +351,8 @@ Cách mỗi cổng chặn người gọi lạ:
 - **Đề xuất:** kiểm hình dạng đầu ra Gemini (kiểu, định dạng ngày/giờ); bắt lỗi theo **từng thư** kèm bộ đếm số lần thử; quá N lần thì bỏ qua thư đó và báo.
 
 ### D-5. `alerts.tick` và "Tắt nhắc" — **Thấp/Vừa** · [Chạy] · 1 h
+
+> **Trạng thái (v1.00.28):** ✅ **ĐÃ SỬA** — v1.00.27. `alerts._save` khoá → gộp `dl_mute` / `cls_ack` từ đĩa → ghi (`alerts.py:25-31`) [Đọc].
 
 - **Bằng chứng:**
   - `tick` đọc ở `alerts.py:222`, gửi từng cảnh báo (toast tới 60 s, ntfy tới 20 s), rồi ghi ở `:286`.
@@ -298,12 +362,16 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### D-6. Cờ chạy và nút "chạy ngay" — **Thấp** · [Đọc] · 1 h
 
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — `/api/mail-check` (`copilot_app.py:1297`) vẫn không kiểm cờ của lượt school [Đọc].
+
 - `_school` / `_mail` đặt cờ đúng cách dưới khoá riêng.
 - Nhưng `/api/mail-check` (`copilot_app.py:1289-1294`) chỉ kiểm cờ của chính nó, nên mail và school có thể chạy song song.
 - Hệ quả: `extra_refresh` chạy hai lần cùng lúc → có thể tạo trùng dòng 🎯 trong Notion.
 - `pdf_translate._worker` và `deadlines._c` là cờ/bộ đệm không khoá. Hai worker pdf2zh có thể cùng chạy [Suy luận].
 
 ### D-7. `inbox_state.json` đọc ngoài khoá — **Thấp/Vừa** · [Chạy] (Linux) + [Suy luận] (Windows) · 1 h
+
+> **Trạng thái (v1.00.28):** ✅ **ĐÃ SỬA** (theo D-1/D-2) — đọc qua `uc_state.load_json`, `os.replace` thử lại 10 lần khi Windows khoá file (`uc_state.py:52-54`). Hành vi trên Windows vẫn là [Suy luận]. Danh sách `items` vẫn chỉ tăng.
 
 - **Trên Linux:** 0/26.660 lần đọc thấy file dở [Chạy].
 - **Trên Windows:** `os.replace` (`copilot_app.py:70`) báo `PermissionError` (WinError 5) nếu đúng lúc đó có tiến trình khác giữ file. Ví dụ: luồng đọc ở `:649`, `:974`, `:1421`, phần mềm diệt virus, indexer, OneDrive [Suy luận].
@@ -319,6 +387,12 @@ Cách mỗi cổng chặn người gọi lạ:
 > Số lần chạy lấy từ code [Đọc]. Số RAM là **ước lượng** [Suy luận], chưa đo trên máy thật.
 
 ### H-1. Chrome headless mở 5–6 lần mỗi khung 5 phút, 24/24 — **Vừa** · [Đọc] · 2–6 h
+
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** [Đọc]:
+> - khung 5 phút 24/24 (`copilot_app.py:686`);
+> - iCTSV mọi lượt (`ctsv_live.py:20`);
+> - `MAX_AGE = 60` (`timetable.py:15`);
+> - `saveDataSuccessExecution: "all"` (`build.py:1379`).
 
 - **Bằng chứng:**
   - Cả `school_loop` và `mail_loop` chạy mọi khung 5 phút suốt ngày (`copilot_app.py:688`).
@@ -343,6 +417,8 @@ Cách mỗi cổng chặn người gọi lạ:
   5. Giãn chu kỳ khi chạy pin (hiện không kiểm tra pin ở đâu). 1–2 h.
 
 ### H-2. Model local giữ thường trú, hai model cùng lúc — **Vừa** · [Đọc] + [Suy luận] · 1–2 h
+
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — vẫn không có `ttl` / unload [Đọc].
 
 - **Bằng chứng [Đọc]:**
   - qwen3-14b dùng ở:
@@ -371,6 +447,8 @@ Cách mỗi cổng chặn người gọi lạ:
   - pdf2zh `-t 1`.
 
 ### H-3. Docker / WSL / Tika — **Thấp/Vừa** · [Đọc] + [Suy luận] · 2–3 h
+
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** [Đọc].
 
 - **Bằng chứng [Đọc]:** gợi ý `.wslconfig` (`memory=4GB`, `autoMemoryReclaim`) chỉ nằm trong `addons/low-end-priority/README.md:61-77`, không có ở README chính.
 - **Ước lượng [Suy luận]:**
@@ -403,6 +481,8 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### O-2. Upload lên Drive/Notion lỗi thì không bao giờ thử lại — **Vừa** · [Đọc] · 2 h
 
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — không có vòng thử lại cho mục `notion = "error"` / `"sending"` [Đọc].
+
 - **Bằng chứng:**
   - Mục có `notion = "error"` / `"sending"` không có vòng quét thử lại.
   - `uni_sync` đánh dấu file `synced` **trước** khi biết kết quả ingest (`copilot_app.py:683`).
@@ -410,6 +490,11 @@ Cách mỗi cổng chặn người gọi lạ:
 - **Đề xuất:** vòng quét định kỳ cho mục `error` / `sending` cũ hơn 10 phút, có giới hạn số lần.
 
 ### O-3. Cổng chép lời: luồng xử lý có thể chết, khởi động lại thì chép từ đầu — **Vừa** · [Đọc] · 2–3 h
+
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** [Đọc]:
+> - `worker()` vẫn chỉ có `try/finally` (`speech-gate/speech_gate.py:482-491`);
+> - `callback` vẫn đọc khoá ngoài `try` (`:468`);
+> - xếp lại job không đặt `resume` (`:581-584`).
 
 - **Bằng chứng:**
   - **Luồng chết:** `worker()` chỉ có `try/finally`, không có `except` (`speech-gate/speech_gate.py:471-480`). Nhánh `except` của `process` lại gọi `save_job` và `callback` (`:386-389`), và `callback` đọc khoá **ngoài** try (`:457`). Lỗi ở đó (đĩa đầy, khoá UTF-16 như B-7a) làm **luồng worker chết vĩnh viễn**, trong khi `/health` vẫn báo `ok`.
@@ -422,12 +507,16 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### O-4. Máy ghi: bản ghi bị kill giữa chừng không gửi lại được — **Vừa** · [Đọc] + [Suy luận] · 2 h
 
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — meta vẫn chỉ ghi lúc Stop (`meeting-lecture-recorder/Program.cs:304`) [Đọc].
+
 - **Bằng chứng [Đọc]:** file meta `.json` chỉ được ghi lúc Stop (`meeting-lecture-recorder/Program.cs:304`), mà `UploadAsync` cần file đó (`:329`).
 - **Suy luận:** sau khi cúp điện, header WAV chưa được chốt.
 - **Kịch bản:** laptop hết pin giữa buổi → "Gửi lại" không thấy bản ghi.
 - **Đề xuất:** ghi meta ngay lúc Start, cập nhật định kỳ; khi khởi động, sửa header WAV của file dở.
 
 ### O-5. Chạy bằng `pythonw` thì mọi `print()` lỗi biến mất — **Vừa** · [Chạy] · 0,5 h
+
+> **Trạng thái (v1.00.28):** 🟡 **SỬA MỘT PHẦN** — lỗi file trạng thái và "nguồn trả rỗng" giờ ghi vào `school/state_errors.log` (`uc_state.py:18-23`). Mọi `print()` khác (vd `copilot_app.py:911`) vẫn mất khi chạy `pythonw` [Đọc].
 
 - **Bằng chứng:**
   - `open_copilot.ps1:9-10` chạy bằng `pythonw.exe`, khi đó `sys.stdout` là `None`.
@@ -436,6 +525,8 @@ Cách mỗi cổng chặn người gọi lạ:
 - **Đề xuất:** đầu `__main__`, nếu `sys.stdout is None` thì chuyển stdout/stderr sang `school/uc.log`, có xoay vòng.
 
 ### O-6. Tự hồi phục của các luồng — phần lớn tốt · [Đọc]
+
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — chưa có watchdog [Đọc].
 
 - Các vòng `while True` đều bọc `try` và tự chạy tiếp.
 - **Ngoại lệ:** worker xếp tài liệu chết nếu `update_item` trong nhánh `except` ném lỗi (`copilot_app.py:918-925`), vd do D-7.
@@ -472,6 +563,8 @@ Cách mỗi cổng chặn người gọi lạ:
 
 ### T-1. Hàm thuần đáng test trước (rẻ, giá trị cao) — 10–14 h
 
+> **Trạng thái (v1.00.28):** 🟡 **SỬA MỘT PHẦN** — số test 264 → **280** (đã chạy: 280 đạt) [Chạy]. Thêm `test_uc_state`, `test_mail_events_state`, `test_study_plan`, hồi quy R-2. Các hàm liệt kê dưới đây (`diff_stages`, `dupscan.sim`, `clean_text`, `phone_link`…) vẫn chưa có test.
+
 Agent đã gọi thử các hàm này và **thấy lỗi thật** [Chạy]:
 
 | Hàm | Lỗi thấy được |
@@ -491,6 +584,8 @@ Agent đã gọi thử các hàm này và **thấy lỗi thật** [Chạy]:
 
 ### T-2. Đồ giả quá dày nên không bắt được lỗi thật — [Đọc]
 
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — `FakeN8n` vẫn như cũ [Đọc].
+
 | Đồ giả | Bỏ qua điều gì | Lỗi lọt qua (ví dụ) |
 |---|---|---|
 | `FakeN8n` (`tests/conftest.py:50-80`) | Luật của cổng n8n thật (`build.py:1075-1088`: ≤ 60 thao tác/lô, danh sách DB cho phép, cấm lưu trữ) | Đổi lô `tkb.py:140` từ 50 lên 100 vẫn xanh, chạy thật thì hỏng |
@@ -500,6 +595,8 @@ Agent đã gọi thử các hàm này và **thấy lỗi thật** [Chạy]:
 | `FakeKernel32` (`tests/test_audio_priority.py`) | Không bao giờ lỗi (handle -1, `GetPriorityClass` trả 0) | Đoạn giữ AI ở IDLE 120 s sau khi dừng ghi (`audio_priority.py:85`) chưa được test qua một lần dừng, dù độ phủ báo 100% |
 
 ### T-3. Thiếu cả nhóm test — [Đọc]
+
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — `.github/workflows/tests.yml` không đổi (chỉ pytest, `PYTHONUTF8=1`) [Đọc].
 
 - **Test hợp đồng cho bộ đọc trường:** chưa có HTML/JSON mẫu đã lưu cho qldt / SIS / iCTSV / FAMI / MOOC / Teams. Đây là cách duy nhất để R-1…R-3 bị bắt trước khi lên Notion.
 - **Test đồng thời:** D-3 cần một test có luồng song song chứng minh lựa chọn "Sẽ đi" còn nguyên.
@@ -531,6 +628,8 @@ Agent đã gọi thử các hàm này và **thấy lỗi thật** [Chạy]:
 
 ### N-1. File quá dài, trộn trách nhiệm — **Vừa** · [Đọc] · 30–40 h (không gấp)
 
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — `copilot_app.py` còn dài hơn (thêm route kế hoạch tự học) [Đọc].
+
 **`copilot_app.py` (1.441 dòng):**
 
 | Dòng | Trách nhiệm |
@@ -553,6 +652,8 @@ Agent đã gọi thử các hàm này và **thấy lỗi thật** [Chạy]:
 
 ### N-2. Code trùng lặp — **Thấp/Vừa** · [Đọc]
 
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** [Đọc]. Riêng nhóm "`_load` / `_save` JSON" đã có hàm chung `uc_state` nhưng mới dùng ở một phần (xem D-1).
+
 | Nhóm trùng | Vị trí | Rủi ro |
 |---|---|---|
 | Định nghĩa `TZ = UTC+7` | 21 bản (vd `academic.py:23`, `fami.py:19`, `deadlines.py:21`, `mooc.py:19`, `speech_gate.py:42`) | Thấp |
@@ -566,6 +667,10 @@ Agent đã gọi thử các hàm này và **thấy lỗi thật** [Chạy]:
 
 ### N-3. Giá trị viết cứng — **Vừa** · [Đọc]
 
+> **Trạng thái (v1.00.28):** 🟡 **SỬA MỘT PHẦN** [Đọc].
+> - **M-1:** `UC_INTAKE_YEAR` đã có ở `school_sync.py:39`, nhưng tab Học kỳ / kỳ hè vẫn viết cứng 2026 (`program.py:39`, `:175`, `:388`) và `semester.py:31` (`first_year: 2026`). Sinh viên khoá khác vẫn thấy **nhãn năm sai** trên giao diện.
+> - **ntfy (L-5) và các mục còn lại:** chưa sửa.
+
 | Giá trị | Vị trí | Hậu quả |
 |---|---|---|
 | **M-1. Năm nhập học 2026** | `school_sync.py:43`, `:49` | Sinh viên khoá khác bị đổi mã kỳ sai toàn bộ (hoặc ra `None` ngoài S1–S8), nên kỳ của môn, TKB (`:122`), CTĐT đều lệch. **Chặn việc dùng cho người khác.** Đưa vào `config.json` (`"khoa": 2026`). 1–2 h |
@@ -578,6 +683,11 @@ Agent đã gọi thử các hàm này và **thấy lỗi thật** [Chạy]:
 | Hằng số chu kỳ | 280 s, `SLOT_LATE` 120, `SYNC_EVERY` 60, `EVERY_MIN` 4, `MAX_AGE` 60, timeout 420 | Nên gom vào `config.schedule` |
 
 ### N-4. Chú thích lỗi thời, code chết — **Thấp** · [Đọc] + [Chạy]
+
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** [Đọc]:
+> - `copilot_app.py:12` vẫn ghi `qwen3-8b`;
+> - `docs/gen_map.py:241` vẫn ghi qwen3-8b;
+> - **mới thấy:** `docs/gen_map.py:364` có một **đường dẫn ổ đĩa cá nhân** trong nhãn sơ đồ (nên thay bằng biến như `%UC_AI_DIR%`).
 
 - **Chú thích sai với code:**
   - `copilot_app.py:12` ghi model xếp tài liệu là `qwen3-8b`, code dùng `qwen3-14b` (`:29`).
@@ -595,19 +705,21 @@ Agent đã gọi thử các hàm này và **thấy lỗi thật** [Chạy]:
 
 ## 8. Kiểm lại danh sách "chưa sửa" của PR #2
 
-| # | Vấn đề | Kết luận | Mức | Nhãn | Chi tiết | Công sức |
-|---|---|---|---|---|---|---|
-| L-1 | Race nút bấm: `process` và `ack` | **Có thật**, khe vài giây | Vừa | [Chạy] | D-3 | 4–6 h |
-| L-2 | Race `tick` và `ack` | **Có thật** | Thấp/Vừa | [Chạy] | D-5 | 1 h |
-| L-3 | `inbox_state.json` đọc ngoài khoá | Linux: không tái hiện được. Windows: có thể `PermissionError` | Thấp/Vừa | [Chạy] + [Suy luận] | D-7. **Lỗi nạp hai lần D-2 nặng hơn và chắc chắn hơn** | 1 h |
-| L-4 | `.copilot-secret` hai kiểu mã hoá | **Có thật** khi file có BOM / UTF-16. Làm chết worker cổng chép lời | Vừa | [Chạy] cơ chế | B-7a, O-3 | 0,5 h |
-| L-5 | ntfy viết cứng | **Có thật**, chỉ ảnh hưởng người tự dựng ntfy | Thấp | [Đọc] | N-3 | 1 h |
-| L-6 | Giờ `HH:MM:SS` | **Có thật**: `"07:00:00"` ném `ValueError` ở `mail_events.py:313`. Đổi phòng của cùng chặng không được ghi, chặng không bao giờ "xong" nên thử lại mỗi 5 phút. `diff_stages` báo thay đổi giả "07:00 → 07:00:00" thành cảnh báo đỏ | Thấp/Vừa | [Chạy] | Chuẩn hoá `gio` / `ngay` ngay khi đọc đầu ra Gemini | 1 h |
-| L-7 | Thiếu timeout `N8N_API_KEY` | **Có thật** nhưng hiếm: chỉ khi PowerShell treo, lúc import `n8napi` (`n8napi.py:4-10`). Module này chỉ được dùng bởi script build và `lecture_monitor` (import trong hàm) | Thấp | [Đọc] | Thêm `timeout=15`, đọc bằng `winreg` như `mail_events.py:56` | 0,25 h |
-| L-8 | Chặn `..` | **Có thật** (lọt dấu `/`), nhưng trang lạ không khai thác được | Vừa/Thấp | [Chạy] | B-5 | 1 h |
-| L-9 | SSRF qua chuyển hướng | **Có thật**, nhưng chỉ là GET mù | Thấp | [Chạy] + [Đọc] | B-6 | 1–2 h |
+| # | Vấn đề | Kết luận | Mức | Nhãn | Chi tiết | Công sức | Trạng thái (v1.00.28) |
+|---|---|---|---|---|---|---|---|
+| L-1 | Race nút bấm: `process` và `ack` | **Có thật**, khe vài giây | Vừa | [Chạy] | D-3 | 4–6 h | ✅ Đã sửa (v1.00.27, D-3) |
+| L-2 | Race `tick` và `ack` | **Có thật** | Thấp/Vừa | [Chạy] | D-5 | 1 h | ✅ Đã sửa (v1.00.27, D-5) |
+| L-3 | `inbox_state.json` đọc ngoài khoá | Linux: không tái hiện được. Windows: có thể `PermissionError` | Thấp/Vừa | [Chạy] + [Suy luận] | D-7. **Lỗi nạp hai lần D-2 nặng hơn và chắc chắn hơn** | 1 h | ✅ Đã sửa (v1.00.24, D-1/D-2) |
+| L-4 | `.copilot-secret` hai kiểu mã hoá | **Có thật** khi file có BOM / UTF-16. Làm chết worker cổng chép lời | Vừa | [Chạy] cơ chế | B-7a, O-3 | 0,5 h | ❌ Chưa sửa |
+| L-5 | ntfy viết cứng | **Có thật**, chỉ ảnh hưởng người tự dựng ntfy | Thấp | [Đọc] | N-3 | 1 h | ❌ Chưa sửa (`phone_link.py:57`, `:157`; `phone_sched.py:99`, `:107`) |
+| L-6 | Giờ `HH:MM:SS` | **Có thật**: `"07:00:00"` ném `ValueError` ở `mail_events.py:313`. Đổi phòng của cùng chặng không được ghi, chặng không bao giờ "xong" nên thử lại mỗi 5 phút. `diff_stages` báo thay đổi giả "07:00 → 07:00:00" thành cảnh báo đỏ | Thấp/Vừa | [Chạy] | Chuẩn hoá `gio` / `ngay` ngay khi đọc đầu ra Gemini | 1 h | 🟡 Một phần (v1.00.27): `_sane` biến `"07:00:00"` thành `None` nên **hết lỗi nhưng mất giờ** [Chạy]; dữ liệu cũ đã lưu vẫn đi qua `mail_events.py:360` |
+| L-7 | Thiếu timeout `N8N_API_KEY` | **Có thật** nhưng hiếm: chỉ khi PowerShell treo, lúc import `n8napi` (`n8napi.py:4-10`). Module này chỉ được dùng bởi script build và `lecture_monitor` (import trong hàm) | Thấp | [Đọc] | Thêm `timeout=15`, đọc bằng `winreg` như `mail_events.py:56` | 0,25 h | ❌ Chưa sửa (`n8napi.py:4-9`) |
+| L-8 | Chặn `..` | **Có thật** (lọt dấu `/`), nhưng trang lạ không khai thác được | Vừa/Thấp | [Chạy] | B-5 | 1 h | ❌ Chưa sửa (`copilot_app.py:1409`) |
+| L-9 | SSRF qua chuyển hướng | **Có thật**, nhưng chỉ là GET mù | Thấp | [Chạy] + [Đọc] | B-6 | 1–2 h | ❌ Chưa sửa (`web_tools.py:50`) |
 
 ### Thêm `sort_job`, đã nêu ở PR #2 dưới dạng nghi vấn — **Có thật**, **Vừa** · [Chạy] · 1 h
+
+> **Trạng thái (v1.00.28):** ❌ **CHƯA SỬA** — `copilot_app.py:337` và `:353` không đổi. Kiểm lại trên `main`: `"…/Giải Tích II".startswith("…/Giải Tích I")` vẫn là `True` [Chạy].
 
 - **Bằng chứng:**
   - `copilot_app.py:339`: thư mục con `new_subfolder` **bị bỏ qua khi đã tồn tại**, nên file rơi vào gốc thư mục môn.
@@ -635,3 +747,43 @@ Agent đã gọi thử các hàm này và **thấy lỗi thật** [Chạy]:
 - Năm phạm vi được rà song song (bảo mật; độ bền; đồng thời + mất mạng; hiệu năng + nợ kỹ thuật; kiểm thử).
 - Các phát hiện ở top 10 và các mục **Cao** đã được đọc lại trực tiếp trong code trước khi đưa vào báo cáo.
 - Script thử nghiệm chạy trên bản sao repo với cấu hình và khoá giả; không script nào nằm trong repo.
+
+---
+
+## Còn mở (sau v1.00.28)
+
+**Tổng kết đối chiếu.**
+- Trong **34 mục** có dòng trạng thái: **7 đã sửa**, **6 sửa một phần**, **20 chưa sửa**, 1 mục kết luận vẫn đúng (B-3). Phần lớn mục "chưa sửa" ở mức Thấp hoặc thuộc hiệu năng / kiểm thử / nợ kỹ thuật.
+- Riêng 9 lỗi "chưa sửa" của PR #2 (mục 8): **3 đã sửa** (L-1, L-2, L-3), **1 một phần** (L-6), **5 chưa sửa**.
+- Lỗi `sort_job` ("Giải Tích II" bị coi là nằm trong "Giải Tích I") **vẫn còn** [Chạy].
+- Không còn mục nào ở mức **Cao**.
+
+Bảng dưới xếp theo mức độ rồi theo tỉ lệ tác động ÷ công sức. Giờ là ước tính, gồm cả test hồi quy.
+
+| # | Mã | Việc còn lại | Mức | Nhãn | Giờ |
+|---|---|---|---|---|---|
+| 1 | sort_job | So thư mục theo chuỗi (`copilot_app.py:353`) → file môn "Giải Tích I" lọt vào "Giải Tích II" mà không cảnh báo; thư mục con loại tài liệu bị bỏ khi đã tồn tại (`:337`) | Vừa | [Chạy] | 1 |
+| 2 | O-3 | Cổng chép lời: `worker` chết nếu nhánh `except` lỗi (`speech-gate/speech_gate.py:482-491`, `:468`); khởi động lại thì chép từ đầu (`:581-584`); không gửi lại callback thất bại | Vừa | [Đọc] | 2–3 |
+| 3 | M-1 (phần còn) | Tab Học kỳ / kỳ hè vẫn viết cứng 2026 (`program.py:39`, `:175`, `:388`; `semester.py:31`), nên khoá khác thấy nhãn năm sai. Nên đọc chung `UC_INTAKE_YEAR` | Vừa | [Đọc] | 1 |
+| 4 | D-1 (phần còn) | ~40 chỗ còn ghi JSON trực tiếp. Ưu tiên: lịch hẹn ntfy (`phone_sched.py:25`), `lecture_export.py:106`, `dupscan.py`, `school_sync.py:285`, `extracurricular.py:162` → chuyển sang `uc_state.save_json` / `load_json` | Vừa | [Đọc] | 2–3 |
+| 5 | B-7a / L-4 | Đọc `.copilot-secret` bằng một hàm chung (`utf-8-sig`) cho `copilot_app.py:25`, `phone_link.py:17`, `speech_gate.py:468` | Vừa | [Chạy] cơ chế | 0,5 |
+| 6 | O-5 (phần còn) | Chạy `pythonw` thì `print()` vẫn mất: chuyển stdout/stderr sang file log có xoay vòng | Vừa | [Đọc] | 0,5 |
+| 7 | O-2 | Không thử lại upload Drive/Notion lỗi; `uni_sync` đánh dấu `synced` trước khi biết kết quả | Vừa | [Đọc] | 2 |
+| 8 | R-3 (phần còn) | Outlook REST v2.0 / khoá `value` (`school_mail.py:28`); `_vnd` (`school_fetch.py:298-301`); nhãn ĐRL (`:337`); năm của luật học phí (`tuition.py:76-78`); `school/health.json` + cảnh báo lên thanh trạng thái | Vừa | [Đọc] | 6–8 |
+| 9 | R (chung) | Đổi giao diện bị báo nhầm "Cần đăng nhập" (`school_fetch.py:150`, `:157`) | Vừa | [Đọc] | 1–2 |
+| 10 | H-1 / H-2 | ~1.700 lần mở Chrome/ngày; n8n lưu mọi execution (`build.py:1379`); `MAX_AGE = 60`; model không có `ttl` | Vừa | [Đọc] + [Suy luận] | 4–8 |
+| 11 | O-4 | Máy ghi chỉ ghi meta lúc Stop (`Program.cs:304`): bản ghi dở không gửi lại được | Vừa | [Đọc] | 2 |
+| 12 | L-6 (phần còn) | Giờ `"HH:MM:SS"` giờ bị bỏ thành `None` (mất giờ của chặng). Nên cắt về `HH:MM` thay vì bỏ; dữ liệu cũ vẫn đi qua `mail_events.py:360` | Thấp/Vừa | [Chạy] | 0,5 |
+| 13 | R-2 (phần còn) | Môn mới tạo từ khung vẫn `Credits = 0` khi ô tín không phải số (`school_sync.py:169`) | Thấp | [Đọc] | 0,25 |
+| 14 | B-5 / L-8 | Chặn `..` chỉ theo `\` (`copilot_app.py:1409`) → dùng `resolve().is_relative_to(UNI)` | Thấp | [Chạy] | 1 |
+| 15 | B-6 / L-9 | SSRF qua chuyển hướng + dải 100.64/10 (`web_tools.py:31-50`) | Thấp | [Chạy] + [Đọc] | 1–2 |
+| 16 | B-2, B-4 | Máy ghi không xác thực; không cổng nào kiểm header `Host` | Thấp (lý thuyết) | [Đọc] + [Suy luận] | 2 |
+| 17 | D-6 | Nút "đọc mail ngay" không kiểm cờ của lượt school (`copilot_app.py:1297`) | Thấp | [Đọc] | 1 |
+| 18 | L-5 | ntfy viết cứng `ntfy.sh` ở `phone_link.py:57`, `:157`, `phone_sched.py:99`, `:107` | Thấp | [Đọc] | 1 |
+| 19 | L-7 | `n8napi._key()` gọi PowerShell không timeout (`n8napi.py:4-9`) | Thấp | [Đọc] | 0,25 |
+| 20 | N-4 | Chú thích lỗi thời (`copilot_app.py:12`, `docs/gen_map.py:241`); **đường dẫn ổ đĩa cá nhân** trong `docs/gen_map.py:364` | Thấp | [Đọc] | 0,5 |
+| 21 | B-8 | Duyệt lại `innerHTML` (thêm phần giao diện mới v1.00.24–26), chặn `href` không phải `http(s)` | Thấp | [Đọc] một phần | 2 |
+| 22 | T-1…T-3 | Test cho `diff_stages`, `dupscan.sim`, `clean_text`, `phone_link`; `FakeN8n` chặt hơn; CI thêm lint / `compileall -W error` / lượt không `PYTHONUTF8` | Thấp (gián tiếp) | [Đọc] | ~25 |
+| 23 | N-1 … N-3 | Tách `copilot_app.py`, gom code trùng, đưa hằng số vào cấu hình | Thấp (không gấp) | [Đọc] | 30–40 |
+
+**Tổng còn lại:** khoảng **25–35 h** cho các mục 1–21 (không tính test và tái cấu trúc). Các mục 1–6 chỉ khoảng **7–9 h** và nên làm trước.
