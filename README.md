@@ -173,6 +173,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.27** | 14/10/2026 | Sửa lỗi dữ liệu: bấm "Sẽ đi / Bỏ" hoặc "Tắt nhắc" đúng lúc UC đang đọc thư không còn bị mất; một kết quả AI lạ không còn làm tắc vĩnh viễn việc đọc thư (thư lỗi 3 lần được bỏ qua, ghi lý do); MOOC / FAMI / iCTSV / Teams trả rỗng không còn xoá dữ liệu cũ; FAMI không còn đánh "đã nộp" bài chưa làm; bài MOOC "Đã làm" không còn bị hạ thành "Bỏ lỡ" |
 | **v1.00.28** | 14/10/2026 | **Phòng họp 4 ghế AI (AgentChattr) vào repo** (`agentchattr/`: bản vá trên agentchattr MIT + bộ giữ ghế, relay hội đồng). Bền hơn: bộ giữ ghế không còn chết im lặng; phòng chat treo được tự phát hiện và bật lại (thử: hồi phục sau 105 s); network-guard giữ bộ giữ ghế luôn chạy; đọc lại được trạng thái "hết quota / cần đăng nhập" của từng ghế |
 | **v1.00.29** | 14/10/2026 | **Luật mới: TKB không thắng thông báo đính chính trên Teams/mail** (`class_override.py`): lớp báo nghỉ / chuyển online / đổi phòng / đổi giờ → dòng TKB trên Lịch đổi theo, bản gốc giữ trong ghi chú. **Chat đọc được hoạt động ngoại khoá**: ngữ cảnh thêm bảng 🎯 (đã đăng ký, đang diễn ra, sắp hết hạn đăng ký, sự kiện trường) — trước đó chat nói "hôm nay không có hoạt động ngoại khoá" dù đang có. 285 test |
+| **v1.00.30** | 14/10/2026 | Sửa tên môn bị rỗng trong ghi chú bài giảng xuất ra (đọc đúng cột tiêu đề Name của Courses) |
 
 ## Chạy thử
 
