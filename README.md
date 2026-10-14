@@ -86,7 +86,7 @@ UC chạy trên laptop, đọc lại các nguồn đúng khung 5 phút suốt 24
 - **Cổng chép lời** (`speech-gate/`, Python + OpenVINO): kiểm tra chất lượng → chép lời PhoWhisper trên NPU → nén bằng LM Studio; audio không bao giờ gửi cho Gemini.
 - **Dịch PDF**: [PDFMathTranslate](https://github.com/PDFMathTranslate/PDFMathTranslate) (`pdf2zh`, AGPL-3.0, chỉ gọi như công cụ ngoài, không chép mã) chạy với model trên máy qua LM Studio. **Tìm web**: SearXNG chạy trên máy. **Phân biệt người nói**: pyannote.audio (cần token Hugging Face của người dùng).
 - **Notion API**: nơi lưu dữ liệu.
-- **Gemini API** (flash-lite) để đọc mail và phân loại hạn. **LM Studio** (qwen3-8b, chạy local) để xếp tài liệu.
+- **Gemini API** (flash-lite) để đọc mail và phân loại hạn. **LM Studio** (qwen3-14b, chạy local) để xếp tài liệu.
 - **ntfy**: thông báo đẩy và lời nhắc hẹn giờ lên điện thoại.
 - Giao diện: một trang HTML/JS do `copilot_app.py` phục vụ tại `127.0.0.1:8320`.
 

@@ -1,6 +1,6 @@
 # Hỏi đáp & lỗi thường gặp
 
-> Theo code trên nhánh `main`; mỗi mục có `file:dòng` để đối chiếu. Chỗ chưa chắc ghi **⚠️ cần chủ repo xác nhận**.
+> Theo code trên nhánh `main` (v1.00.23); mỗi mục có `file:dòng` để đối chiếu. Chỗ chưa chắc ghi **⚠️ cần chủ repo xác nhận**.
 > Cài đặt: [CAI-DAT.md](CAI-DAT.md) · Kiến trúc: [KIEN-TRUC.md](KIEN-TRUC.md).
 
 **Mẹo chung:** khi có lỗi, đừng chạy bằng `open_copilot.ps1` (script này ẩn cửa sổ và ẩn lỗi: `pythonw.exe` + `$ErrorActionPreference = 'SilentlyContinue'`, `open_copilot.ps1:5`, `:9-10`). Hãy chạy thẳng trong PowerShell để đọc được thông báo:
@@ -49,7 +49,7 @@ UC **dừng và báo**, không tự vượt (`school_fetch.py:10-11`, `:35-36`).
 
 **Thư mới không thành sự kiện; console in `gemini lỗi …`**
 Lỗi khi gọi Gemini (qua cổng :8350) thì UC trả thư về hàng chờ và **dừng lượt đó** để giữ đúng thứ tự thư; lượt 5 phút sau thử lại (`mail_events.py:231-234`). Kiểm tra:
-- cổng Gemini :8350 có chạy không (⚠️ không có trong repo, xem [CAI-DAT §0](CAI-DAT.md#0-đọc-trước-repo-hiện-chưa-đủ-để-dựng-lại-toàn-bộ));
+- cổng Gemini :8350 có chạy không (`gemini_gate.py` nằm ngoài repo, xem [CAI-DAT §0](CAI-DAT.md#0-đọc-trước-repo-hiện-chưa-đủ-để-dựng-lại-toàn-bộ));
 - biến `GEMINI_API_KEY` đã đặt cho User chưa (`mail_events.py:54-57`);
 - lỗi 429 (hết quota theo phút): UC tự chờ 65 giây rồi 130 giây trước khi bỏ cuộc (`mail_events.py:60-65`).
 
@@ -77,7 +77,7 @@ Bước pyannote thoát mã 3 khi chưa đăng nhập Hugging Face (`speech-gate
 - Điện thoại phải đăng ký **đúng** topic trong file đó.
 
 **Nhắc lúc nửa đêm**
-Đây là thiết kế: "kệ giờ, phải đúng mốc"; mốc rơi vào nửa đêm vẫn gửi đúng giờ (`README.md:70`). Các mốc theo loại hạn nằm ở `deadlines.py:26-29`.
+Đây là thiết kế: "kệ giờ, phải đúng mốc"; mốc rơi vào nửa đêm vẫn gửi đúng giờ (`README.md:78`). Các mốc theo loại hạn nằm ở `deadlines.py:26-29`.
 
 **Gập máy thì có lỡ nhắc không?**
 - Lượt đồng bộ: lỡ khung 5 phút quá 120 giây thì **bỏ, không chạy bù** (`copilot_app.py:689-695`).
@@ -96,6 +96,19 @@ Google bắt đăng nhập tay. Đăng nhập trong cửa sổ đang mở rồi 
 
 **Luật học phí năm mới chưa cập nhật**
 UC chỉ tự tìm *Quyết định mức học phí* từ tháng 8 tới tháng 11, mỗi ngày tối đa một lần (`tuition_rules.py:141-148`). Ngoài thời gian đó thì chạy tay: `py tuition_rules.py --force` (`tuition_rules.py:176-179`).
+
+## Lỗi đã sửa ở v1.00.23 (nếu bạn đang dùng bản cũ hơn)
+
+Gặp các hiện tượng dưới đây thì cập nhật mã nguồn lên `main` mới nhất:
+
+| Hiện tượng ở bản cũ | Nguyên nhân | Đã sửa ở |
+|---|---|---|
+| Điểm `B+`, `C+`, `D+` hiện thành `B`, `C`, `D` (CPA tính thấp hơn thật) | biểu thức `\b` không khớp sau dấu `+` | `school_sync.py:174` |
+| Giờ bắt đầu khoá MOOC lệch 7 tiếng | giờ UTC (`…Z`) bị coi như giờ Việt Nam | `extracurricular.py:75` |
+| Trang web lạ mở trong trình duyệt có thể gửi lệnh ghi tới UC | 4 endpoint POST nằm trước bước kiểm tra Origin | `copilot_app.py:1087-1088` (kiểm tra Origin nay đứng đầu `do_POST`) |
+| Thông báo kiểu "CPA từ 3.2" bị ẩn như thông báo cũ | số thập phân bị đọc thành ngày "3/2" | `stale_filter.py:63-64` |
+
+Mỗi lỗi có test hồi quy trong `tests/` (xem [KIEN-TRUC §6](KIEN-TRUC.md#6-kiểm-thử)).
 
 ## Mã hoá tiếng Việt
 

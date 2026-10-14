@@ -1,6 +1,6 @@
 # Kiến trúc University Copilot
 
-> Tài liệu này mô tả **code đang có trên nhánh `main`**. Mỗi khẳng định kèm `file:dòng` để bạn tự đối chiếu.
+> Tài liệu này mô tả **code đang có trên nhánh `main` (v1.00.23)**. Mỗi khẳng định kèm `file:dòng` để bạn tự đối chiếu.
 > Chỗ nào code không đủ để khẳng định thì ghi **⚠️ cần chủ repo xác nhận**.
 > Bản đồ vẽ tay đầy đủ hơn (kèm các phần không có trong repo): [Map.svg](Map.svg), sơ đồ khối n8n: [Map-n8n.svg](Map-n8n.svg).
 
@@ -11,15 +11,15 @@ Mọi dịch vụ do repo này chạy đều **chỉ nghe trên `127.0.0.1`** (k
 | Cổng | Dịch vụ | Chạy bằng | Có trong repo? | Bằng chứng |
 |---|---|---|---|---|
 | **8320** | Web app UC (giao diện + API cho n8n) | `python copilot_app.py` (hoặc `open_copilot.ps1`) | ✅ | `copilot_app.py:31`, `copilot_app.py:1441`, `open_copilot.ps1:8-11` |
-| **5678** | n8n (Docker) — workflow "University — Copilot", Lecture Capture, Lecture Analysis | Docker Desktop | ✅ một phần (xem §4) | `copilot_app.py:26`, `n8napi.py:3`, `build.py:20` |
+| **5678** | n8n 2.36.7 (Docker) — workflow "University — Copilot", Lecture Capture, Lecture Analysis | Docker Desktop | ✅ một phần (xem §4) | `copilot_app.py:26`, `n8napi.py:3`, `build.py:20` |
 | **8340** | Cổng chép lời (speech gate): âm thanh → chữ → bản nén | `python speech-gate/speech_gate.py` | ✅ | `speech-gate/speech_gate.py:40`, `:571` |
 | **5681** | Máy ghi bài giảng / cuộc họp (C# .NET 8) | `meeting-lecture-recorder/Start-LectureRecorder.ps1` | ✅ | `meeting-lecture-recorder/README.md:3`, `Start-LectureRecorder.ps1:3-4` |
-| **8350** | "Cổng Gemini" (đếm quota, chuyển tiếp tới Gemini API) | `gemini_gate.py` | ❌ **không có trong repo** | dùng ở `mail_events.py:18`, `copilot_app.py:181`, `lecture_build.py:27` — ⚠️ cần chủ repo xác nhận cách cài |
+| **8350** | "Cổng Gemini" (đếm quota, chuyển tiếp tới Gemini API) | `gemini_gate.py` | ❌ **ngoài repo** (chủ repo xác nhận) | dùng ở `mail_events.py:18`, `copilot_app.py:181`, `lecture_build.py:27` — ⚠️ cần chủ repo xác nhận cách cài |
 | **1234** | LM Studio (API kiểu OpenAI) — model chạy trên máy | LM Studio | ngoài | `copilot_app.py:27`, `speech-gate/speech_gate.py:37`, `pdf_translate.py:61` |
-| **9998** | Apache Tika (trích chữ từ PDF/Office) | ⚠️ cần chủ repo xác nhận (Docker hay bản Java) | ngoài | `copilot_app.py:28`, `tuition_rules.py:22`, `course_detail.py:50` |
-| **8888** | SearXNG (tìm web cho chat + Research Hub) | Docker ("university-searxng") | ngoài | `web_tools.py:13`, `research.py:92-97` |
+| **9998** | Apache Tika (trích chữ từ PDF/Office) | Docker `apache/tika:4.0.0-1-full` (chủ repo xác nhận) | ngoài | `copilot_app.py:28`, `tuition_rules.py:22`, `course_detail.py:50` |
+| **8888** | SearXNG (tìm web cho chat + Research Hub) | Docker ("university-searxng", chủ repo xác nhận) | ngoài | `web_tools.py:13`, `research.py:92-97` |
 | **9333** | Chrome riêng để "Làm bài" (cổng gỡ lỗi từ xa) | UC tự bật | ✅ | `work_open.py:24`, `work_open.py:90-100` |
-| 8300 / 8310 | AgentChattr ("Hội đồng AI") + `council_relay.py` | ngoài | ❌ không có trong repo | `ui/index.html:555`, `build.py:496-499`, `build.py:777` — tuỳ chọn, ⚠️ cần chủ repo xác nhận |
+| 8300 / 8310 | AgentChattr ("Hội đồng AI") + `council_relay.py` | ngoài | ❌ ngoài repo (chủ repo xác nhận) | `ui/index.html:555`, `build.py:496-499`, `build.py:777` — tuỳ chọn |
 | — | ntfy (máy chủ công khai `ntfy.sh`) — đẩy thông báo lên điện thoại | dịch vụ Internet | ngoài | `phone_sched.py:99`, `phone_link.py:58`, `alerts.py:198` |
 
 ## 2. Sơ đồ tổng thể
@@ -146,10 +146,17 @@ Audio **không bao giờ** gửi cho Gemini (`speech-gate/README.md:5`, `speech-
 
 | Ở đâu | Gì | Bằng chứng |
 |---|---|---|
-| `config.json` | ID database Notion, ID credential n8n, ID workflow n8n, đường dẫn | `uc_config.py:11-40` |
+| `config.json` | ID database Notion, ID credential n8n, ID workflow n8n (đang chạy + workflow cũ), đường dẫn | `uc_config.py:11-47` |
 | `.copilot-secret` | khoá chung: ký link nội bộ, header `X-Copilot-Key`, chữ ký lệnh điện thoại | `copilot_app.py:25`, `phone_link.py:17`, `speech-gate/speech_gate.py:39` |
 | `school/` | mọi trạng thái và dữ liệu đọc từ trường (JSON) | `.gitignore:8` |
 | Windows Credential Manager, mục `uc-school-sync` | email + mật khẩu tài khoản trường | `school_cred.py:4`, `:15` |
-| Biến môi trường User | `GEMINI_API_KEY`, `N8N_API_KEY` | `mail_events.py:54-57`, `n8napi.py:5-8` |
+| Biến môi trường User | `GEMINI_API_KEY`, `N8N_API_KEY`; tuỳ chọn `UC_DATA_DIR`, `UC_AI_DIR` (thư mục dữ liệu / model của cổng chép lời và máy ghi) | `mail_events.py:54-57`, `n8napi.py:5-8`, `speech-gate/speech_gate.py:27-28`, `Program.cs:73` |
 
 Toàn bộ các file trên đều nằm trong `.gitignore` (`.gitignore:1-16`), không đưa lên Git.
+
+## 6. Kiểm thử
+
+- `tests/` có bộ test pytest cho phần logic thuần: học phí (`test_tuition*.py`), ưu tiên tiến trình (`test_audio_priority.py`, giả lập Windows API), hạn nộp / lịch / việc hết hạn (`test_deadlines.py`, `test_calendar.py`, `test_reschedule_expired.py`), điểm (`test_academic.py`, `test_school_sync.py`), giờ MOOC (`test_extracurricular.py`), chặn cross-origin (`test_copilot_app_origin.py`).
+- Không test nào gọi mạng, Notion, n8n hay LM Studio thật: `tests/conftest.py` chặn `urllib.request.urlopen` cho mọi test (`tests/conftest.py:25-29`), còn n8n / Notion được thay bằng đồ giả trong cùng file.
+- Chạy trên máy: `py -m pip install -r requirements-dev.txt` rồi `py -m pytest` (`pytest.ini:2`, `requirements-dev.txt:2`).
+- GitHub Actions chạy bộ test trên mỗi PR và mỗi lần push lên `main`, trên Ubuntu + Windows × Python 3.12 / 3.13 (`.github/workflows/tests.yml:3-6`, `:19-20`).

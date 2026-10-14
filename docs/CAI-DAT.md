@@ -1,12 +1,12 @@
 # Cài đặt University Copilot trên Windows
 
 > Hướng dẫn cho **một sinh viên HUST khác** muốn tự dựng hệ thống trên máy mình.
-> Viết theo **code đang có trên nhánh `main`**; mỗi bước có `file:dòng` để đối chiếu. Chỗ code không đủ để khẳng định ghi **⚠️ cần chủ repo xác nhận**.
+> Viết theo **code đang có trên nhánh `main` (v1.00.23)**; mỗi bước có `file:dòng` để đối chiếu. Chỗ code không đủ để khẳng định ghi **⚠️ cần chủ repo xác nhận**.
 > Xem thêm: [KIEN-TRUC.md](KIEN-TRUC.md) (dịch vụ, cổng, luồng dữ liệu) · [HOI-DAP.md](HOI-DAP.md) (lỗi thường gặp).
 
 ## 0. Đọc trước: repo hiện CHƯA đủ để dựng lại toàn bộ
 
-README đã nói rõ đây là công cụ cá nhân, "chưa phải sản phẩm cài một lần là chạy" (`README.md:163`). Khi đối chiếu code, các phần sau **không có trong repo**, nên bạn cần chủ repo cung cấp thêm:
+README đã nói rõ đây là công cụ cá nhân, "chưa phải sản phẩm cài một lần là chạy" (`README.md:173`). Khi đối chiếu code, các phần sau **không có trong repo**, nên bạn cần chủ repo cung cấp thêm:
 
 | Thiếu | Vì sao cần | Bằng chứng |
 |---|---|---|
@@ -23,9 +23,9 @@ Những phần **chạy được ngay** chỉ với repo: web app `copilot_app.p
 | Cần | Ghi chú | Bằng chứng |
 |---|---|---|
 | Windows 10/11 | Code dùng Windows Credential Manager, toast Windows, `winreg`, PowerShell | `school_cred.py:4`, `alerts.py:173-186`, `mail_events.py:56-57` |
-| Python **3.12+** | | `README.md:165` |
+| Python **3.12+** | | `README.md:177` |
 | Google Chrome (bản cài thường) | Playwright mở **Chrome thật** (`channel="chrome"`); "Làm bài" gọi `chrome.exe` ở thư mục cài mặc định | `school_fetch.py:42`, `work_open.py:23` |
-| Docker Desktop | Chạy n8n (và SearXNG nếu dùng) | `README.md:76`, `open_copilot.ps1:13` |
+| Docker Desktop | Chạy n8n (và SearXNG nếu dùng) | `README.md:84`, `open_copilot.ps1:13` |
 | Tài khoản `@sis.hust.edu.vn` | Chỉ nhận email đuôi này | `school_cred.py:37-39` |
 | Tài khoản Notion, Google (Gemini API key, Google Drive) | n8n giữ credential Notion / Gemini / Drive | `n8napi.py:22-26` |
 
@@ -37,7 +37,7 @@ cd university-copilot-HUST
 py -m pip install playwright keyring
 py -m playwright install chrome
 ```
-- Phần lõi chỉ cần `playwright` + `keyring` (`README.md:165`); `copilot_app.py` chỉ dùng thư viện chuẩn (`copilot_app.py:14`).
+- Phần lõi chỉ cần `playwright` + `keyring` (`README.md:177`); `copilot_app.py` chỉ dùng thư viện chuẩn (`copilot_app.py:14`).
 - Các thư viện nặng (`numpy`, `faster-whisper`, `openvino`, `torch`, `pyannote`…) **chỉ** dành cho cổng chép lời (bước 9).
 
 ## 3. `config.json`
@@ -76,11 +76,11 @@ Mở `config.json` và điền (`uc_config.py:24-47` đọc đúng các khối n
 
 ## 5. Docker + n8n
 
-1. Cài Docker Desktop, chạy n8n ở cổng **5678** (UC gọi `http://127.0.0.1:5678/webhook/...`, `copilot_app.py:26`). Một lệnh **gợi ý** theo tài liệu chính thức của n8n:
+1. Cài Docker Desktop, chạy n8n ở cổng **5678** (UC gọi `http://127.0.0.1:5678/webhook/...`, `copilot_app.py:26`). Chủ repo dùng **n8n 2.36.7** (chủ repo xác nhận). Lệnh gợi ý, viết theo tài liệu chính thức của n8n:
    ```powershell
-   docker run -d --name n8n --restart unless-stopped -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n
+   docker run -d --name n8n --restart unless-stopped -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n:2.36.7
    ```
-   ⚠️ cần chủ repo xác nhận: phiên bản n8n và các biến môi trường n8n đang dùng. Workflow tự đặt múi giờ `Asia/Ho_Chi_Minh` (`build.py:21`, `build.py:1378`).
+   Giữ tên container là `n8n`, vì add-on network-guard gọi `docker pause n8n` (§12). ⚠️ cần chủ repo xác nhận: các biến môi trường n8n đang dùng. Workflow tự đặt múi giờ `Asia/Ho_Chi_Minh` (`build.py:21`, `build.py:1378`).
 2. n8n trong Docker gọi ngược về máy qua `host.docker.internal` (`build.py:443-491`, `lecture_build.py:25-27`). Docker Desktop có sẵn tên này.
 3. Trong n8n: **Settings → n8n API** tạo API key, rồi đặt vào `N8N_API_KEY` (bước 4).
 4. Tạo **5 credential** rồi chép ID của từng cái vào `config.json → n8n_credentials` (`n8napi.py:22-26`):
@@ -98,10 +98,8 @@ Mở `config.json` và điền (`uc_config.py:24-47` đọc đúng các khối n
 ## 6. LM Studio
 
 - Bật **server** của LM Studio ở cổng **1234** (`copilot_app.py:27`).
-- Model mà code gọi theo tên: **`qwen3-14b`** (xếp tài liệu `copilot_app.py:29`, nén bản chép lời `speech-gate/speech_gate.py:38`, dịch PDF `pdf_translate.py:61`, não dự phòng của chat `build.py:414`) và **`qwen3-8b`** (dự phòng khi thiếu bộ nhớ `speech-gate/speech_gate.py:177`).
+- Model mà code gọi theo tên (chủ repo xác nhận model xếp tài liệu là `qwen3-14b`): **`qwen3-14b`** (xếp tài liệu `copilot_app.py:29`, nén bản chép lời `speech-gate/speech_gate.py:38`, dịch PDF `pdf_translate.py:61`, não dự phòng của chat `build.py:414`) và **`qwen3-8b`** (dự phòng khi thiếu bộ nhớ `speech-gate/speech_gate.py:177`).
 - Dịch PDF còn gọi lệnh `lms` (CLI của LM Studio) để kiểm tra model đang nạp; đổi đường dẫn bằng biến `LMS_EXE` (`pdf_translate.py:17`, `:33`).
-
-> Ghi chú: README ghi model xếp tài liệu là `qwen3-8b` (`README.md:81`), còn code hiện dùng `qwen3-14b` (`copilot_app.py:29`). Tài liệu này theo code.
 
 ## 7. Notion
 
@@ -164,11 +162,11 @@ powershell -ExecutionPolicy Bypass -File .\open_copilot.ps1
 ### 11.3. Các dịch vụ ngoài khác
 | Tính năng | Cần | Bằng chứng |
 |---|---|---|
-| Đọc chữ PDF/Office (xếp tài liệu, học phí, chi tiết học phần) | Apache Tika ở `127.0.0.1:9998`. ⚠️ cần chủ repo xác nhận cách chạy | `copilot_app.py:28`, `tuition_rules.py:22` |
-| Chat tìm web, Research Hub | SearXNG ở `127.0.0.1:8888` (Docker "university-searxng") | `web_tools.py:13`, `research.py:97` |
+| Đọc chữ PDF/Office (xếp tài liệu, học phí, chi tiết học phần) | Apache Tika ở cổng 9998, chạy bằng Docker image `apache/tika:4.0.0-1-full` (chủ repo xác nhận), vd `docker run -d --name tika --restart unless-stopped -p 127.0.0.1:9998:9998 apache/tika:4.0.0-1-full` | `copilot_app.py:28`, `tuition_rules.py:22` |
+| Chat tìm web, Research Hub | SearXNG ở `127.0.0.1:8888`, chạy bằng Docker (container "university-searxng", chủ repo xác nhận) | `web_tools.py:13`, `research.py:97` |
 | Dịch PDF | `pdf2zh` cài bằng `uv tool` (`%APPDATA%\uv\tools\pdf2zh\...`) | `pdf_translate.py:15` |
-| Gửi tài liệu sang NotebookLM | `notebooklm-py` cài bằng `uv tool`; giữ phiên bằng `notebooklm-keepalive/refresh.vbs`. ⚠️ cần chủ repo xác nhận lịch chạy `refresh.vbs` | `nlm_bridge.py:12`, `notebooklm-keepalive/refresh.vbs:4` |
-| Hội đồng AI | AgentChattr (:8300) + `council_relay.py` (:8310), không có trong repo | `ui/index.html:555`, `build.py:777` |
+| Gửi tài liệu sang NotebookLM | `notebooklm-py` cài bằng `uv tool`; giữ phiên bằng `notebooklm-keepalive/refresh.vbs`, tạo tác vụ Task Scheduler chạy **mỗi 20 phút và lúc đăng nhập Windows** (chủ repo xác nhận) | `nlm_bridge.py:12`, `notebooklm-keepalive/refresh.vbs:4` |
+| Hội đồng AI | AgentChattr (:8300) + `council_relay.py` (:8310). Cả hai nằm ngoài repo (chủ repo xác nhận); tuỳ chọn | `ui/index.html:555`, `build.py:777` |
 
 ## 12. Add-on "máy yếu" (`addons/low-end-priority`)
 
