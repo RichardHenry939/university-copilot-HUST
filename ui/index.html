@@ -529,6 +529,7 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
 .tasks.exlist .h { text-align: right; white-space: nowrap; }
 @media (max-width: 860px) { .bell-m { display: grid; } .notif { left: auto; right: 12px; top: 56px; } .tabs { padding-right: 56px; } }
 @media (max-width: 600px) { .tasks.exlist li { grid-template-columns: 1fr; } .tasks.exlist .h { grid-column: 1; text-align: left; } }
+.plan-box{margin-top:28px}.plan-t{border-collapse:collapse;margin:10px 0;font-size:14px}.plan-t td,.plan-t th{border:1px solid var(--line,#ddd);padding:4px 8px;text-align:left}.plan-t .warn,p.warn{color:var(--red,#c0392b)}.plan-week{font-size:14px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -668,6 +669,18 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
         </div>
         <div id="cal-month"></div>
         <div class="mlegend"><span style="--c: var(--green)">Học trên lớp</span><span style="--c: var(--blue)">Online</span><span style="--c: var(--red)">Hạn nộp</span><span style="--c: var(--amber)">Đợt nghỉ / đợt học tập trung</span><span>Bấm một ngày ở lịch tuần hoặc lịch tháng để chọn; hai lịch luôn chọn cùng một ngày</span></div>
+        <div class="plan-box" id="plan-box">
+          <h2>Kế hoạch tự học · xuất lịch</h2>
+          <p class="lead">Giờ tự học mỗi tuần theo khối lượng của trường (ví dụ <b>4(3-0-2-8)</b>: 8 giờ tự học / tuần), chia đều vào giờ trống không trùng lịch học.</p>
+          <div class="cal-nav">
+            <label>Mục tiêu <select id="plan-pct"><option value="100">100% yêu cầu</option><option value="75">75%</option><option value="50">50%</option></select></label>
+            <button class="ghost" id="plan-go">Lập kế hoạch tự học</button>
+            <button class="ghost" id="plan-ics">Xuất Google Calendar (.ics)</button>
+            <button class="ghost" id="plan-xlsx">Xuất Excel</button>
+          </div>
+          <div id="plan-out"></div>
+          <p class="cal-sync">Google Calendar: mở calendar.google.com → Cài đặt → Nhập và xuất → chọn file .ics vừa tải (nên tạo một lịch riêng để dễ xoá khi đổi kỳ).</p>
+        </div>
       </div>
     </section>
 
@@ -779,6 +792,37 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
 <script>
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// 📅 (v1.00.24) Kế hoạch tự học + xuất Google Calendar / Excel (study_plan.py)
+async function planLoad() {
+  const out = document.getElementById('plan-out'); const pct = document.getElementById('plan-pct').value;
+  out.innerHTML = '<p class="skeleton">Đang lập kế hoạch…</p>';
+  try {
+    const d = await (await fetch('/api/study-plan?pct=' + pct)).json();
+    if (d.error) { out.innerHTML = '<p>Chưa lập được: ' + esc(d.error) + '</p>'; return; }
+    let h = '<table class="plan-t"><tr><th>Môn</th><th>Khối lượng</th><th>Tự học / tuần</th><th>Mục tiêu</th><th>Đã xếp</th></tr>';
+    for (const x of d.summary) h += '<tr><td>' + esc(x.code + ' ' + x.name) + '</td><td>' + esc(x.info) + '</td><td>' + x.yeu_cau_h + ' giờ</td><td>' + x.muc_tieu_h + ' giờ</td><td' + (x.da_xep_h < x.muc_tieu_h ? ' class="warn"' : '') + '>' + x.da_xep_h + ' giờ</td></tr>';
+    h += '</table>';
+    const miss = Object.entries(d.thieu_cho || {});
+    if (miss.length) h += '<p class="warn">Không đủ giờ trống cho: ' + miss.map(([c, v]) => esc(c) + ' (thiếu ' + v + ' giờ)').join(', ') + '. Thử mục tiêu thấp hơn hoặc tự thêm giờ.</p>';
+    const byDay = {}; for (const b of d.blocks) (byDay[b.thu] = byDay[b.thu] || []).push(esc(b.start + '–' + b.end + ' ' + b.name));
+    h += '<ul class="plan-week">' + Object.entries(byDay).map(([t, xs]) => '<li><b>' + esc(t) + ':</b> ' + xs.join(' · ') + '</li>').join('') + '</ul>';
+    if ((d.tuan_nay_bo || []).length) h += '<p><b>Tuần này bỏ ' + d.tuan_nay_bo.length + ' khối tự học:</b> ' + d.tuan_nay_bo.map(x => esc(x.thu + ' ' + x.ngay + ' ' + x.start + ' ' + x.name + ' (' + x.vi + ')')).join(' · ') + '</p>';
+    h += '<p class="cal-sync">Ngày 💤 Rest ở tab Hôm nay và hoạt động bạn đã bấm "Sẽ đi" được tránh khi xuất Google Calendar; hoạt động "Sẽ đi" cũng có trong file.</p>';
+    out.innerHTML = h;
+  } catch (e) { out.innerHTML = '<p>Lỗi: ' + esc(e.message) + '</p>'; }
+}
+async function planDownload(kind) {
+  const pct = document.getElementById('plan-pct').value;
+  const r = await fetch('/api/export/' + kind + '?pct=' + pct);
+  if (!r.ok) { alert('Chưa xuất được: ' + (await r.text()).slice(0, 200)); return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob());
+  a.download = 'hoc-ky-uc.' + kind; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('plan-go')?.addEventListener('click', planLoad);
+  document.getElementById('plan-ics')?.addEventListener('click', () => planDownload('ics'));
+  document.getElementById('plan-xlsx')?.addEventListener('click', () => planDownload('xlsx'));
+});
 const md = (s) => DOMPurify.sanitize(marked.parse(String(s || ''), { breaks: true }));
 let sessionId = localStorage.getItem('uc-session');
 if (!sessionId) { sessionId = 'web-' + crypto.randomUUID(); localStorage.setItem('uc-session', sessionId); }

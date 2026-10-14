@@ -18,12 +18,12 @@ UC = 'http://127.0.0.1:8320/'
 APP_ID = r'{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
 
 
-def _load():
-    try: return json.loads(STATE.read_text(encoding='utf-8'))
-    except Exception: return {'sent': {}}
+def _load():   # (v1.00.24, D-1) ghi nguyên tử + .bak; đọc hỏng -> .bak + ghi lỗi rõ (uc_state)
+    import uc_state; return uc_state.load_json(STATE, {'sent': {}})
 
 
-def _save(s): STATE.write_text(json.dumps(s, ensure_ascii=False, indent=1), encoding='utf-8')
+def _save(s):
+    import uc_state; uc_state.save_json(STATE, s)
 
 
 def left(w, now):

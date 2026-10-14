@@ -448,10 +448,21 @@ def finish(job, status, stats, reason="", compact="", excerpts=None, transcript=
                    "transcript": transcript[:90000], "slides": slides_payload(job["captureId"]) if status == "done" else []})
 
 
+def callback_ok(url):
+    """(v1.00.24, B-1) CHỈ gửi khoá X-Copilot-Key về n8n trên máy: http://127.0.0.1|localhost|host.docker.internal:5678/webhook/...
+    Trước đây nhận URL bất kỳ -> ai POST được /jobs là lấy được khoá chung (giả n8n, ký lệnh điện thoại)."""
+    from urllib.parse import urlparse as _u
+    try: x = _u(url)
+    except Exception: return False
+    return x.scheme == 'http' and x.hostname in ('127.0.0.1', 'localhost', 'host.docker.internal') and x.port == 5678 and x.path.startswith('/webhook/')
+
+
 def callback(job, extra):
     url = job.get("callback")
     if not url:
         return
+    if not callback_ok(url):
+        log(f"callback {job['jobId']}: BỎ — địa chỉ không phải n8n trên máy ({url[:80]})"); return
     body = {"jobId": job["jobId"], "captureId": job["captureId"], "startedAt": job.get("startedAt"),
             "endedAt": job.get("endedAt"), "kind": job.get("kind") or kind_of(job["captureId"]), **extra}
     key = SECRET.read_text(encoding="utf-8").strip() if SECRET.exists() else ""
@@ -507,6 +518,11 @@ class H(BaseHTTPRequestHandler):
 
     def do_POST(self):
         u = urlparse(self.path); q = {k: v[0] for k, v in parse_qs(u.query).items()}
+        org = self.headers.get('Origin')   # (v1.00.24, B-1) trang web lạ không được POST vào cổng này; n8n / máy ghi / curl không gửi Origin
+        if org and urlparse(org).hostname not in ('127.0.0.1', 'localhost'):
+            return self._send(403, {'error': 'cross-origin blocked'})
+        if q.get('callback') and not callback_ok(q['callback']):
+            return self._send(400, {'error': 'callback must be the local n8n webhook'})
         try:
             if u.path.startswith("/jobs/") and u.path.endswith("/retry"):
                 jid = u.path.split("/")[2]

@@ -60,14 +60,12 @@ jobs = queue.Queue()
 # ----------------------------------------------------------------------------- state
 def load_state():
     try:
-        return json.loads(STATE.read_text("utf-8"))
+        import uc_state; return uc_state.load_json(STATE, {"items": []})   # (v1.00.24, D-1) hỏng -> .bak + ghi lỗi rõ, không lặng lẽ về rỗng
     except Exception:
         return {"items": []}
 
 def save_state(st):
-    tmp = STATE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(st, ensure_ascii=False, indent=1), "utf-8")
-    tmp.replace(STATE)
+    import uc_state; uc_state.save_json(STATE, st)   # (v1.00.24, D-1/D-2) file tạm tên riêng (trước dùng chung inbox_state.tmp) + .bak
 
 def update_item(item_id, **kw):
     with lock:
@@ -1037,6 +1035,16 @@ class H(BaseHTTPRequestHandler):
                     return self._send(400, {"error": "from/to phải dạng YYYY-MM-DD"})
                 import timetable
                 return self._send(200, timetable.window(_npost, f, t))
+            if u.path in ("/api/study-plan", "/api/export/ics", "/api/export/xlsx"):   # 📅 (v1.00.24) kế hoạch tự học + xuất Google Calendar / Excel
+                import importlib, study_plan; importlib.reload(study_plan)
+                try: pct = max(10, min(150, int(q.get("pct", ["100"])[0])))
+                except ValueError: pct = 100
+                try:
+                    if u.path == "/api/study-plan": return self._send(200, study_plan.plan(pct, post=_npost))
+                    if u.path == "/api/export/ics": return self._send(200, raw=study_plan.ics(pct, post=_npost), ctype="text/calendar; charset=utf-8")
+                    return self._send(200, raw=study_plan.xlsx(pct), ctype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                except Exception as e:
+                    return self._send(200 if u.path == "/api/study-plan" else 500, {"error": f"{type(e).__name__}: {e}"[:300]})
             if u.path == "/api/timetable/all":   # tab Lịch: lấy 1 lần, giao diện tự vẽ tuần/tháng (timetable.py)
                 import timetable
                 return self._send(200, timetable.get(_npost, force=q.get("force", [""])[0] == "1"))
@@ -1417,6 +1425,8 @@ class H(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    import sys; sys.modules.setdefault("copilot_app", sys.modules["__main__"])   # (v1.00.24, D-2) các module khác `import copilot_app` phải dùng CHUNG bản này
+    # (cùng lock / hàng đợi jobs) — trước đây Python nạp bản thứ hai: file kéo từ 📥 kẹt "queued", khoá inbox_state vô tác dụng
     # file đang dở từ lần chạy trước -> xếp lại
     for it in load_state()["items"]:
         if it.get("status") in ("queued", "reading", "thinking") and Path(it["path"]).exists():

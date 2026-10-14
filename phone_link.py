@@ -27,13 +27,12 @@ def cfg():
 
 
 def _load():
-    try: return json.loads(STATE.read_text(encoding='utf-8'))
-    except Exception: return {'last_id': None, 'used': {}}
+    import uc_state; return uc_state.load_json(STATE, {'last_id': None, 'used': {}})   # (v1.00.24, D-1) ghi nguyên tử + .bak; đọc hỏng -> .bak + ghi lỗi rõ (uc_state)
 
 
 def _save(s):
     now = time.time(); s['used'] = {k: v for k, v in s['used'].items() if v > now - TTL - 3600}   # nhớ lệnh đã dùng tới khi hết hạn
-    STATE.write_text(json.dumps(s, ensure_ascii=False), encoding='utf-8')
+    import uc_state; uc_state.save_json(STATE, s, indent=None)
 
 
 # ------------------------------------------------------------------ lệnh có chữ ký

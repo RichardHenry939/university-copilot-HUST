@@ -9,10 +9,16 @@ COURSE = page('c-it', Code=('rich_text', 'IT1108'), Name=('title', 'Nhập môn 
               Semester=('select', 'S1'), Status=('status', 'Completed'), Result=('select', 'Unknown'))
 
 
-def _program(grade):
+HEADS = ['STT', 'MÃ HỌC PHẦN', 'TÊN HỌC PHẦN', 'Phân loại Module/HP', 'Số TC', 'ECTS', 'Bắt buộc', 'Đã học', 'Điểm HP(Bậc)', 'Kết quả',
+         'Xem chi tiết HP']   # đúng tiêu đề bảng CTĐT của qldt (10/2026)
+
+
+def _program(grade, heads=HEADS, extra_col_at=None):
     # hàng khung CTĐT của qldt: STT · mã · tên · nhóm · TC · … · bắt buộc (X) · … · điểm chữ · kết quả
-    return {'rows': [['Học kỳ 1 - Năm học 2026-2027'],
-                     ['1', 'IT1108', 'Nhập môn lập trình', 'Cơ sở ngành', '2', '', 'X', '', grade, 'Đạt']]}
+    row = ['1', 'IT1108', 'Nhập môn lập trình', 'Cơ sở ngành', '2', '', 'X', '', grade, 'Đạt']
+    heads = list(heads)
+    if extra_col_at is not None: heads.insert(extra_col_at, 'CỘT MỚI'); row.insert(extra_col_at, '???')
+    return {'heads': heads, 'rows': [['Học kỳ 1 - Năm học 2026-2027'], row]}
 
 
 @pytest.mark.parametrize('grade, gpa4, result', [
@@ -33,3 +39,21 @@ def test_apply_skips_row_without_letter_grade():
     n8n = FakeN8n({'db-courses': [COURSE]})
     school_sync.apply(n8n, {'program': _program('')})
     assert 'Current GPA 4' not in dict(n8n.patched).get('c-it', {})
+
+
+def test_program_column_inserted_still_reads_by_header():
+    # (v1.00.24, R-2) trường chèn thêm 1 cột: trước đây đọc cứng r[4] -> số tín sai / Credits = 0; nay dò cột theo tên tiêu đề
+    n8n = FakeN8n({'db-courses': [COURSE]})
+    changes, review = school_sync.apply(n8n, {'program': _program('B+', extra_col_at=3)})
+    props = dict(n8n.patched)['c-it']
+    assert props['Current GPA 4'] == {'number': 3.5}
+    assert 'Credits' not in props            # số tín vẫn đọc đúng = 2 như Notion -> không ghi đè
+
+
+def test_program_missing_column_skips_step_and_reports():
+    # (v1.00.24, R-2) bảng mất cột "Số TC" -> bỏ cả bước CTĐT lượt đó, báo review, không ghi gì
+    n8n = FakeN8n({'db-courses': [COURSE]})
+    heads = [h for h in HEADS if h != 'Số TC']
+    changes, review = school_sync.apply(n8n, {'program': _program('B+', heads=heads)})
+    assert 'c-it' not in dict(n8n.patched)
+    assert any('CTĐT' in r and 'số tc' in r for r in review)

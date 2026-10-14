@@ -19,7 +19,7 @@ LUẬT CỐ ĐỊNH (người dùng 2026-10-04, áp cho MỌI kỳ: 20261, 20262
   KHÔNG áp cho NOTION THỪA: thứ Notion có mà trường không liệt kê (môn Module chưa hiện hết, luật môn GV nói, deadline,
   ghi chú…) → giữ nguyên, không xoá, không báo. Môn tự chọn trong khung cũng cần có (chỉ là kỳ học do bạn chọn).
 """
-import uc_config as cfg
+import os, uc_config as cfg
 import json, re, subprocess, sys, datetime as dt
 from pathlib import Path
 from academic import Notion, P, rt, title, TZ, COURSES, CONDUCT, course_view
@@ -36,17 +36,20 @@ G4 = {"A+": 4.0, "A": 4.0, "B+": 3.5, "B": 3.0, "C+": 2.5, "C": 2.0, "D+": 1.5, 
 def _clean(s):
     return str(s or "").replace("\xa0", " ").strip()
 
+INTAKE = int(os.environ.get("UC_INTAKE_YEAR") or 2026)   # (v1.00.24, M-1) năm nhập học (K71 = 2026). Khoá khác: đặt UC_INTAKE_YEAR, vd K70 -> 2025
+
+
 def sem_of_code(code):
     """'20261' -> 'S1', '20272' -> 'S4' (năm học bắt đầu 2026)."""
     m = re.match(r"(\d{4})\.?([12])", _clean(code))
     if not m: return None
-    k = (int(m.group(1)) - 2026) * 2 + int(m.group(2))
+    k = (int(m.group(1)) - INTAKE) * 2 + int(m.group(2))
     return f"S{k}" if 1 <= k <= 8 else None
 
 def sem_of_header(text):
     """'Học kỳ 1 - Năm học 2026-2027' -> 'S1'"""
     m = re.search(r"Học kỳ\s*(\d)\s*-\s*Năm học\s*(\d{4})", _clean(text))
-    return f"S{(int(m.group(2)) - 2026) * 2 + int(m.group(1))}" if m else None
+    return f"S{(int(m.group(2)) - INTAKE) * 2 + int(m.group(1))}" if m else None
 
 def _category(groups):
     g = " ".join(groups).lower()
@@ -118,7 +121,9 @@ def apply(post, snap):
         lop, vang, probs = parse_tkb(t)
         review += probs
         sem = sem_of_code(t.get("sem") or "")
-        if lop and sem:
+        if probs and lop:   # (v1.00.24, R-1) trường đổi định dạng ô lịch -> KHÔNG ghi lượt này: tkb.run sẽ đưa buổi của môn đọc hỏng vào thùng rác
+            review.append(f"TKB: {len(probs)} ô không đọc được -> giữ nguyên lịch cũ trên Notion, chưa ghi lượt này (xem 'Không đọc được…' ở trên)")
+        if lop and sem and not probs:
             import tkb
             w1 = tkb.week1(dt.date(int(t["sem"][:4]), 10, 1))
             ws = [w for l in lop for w in l["tuan"]]
@@ -147,10 +152,17 @@ def apply(post, snap):
 
     # 3) chương trình đào tạo
     prog = {}
-    for grp, r in parse_grouped(snap.get("program") or {}, sem_of_header):
-        if len(r) < 10 or not re.match(r"[A-Z]{2,4}\d", r[1]): continue
-        p = prog.setdefault(r[1], {"sem": grp, "name": r[2], "groups": [], "tc": r[4], "req": r[6] == "X", "grade": r[8], "res": r[9]})
-        if r[3] not in p["groups"]: p["groups"].append(r[3])
+    # (v1.00.24, R-2) dò cột theo TÊN tiêu đề (trước đọc cứng r[1]..r[9]: trường chèn 1 cột -> mọi môn Credits = 0). Thiếu cột -> bỏ cả bước, báo review.
+    _ph = [h.strip().lower() for h in ((snap.get("program") or {}).get("heads") or [])]
+    _need = {"code": "mã học phần", "name": "tên học phần", "group": "phân loại", "tc": "số tc", "req": "bắt buộc", "grade": "điểm hp", "res": "kết quả"}
+    _pc = {k: next((i for i, h in enumerate(_ph) if h.startswith(v)), None) for k, v in _need.items()}
+    if snap.get("program") and None in _pc.values():
+        review.append("CTĐT: bảng của trường đổi cột (thiếu " + ", ".join(_need[k] for k, v in _pc.items() if v is None) + ") -> bỏ qua bước CTĐT lượt này")
+    for grp, r in (parse_grouped(snap.get("program") or {}, sem_of_header) if None not in _pc.values() else []):
+        if len(r) <= max(_pc.values()) or not re.match(r"[A-Z]{2,4}\d", r[_pc["code"]]): continue
+        p = prog.setdefault(r[_pc["code"]], {"sem": grp, "name": r[_pc["name"]], "groups": [], "tc": r[_pc["tc"]], "req": r[_pc["req"]] == "X",
+                                          "grade": r[_pc["grade"]], "res": r[_pc["res"]]})
+        if r[_pc["group"]] not in p["groups"]: p["groups"].append(r[_pc["group"]])
     for code, p in prog.items():
         c = courses.get(code)
         if not c:   # Notion THIẾU môn của khung trường → tạo (bắt buộc: đặt kỳ theo khung; tự chọn: để bạn chọn kỳ, ghi kỳ gợi ý)
@@ -165,8 +177,8 @@ def apply(post, snap):
             nt.create(COURSES, props)
             changes.append(f"Thêm {code} {p['name']} ({p['sem'] if p['req'] else 'tự chọn, gợi ý ' + str(p['sem'])}, {tc0:g} TC) theo khung CTĐT")
             continue
-        tc = float(p["tc"]) if re.match(r"^\d+(\.\d+)?$", p["tc"] or "") else 0
-        if float(c["credits"] or 0) != tc:
+        tc = float(p["tc"]) if re.match(r"^\d+(\.\d+)?$", p["tc"] or "") else None   # (v1.00.24, R-2) không đọc được số tín -> BỎ QUA, đừng ghi 0
+        if tc is not None and float(c["credits"] or 0) != tc:
             patch(c, "Credits", {"number": tc}, f"{code}: số tín {c['credits']} → {tc:g} (theo CTĐT)")
         groups = " · ".join(p["groups"])
         if groups != (cprop(c, "Nhóm HP (trường)") or ""):

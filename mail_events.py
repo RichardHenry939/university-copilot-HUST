@@ -35,14 +35,12 @@ def subject_key(s):
     return norm(s)[:80]
 
 
-def load():
-    try: return json.loads(STORE.read_text(encoding='utf-8'))
-    except Exception: return {'events': {}, 'processed': []}
+def load():   # (v1.00.24, D-1) ghi nguyên tử + .bak; đọc hỏng -> .bak + ghi lỗi rõ (uc_state)
+    import uc_state; return uc_state.load_json(STORE, {'events': {}, 'processed': []})
 
 
 def save(st):
-    STORE.parent.mkdir(parents=True, exist_ok=True)
-    STORE.write_text(json.dumps(st, ensure_ascii=False, indent=1), encoding='utf-8')
+    import uc_state; uc_state.save_json(STORE, st)
 
 
 def done_ids(st): return set(st['processed'])
