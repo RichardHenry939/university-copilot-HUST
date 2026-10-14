@@ -315,7 +315,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .checks { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
 /* ---------- Học kỳ: thẻ kỳ bấm được ---------- */
 .overall { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 22px; }
-.semcards { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; margin: 0 0 26px; }
+.semcards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) .55fr repeat(2, minmax(0, 1fr)) .55fr repeat(2, minmax(0, 1fr)) .55fr repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 26px; }
+.semcard.summer { background: transparent; border-style: dashed; justify-content: center; align-items: center; text-align: center; padding: 8px 4px; }
+.semcard.summer .lbl { font-size: 14px; } .semcard.summer .sub { font-size: 11px; color: var(--ink-3); }
 .semcard { text-align: left; font: inherit; color: inherit; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 10px 10px 9px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .semcard:hover { border-color: var(--ink-3); }
 .semcard[aria-pressed="true"] { border: 2px solid var(--blue); padding: 9px 9px 8px; background: color-mix(in srgb, var(--blue-wash) 55%, var(--sheet)); }
@@ -1116,11 +1118,17 @@ function renderSchool() {
 }
 function loadGrad() { renderGrad(); prgSync(); }
 
+function summerLabel(k) { return (2026 + k / 2 - 1) + '.3'; }   // hè sau S2 = 2026.3, sau S4 = 2027.3, sau S6 = 2028.3 (mã kỳ hè HUST)
+function summerCard(sem, suSel) {   // (14/10) thẻ kỳ hè chèn sau S2/S4/S6 — chỉ nhãn, không số liệu / trạng thái
+  const k = { S2: 2, S4: 4, S6: 6 }[sem]; if (!k) return '';
+  return '<button class="semcard summer" data-s="H' + k + '" aria-pressed="' + (!!suSel && suSel.k === k) + '"><span class="lbl">' + summerLabel(k) + '</span><span class="sub">Kỳ hè</span></button>';
+}
 function renderSem() {
   const body = $('#sem-body');
   if (!PRG) { body.innerHTML = '<p class="skeleton">Đang đọc dữ liệu học kỳ lần đầu…</p>'; return; }
   const sems = PRG.semesters;
   if (!semSel) semSel = PRG.current;
+  const suSel = /^H\d$/.test(semSel || '') ? (PRG.summer || []).find(s => 'H' + s.k === semSel) : null;   // (14/10) đang chọn thẻ kỳ hè .3
   const cur = sems.find(x => x.sem === semSel) || sems[0];
   const periodVi = { Semester: 'đang học', 'Tết': 'nghỉ Tết', 'Hè': 'kỳ hè', 'Thực tập': 'thực tập' }[PRG.period] || PRG.period;
   $('#sem-title').textContent = 'Học kỳ ' + PRG.currentLabel + ' · ' + periodVi;
@@ -1135,7 +1143,19 @@ function renderSem() {
     '<button class="semcard" data-s="' + x.sem + '" aria-pressed="' + (x.sem === cur.sem) + '">' +
     '<span class="lbl">' + x.label + '</span><span class="st ' + stCls[x.status] + '">' + x.status + '</span>' +
     '<dl><dt>GPA</dt><dd>' + f2(x.gpa) + '</dd><dt>CPA</dt><dd>' + f2(x.cpa) + '</dd>' +
-    '<dt>Hoàn tất</dt><dd>' + x.done + '/' + (x.credits ?? '–') + '</dd><dt>Nợ tín</dt><dd' + (x.debt ? ' class="bad"' : '') + '>' + x.debt + '</dd></dl></button>').join('') + '</div>';
+    '<dt>Hoàn tất</dt><dd>' + x.done + '/' + (x.credits ?? '–') + '</dd><dt>Nợ tín</dt><dd' + (x.debt ? ' class="bad"' : '') + '>' + x.debt + '</dd></dl></button>' +
+    summerCard(x.sem, suSel)).join('') + '</div>';
+  if (suSel) {   // (14/10) chi tiết kỳ hè: như engine hè — không CTĐT, không trạng thái; tới hè (19/07) mới hỏi học hè / nghỉ / thực tập
+    const vi = { 'Study Summer': 'Học hè', Relax: 'Nghỉ', Internship: 'Thực tập' };
+    html += '<div class="semhead"><h2>Kỳ hè ' + summerLabel(suSel.k) + '</h2><span style="color:var(--ink-3);font-size:13.5px">sau học kỳ ' + esc(suSel.after) + '</span></div>';
+    if (suSel.choice) {
+      const det = suSel.choice === 'Internship' ? [suSel.company, suSel.position, suSel.hours && 'giờ làm ' + suSel.hours] : suSel.choice === 'Study Summer' ? [suSel.credits && suSel.credits + ' tín', suSel.courses] : [];
+      html += '<p class="lead">Bạn đã chọn: <b>' + (vi[suSel.choice] || esc(suSel.choice)) + '</b>' + (det.some(Boolean) ? ' · ' + det.filter(Boolean).map(esc).join(' · ') : '') + '</p>';
+    } else html += '<p class="lead">' + (suSel.now ? 'Đang là kỳ hè — chọn học hè, nghỉ hay thực tập ở thanh <b>GDTC · Hè · Học lại</b> bên phải.' : suSel.past ? 'Kỳ hè này đã qua.' : 'Chưa tới hè. Khi vào hè (từ 19/07), UC sẽ hỏi bạn học hè, nghỉ hay thực tập.') + '</p>';
+    body.innerHTML = html;
+    body.querySelectorAll('.semcard').forEach(b => b.onclick = () => { semSel = b.dataset.s; renderSem(); });
+    return;
+  }
   // chi tiết kỳ đang chọn
   html += '<div class="semhead"><h2>Học kỳ ' + cur.label + '</h2><span class="st ' + stCls[cur.status] + '" style="font-size:12.5px;border-radius:999px;padding:1px 9px;font-weight:600">' + cur.status + '</span>' +
     '<span style="color:var(--ink-3);font-size:13.5px">' + cur.sem + ' trong Notion · dự kiến ' + (cur.credits ?? '–') + (cur.required != null ? '/' + cur.required : '') + ' tín theo chương trình</span></div>';

@@ -138,6 +138,20 @@ def extra(post=None):
                         if day.weekday() in days: going.append({'day': day, 'start': a, 'end': b, 'title': it['title'], 'where': '', 'kind': 'intern'})
                     day += dt.timedelta(days=1)
         except Exception as e: print('study_plan: không đọc được thực tập hè:', e)
+    # 💼 (14/10) làm part-time TRONG NĂM (hiếm): dùng chung engine đọc giờ của thực tập hè. Nguồn: school/part_time.json —
+    #   [{"ten": "Gia sư Toán", "tu": "2026-11-01", "den": "2026-12-31", "gio": "T7 8h-12h; T3 19h-21h"}]  (thiếu "den" = tới hết kỳ)
+    try:
+        import uc_state
+        for job in uc_state.load_json(HERE / 'school' / 'part_time.json', []):
+            slots = parse_work_hours(job.get('gio'))
+            if not slots: notes.append(f"không đọc được giờ làm thêm “{str(job.get('gio'))[:40]}” ({job.get('ten', '')}) -> bỏ qua"); continue
+            day = dt.date.fromisoformat(str(job.get('tu'))[:10]); end = dt.date.fromisoformat(str(job.get('den') or job.get('tu'))[:10]) if job.get('den') else day + dt.timedelta(days=150)
+            intern.append({'from': day, 'to': end, 'slots': slots, 'title': 'Làm thêm: ' + str(job.get('ten', '')), 'note': ''})
+            while day <= end:
+                for days, a, b in slots:
+                    if day.weekday() in days: going.append({'day': day, 'start': a, 'end': b, 'title': 'Làm thêm: ' + str(job.get('ten', '')), 'where': '', 'kind': 'intern'})
+                day += dt.timedelta(days=1)
+    except Exception as e: notes.append(f'school/part_time.json lỗi: {type(e).__name__}')
     return {'rest': rest, 'going': going, 'intern': intern, 'notes': notes}
 
 

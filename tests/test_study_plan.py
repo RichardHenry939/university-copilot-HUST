@@ -15,3 +15,21 @@ import study_plan as sp
 def test_parse_work_hours(text, want):
     got = [(sorted(d), sp._hm(a), sp._hm(b)) for d, a, b in sp.parse_work_hours(text)]
     assert got == want
+
+
+def test_part_time_file_blocks_shifts(tmp_path, monkeypatch):
+    # (v1.00.26) làm part-time trong năm: school/part_time.json dùng chung engine đọc giờ của thực tập hè
+    import json
+    (tmp_path / 'school').mkdir()
+    (tmp_path / 'school' / 'part_time.json').write_text(json.dumps(
+        [{'ten': 'Gia sư', 'tu': '2026-11-02', 'den': '2026-11-15', 'gio': 'T3 19h-21h'}], ensure_ascii=False), encoding='utf-8')
+    monkeypatch.setattr(sp, 'HERE', tmp_path)
+    x = sp.extra(None)
+    shifts = [g for g in x['going'] if g.get('kind') == 'intern']
+    assert [str(g['day']) for g in shifts] == ['2026-11-03', '2026-11-10']          # 2 Thứ 3 trong khoảng
+    assert all((sp._hm(g['start']), sp._hm(g['end'])) == ('19:00', '21:00') for g in shifts)
+
+
+def test_no_part_time_file_means_none(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, 'HERE', tmp_path)
+    assert not [g for g in sp.extra(None)['going'] if g.get('kind') == 'intern']
