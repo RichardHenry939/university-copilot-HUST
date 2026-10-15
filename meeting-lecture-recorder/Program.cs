@@ -89,6 +89,10 @@ sealed class Recorder
     string? captureId, mode, path, appName, course, lastError, deviceName;
     bool includeMic, simulate, testOnly, cable, heardAny, silentWarned;
     CableMonitor? monitor;
+    // (15/10) O9: bộ nghe cáp THƯỜNG TRỰC — Teams chọn loa "CABLE Input" là nghe được ngay, kể cả khi KHÔNG ghi
+    // (trước: chỉ phát lại lúc đang ghi -> ngoài giờ ghi bạn không nghe thấy gì). Tách khỏi luồng ghi: bộ nghe lỗi thì việc ghi vẫn chạy.
+    // Giới hạn: cáp ngắt/thiết bị CABLE Output mất giữa chừng thì bộ nghe không tự dựng lại — khởi động lại recorder.
+    DeviceSource? listenSrc; CableMonitor? listen;
     double peakDb = -120, sumDb; long levelTicks;
     int? appPid;
     double levelDb = -120;
@@ -100,6 +104,22 @@ sealed class Recorder
         Directory.CreateDirectory(Root);
         watcher = new DeviceWatcher(this);
         try { enumerator.RegisterEndpointNotificationCallback(watcher); } catch { /* không có thông báo thiết bị vẫn ghi được */ }
+        StartListen();
+    }
+
+    void StartListen()
+    {
+        try
+        {
+            listenSrc = DeviceSource.Cable(enumerator, out var cn);
+            listen = new CableMonitor(enumerator); listenSrc.Tap += listen.Feed; listen.Open(listenSrc.Format); listenSrc.Start();
+            Log("Bộ nghe cáp thường trực: " + cn + " -> " + listen.DeviceName);
+        }
+        catch (Exception ex)
+        {
+            listen?.Dispose(); listen = null; listenSrc?.Dispose(); listenSrc = null;
+            Log("Không mở được bộ nghe cáp (vẫn ghi được): " + ex.Message);
+        }
     }
 
     static int CapMinutes()
@@ -125,7 +145,7 @@ sealed class Recorder
                 recording = rec, mode, captureId, startedAt, elapsedSec = Math.Round(elapsed), levelDb = Math.Round(levelDb, 1),
                 capMinutes = CapMinutes(), capAt = rec ? capAt : (DateTimeOffset?)null, capLeftSec = Math.Round(capLeft),
                 capWarning = rec && capLeft <= 600, includeMic, test = testOnly, appName, appPid, course, device = deviceName, simulate,
-                markers = markers.Count, cable, monitor = monitor?.DeviceName, lastError = lastError ?? ProcessLoopbackSource.LastError, events = events.TakeLast(6).ToArray(), pending = Pending().Length
+                markers = markers.Count, cable, monitor = listen?.DeviceName, lastError = lastError ?? ProcessLoopbackSource.LastError, events = events.TakeLast(6).ToArray(), pending = Pending().Length
             };
         }
     }
@@ -155,7 +175,7 @@ sealed class Recorder
                     if (cable)
                     {
                         var src = DeviceSource.Cable(enumerator, out var cn);
-                        monitor = new CableMonitor(enumerator); src.Tap += monitor.Feed; monitor.Open(src.Format);
+                        // (15/10) O9: không phát lại ở đây nữa — bộ nghe thường trực (listen) đã phát cáp ra loa
                         AddSource(src, "Teams qua cáp: " + cn);
                     }
                     else if (appPid is int pid) AddSource(ProcessLoopbackSource.Create(pid), "chỉ ứng dụng: " + (appName ?? pid.ToString()));
@@ -231,10 +251,11 @@ sealed class Recorder
         {
             lock (gate)
             {
+                if (flow == DataFlow.Render) { try { listen?.Reopen(); } catch (Exception ex) { Log("Bộ nghe cáp không đổi loa được: " + ex.Message); } }   // (15/10) O9
                 if (writer is null || simulate || mixer is null) return;
                 try
                 {
-                    if (flow == DataFlow.Render && cable) { monitor?.Reopen(); Log("Đổi loa nghe lại -> " + monitor?.DeviceName); }
+                    if (flow == DataFlow.Render && cable) { Log("Đổi loa nghe lại -> " + listen?.DeviceName); }
                     else if (flow == DataFlow.Render && mode == "online" && appPid is null)
                         Swap(s => s is DeviceSource d && d.IsLoopback, () => DeviceSource.Loopback(enumerator, out var n), "âm thanh máy");
                     else if (flow == DataFlow.Capture && (mode == "room" || includeMic))

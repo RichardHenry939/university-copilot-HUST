@@ -63,7 +63,7 @@ def _safe(s): return re.sub(r'\s+', ' ', re.sub(r'[<>:"/\\|?*\x00-\x1f]', ' ', s
 def run(post):
     import academic, copilot_app as app, teams_files
     N = academic.Notion(post)
-    courses = {c['id']: (_txt(c['properties'].get('Code', {}).get('rich_text')), _txt(c['properties'].get('Name', {}).get('rich_text')))
+    courses = {c['id']: (_txt(c['properties'].get('Code', {}).get('rich_text')), _txt(c['properties'].get('Name', {}).get('title')))
                for c in N.query(academic.COURSES)}
     st = _load(); out = {'written': [], 'kept': 0}
     for r in N.query(NOTES_DB):
