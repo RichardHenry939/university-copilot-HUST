@@ -76,7 +76,7 @@ def deadline_alerts(dls, now):
     muted = _load().get('dl_mute', {})
     out = []
     for x in dls or []:
-        if x['overdue'] or f"dl|{x['id']}" in muted: continue
+        if x['overdue'] or f"dl|{x['id']}" in muted or x.get('extended'): continue   # (19/10) hạn tự luyện đã tự gia hạn: không nhắc ra ngoài (toast / ntfy)
         w = dt.datetime.fromisoformat(x['due']).astimezone(TZ); left = (w - now).total_seconds() / 60
         if left > 72 * 60: continue
         who = f"{x['name']}" + (f" · {x['course']}" if x['course'] else '')
@@ -193,13 +193,14 @@ def toast(title, text, persistent=False):
                    capture_output=True, timeout=60, creationflags=0x08000000)
 
 
-def phone(title, text, priority=4, actions=None):
+def phone(title, text, priority=4, actions=None, click=None):
     """Đẩy lên điện thoại qua ntfy (kênh trong school/ntfy.json). Lỗi mạng không làm hỏng toast."""
     import urllib.request
     try: c = json.loads((HERE / 'school' / 'ntfy.json').read_text(encoding='utf-8'))
     except Exception: return False
     b = {'topic': c['topic'], 'title': title, 'message': text, 'priority': priority, 'tags': ['rotating_light' if priority >= 5 else 'warning']}
     if actions: b['actions'] = actions[:3]   # nút bấm ngay trên thông báo (phone_link: có chữ ký, luôn hỏi Xác nhận)
+    if click: b['click'] = click   # (19/10) bấm vào thông báo -> mở thẳng chỗ làm bài, không mở app ntfy
     body = json.dumps(b).encode('utf-8')
     try:
         urllib.request.urlopen(urllib.request.Request(c.get('server', 'https://ntfy.sh'), data=body, headers={'Content-Type': 'application/json'}), timeout=20).read()
@@ -216,7 +217,12 @@ def notify(title, text, persistent=False, level='red', alert=None, phone_ok=True
         try:
             import phone_link; acts = phone_link.actions_for(alert)
         except Exception as e: print('phone actions:', e); acts = None
-        phone(title, text, 5 if persistent else 4, acts)
+        click = None
+        if alert and alert.get('kind') == 'deadline' and alert.get('dl'):
+            try:
+                import deadlines as D; click = D.work_link(alert['dl']) or None
+            except Exception as e: print('deadline link:', e)
+        phone(title, text, 5 if persistent else 4, acts, click)
 
 
 EVERY = {'yellow': None, 'red': 6 * 3600, 'day': 3600, 'change': None, 'optional': None}   # None = chỉ 1 lần

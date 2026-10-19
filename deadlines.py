@@ -78,7 +78,7 @@ def _fetch(post):
         c = courses.get(cid) or {}
         out.append({'id': r['id'], 'name': P(r, 'Name') or '', 'due': due, 'kind': P(r, 'Loại hạn'), 'status': P(r, 'Status') or 'Not started',
                     'course': c.get('code') or '', 'courseName': c.get('name') or '', 'type': P(r, 'Type') or '',
-                    'weight': P(r, 'Weight %'), 'url': r.get('url')})
+                    'weight': P(r, 'Weight %'), 'url': r.get('url'), 'link': P(r, 'Submission/Repo') or ''})
     todo = [x for x in out if not x['kind'] and x['status'] not in DONE]   # agent chỉ phân loại dòng đang mở, chưa có giá trị
     if todo:
         got = classify(todo)
@@ -119,15 +119,93 @@ def open_list(post, days=21):
     now = dt.datetime.now(TZ)
     try: review = json.loads(REVIEW.read_text(encoding='utf-8'))
     except Exception: review = {}
+    ext = _ext_load()
     out = []
     for x in all_rows(post):
         if x['status'] in DONE: continue
         w = dt.datetime.fromisoformat(x['due'])
         if w > now + dt.timedelta(days=days): continue
         rv = review.get(x['id'])
+        n_ext = (ext.get(x['id']) or {}).get('count', 0)
         out.append({**x, 'overdue': w < now, 'minsLeft': int((w - now).total_seconds() // 60),
+                    'self': is_self(x), 'extended': n_ext, 'extWarn': n_ext >= EXT_WARN,
                     'review': f"Teams ghi hạn {rv['teams']}, Notion ghi {rv['notion'][:10]} — sửa ngày trong Notion nếu Notion sai" if rv and rv['notion'][:10] == x['due'][:10] else ''})
     return out
+
+
+# ------------------------------------------------------------------ (19/10) hạn tự luyện: tự gia hạn +1 tuần, đếm số lần
+SELF_KINDS = {'Tự luyện', 'Tự luyện cốt lõi'}   # = reschedule.MOVABLE: hạn bạn tự đặt, không phụ thuộc nhà trường
+EXT_LOG = HERE / 'school' / 'deadline_extend.json'
+EXT_STEP = dt.timedelta(days=7)
+EXT_WARN = 3   # từ lần gia hạn thứ 3 -> cảnh báo đỏ trên tab Hôm nay
+
+
+def is_self(x):
+    """Hạn tự luyện thật sự của bạn: đúng loại VÀ không mang dấu hiệu hệ thống trường (link FAMI/MOOC/Teams, tên "(FAMI)"/"(MOOC)").
+    Luật tối cao: hạn của trường không bao giờ bị UC tự dời."""
+    import reschedule as R
+    return (x.get('kind') in SELF_KINDS and not R.SCHOOL_URL.search(x.get('link') or '')
+            and not R.SCHOOL_NAME.search(x.get('name') or ''))
+
+
+def _ext_load():
+    try: return json.loads(EXT_LOG.read_text(encoding='utf-8'))
+    except Exception: return {}
+
+
+def extend_plan(rows, now):
+    """Thuần (không ghi gì): hạn tự luyện đã qua, chưa nộp -> [(row, hạn_mới_iso, số_tuần)]. Dời từng bước 7 ngày tới khi còn sống."""
+    out = []
+    for x in rows:
+        if x.get('status') in DONE or not is_self(x): continue
+        w = dt.datetime.fromisoformat(x['due'])
+        if w >= now: continue
+        steps = 0
+        while w < now:
+            w += EXT_STEP; steps += 1
+        out.append((x, w.isoformat(), steps))
+    return out
+
+
+def auto_extend(post, now=None):
+    """Ghi: Due trong 📋 Academic Work + dòng lịch của hạn (deadline|id) + việc con chưa xong cùng hạn cũ. Đếm số lần vào EXT_LOG."""
+    from academic import Notion, P
+    now = now or dt.datetime.now(TZ)
+    rows = _fetch(post)   # đọc MỚI từ Notion, không dùng bản đệm: bản đệm cũ -> thấy hạn vẫn quá -> gia hạn lặp, đếm sai
+    _c.update(rows=rows, at=time.time())
+    plan = extend_plan(rows, now)
+    if not plan: return []
+    nt = Notion(post); log = _ext_load(); done = []
+    for x, new_due, steps in plan:
+        try:
+            nt.patch(x['id'], {'Due': {'date': {'start': new_due}}})
+            for r in nt.query(cfg.notion("calendar_events"), {'property': 'Sync Key', 'rich_text': {'equals': f"deadline|{x['id']}"}}):
+                nt.patch(r['id'], {'When': {'date': {'start': new_due}}})
+            for t in nt.query(cfg.notion("academic_tasks"), {'property': 'Academic Work', 'relation': {'contains': x['id']}}):
+                td = ((t['properties'].get('Due') or {}).get('date') or {}).get('start') or ''
+                if P(t, 'Status') != 'Done' and td[:16] == x['due'][:16]:
+                    nt.patch(t['id'], {'Due': {'date': {'start': new_due}}})
+        except Exception as e:
+            print('auto_extend:', x['name'], e); continue
+        e = log.setdefault(x['id'], {'name': x['name'], 'count': 0, 'history': []})
+        e['name'] = x['name']; e['count'] += steps
+        e['history'] = (e['history'] + [{'at': now.isoformat(timespec='minutes'), 'from': x['due'], 'to': new_due, 'weeks': steps}])[-20:]
+        x['due'] = new_due
+        done.append(f"{x['name']}: +{steps} tuần → {new_due[:16].replace('T', ' ')} (đã gia hạn {e['count']} lần)")
+    EXT_LOG.parent.mkdir(parents=True, exist_ok=True)
+    EXT_LOG.write_text(json.dumps(log, ensure_ascii=False, indent=1), encoding='utf-8')
+    if done: threading.Thread(target=refresh, args=(post,), daemon=True).start()
+    return done
+
+
+def work_link(x):
+    """Link mở trên điện thoại khi bấm thông báo: chỗ làm bài (FAMI / MOOC / Teams) nếu UC biết, không thì trang Notion của hạn."""
+    try:
+        import work_open
+        r = work_open.resolve(x)
+        if r and r.get('url'): return r['url']
+    except Exception as e: print('work_link:', e)
+    return x.get('link') or x.get('url') or ''
 
 
 def complete(post, row_id):

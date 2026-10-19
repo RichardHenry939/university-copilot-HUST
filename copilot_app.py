@@ -819,6 +819,9 @@ def mail_run(by):
             import deadlines; importlib.reload(deadlines)
             r["deadlines"] = deadlines.upsert_teams(_npost, mail_events.load())
         except Exception as e: r["deadlines"] = f"{type(e).__name__}: {e}"[:200]
+        try:   # (19/10) hạn TỰ LUYỆN đã qua mà chưa nộp -> tự gia hạn +1 tuần, đếm số lần (hạn của trường không bao giờ bị dời)
+            r["self_extend"] = deadlines.auto_extend(_npost)
+        except Exception as e: r["self_extend"] = f"{type(e).__name__}: {e}"[:200]
         extra_refresh()
         phone_refresh()
         _mail["last"] = {"at": time.strftime("%Y-%m-%d %H:%M"), "by": by, **r}

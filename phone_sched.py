@@ -9,7 +9,7 @@ Máy còn thức -> UC hẹn sẵn trên máy chủ ntfy (tối đa 3 ngày, ở
 Mỗi lần nhắc có mã cố định (sequence id) -> có thay đổi thì SỬA tin đã hẹn, hết cần (Hoàn tất / Tắt nhắc / Bỏ / qua giờ…) thì HUỶ.
 LUẬT (06/10): kệ giờ, phải đúng mốc — không có giờ yên lặng cho các mốc nhắc.
 Những lần nhắc này KHÔNG gửi lại từ vòng cảnh báo trên máy (tránh trùng) — trên máy chỉ còn toast."""
-import datetime as dt, hashlib, json, time, urllib.request
+import datetime as dt, hashlib, json, time, urllib.parse, urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -58,14 +58,16 @@ def plan(post, now=None):
                 'text': f"{w:%H:%M}{'–' + en if en else ''} · {c.get('location') or 'chưa có phòng'}" + (f"\n{note}" if note else '')}
     # hạn học tập
     for x in D.open_list(post, days=4):
-        if x['overdue'] or f"dl|{x['id']}" in muted: continue
+        if x['overdue'] or f"dl|{x['id']}" in muted or x.get('extended'): continue   # (19/10) hạn tự luyện đã tự gia hạn: không nhắc ra ngoài (toast / ntfy)
         due = dt.datetime.fromisoformat(x['due']).astimezone(TZ)
+        link = D.work_link(x)   # (19/10) bấm thông báo -> mở thẳng chỗ làm bài trên điện thoại
         for m in D.MARKS.get(x['kind'], D.MARKS['Môn học']):
             t = _quiet_shift(due - dt.timedelta(minutes=m), m, due)
             if not t or t <= now or t > end: continue
             left = (due - t).total_seconds() / 60
             out[f"dl|{x['id']}|{m}"] = {'at': t, 'title': f"Còn {D.say_left(left)}: {x['name']}" + (f" · {x['course']}" if x['course'] else ''),
-                                        'text': f"{x['kind']} — hạn {due:%H:%M} {due.day}/{due.month}", 'priority': 5 if m <= 60 else 4}
+                                        'text': f"{x['kind']} — hạn {due:%H:%M} {due.day}/{due.month}", 'priority': 5 if m <= 60 else 4,
+                                        'click': link}
     # ngoại khoá
     for x in X.alert_items(X.load(), now):
         if f"ex|{x['key']}" in muted: continue
@@ -99,7 +101,8 @@ def _send(topic, sid, body, at):
     req = urllib.request.Request(f"https://ntfy.sh/{topic}/{sid}", data=body['text'].encode('utf-8'), method='PUT',
                                  headers={'Title': '=?UTF-8?B?' + __import__('base64').b64encode(body['title'].encode('utf-8')).decode() + '?=',   # RFC 2047
                                           'At': str(int(at.timestamp())),
-                                          'Priority': str(body['priority']), 'Tags': 'alarm_clock'})
+                                          'Priority': str(body['priority']), 'Tags': 'alarm_clock',
+                                          **({'Click': urllib.parse.quote(body['click'], safe=":/?#[]@!$&'()*+,;=%")} if body.get('click') else {})})
     urllib.request.urlopen(req, timeout=20).read()
 
 
@@ -114,7 +117,7 @@ def reconcile(post, now=None, dry=False):
     s = _load(); have = s['items']; topic = _cfg()['topic']
     added = changed = cancelled = 0; errors = []
     for key, b in want.items():
-        sig = hashlib.sha1(json.dumps([b['title'], b['text'], int(b['at'].timestamp()), b['priority']], ensure_ascii=False).encode()).hexdigest()[:16]
+        sig = hashlib.sha1(json.dumps([b['title'], b['text'], int(b['at'].timestamp()), b['priority'], b.get('click') or ''], ensure_ascii=False).encode()).hexdigest()[:16]
         cur = have.get(key)
         if cur and cur['sig'] == sig: continue
         if (b['at'] - now).total_seconds() < 15: continue   # ntfy cần hẹn ≥10 giây; sát giờ thì để vòng trên máy lo

@@ -1700,16 +1700,23 @@ function renderDay() {
   }).join('') + '</div>';
   const dls = d.deadlines || [];
   const leftTxt = m => m < 0 ? 'quá hạn' : m >= 2880 ? 'còn ' + Math.floor(m / 1440) + ' ngày' : m >= 120 ? 'còn ' + Math.floor(m / 60) + ' giờ' : 'còn ' + m + ' phút';
-  html += '<h2 style="font-size:17px;margin:0 0 8px">Hạn sắp tới</h2><ul class="tasks dls">' + (dls.map(x => {
+  /* (19/10) tách hạn: Môn học (của trường) · Tự luyện (bạn tự đặt, tự gia hạn +1 tuần) · Hạn đã qua (mục riêng, thu gọn ở cuối tab) */
+  const dlLi = x => {
     const w = new Date(x.due), asking = dlAsk === x.id;
     return '<li class="' + (x.minsLeft < 1440 ? 'soon' : '') + '"><button class="chk dlchk" data-dl="' + x.id + '" aria-label="Hoàn tất ' + esc(x.name) + '"></button>' +
       '<div><button class="link tname dlopen" data-dlo="' + x.id + '" title="Mở thẳng chỗ làm bài (tự đăng nhập nếu cần)" style="text-align:left;padding:0;font:inherit;font-weight:600">' + esc(x.name) + ' ↗</button>' +
       (DLO[x.id] ? '<small class="note" style="color:var(--' + (DLO[x.id].bad ? 'red' : 'ink') + ')">' + esc(DLO[x.id].msg) + '</small>' : '') + '<small>' + (x.course ? esc(x.course) + ' · ' : '') + '<span class="kind k-' + (x.kind === 'Môn học' ? 'mh' : x.kind === 'Tự luyện cốt lõi' ? 'cl' : 'tl') + '">' + esc(x.kind) + '</span> · hạn ' +
       String(w.getHours()).padStart(2, '0') + ':' + String(w.getMinutes()).padStart(2, '0') + ' ' + w.getDate() + '/' + (w.getMonth() + 1) + '</small>' +
       (x.review ? '<small style="color:var(--red)">⚠ ' + esc(x.review) + '</small>' : '') +
+      (x.extended ? '<small style="color:var(--' + (x.extWarn ? 'red' : 'ink-3') + ')">↻ đã tự gia hạn ' + x.extended + ' lần' + (x.extWarn ? ' — cảnh báo: việc này đang bị dời mãi' : '') + '</small>' : '') +
       (asking ? '<div class="sask" style="margin-top:6px"><b>Đánh dấu hoàn tất?</b> Ghi Submitted vào 📋 Academic Work; hạn biến mất và hết nhắc. <button class="primary" id="dl-ok">Xác nhận</button> <button class="ghost" id="dl-no">Hủy</button><span class="smsg" id="dl-msg"></span></div>' : '') +
       '</div><span class="h">' + leftTxt(x.minsLeft) + '</span></li>';
-  }).join('') || '<span class="empty">Không có hạn nào trong 3 tuần tới.</span>') + '</ul>';
+  };
+  const dlLive = dls.filter(x => !x.overdue), dlDead = dls.filter(x => x.overdue);
+  html += '<h2 style="font-size:17px;margin:0 0 8px">Hạn môn học</h2><ul class="tasks dls">' +
+    (dlLive.filter(x => !x.self).map(dlLi).join('') || '<span class="empty">Không có hạn môn học nào trong 3 tuần tới.</span>') + '</ul>';
+  html += '<h2 style="font-size:17px;margin:0 0 8px">Hạn tự luyện</h2><ul class="tasks dls">' +
+    (dlLive.filter(x => x.self).map(dlLi).join('') || '<span class="empty">Không có hạn tự luyện nào trong 3 tuần tới.</span>') + '</ul>';
   html += '<h2 style="font-size:17px;margin:0 0 8px">Việc hôm nay</h2><ul class="tasks">' + (d.items.map(x => {
     const dn = x.status === 'Done';
     const note = (x.note || '').replace(/runtime.*$/, '').trim();
@@ -1731,6 +1738,9 @@ function renderDay() {
   }
   if (dayAsk && (dayPick || dayAsk.date !== t)) html += askBox(d);
   if (w.focus) html += '<div class="weekbox"><b class="v-' + String(w.verdict || '').split(' ')[0] + '">' + esc(w.verdict || '') + '</b> · ' + esc(w.focus) + (w.pattern ? '<br><small style="color:var(--ink-3)">' + esc(w.pattern) + '</small>' : '') + '</div>';
+  if (dlDead.length) html += '<details class="dldead" style="margin-top:14px"' + (dlDead.some(x => dlAsk === x.id) ? ' open' : '') + '><summary style="font-size:17px;font-weight:600;cursor:pointer">Hạn đã qua (' + dlDead.length + ')</summary>' +
+    '<p class="note" style="padding:4px 0">Hạn đã chết, chưa đánh dấu hoàn tất. Không còn nhắc. Hạn tự luyện thì UC tự gia hạn +1 tuần nên thường không nằm ở đây.</p>' +
+    '<ul class="tasks dls">' + dlDead.map(dlLi).join('') + '</ul></details>';
   body.innerHTML = html;
   body.querySelectorAll('.modebar .seg button').forEach(b => b.onclick = () => { dayPick = null; askMode(t, b.dataset.m, $('#day-hours').value); });
   const ok = $('#ask-ok'), no = $('#ask-no');
