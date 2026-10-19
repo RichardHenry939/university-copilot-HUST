@@ -347,7 +347,7 @@ Danh sách môn học: mã, tín, kỳ, trạng thái, kết quả, luật môn,
 
 | Thuộc tính | Kiểu | Lựa chọn | Nguồn | Bằng chứng | Ghi chú |
 |---|---|---|---|---|---|
-| **Name** | title |  | [Đọc] | `school_sync.py:170; build.py:225 (T)` | lecture_export.py:66 đọc nhầm như rich_text (lỗi nhỏ của app, tên môn ra rỗng) — đừng tạo Name kiểu rich_text |
+| **Name** | title |  | [Đọc] | `school_sync.py:170; build.py:225 (T)` | lecture_export.py:66 từng đọc nhầm như rich_text (tên môn ra rỗng, đã sửa ở v1.00.30) — đừng tạo Name kiểu rich_text |
 | Code | rich_text |  | [Đọc] | `school_sync.py:170; build.py:225 (X)` | vd MI1111 |
 | Credits | number |  | [Đọc] | `school_sync.py:170,182` |  |
 | Status | status ✋ | Planned, Taking, Completed | [Đọc] | `build.py:293 (lọc status equals Taking); semester.py:103,107; tkb.py:142` | nhóm — suy ra: Planned = To-do, Taking = In progress, Completed = Complete |
@@ -837,7 +837,7 @@ Tổng kết tuần do UC viết.
 - **Council Sessions `Source Work`:** code không ghi DB đích; suy ra 📋 Academic Work từ tên.
 - **Biểu tượng Điểm rèn luyện:** `build.py:38` ghi 🏅, `school_sync.py:11` ghi ⭐. Mình chọn 🏅; code không dùng biểu tượng nên không ảnh hưởng.
 - **Tên database có emoji hay không:** code chỉ dùng ID, không dùng tên. Công cụ đặt tên **không** kèm emoji và dùng emoji làm biểu tượng trang, theo `docs/gen_n8n_map.py:159` (tên lấy từ Notion thật). Nếu bạn đổi tên database sau khi tạo, lần chạy lại sẽ không nhận ra và tạo database mới.
-- **Lỗi nhỏ của app thấy khi rà (chưa sửa ở PR này):** `lecture_export.py:66` đọc cột `Name` của Courses như `rich_text`, trong khi đó là cột tiêu đề. Vì vậy tên môn trong file ghi chú bài giảng xuất ra bị rỗng.
+- **Lỗi nhỏ của app thấy khi rà (đã sửa ở v1.00.30, có test `tests/test_lecture_export.py`):** `lecture_export.py:66` đọc cột `Name` của Courses như `rich_text`, trong khi đó là cột tiêu đề. Vì vậy tên môn trong file ghi chú bài giảng xuất ra bị rỗng.
 
 ## Database code có nhắc nhưng không có khoá cấu hình
 

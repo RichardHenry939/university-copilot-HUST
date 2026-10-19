@@ -1007,7 +1007,7 @@
      "type": "title",
      "certainty": "CODE",
      "evidence": "school_sync.py:170; build.py:225 (T)",
-     "note": "lecture_export.py:66 đọc nhầm như rich_text (lỗi nhỏ của app, tên môn ra rỗng) — đừng tạo Name kiểu rich_text"
+     "note": "lecture_export.py:66 từng đọc nhầm như rich_text (tên môn ra rỗng, đã sửa ở v1.00.30) — đừng tạo Name kiểu rich_text"
     },
     {
      "name": "Code",
