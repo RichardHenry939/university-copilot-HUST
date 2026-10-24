@@ -57,12 +57,41 @@ def fetch():
     try: old = json.loads(OUT.read_text(encoding='utf-8'))
     except Exception: old = {}
     out['missed_notified'] = old.get('missed_notified', [])
+    # (v1.00.32) LỊCH THI GIỮA KỲ: trang "Lịch thi" của FAMI đọc API student-lop-thi-list (POST, cùng kiểu với danh sách lớp). CHỈ ĐỌC.
+    # Lỗi thì giữ lịch cũ; không ghi đè bằng danh sách rỗng khi lần trước có lịch.
+    try:
+        ex = _get('/api/student-lop-thi-list', t, 'POST', {'page': 1, 'per_page': 50}).get('list', [])
+        if not ex and old.get('exams'):
+            out['exams'] = old['exams']; out['exams_error'] = 'FAMI trả 0 lịch thi — giữ lịch lần trước'
+        else:
+            out['exams'] = [{'id': e.get('id'), 'ma_hp': e.get('ma_hp'), 'ten_hp': e.get('ten_hp'), 'loai': e.get('loai'), 'ngay': e.get('ngay_thi'),
+                             'kip': e.get('kip_thi'), 'phong': e.get('phong_thi'), 'lop': e.get('ma'), 'ki_hoc': e.get('ki_hoc')} for e in ex]
+    except Exception as e:
+        out['exams'] = old.get('exams', []); out['exams_error'] = f"{type(e).__name__}: {e}"[:200]
     # (v1.00.27, R-3) nguồn trả RỖNG hợp lệ (đổi khoá JSON / 403) mà lần trước có dữ liệu -> KHÔNG ghi đè, giữ bản cũ, báo lỗi rõ
     if not out['lops'] and old.get('lops'):
         import uc_state; uc_state._err('fami.json: lượt mới 0 lớp (lần trước %d) -> giữ bản cũ' % len(old['lops']))
         return {'ok': False, 'error': 'FAMI trả 0 lớp — giữ dữ liệu lần trước'}
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding='utf-8')
     return {'ok': True, 'lops': len(out['lops']), 'chuongs': sum(len(x['chuongs']) for x in out['lops'])}
+
+
+def exams_upcoming(now=None):
+    """Lịch thi giữa kỳ sắp tới (ngày >= hôm nay), từ school/fami.json."""
+    try: d = json.loads(OUT.read_text(encoding='utf-8'))
+    except Exception: return []
+    today = (now or dt.datetime.now(TZ)).date().isoformat()
+    def _gio(kip):   # '14h25-15h05' -> (14, 25); so chuỗi sẽ đặt '14h' trước '8h'
+        m = re.match(r'\s*(\d{1,2})h(\d{2})', kip or '')
+        return (int(m.group(1)), int(m.group(2))) if m else (99, 99)
+    return sorted([e for e in d.get('exams') or [] if (e.get('ngay') or '') >= today], key=lambda e: (e['ngay'], _gio(e.get('kip'))))
+
+
+def gk_flags(deadlines, exams):
+    """Đánh dấu hạn nào thuộc môn có lịch thi giữa kỳ sắp tới (so mã học phần, ví dụ MI1111)."""
+    codes = {e.get('ma_hp') for e in exams if e.get('ma_hp')}
+    for x in deadlines: x['gkExam'] = bool(x.get('course')) and x.get('course') in codes
+    return deadlines
 
 
 def items(now=None):

@@ -175,6 +175,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.29** | 14/10/2026 | **Luật mới: TKB không thắng thông báo đính chính trên Teams/mail** (`class_override.py`): lớp báo nghỉ / chuyển online / đổi phòng / đổi giờ → dòng TKB trên Lịch đổi theo, bản gốc giữ trong ghi chú. **Chat đọc được hoạt động ngoại khoá**: ngữ cảnh thêm bảng 🎯 (đã đăng ký, đang diễn ra, sắp hết hạn đăng ký, sự kiện trường) — trước đó chat nói "hôm nay không có hoạt động ngoại khoá" dù đang có. 285 test |
 | **v1.00.30** | 15/10/2026 | **Recorder nghe được qua CABLE Input ngay cả khi không ghi** (bộ nghe cáp thường trực, tách khỏi luồng ghi: Teams chọn loa CABLE Input là nghe được). Sửa tên môn bị rỗng trong ghi chú bài giảng xuất ra (đọc đúng cột tiêu đề Name của Courses). 297 test |
 | **v1.00.31** | 19/10/2026 | **Deadline gọn hơn:** bấm thông báo ntfy mở thẳng chỗ làm bài (FAMI / MOOC / Teams; không rõ thì trang Notion). Tab Hôm nay tách 3 mục: Hạn môn học · Hạn tự luyện · Hạn đã qua (thu gọn). **Hạn tự luyện quá hạn tự gia hạn +1 tuần**, đếm số lần, cảnh báo từ lần 3, và không nhắc ra ngoài nữa; hạn của trường không bao giờ bị dời. 300 test |
+| **v1.00.32** | 24/10/2026 | **Lịch thi giữa kỳ hiện trên đầu tab Hôm nay** (đọc từ FAMI, trang Lịch thi). Hạn của môn có thi giữa kỳ được đánh dấu đỏ. 305 test |
 
 ## Chạy thử
 

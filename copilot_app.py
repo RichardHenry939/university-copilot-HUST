@@ -1068,6 +1068,9 @@ class H(BaseHTTPRequestHandler):
                 except Exception: v["dups"] = []
                 try: v["deadlines"] = _dls()   # mục "Hạn sắp tới": tích Hoàn tất thì biến mất
                 except Exception as e: v["deadlines"] = []; v["deadlinesError"] = str(e)[:200]
+                try:   # (v1.00.32) lịch thi giữa kỳ lên đầu tab; hạn của môn có thi thì đánh dấu đỏ
+                    import fami; v["exams"] = fami.exams_upcoming(); fami.gk_flags(v["deadlines"], v["exams"])
+                except Exception as e: v["exams"] = []; v["examsError"] = str(e)[:200]
                 return self._send(200, v)
             if u.path == "/api/program":   # tab Học kỳ / Tự chọn / ĐK tốt nghiệp (program.py, có đệm)
                 import program

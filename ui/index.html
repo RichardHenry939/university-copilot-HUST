@@ -532,6 +532,11 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
 @media (max-width: 860px) { .bell-m { display: grid; } .notif { left: auto; right: 12px; top: 56px; } .tabs { padding-right: 56px; } }
 @media (max-width: 600px) { .tasks.exlist li { grid-template-columns: 1fr; } .tasks.exlist .h { grid-column: 1; text-align: left; } }
 .plan-box{margin-top:28px}.plan-t{border-collapse:collapse;margin:10px 0;font-size:14px}.plan-t td,.plan-t th{border:1px solid var(--line,#ddd);padding:4px 8px;text-align:left}.plan-t .warn,p.warn{color:var(--red,#c0392b)}.plan-week{font-size:14px;line-height:1.6}
+/* (v1.00.32) lịch thi giữa kỳ và hạn của môn có thi giữa kỳ */
+.gkexam { background: #fff0f0; border: 2px solid #c62828; border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; color: #8b0000; font-size: 14px; }
+.gkexam b { color: #c62828; }
+li.gk { border-left: 4px solid #c62828 !important; }
+li.gk .tname, li.gk small { color: #c62828; }
 </style>
 </head>
 <body>
@@ -1676,7 +1681,10 @@ function renderDay() {
   if (!DAY) { body.innerHTML = '<p class="skeleton">Đang đọc lần đầu…</p>'; return; }
   const d = DAY, t = d.today;
   $('#day-title').textContent = 'Hôm nay · ' + d.dow + ' ' + t.slice(8, 10) + '/' + t.slice(5, 7);
-  let html = '<div class="modebar"><div class="seg" role="group" aria-label="Chế độ hôm nay">' +
+  // (v1.00.32) lịch thi giữa kỳ (FAMI) lên trên cùng: ai cũng thấy trước cả deadline
+  const exams = d.exams || [];
+  const examHtml = exams.length ? '<div class="gkexam"><b>Lịch thi giữa kỳ</b>' + exams.map(e => '<div>' + esc(e.ten_hp || e.ma_hp) + ' · <b>' + e.ngay.slice(8, 10) + '/' + e.ngay.slice(5, 7) + '</b>' + (e.kip ? ' · ' + esc(e.kip) : '') + (e.phong ? ' · phòng ' + esc(e.phong) : '') + '</div>').join('') + '</div>' : '';
+  let html = examHtml + '<div class="modebar"><div class="seg" role="group" aria-label="Chế độ hôm nay">' +
     ['Bình thường', 'Camp', 'Rest'].map(m => '<button data-m="' + m + '" aria-pressed="' + (d.mode === m) + '">' + modeVi[m] + '</button>').join('') + '</div>' +
     '<label>Giờ camp <input id="day-hours" type="number" min="1" max="14" step="0.5" value="' + (d.hours || 6) + '"></label><span class="msg" id="day-msg"></span></div>';
   if (dayAsk && dayAsk.date === t && !dayPick) html += askBox(d);
@@ -1703,7 +1711,7 @@ function renderDay() {
   /* (19/10) tách hạn: Môn học (của trường) · Tự luyện (bạn tự đặt, tự gia hạn +1 tuần) · Hạn đã qua (mục riêng, thu gọn ở cuối tab) */
   const dlLi = x => {
     const w = new Date(x.due), asking = dlAsk === x.id;
-    return '<li class="' + (x.minsLeft < 1440 ? 'soon' : '') + '"><button class="chk dlchk" data-dl="' + x.id + '" aria-label="Hoàn tất ' + esc(x.name) + '"></button>' +
+    return '<li class="' + (x.minsLeft < 1440 ? 'soon' : '') + (x.gkExam ? ' gk' : '') + '"><button class="chk dlchk" data-dl="' + x.id + '" aria-label="Hoàn tất ' + esc(x.name) + '"></button>' +
       '<div><button class="link tname dlopen" data-dlo="' + x.id + '" title="Mở thẳng chỗ làm bài (tự đăng nhập nếu cần)" style="text-align:left;padding:0;font:inherit;font-weight:600">' + esc(x.name) + ' ↗</button>' +
       (DLO[x.id] ? '<small class="note" style="color:var(--' + (DLO[x.id].bad ? 'red' : 'ink') + ')">' + esc(DLO[x.id].msg) + '</small>' : '') + '<small>' + (x.course ? esc(x.course) + ' · ' : '') + '<span class="kind k-' + (x.kind === 'Môn học' ? 'mh' : x.kind === 'Tự luyện cốt lõi' ? 'cl' : 'tl') + '">' + esc(x.kind) + '</span> · hạn ' +
       String(w.getHours()).padStart(2, '0') + ':' + String(w.getMinutes()).padStart(2, '0') + ' ' + w.getDate() + '/' + (w.getMonth() + 1) + '</small>' +
