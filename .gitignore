@@ -26,3 +26,10 @@ _preview.html
 # Build .NET
 bin/
 obj/
+
+# (v1.00.34) connector trên Firebase: khoá và tên site chỉ nằm trên máy
+uc_mcp/cloud.local.json
+uc_mcp/cloud/.firebaserc
+uc_mcp/cloud/.firebase/
+uc_mcp/cloud/functions/.env*
+uc_mcp/cloud/functions/node_modules/

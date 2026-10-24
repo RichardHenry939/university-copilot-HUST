@@ -17,6 +17,7 @@ PROTO = "2025-03-26"
 TZ = dt.timezone(dt.timedelta(hours=7))
 OFFLINE = ("Máy tính đang tắt hoặc UC chưa chạy, nên chưa có dữ liệu trực tiếp. "
            "Hãy báo cho người dùng là máy đang tắt và dùng nguồn Notion (skill uc-briefing) để báo cáo sơ bộ, ghi rõ thời điểm dữ liệu.")
+STATUS_VN = {"co_lich": "có lịch thi", "du_kien": "dự kiến", "chua_lich": "có thi, chưa có lịch", "chua_co": "chưa có thông báo", "khong_thi": "không thi giữa kỳ"}
 NO_ARGS = {"type": "object", "properties": {}}
 TOOLS = [
     {"name": "uc_status", "description": "Kiểm tra máy tính có đang chạy University Copilot không (online/offline).", "inputSchema": NO_ARGS},
@@ -63,6 +64,7 @@ def t_today(args):
     if d is None: return {"online": False, "thong_bao": OFFLINE, "chi_tiet": err}
     return {"online": True, "luc": dt.datetime.now(TZ).isoformat(timespec="minutes"),
             "lich_thi_giua_ki": d.get("exams") or [],
+            "thi_giua_ki_tung_mon": d.get("examStatus") or [],
             "han_dang_mo": [_deadline_view(x) for x in _song(d)[:30]],
             "han_da_qua_chua_nop": len(_qua(d)),
             "viec_hom_nay": [{"viec": i.get("task"), "trang_thai": i.get("status"), "gio_uoc": i.get("est")} for i in (d.get("items") or [])[:20]],
@@ -80,7 +82,7 @@ def t_deadlines(args):
 def t_exams(args):
     d, err = _fetch()
     if d is None: return {"online": False, "thong_bao": OFFLINE, "chi_tiet": err}
-    return {"online": True, "lich_thi_giua_ki": d.get("exams") or []}
+    return {"online": True, "lich_thi_giua_ki": d.get("exams") or [], "thi_giua_ki_tung_mon": d.get("examStatus") or []}
 
 
 def t_briefing(args):
@@ -89,7 +91,15 @@ def t_briefing(args):
     ex = d.get("exams") or []
     hs = _song(d)
     lines = [f"Báo cáo UC lúc {dt.datetime.now(TZ):%H:%M %d/%m/%Y} (máy đang bật)."]
-    lines.append("Lịch thi giữa kỳ: " + ("; ".join(f"{e.get('ten_hp') or e.get('ma_hp')} {e.get('ngay')} {e.get('kip') or ''} phòng {e.get('phong') or '?'}" for e in ex) if ex else "không có"))
+    st = d.get("examStatus") or []
+    if st:   # (v1.00.34) mỗi môn 1 dòng, kể cả môn chưa có lịch / không thi
+        lines.append("Thi giữa kỳ từng môn:")
+        for r in st:
+            lines.append(f"  - {r.get('ten_hp')}: {STATUS_VN.get(r.get('trang_thai'), r.get('trang_thai'))}"
+                         + (f" {r.get('ngay')} {r.get('kip') or ''} phòng {r.get('phong') or '?'}" if r.get("ngay") else "")
+                         + (f" ({r.get('trich')})" if r.get("trich") and r.get("trang_thai") != "co_lich" else ""))
+    else:
+        lines.append("Lịch thi giữa kỳ: " + ("; ".join(f"{e.get('ten_hp') or e.get('ma_hp')} {e.get('ngay')} {e.get('kip') or ''} phòng {e.get('phong') or '?'}" for e in ex) if ex else "không có"))
     lines.append(f"Hạn đang mở: {len(hs)}")
     for x in hs[:5]:
         lines.append(f"  - {x.get('name')} ({x.get('course') or '-'}) hạn {str(x.get('due'))[:16]}" + (" [môn thi giữa kì]" if x.get("gkExam") else ""))

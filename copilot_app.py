@@ -1071,6 +1071,10 @@ class H(BaseHTTPRequestHandler):
                 try:   # (v1.00.32) lịch thi giữa kỳ lên đầu tab; hạn của môn có thi thì đánh dấu đỏ
                     import fami; v["exams"] = fami.exams_upcoming(); fami.gk_flags(v["deadlines"], v["exams"])
                 except Exception as e: v["exams"] = []; v["examsError"] = str(e)[:200]
+                try:   # (v1.00.34) mọi môn đang học đều có 1 dòng trạng thái thi giữa kỳ (FAMI / Teams+mail / cách tính điểm)
+                    import exam_status, fami; v["examStatus"] = exam_status.overview()
+                    fami.gk_flags(v["deadlines"], [{"ma_hp": c} for c in exam_status.midterm_codes(v["examStatus"])])
+                except Exception as e: v["examStatus"] = []; v["examStatusError"] = str(e)[:200]
                 return self._send(200, v)
             if u.path == "/api/program":   # tab Học kỳ / Tự chọn / ĐK tốt nghiệp (program.py, có đệm)
                 import program

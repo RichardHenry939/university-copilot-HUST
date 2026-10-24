@@ -13,10 +13,10 @@ UC là hệ thống của chính sinh viên. Claude đọc được dữ liệu 
 - Cần tổng quan nhanh: `uc_briefing` (báo cáo một trang).
 - Cần việc hôm nay, hạn, lịch thi chi tiết: `uc_today`.
 - Chỉ hỏi hạn trong vài ngày tới: `uc_deadlines` với tham số `days`.
-- Chỉ hỏi lịch thi giữa kỳ: `uc_exams`.
+- Chỉ hỏi lịch thi giữa kỳ: `uc_exams` (lịch FAMI và trạng thái từng môn; môn chưa có lịch cũng phải được nhắc).
 - Chỉ muốn biết máy có bật không: `uc_status`.
 
-Luôn kiểm tra trường `online` trước khi dùng dữ liệu. Khi `online` là false, làm theo skill **uc-briefing** (dùng Notion, nói rõ máy đang tắt).
+Luôn kiểm tra trường `online` trước khi dùng dữ liệu. Khi `online` là false, làm theo skill **uc-briefing**: nói rõ máy đang tắt và thời điểm `lan_cuoi`, dùng `ban_so_bo` làm báo cáo sơ bộ, bổ sung bằng Notion nếu có.
 
 ## Quy tắc khi trả lời
 

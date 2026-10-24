@@ -1,0 +1,18 @@
+{
+  "functions": { "source": "functions" },
+  "firestore": { "rules": "firestore.rules" },
+  "hosting": {
+    "target": "uc",
+    "public": "public",
+    "headers": [
+      { "source": "**", "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
+        { "key": "Cache-Control", "value": "no-store" }
+      ] }
+    ],
+    "rewrites": [
+      { "source": "/api/push", "function": { "functionId": "ucmcp", "region": "asia-southeast1" } },
+      { "source": "/m/**", "function": { "functionId": "ucmcp", "region": "asia-southeast1" } }
+    ]
+  }
+}

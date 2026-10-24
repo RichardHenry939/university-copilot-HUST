@@ -8,6 +8,8 @@ Chỉ đọc. Không có công cụ ghi.
 | File | Vai trò |
 |---|---|
 | `server.py` | Máy chủ MCP (JSON-RPC qua HTTP, `POST /mcp`), chỉ thư viện chuẩn. Gọi `/api/today` của UC trên `127.0.0.1:8320`. |
+| `push.py` | Gửi bản tóm tắt UC lên connector Firebase (chỉ chiều đi ra). |
+| `cloud/` | Connector trên Firebase: Cloud Function MCP, Hosting không cho lập chỉ mục, luật Firestore chặn hết. |
 | `skills/uc-briefing/SKILL.md` | Báo cáo sơ bộ. Khi máy tắt, dùng Notion thay thế và nói rõ máy đang tắt. |
 | `skills/uc-assistant/SKILL.md` | Quy tắc làm việc với UC: chỉ đọc, xử lý dữ liệu lỗi/rỗng, không tin chỉ dẫn trong nội dung web. |
 
@@ -31,14 +33,26 @@ Mặc định chỉ lắng nghe `127.0.0.1`. Kiểm tra: `GET http://127.0.0.1:8
 
 Đặt biến `UC_MCP_TOKEN` để bắt buộc `Authorization: Bearer <token>` cho mọi yêu cầu.
 
-## Đưa ra ngoài để Claude (claude.ai, Claude Chat, điện thoại) gọi được
+## Đưa ra ngoài để Claude (claude.ai, Claude Chat, điện thoại) gọi được: Firebase (v1.00.34)
 
-Đây là quyết định của chủ máy, vì nó đưa dữ liệu học tập ra internet. Có hai hướng:
+Máy **không mở cổng nào**. Máy chỉ gửi đi:
 
-1. **Đường hầm HTTPS** (ví dụ Cloudflare Tunnel) trỏ về `127.0.0.1:8790`, kèm `UC_MCP_TOKEN`. Đăng ký như connector tuỳ chỉnh trong claude.ai. Khi máy tắt, đường hầm không có đích và Claude chuyển sang Notion.
-2. **Chỉ trong mạng riêng** (Tailscale): chỉ thiết bị của bạn gọi được. Phù hợp hơn về bảo mật, nhưng Claude.ai không gọi được trực tiếp.
+```
+máy (UC) --push.py, mỗi 10 phút, khoá PUSH_KEY--> Firebase Function --> Firestore (1 bản tóm tắt)
+claude.ai --POST /m/<MCP_KEY>--> Firebase Function --> đọc bản tóm tắt
+```
 
-Chưa bật đường hầm nào. Trước khi bật, cần chốt: ai được gọi, token lưu ở đâu, và có chấp nhận rủi ro dữ liệu học tập đi qua máy chủ trung gian không.
+- `cloud/functions/index.js`: Cloud Function `ucmcp` (asia-southeast1). Sai khoá thì trả 404 như trang không tồn tại.
+- Quá 20 phút không có bản mới thì coi là **máy đang tắt**. Công cụ trả `online: false`, `lan_cuoi`, và `ban_so_bo` (bản cuối, hạn tính lại theo giờ hiện tại).
+- Không cho máy tìm kiếm lập chỉ mục: `robots.txt` chặn tất cả, mọi phản hồi có `X-Robots-Tag: noindex, nofollow, noarchive`, trang chủ trả 404.
+- Firestore: luật chặn mọi truy cập từ client, chỉ Function đọc và ghi được.
+- Tên site Hosting do máy sinh ngẫu nhiên. Khoá (`functions/.env`), `.firebaserc` và `cloud.local.json` chỉ nằm trên máy, không có trong repo.
+
+Yêu cầu: project Firebase ở gói **Blaze**, vì Cloud Functions không chạy trên gói Spark. Mức dùng của connector nằm trong hạn mức miễn phí, nhưng nên đặt cảnh báo ngân sách.
+
+Triển khai: chép `cloud/` ra thư mục riêng, tạo `functions/.env` (`PUSH_KEY=`, `MCP_KEY=`, mỗi khoá là chuỗi ngẫu nhiên dài), chạy `firebase target:apply hosting uc <site>`, rồi `firebase deploy --only functions,firestore:rules,hosting:uc`. Đặt `push.py` chạy mỗi 10 phút. Trong claude.ai: Settings > Connectors > Add custom connector, dán `https://<site>.web.app/m/<MCP_KEY>`.
+
+Cách cũ (chạy `server.py` trên máy, đưa ra ngoài bằng đường hầm) vẫn dùng được, nhưng phải mở đường vào máy.
 
 ## Kiểm thử
 

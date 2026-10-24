@@ -71,6 +71,24 @@ def test_briefing_co_bao_cao_va_nhac_mon_thi(monkeypatch):
     assert 'Giải tích I' in out['bao_cao'] and '[môn thi giữa kì]' in out['bao_cao']
 
 
+def test_briefing_liet_ke_tung_mon_ke_ca_mon_chua_lich(monkeypatch):
+    data = dict(FAKE, examStatus=[{'ma_hp': 'MI1111', 'ten_hp': 'Giải tích I', 'trang_thai': 'co_lich', 'ngay': '2026-11-08', 'kip': '8h10', 'phong': 'D5'},
+                                  {'ma_hp': 'IT1108', 'ten_hp': 'Nhập môn lập trình', 'trang_thai': 'chua_lich', 'trich': 'chưa thấy lịch'}])
+    out = _call('uc_briefing', monkeypatch=monkeypatch, data=data)
+    assert 'Thi giữa kỳ từng môn' in out['bao_cao'] and 'Nhập môn lập trình: có thi, chưa có lịch' in out['bao_cao']
+    assert _call('uc_exams', monkeypatch=monkeypatch, data=data)['thi_giua_ki_tung_mon'][1]['ma_hp'] == 'IT1108'
+
+
+def test_push_snapshot_doc_uc_mot_lan(monkeypatch):
+    import push
+    calls = []
+    monkeypatch.setattr(S, '_fetch', lambda: (calls.append(1), (FAKE, None))[1])
+    snap = push.snapshot()
+    assert len(calls) == 1 and snap['today']['online'] is True and snap['han_tat_ca'][0]['ten'] == 'Bài 10-35' and 'bao_cao' in snap
+    monkeypatch.setattr(S, '_fetch', lambda: (None, 'refused'))
+    assert push.snapshot() is None
+
+
 def test_xac_thuc_token_qua_http(monkeypatch):
     import http.client, threading
     from http.server import ThreadingHTTPServer

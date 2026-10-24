@@ -535,6 +535,10 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
 /* (v1.00.32) lịch thi giữa kỳ và hạn của môn có thi giữa kỳ */
 .gkexam { background: #fff0f0; border: 2px solid #c62828; border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; color: #8b0000; font-size: 14px; }
 .gkexam b { color: #c62828; }
+.gkrow { margin-top: 3px; }
+.gkrow small { color: #6b4a4a; }
+.gk-khong_thi, .gk-chua_co { color: #666; }
+.gk-khong_thi b, .gk-chua_co b { color: #666; }
 li.gk { border-left: 4px solid #c62828 !important; }
 li.gk .tname, li.gk small { color: #c62828; }
 </style>
@@ -1684,7 +1688,13 @@ function renderDay() {
   // (v1.00.32) lịch thi giữa kỳ (FAMI) lên trên cùng: ai cũng thấy trước cả deadline
   const exams = d.exams || [];
   const examHtml = exams.length ? '<div class="gkexam"><b>Lịch thi giữa kỳ</b>' + exams.map(e => '<div>' + esc(e.ten_hp || e.ma_hp) + ' · <b>' + e.ngay.slice(8, 10) + '/' + e.ngay.slice(5, 7) + '</b>' + (e.kip ? ' · ' + esc(e.kip) : '') + (e.phong ? ' · phòng ' + esc(e.phong) : '') + '</div>').join('') + '</div>' : '';
-  let html = examHtml + '<div class="modebar"><div class="seg" role="group" aria-label="Chế độ hôm nay">' +
+  // (v1.00.34) mỗi môn 1 dòng: có lịch / dự kiến / có thi nhưng chưa lịch / chưa có tin / không thi. Không môn nào bị bỏ.
+  const ST = {co_lich: 'Lịch thi', du_kien: 'Dự kiến', chua_lich: 'Có thi, chưa có lịch', chua_co: 'Chưa có thông báo', khong_thi: 'Không thi giữa kỳ'};
+  const es = d.examStatus || [];
+  const statusHtml = es.length ? '<div class="gkexam"><b>Thi giữa kỳ, từng môn</b>' + es.map(r => '<div class="gkrow gk-' + r.trang_thai + '">' + esc(r.ten_hp) + ' · <b>' + ST[r.trang_thai] + '</b>' +
+    (r.ngay ? ' · ' + r.ngay.slice(8, 10) + '/' + r.ngay.slice(5, 7) : '') + (r.kip ? ' · ' + esc(r.kip) : '') + (r.phong ? ' · phòng ' + esc(r.phong) : '') +
+    (r.trich && r.trang_thai !== 'co_lich' ? '<small> — “' + esc(r.trich) + '” (' + esc(r.nguon || '') + (r.luc ? ' ' + r.luc.slice(8, 10) + '/' + r.luc.slice(5, 7) : '') + ')</small>' : '') + '</div>').join('') + '</div>' : examHtml;
+  let html = statusHtml + '<div class="modebar"><div class="seg" role="group" aria-label="Chế độ hôm nay">' +
     ['Bình thường', 'Camp', 'Rest'].map(m => '<button data-m="' + m + '" aria-pressed="' + (d.mode === m) + '">' + modeVi[m] + '</button>').join('') + '</div>' +
     '<label>Giờ camp <input id="day-hours" type="number" min="1" max="14" step="0.5" value="' + (d.hours || 6) + '"></label><span class="msg" id="day-msg"></span></div>';
   if (dayAsk && dayAsk.date === t && !dayPick) html += askBox(d);

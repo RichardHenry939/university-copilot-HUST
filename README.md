@@ -177,6 +177,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.31** | 19/10/2026 | **Deadline gọn hơn:** bấm thông báo ntfy mở thẳng chỗ làm bài (FAMI / MOOC / Teams; không rõ thì trang Notion). Tab Hôm nay tách 3 mục: Hạn môn học · Hạn tự luyện · Hạn đã qua (thu gọn). **Hạn tự luyện quá hạn tự gia hạn +1 tuần**, đếm số lần, cảnh báo từ lần 3, và không nhắc ra ngoài nữa; hạn của trường không bao giờ bị dời. 300 test |
 | **v1.00.32** | 24/10/2026 | **Lịch thi giữa kỳ hiện trên đầu tab Hôm nay** (đọc từ FAMI, trang Lịch thi). Hạn của môn có thi giữa kỳ được đánh dấu đỏ. 305 test |
 | **v1.00.33** | 24/10/2026 | **Connector MCP cho UC** (uc_mcp/): Claude đọc được tổng quan UC (lịch thi, hạn, việc hôm nay) từ mọi nơi khi máy bật; khi máy tắt chuyển sang Notion và báo máy đang tắt. Chỉ đọc. Kèm 2 skill (uc-briefing, uc-assistant). 314 test |
+| **v1.00.34** | 24/10/2026 | **Thi giữa kỳ từng môn**: mỗi môn đang học một dòng (lịch FAMI / thông báo Teams-mail / có thi chưa lịch / chưa có tin / không thi), hạn của mọi môn sẽ thi được tô đỏ. **Connector trên Firebase** (uc_mcp/cloud): máy chỉ gửi đi bản tóm tắt, Claude gọi qua đường dẫn bí mật, máy tắt thì báo máy tắt kèm bản cuối; chặn máy tìm kiếm. 323 test |
 
 ## Chạy thử
 
