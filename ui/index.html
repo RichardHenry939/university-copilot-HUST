@@ -532,15 +532,15 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
 @media (max-width: 860px) { .bell-m { display: grid; } .notif { left: auto; right: 12px; top: 56px; } .tabs { padding-right: 56px; } }
 @media (max-width: 600px) { .tasks.exlist li { grid-template-columns: 1fr; } .tasks.exlist .h { grid-column: 1; text-align: left; } }
 .plan-box{margin-top:28px}.plan-t{border-collapse:collapse;margin:10px 0;font-size:14px}.plan-t td,.plan-t th{border:1px solid var(--line,#ddd);padding:4px 8px;text-align:left}.plan-t .warn,p.warn{color:var(--red,#c0392b)}.plan-week{font-size:14px;line-height:1.6}
-/* (v1.00.32) lịch thi giữa kỳ và hạn của môn có thi giữa kỳ */
-.gkexam { background: #fff0f0; border: 2px solid #c62828; border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; color: #8b0000; font-size: 14px; }
-.gkexam b { color: #c62828; }
-.gkrow { margin-top: 3px; }
-.gkrow small { color: #6b4a4a; }
-.gk-khong_thi, .gk-chua_co { color: #666; }
-.gk-khong_thi b, .gk-chua_co b { color: #666; }
-li.gk { border-left: 4px solid #c62828 !important; }
-li.gk .tname, li.gk small { color: #c62828; }
+/* (v1.00.35) lịch thi: thẻ đỏ đặc (loại hạn đặc biệt); hạn của môn đã có lịch thi: viền đỏ */
+.tasks.exams li.exam { background: var(--red); color: #fff; border-color: var(--red); }
+.tasks.exams li.exam .tname, .tasks.exams li.exam small, .tasks.exams li.exam .h { color: #fff; font-weight: 600; }
+.exmark { flex: none; align-self: flex-start; border: 2px solid #fff; border-radius: 6px; padding: 2px 6px; font-size: 12px; font-weight: 700; }
+.exnote { margin: -4px 0 14px; font-size: 13px; }
+.ev.ex { border-left-color: var(--red); background: var(--red); color: #fff; } .ev.ex time, .ev.ex small, .ev.ex b { color: #fff; } .ev.ex .md { background: #fff; color: var(--red); }
+.mi.ex { border-left-color: var(--red); background: var(--red); color: #fff; font-weight: 700; } .mi.ex time { color: #fff; }
+li.gk { border-left: 4px solid var(--red) !important; }
+li.gk .tname, li.gk small { color: var(--red); }
 </style>
 </head>
 <body>
@@ -920,7 +920,8 @@ function evInfo(e, now) {
   const dl = e.kind === 'Deadline';
   const parts = e.title.split(' · ');
   const online = !dl && (/· online$/i.test(e.title) || /^online/i.test(e.location || ''));
-  return { dl, online, cls: dl ? 'dl' : (online ? 'on' : 'off'), past: Date.parse(e.end || e.start) < now,
+  const ex = e.kind === 'Exam';   // (v1.00.35) lịch thi FAMI: loại sự kiện riêng, thẻ đỏ đặc
+  return { dl, online, cls: ex ? 'ex' : dl ? 'dl' : (online ? 'on' : 'off'), past: Date.parse(e.end || e.start) < now,
            name: dl ? e.title : (parts.length >= 3 ? parts[1] + ' · ' + parts[2] : e.title), short: dl ? e.title : (parts[1] || e.title) + (parts[2] ? ' ' + parts[2] : '') };
 }
 function renderCal() {
@@ -1685,16 +1686,7 @@ function renderDay() {
   if (!DAY) { body.innerHTML = '<p class="skeleton">Đang đọc lần đầu…</p>'; return; }
   const d = DAY, t = d.today;
   $('#day-title').textContent = 'Hôm nay · ' + d.dow + ' ' + t.slice(8, 10) + '/' + t.slice(5, 7);
-  // (v1.00.32) lịch thi giữa kỳ (FAMI) lên trên cùng: ai cũng thấy trước cả deadline
-  const exams = d.exams || [];
-  const examHtml = exams.length ? '<div class="gkexam"><b>Lịch thi giữa kỳ</b>' + exams.map(e => '<div>' + esc(e.ten_hp || e.ma_hp) + ' · <b>' + e.ngay.slice(8, 10) + '/' + e.ngay.slice(5, 7) + '</b>' + (e.kip ? ' · ' + esc(e.kip) : '') + (e.phong ? ' · phòng ' + esc(e.phong) : '') + '</div>').join('') + '</div>' : '';
-  // (v1.00.34) mỗi môn 1 dòng: có lịch / dự kiến / có thi nhưng chưa lịch / chưa có tin / không thi. Không môn nào bị bỏ.
-  const ST = {co_lich: 'Lịch thi', du_kien: 'Dự kiến', chua_lich: 'Có thi, chưa có lịch', chua_co: 'Chưa có thông báo', khong_thi: 'Không thi giữa kỳ'};
-  const es = d.examStatus || [];
-  const statusHtml = es.length ? '<div class="gkexam"><b>Thi giữa kỳ, từng môn</b>' + es.map(r => '<div class="gkrow gk-' + r.trang_thai + '">' + esc(r.ten_hp) + ' · <b>' + ST[r.trang_thai] + '</b>' +
-    (r.ngay ? ' · ' + r.ngay.slice(8, 10) + '/' + r.ngay.slice(5, 7) : '') + (r.kip ? ' · ' + esc(r.kip) : '') + (r.phong ? ' · phòng ' + esc(r.phong) : '') +
-    (r.trich && r.trang_thai !== 'co_lich' ? '<small> — “' + esc(r.trich) + '” (' + esc(r.nguon || '') + (r.luc ? ' ' + r.luc.slice(8, 10) + '/' + r.luc.slice(5, 7) : '') + ')</small>' : '') + '</div>').join('') + '</div>' : examHtml;
-  let html = statusHtml + '<div class="modebar"><div class="seg" role="group" aria-label="Chế độ hôm nay">' +
+  let html = '<div class="modebar"><div class="seg" role="group" aria-label="Chế độ hôm nay">' +
     ['Bình thường', 'Camp', 'Rest'].map(m => '<button data-m="' + m + '" aria-pressed="' + (d.mode === m) + '">' + modeVi[m] + '</button>').join('') + '</div>' +
     '<label>Giờ camp <input id="day-hours" type="number" min="1" max="14" step="0.5" value="' + (d.hours || 6) + '"></label><span class="msg" id="day-msg"></span></div>';
   if (dayAsk && dayAsk.date === t && !dayPick) html += askBox(d);
@@ -1731,6 +1723,24 @@ function renderDay() {
       '</div><span class="h">' + leftTxt(x.minsLeft) + '</span></li>';
   };
   const dlLive = dls.filter(x => !x.overdue), dlDead = dls.filter(x => x.overdue);
+  // (v1.00.35) lịch thi = 1 loại hạn đặc biệt: mục "Lịch thi" đầu danh sách hạn, mỗi kỳ thi 1 dòng (thẻ đỏ đặc).
+  // Môn chưa có lịch / không thi giữa kỳ: chỉ 1 dòng ghi chú nhỏ, không chiếm chỗ.
+  const ST = {du_kien: 'dự kiến', chua_lich: 'có thi, chưa có lịch', chua_co: 'chưa có thông báo', khong_thi: 'không thi giữa kỳ'};
+  const DOWN = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+  const es = d.examStatus || [], exRows = es.filter(r => r.trang_thai === 'co_lich'), exOther = es.filter(r => r.trang_thai !== 'co_lich');
+  const exLi = r => {
+    const hm = (r.kip || '').match(/(\d{1,2})h(\d{2})/);
+    const at = Date.parse(r.ngay + 'T' + (hm ? hm[1].padStart(2, '0') + ':' + hm[2] : '07:00') + ':00+07:00');
+    const wd = DOWN[new Date(r.ngay + 'T12:00:00+07:00').getUTCDay()];
+    return '<li class="exam"><span class="exmark" aria-hidden="true">Thi</span><div><span class="tname">Giữa kỳ: ' + esc(r.ten_hp) + '</span>' +
+      '<small>' + esc(r.ma_hp) + ' · ' + wd + ' ' + r.ngay.slice(8, 10) + '/' + r.ngay.slice(5, 7) + (r.kip ? ' · ' + esc(r.kip) : '') + (r.phong ? ' · phòng ' + esc(r.phong) : '') + '</small></div>' +
+      '<span class="h">' + leftTxt(Math.round((at - Date.now()) / 60000)) + '</span></li>';
+  };
+  if (exRows.length || exOther.length) {
+    html += '<h2 style="font-size:17px;margin:0 0 8px">Lịch thi</h2><ul class="tasks dls exams">' + (exRows.map(exLi).join('') || '<span class="empty">Chưa môn nào có lịch thi giữa kỳ.</span>') + '</ul>';
+    if (exOther.length) html += '<p class="note exnote">' + exOther.map(r => esc(r.ten_hp) + ': ' + ST[r.trang_thai] +
+      (r.trich && r.nguon !== 'cách tính điểm' ? ' (“' + esc(r.trich) + '”, ' + esc(r.nguon || '') + ')' : '')).join(' · ') + '</p>';
+  }
   html += '<h2 style="font-size:17px;margin:0 0 8px">Hạn môn học</h2><ul class="tasks dls">' +
     (dlLive.filter(x => !x.self).map(dlLi).join('') || '<span class="empty">Không có hạn môn học nào trong 3 tuần tới.</span>') + '</ul>';
   html += '<h2 style="font-size:17px;margin:0 0 8px">Hạn tự luyện</h2><ul class="tasks dls">' +

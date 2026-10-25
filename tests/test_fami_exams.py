@@ -36,3 +36,17 @@ def test_gk_flags_danh_dau_dung_mon_co_thi():
 def test_gk_flags_khong_co_lich_thi_thi_khong_hat_mon_nao():
     rows = [{'course': 'MI1111', 'name': 'x'}]
     assert fami.gk_flags(rows, [])[0]['gkExam'] is False
+
+
+def test_exam_events_cho_tab_lich(tmp_path, monkeypatch):
+    f = tmp_path / 'fami.json'
+    f.write_text(json.dumps({'exams': [
+        {'ma_hp': 'MI1111', 'ten_hp': 'Giải tích I', 'ngay': '2026-11-08', 'kip': '8h10-8h50', 'phong': 'D5-101', 'loai': 'GK'},
+        {'ma_hp': 'MI1141', 'ten_hp': 'Đại số', 'ngay': '2026-11-08', 'kip': '', 'phong': ''},   # không có kíp -> cả ngày
+        {'ma_hp': 'X', 'ngay': 'sai'},
+    ]}, ensure_ascii=False), encoding='utf-8')
+    monkeypatch.setattr(fami, 'OUT', f)
+    ev = fami.exam_events()
+    assert len(ev) == 2 and all(e['kind'] == 'Exam' for e in ev)
+    assert ev[0]['title'] == 'Thi GK: Giải tích I' and ev[0]['start'] == '2026-11-08T08:10:00+07:00' and ev[0]['end'] == '2026-11-08T08:50:00+07:00'
+    assert ev[0]['location'] == 'D5-101' and ev[1]['start'] == '2026-11-08'

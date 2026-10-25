@@ -106,5 +106,5 @@ def overview(now=None):
 
 
 def midterm_codes(rows):
-    """Mã môn SẼ thi giữa kỳ (để tô đỏ hạn): có lịch, có thông báo dự kiến, hoặc cách tính điểm có Giữa kỳ."""
-    return {r['ma_hp'] for r in rows if r['trang_thai'] in ('co_lich', 'du_kien', 'chua_lich')}
+    """Mã môn để tô đỏ hạn: CHỈ môn đã có lịch thi chính thức (chủ dặn 25/10: môn chưa có lịch thì hạn để màu thường)."""
+    return {r['ma_hp'] for r in rows if r['trang_thai'] == 'co_lich'}

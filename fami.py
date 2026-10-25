@@ -87,6 +87,23 @@ def exams_upcoming(now=None):
     return sorted([e for e in d.get('exams') or [] if (e.get('ngay') or '') >= today], key=lambda e: (e['ngay'], _gio(e.get('kip'))))
 
 
+def exam_events():
+    """(v1.00.35) Lịch thi thành sự kiện cho tab Lịch (cùng dạng sự kiện của timetable.py), kind 'Exam'.
+    Kíp '8h10-8h50' -> giờ bắt đầu / kết thúc; không đọc được kíp thì để cả ngày."""
+    try: d = json.loads(OUT.read_text(encoding='utf-8'))
+    except Exception: return []
+    out = []
+    for e in d.get('exams') or []:
+        day = e.get('ngay') or ''
+        if not re.match(r'\d{4}-\d{2}-\d{2}$', day): continue
+        hm = re.findall(r'(\d{1,2})h(\d{2})', e.get('kip') or '')
+        iso = lambda h, m: f"{day}T{int(h):02d}:{m}:00+07:00"
+        start, end = (iso(*hm[0]), iso(*hm[-1])) if len(hm) >= 2 else (day, None)
+        out.append({'kind': 'Exam', 'title': f"Thi GK: {e.get('ten_hp') or e.get('ma_hp')}", 'start': start, 'end': end or start,
+                    'location': e.get('phong') or '', 'notes': f"{e.get('ma_hp') or ''} · {e.get('loai') or 'GK'}"})
+    return out
+
+
 def gk_flags(deadlines, exams):
     """Đánh dấu hạn nào thuộc môn có lịch thi giữa kỳ sắp tới (so mã học phần, ví dụ MI1111)."""
     codes = {e.get('ma_hp') for e in exams if e.get('ma_hp')}

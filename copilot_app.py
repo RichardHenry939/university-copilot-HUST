@@ -1056,7 +1056,12 @@ class H(BaseHTTPRequestHandler):
                     return self._send(200 if u.path == "/api/study-plan" else 500, {"error": f"{type(e).__name__}: {e}"[:300]})
             if u.path == "/api/timetable/all":   # tab Lịch: lấy 1 lần, giao diện tự vẽ tuần/tháng (timetable.py)
                 import timetable
-                return self._send(200, timetable.get(_npost, force=q.get("force", [""])[0] == "1"))
+                tt = timetable.get(_npost, force=q.get("force", [""])[0] == "1")
+                try:   # (v1.00.35) lịch thi FAMI hiện trên tab Lịch như 1 loại sự kiện riêng (kind "Exam")
+                    import fami
+                    if isinstance(tt, dict) and isinstance(tt.get("events"), list): tt = dict(tt, events=tt["events"] + fami.exam_events())
+                except Exception: pass
+                return self._send(200, tt)
             if u.path == "/api/study":   # GPA kỳ, CPA, rèn luyện — tính bằng academic.py
                 import academic
                 return self._send(200, academic.record(lambda path, body: n8n(path, body, timeout=120), {"loai": "xem"}))

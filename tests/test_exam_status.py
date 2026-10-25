@@ -65,7 +65,7 @@ def test_mail_khong_lien_quan_mon_thi_bo_qua(tmp_path, monkeypatch):
     assert _by(X.overview(NOW))['IT3000']['trang_thai'] == 'chua_co'
 
 
-def test_midterm_codes_chi_lay_mon_se_thi():
+def test_midterm_codes_chi_lay_mon_da_co_lich():
     rows = [{'ma_hp': 'A', 'trang_thai': 'co_lich'}, {'ma_hp': 'B', 'trang_thai': 'du_kien'}, {'ma_hp': 'C', 'trang_thai': 'chua_lich'},
             {'ma_hp': 'D', 'trang_thai': 'chua_co'}, {'ma_hp': 'E', 'trang_thai': 'khong_thi'}]
-    assert X.midterm_codes(rows) == {'A', 'B', 'C'}
+    assert X.midterm_codes(rows) == {'A'}   # (v1.00.35) chưa có lịch thì hạn để màu thường
