@@ -383,7 +383,7 @@ def backup_log(it, ok, drive_link, err="", status=None):
         rel = it.get("relPath") or it.get("name") or ""
         code = it.get("courseCode") or ""
         notes = rel + (f" · môn {code} {it.get('courseName') or ''}".rstrip() if code else " · chưa rõ môn (A2 sẽ hỏi)") + \
-                (" · từ Uni-Documents (tự đồng bộ)" if it.get("source") == "uni-sync" else " · tải qua UC") + ((f" · ghi chú: {err}" if status else f" · lỗi: {err}") if err else "")
+                (" · từ Uni-Documents (tự đồng bộ)" if it.get("source") == "uni-sync" else " · từ Zalo" if it.get("source") == "zalo" else " · tải qua UC") + ((f" · ghi chú: {err}" if status else f" · lỗi: {err}") if err else "")
         page = academic.Notion(_npost).create(BACKUP_DB, {
             "Item": {"title": [{"text": {"content": (it.get("title") or os.path.basename(rel))[:200]}}]},
             "Type": {"select": {"name": "Course Material"}}, "Status": {"select": {"name": status or ("Synced" if ok else "Needs review")}},
@@ -1455,6 +1455,7 @@ if __name__ == "__main__":
     threading.Thread(target=worker, daemon=True).start()
     _tt_refresh()   # làm nóng lịch: tab Lịch hiện ngay lần bấm đầu
     threading.Thread(target=uni_sync_loop, daemon=True).start()
+    threading.Thread(target=lambda: __import__("zalo_files").loop(), daemon=True).start()   # (v1.00.36) file tải từ Zalo -> Inbox -> Uni-Documents + Notion
     threading.Thread(target=mail_loop, daemon=True).start()    # 📡 mọi nguồn đúng khung 5 phút, 24 giờ
     threading.Thread(target=alert_loop, daemon=True).start()
     threading.Thread(target=_audio_priority_loop, daemon=True).start()   # 🎙️ (12/10) LUẬT TỐI CAO: tiếng CABLE Input ưu tiên tuyệt đối

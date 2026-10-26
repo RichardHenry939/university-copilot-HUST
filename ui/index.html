@@ -1962,7 +1962,7 @@ async function refreshInbox() {
         </select><button class="btn" data-id="${it.id}">Xếp vào thư mục này</button></div>`;
       if (it.status === 'duplicate') body = `<div class="meta">Trùng nội dung với file đã có, nên không xếp thêm bản nữa và không gửi lại Notion:</div><div class="path">${crumbs('Uni-Documents\\' + (it.dupOf || ''))}</div><div class="meta">Bản vừa tải lên còn ở thư mục 00 · Inbox, bạn xoá được nếu không cần.</div>`;
       if (['queued', 'reading', 'thinking'].includes(it.status)) body = `<div class="meta">Model local đang xử lý, thường mất 10 đến 40 giây.</div>`;
-      return `<article class="file ${it.status === 'needs_choice' ? 'ask' : ''}"><div class="file-top"><span class="file-name">${esc(it.title && it.status === 'placed' ? it.title : it.name)}</span><span class="badge ${cls}">${label}</span></div>${body}</article>`;
+      return `<article class="file ${it.status === 'needs_choice' ? 'ask' : ''}"><div class="file-top"><span class="file-name">${esc(it.title && it.status === 'placed' ? it.title : it.name)}</span>${it.source === 'zalo' ? '<span class="badge" title="Tải từ Zalo (thư mục Zalo-Logistic-Checkpoint)">Zalo</span>' : ''}<span class="badge ${cls}">${label}</span></div>${body}</article>`;
     }).join('');
     $('#files').querySelectorAll('.btn[data-id]').forEach(b => b.onclick = async () => {
       b.disabled = true; const folder = b.previousElementSibling.value;
