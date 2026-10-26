@@ -182,6 +182,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.36** | 26/10/2026 | **File Zalo vào kho tài liệu**: file tải từ Zalo vào thư mục riêng (`paths.zalo_inbox`, mặc định `Downloads\Zalo-Logistic-Checkpoint`) được chép vào Inbox, kiểm SHA rồi mới xoá bản gốc (máy chỉ giữ 1 bản), agent xếp vào Uni-Documents, sao lưu Drive và lên University Inbox (Notion). Trùng nội dung thì chỉ xoá bản Zalo. Tin nhắn Zalo bị mã hoá nên không đọc. 330 test |
 | **v1.00.37** | 26/10/2026 | **Inbox**: nút "Mở trong thư mục" (File Explorer, chỉ file trong Uni-Documents). **Ngoại khoá**: tắt nhắc từ điện thoại (từng mục, hoặc cả loại bằng "tắt / bật ngoại khoá"), luôn hỏi Xác nhận rồi huỷ tin đã hẹn; hạn minh chứng chỉ nhắc 2 lần (24 giờ, 3 giờ) và có nút "Đã nộp MC"; vòng 2 / bán kết / chung kết chỉ nhắc khi bạn bấm Sẽ đi. **Học kỳ**: vắng ở môn nào, ngày nào. 333 test |
 | **v1.00.38** | 26/10/2026 | **Giao diện**: lịch tuần dạng lưới giờ (mỗi buổi đặt đúng giờ, cao theo thời lượng, chồng giờ chia làn, hạn nộp là mốc đỏ đúng giờ, vạch "bây giờ", lịch thi khối đỏ); thanh điều hướng dọc trên màn hình rộng. 333 test |
+| **v1.00.40** | 26/10/2026 | **Giao diện**: tab Lịch đổi tên **Thời khoá biểu toàn kỳ**, đứng đầu và mở mặc định; tab **Hôm nay** được gộp vào cuối tab này (bấm một ngày ở lịch thì phía dưới hiện việc hôm nay, chế độ ngày, lịch thi và hạn nộp); **Trò chuyện** đổi tên **Chatbot hỗ trợ**, xếp thứ 2. |
 
 ## Chạy thử
 

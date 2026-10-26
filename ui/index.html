@@ -616,11 +616,11 @@ li.gk .tname, li.gk small { color: var(--red); }
       <p class="notif-empty" id="notif-empty">Không có thông báo nào.</p>
     </div>
     <div class="tabs" role="tablist">
-      <button class="tab" role="tab" id="t-chat" aria-selected="true" aria-controls="p-chat">Trò chuyện</button>
-      <button class="tab" role="tab" id="t-day" aria-selected="false" aria-controls="p-day">Hôm nay</button>
+      <!-- (v1.00.40) Thời khoá biểu toàn kỳ lên đầu (gộp tab Hôm nay vào cuối tab này); Trò chuyện đổi tên thành Chatbot hỗ trợ, xếp thứ 2 -->
+      <button class="tab" role="tab" id="t-cal" aria-selected="true" aria-controls="p-cal">Thời khoá biểu toàn kỳ</button>
+      <button class="tab" role="tab" id="t-chat" aria-selected="false" aria-controls="p-chat">Chatbot hỗ trợ</button>
       <button class="tab" role="tab" id="t-sg" aria-selected="false" aria-controls="p-sg">Gợi ý <span class="count" id="c-sg" hidden></span></button>
       <button class="tab" role="tab" id="t-ib" aria-selected="false" aria-controls="p-ib">Inbox tài liệu <span class="count warn" id="c-ib" hidden></span></button>
-      <button class="tab" role="tab" id="t-cal" aria-selected="false" aria-controls="p-cal">Lịch</button>
       <button class="tab" role="tab" id="t-extra" aria-selected="false" aria-controls="p-extra">Ngoại khoá</button>
       <button class="tab" role="tab" id="t-admin" aria-selected="false" aria-controls="p-admin">Hành chính</button>
       <button class="tab" role="tab" id="t-schol" aria-selected="false" aria-controls="p-schol">Học bổng</button>
@@ -631,7 +631,7 @@ li.gk .tname, li.gk small { color: var(--red); }
       <button class="tab tab-r" id="t-pe" aria-expanded="false" aria-controls="side-pe">GDTC · Hè · Học lại <span class="count" id="c-pe">0/4</span></button>
     </div>
 
-    <section class="panel on" id="p-chat" role="tabpanel" aria-labelledby="t-chat">
+    <section class="panel" id="p-chat" role="tabpanel" aria-labelledby="t-chat">
       <div id="chat-log"><div class="wrap" id="chat-inner">
         <div class="hello" id="hello">
           <h1>Hôm nay bạn muốn lo việc gì?</h1>
@@ -700,9 +700,9 @@ li.gk .tname, li.gk small { color: var(--red); }
     </section>
 
 
-    <section class="panel" id="p-cal" role="tabpanel" aria-labelledby="t-cal">
+    <section class="panel on" id="p-cal" role="tabpanel" aria-labelledby="t-cal">
       <div class="wrap wide cal">
-        <h1>Lịch học và hạn nộp</h1>
+        <h1>Thời khoá biểu toàn kỳ</h1>
         <p class="lead">Thời khoá biểu và deadline trong Notion: tuần ở trên, cả tháng ở dưới. Muốn đổi lịch, nhắn cho Copilot.</p>
         <div class="cal-nav">
           <span class="wk" id="cal-wk">Đang đọc…</span>
@@ -720,6 +720,12 @@ li.gk .tname, li.gk small { color: var(--red); }
         </div>
         <div id="cal-month"></div>
         <div class="mlegend"><span style="--c: var(--green)">Học trên lớp</span><span style="--c: var(--blue)">Online</span><span style="--c: var(--red)">Hạn nộp</span><span style="--c: var(--amber)">Đợt nghỉ / đợt học tập trung</span><span>Bấm một ngày ở lịch tuần hoặc lịch tháng để chọn; hai lịch luôn chọn cùng một ngày</span></div>
+        <!-- (v1.00.40) gộp tab "Hôm nay": việc trong ngày, chế độ ngày, lịch thi và hạn nộp hiện ngay dưới lịch -->
+        <div class="sem" id="cal-day">
+          <h2 id="day-title" style="font-size:20px;margin:18px 0 6px">Hôm nay</h2>
+          <p class="lead" id="day-sel-note">Việc hôm nay do A4 xếp, và chế độ ngày: ⛺ Camp khi bạn dồn sức, 💤 Rest khi nghỉ.</p>
+          <div id="day-body"><p class="skeleton">Đang đọc…</p></div>
+        </div>
         <div class="plan-box" id="plan-box">
           <h2>Kế hoạch tự học · xuất lịch</h2>
           <p class="lead">Giờ tự học mỗi tuần theo khối lượng của trường (ví dụ <b>4(3-0-2-8)</b>: 8 giờ tự học / tuần), chia đều vào giờ trống không trùng lịch học.</p>
@@ -781,13 +787,6 @@ li.gk .tname, li.gk small { color: var(--red); }
         <p class="lead">Chọn một kỳ để xem môn, điểm và chuyên cần. Báo điểm hoặc buổi vắng cho Copilot để ghi; GDTC tự chọn, kỳ hè và học lại nằm ở thanh bên phải.</p>
         <div id="school-bar"></div>
         <div id="sem-body"><p class="skeleton">Đang đọc dữ liệu học kỳ…</p></div>
-      </div>
-    </section>
-    <section class="panel" id="p-day" role="tabpanel" aria-labelledby="t-day">
-      <div class="wrap wide sem">
-        <h1 id="day-title">Hôm nay</h1>
-        <p class="lead">Việc hôm nay do A4 xếp, và chế độ ngày: ⛺ Camp khi bạn dồn sức, 💤 Rest khi nghỉ. Các giám sát viên (A4, bản tin, đánh giá tuần, Copilot) nhìn vào đây — không cảnh báo vì một ngày nghỉ.</p>
-        <div id="day-body"><p class="skeleton">Đang đọc…</p></div>
       </div>
     </section>
     <section class="panel" id="p-lang" role="tabpanel" aria-labelledby="t-lang">
@@ -886,12 +885,13 @@ setInterval(() => {
   if (!draft) location.reload();
 }, 15 * 60 * 1000);
 /* ---------- tabs ---------- */
-const tabs = { chat: ['#t-chat', '#p-chat'], day: ['#t-day', '#p-day'], sg: ['#t-sg', '#p-sg'], ib: ['#t-ib', '#p-ib'], cal: ['#t-cal', '#p-cal'], extra: ['#t-extra', '#p-extra'], admin: ['#t-admin', '#p-admin'], schol: ['#t-schol', '#p-schol'], sem: ['#t-sem', '#p-sem'], lang: ['#t-lang', '#p-lang'], grad: ['#t-grad', '#p-grad'], rec: ['#t-rec', '#p-rec'] };
+const tabs = { chat: ['#t-chat', '#p-chat'], sg: ['#t-sg', '#p-sg'], ib: ['#t-ib', '#p-ib'], cal: ['#t-cal', '#p-cal'], extra: ['#t-extra', '#p-extra'], admin: ['#t-admin', '#p-admin'], schol: ['#t-schol', '#p-schol'], sem: ['#t-sem', '#p-sem'], lang: ['#t-lang', '#p-lang'], grad: ['#t-grad', '#p-grad'], rec: ['#t-rec', '#p-rec'] };
 function show(name) {
   for (const [k, [t, p]] of Object.entries(tabs)) { $(t).setAttribute('aria-selected', k === name); $(p).classList.toggle('on', k === name); }
   if (name === 'ib') refreshInbox();
   if (name === 'rec') { recTick(); loadLectures(); }
-  if (name === 'cal') loadCal();
+  if (name === 'cal') { loadCal(); loadDay(); }   // (v1.00.40) phần Hôm nay nằm trong tab này
+  if (name === 'day') { show('cal'); return; }    // (v1.00.40) lối vào cũ của tab Hôm nay
   if (name === 'extra') loadExtra();
   if (name === 'admin') loadAdmin();
   if (name === 'ib' && !NLM.loaded) { NLM.loaded = 1; nlmSearch(); nlmNotebooks(); trSearch(); trJobs(); }
@@ -902,7 +902,8 @@ function show(name) {
   if (name === 'day') loadDay();
   if (name === 'chat') $('#input').focus();
 }
-$('#t-chat').onclick = () => show('chat'); $('#t-sg').onclick = () => show('sg'); $('#t-ib').onclick = () => show('ib'); $('#t-rec').onclick = () => show('rec'); $('#t-cal').onclick = () => show('cal'); $('#t-sem').onclick = () => show('sem'); $('#t-grad').onclick = () => show('grad'); $('#t-lang').onclick = () => show('lang'); $('#t-day').onclick = () => show('day');
+$('#t-chat').onclick = () => show('chat'); $('#t-sg').onclick = () => show('sg'); $('#t-ib').onclick = () => show('ib'); $('#t-rec').onclick = () => show('rec'); $('#t-cal').onclick = () => show('cal'); $('#t-sem').onclick = () => show('sem'); $('#t-grad').onclick = () => show('grad'); $('#t-lang').onclick = () => show('lang');
+setTimeout(() => { if ($('#p-cal').classList.contains('on')) { loadCal(); loadDay(); } }, 0);   // (v1.00.40) mở app là thấy Thời khoá biểu toàn kỳ
 
 /* ---------- Lịch (Claude 2026-10-03) ---------- */
 const TZ_OFF = 7 * 3600e3, WEEK1 = Date.parse('2026-08-31T00:00:00+07:00');
@@ -917,6 +918,10 @@ const dayMs = (d) => Date.parse(d + 'T12:00:00+07:00');
 function selectDay(d, from) {
   calSel = d; calMon = mondayOf(dayMs(d)); calMonth = d.slice(0, 7);
   renderCal();
+  // (v1.00.40) phần dưới lịch: hôm nay thì việc trong ngày; ngày khác thì nhắc đây vẫn là việc hôm nay + lịch thi chung
+  const today = vnDate(Date.now()), note = $('#day-sel-note');
+  if (note) note.textContent = d === today ? 'Việc hôm nay do A4 xếp, và chế độ ngày: ⛺ Camp khi bạn dồn sức, 💤 Rest khi nghỉ.'
+    : 'Bạn đang chọn ' + d.slice(8, 10) + '/' + d.slice(5, 7) + '. Lịch học ngày đó ở lịch phía trên; dưới đây là việc hôm nay, lịch thi và hạn nộp. Đổi chế độ cho ngày khác ở dải ngày bên dưới.';
   // chọn từ lịch tháng mà lịch tuần đang khuất phía trên -> cuộn lên cho thấy
   if (from === 'month' && $('#cal-wk').getBoundingClientRect().top < 0) $('#cal-wk').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
