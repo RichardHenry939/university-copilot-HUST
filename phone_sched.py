@@ -69,7 +69,7 @@ def plan(post, now=None):
                                         'text': f"{x['kind']} — hạn {due:%H:%M} {due.day}/{due.month}", 'priority': 5 if m <= 60 else 4,
                                         'click': link}
     # ngoại khoá
-    for x in X.alert_items(X.load(), now):
+    for x in ([] if st_al.get('extra_off') else X.alert_items(X.load(), now)):   # (v1.00.37) tắt mọi nhắc ngoại khoá -> không hẹn tin nào
         if f"ex|{x['key']}" in muted: continue
         w = dt.datetime.fromisoformat(x['when']).astimezone(TZ)
         mc = x['loai'] == 'Hạn nộp minh chứng'
@@ -85,7 +85,7 @@ def plan(post, now=None):
         if e.get('status') != 'Đang theo dõi' or e.get('kind'): continue
         for k, s in e['chang'].items():
             ack = ((e.get('ack') or {}).get(k) or {}).get('choice')
-            if not (e.get('must') or ack == 'Sẽ đi') or ack in ('Bỏ', 'Đã nộp') or s.get('huy'): continue
+            if not me.must_remind(e, s, ack) or ack in ('Bỏ', 'Đã nộp') or s.get('huy'): continue   # (v1.00.37) vòng sau: chỉ khi bạn bấm Sẽ đi
             w = me.when_of(s)
             if not w or not (now < w <= end + dt.timedelta(days=1)): continue
             for m in (24 * 60, 120, 30):

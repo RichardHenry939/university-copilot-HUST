@@ -80,7 +80,7 @@ def sync_once(now=None):
             try: tmp.unlink()
             except OSError: pass
             out.append({'name': p.name, 'kq': f'chép lỗi ({type(e).__name__}), giữ bản Zalo'}); continue
-        item = {'id': uuid.uuid4().hex, 'name': dest.name, 'path': str(dest), 'size': dest.stat().st_size, 'status': 'queued',
+        item = {'id': str(uuid.uuid4()), 'name': dest.name, 'path': str(dest), 'size': dest.stat().st_size, 'status': 'queued',
                 'createdAt': time.time(), 'updatedAt': time.time(), 'source': 'zalo', 'sha': h}
         with app.lock:
             st = app.load_state(); st['items'].append(item); app.save_state(st)

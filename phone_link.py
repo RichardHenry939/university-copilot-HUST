@@ -69,6 +69,10 @@ def actions_for(a):
         return []
     if k == 'change':
         return [btn('Đã biết', make('ack', eid=a['eid'], change_at=a['change_at'], choice='Đã biết', name=a['title']))]
+    if k == 'extra':   # (v1.00.37) ngoại khoá: tắt từ xa (riêng mục này / cả loại) — vẫn hỏi Xác nhận
+        mc = str(a.get('title', '')).startswith('Hạn nộp minh chứng')
+        return [btn('Đã nộp MC' if mc else 'Tắt nhắc', make('mute', eid=a['eid'], name=a['title'], choice='Đã nộp MC' if mc else 'Tắt nhắc')),
+                btn('Tắt mọi nhắc NK', make('extra', off=True, name='mọi nhắc ngoại khoá'))]
     if k == 'stage':
         return [btn(c, make('ack', eid=a['eid'], stage=a['stage'], choice=c, name=a['title'])) for c in a.get('buttons', [])][:3]
     return []
@@ -116,20 +120,26 @@ def reply_view(post, text):
     if t in ('hạn', 'han', 'deadline', 'deadlines'):
         dl = _deadlines(post, 21)
         return ('Hạn 3 tuần tới', '\n'.join(dl) if dl else 'Không có hạn nào đang mở.')
-    return ('UC · lệnh', 'Gõ hoặc bấm: "hôm nay" · "mai" · "hạn". Nút Sẽ đi / Bỏ / Đã biết trên cảnh báo sự kiện luôn hỏi Xác nhận trước khi ghi. Hoàn tất / Tắt nhắc hạn: làm trên UC ở máy.')
+    return ('UC · lệnh', 'Gõ hoặc bấm: "hôm nay" · "mai" · "hạn" · "tắt ngoại khoá" · "bật ngoại khoá". Nút Sẽ đi / Bỏ / Đã biết / Tắt nhắc luôn hỏi Xác nhận trước khi ghi. Hoàn tất / Tắt nhắc HẠN NỘP: làm trên UC ở máy.')
 
 
 # ------------------------------------------------------------------ thực hiện lệnh có chữ ký
 def run_signed(post, d):
     import alerts
     op, a, name = d['op'], d['arg'], d['arg'].get('name', '')
-    if op != 'ack': return ('UC · từ chối', 'Hoàn tất / Tắt nhắc hạn chỉ làm trên UC ở máy.', None)   # yêu cầu của bạn 4/10
-    label = a.get('choice', '')
+    if op == 'mute' and not str(a.get('eid', '')).startswith('ex|'): op = 'bad'   # tắt nhắc từ xa: CHỈ ngoại khoá (hạn nộp vẫn làm ở máy, luật 4/10)
+    if op not in ('ack', 'mute', 'extra'): return ('UC · từ chối', 'Hoàn tất / Tắt nhắc hạn chỉ làm trên UC ở máy.', None)   # yêu cầu của bạn 4/10
+    label = a.get('choice') or ('Tắt nhắc' if op == 'mute' else 'Tắt mọi nhắc ngoại khoá' if a.get('off') else 'Bật lại nhắc ngoại khoá')
     if d['step'] == 'ask':   # bước 1: hỏi lại
         return (f"Xác nhận “{label}”?", f"{name}\nGhi lựa chọn này (Notion nếu cần) và cập nhật cảnh báo.",
                 [btn('Xác nhận', make(op, 'do', **a)), btn('Huỷ', 'huỷ')])
     if op == 'ack': alerts.ack(a['eid'], a['choice'], stage=a.get('stage'), change_at=a.get('change_at'), post=post)
+    elif op == 'mute': alerts.ack(a['eid'], 'Tắt nhắc')
+    elif op == 'extra': alerts.set_extra_off(bool(a.get('off')))
     else: return ('UC · lệnh lạ', op, None)
+    if op in ('mute', 'extra'):   # huỷ ngay các tin đã hẹn giờ trên ntfy (không đợi lượt đồng bộ sau)
+        try: __import__('phone_sched').reconcile(post)
+        except Exception as e: print('reconcile:', e)
     return (f"Đã {label.lower()}", name, None)
 
 
@@ -144,6 +154,11 @@ def handle(post, text):
         s['used'][key] = time.time(); _save(s)
         try: return run_signed(post, d)
         except Exception as e: return ('UC · lỗi', f'{type(e).__name__}: {e}'[:300], None)
+    t = text.lower()
+    if t in ('tắt ngoại khoá', 'tắt ngoại khóa', 'tat ngoai khoa', 'tắt nk', 'tat nk'):   # (v1.00.37) lệnh gõ: vẫn qua bước Xác nhận có chữ ký
+        return run_signed(post, {'op': 'extra', 'step': 'ask', 'arg': {'off': True, 'name': 'mọi nhắc ngoại khoá'}})
+    if t in ('bật ngoại khoá', 'bật ngoại khóa', 'bat ngoai khoa', 'bật nk', 'bat nk'):
+        return run_signed(post, {'op': 'extra', 'step': 'ask', 'arg': {'off': False, 'name': 'mọi nhắc ngoại khoá'}})
     title, body = reply_view(post, text)
     return (title, body, menu_buttons())
 

@@ -1175,6 +1175,12 @@ function renderSem() {
     '<div class="stat"><strong>' + f2(cur.cpa) + '</strong><span>CPA đến hết kỳ</span><em>tự tính từ các kỳ trước</em></div>' +
     '<div class="stat"><strong>' + cur.done + '</strong><span>tín hoàn tất</span><em>nợ ' + cur.debt + ' tín</em></div>' +
     '<div class="stat"><strong>' + totalAbs + '</strong><span>buổi vắng</span><em>báo vắng cho Copilot để ghi</em></div></div>';
+  // (v1.00.37) vắng ở môn nào, ngày nào (ngày từ bảng điểm danh trong Notion; số của qldt có thể lớn hơn số ngày UC có)
+  const absC = cur.courses.filter(c => c.abs && c.abs.absent > 0);
+  if (absC.length) html += '<p class="lead" style="margin:-10px 0 14px">Vắng: ' + absC.map(c => {
+    const ds = (c.abs.dates || []).map(x => x.slice(8, 10) + '/' + x.slice(5, 7));
+    return '<b>' + esc(c.code) + '</b> ' + esc(c.name) + ' ' + c.abs.absent + ' buổi' + (ds.length ? ' (' + ds.join(', ') + (ds.length < c.abs.absent ? ', còn ' + (c.abs.absent - ds.length) + ' buổi theo qldt chưa rõ ngày' : '') + ')' : ' (theo qldt, chưa rõ ngày)');
+  }).join(' · ') + '</p>';
   const rl = cur.conduct;
   html += '<p class="lead" style="margin:-10px 0 20px">Điểm rèn luyện ' + cur.label + ': ' + (rl && rl.diem != null ? '<b>' + rl.diem + '</b> · ' + esc(rl.xep_loai) : 'chưa có — báo cho Copilot khi có') + '</p>';
   const order = ['Môn Đại cương', 'Môn Cơ sở ngành', 'Môn Chuyên ngành', 'Thực hành', 'Chính trị', 'Thể chất', 'Kỹ năng mềm', 'Cử nhân'];
@@ -1962,8 +1968,13 @@ async function refreshInbox() {
         </select><button class="btn" data-id="${it.id}">Xếp vào thư mục này</button></div>`;
       if (it.status === 'duplicate') body = `<div class="meta">Trùng nội dung với file đã có, nên không xếp thêm bản nữa và không gửi lại Notion:</div><div class="path">${crumbs('Uni-Documents\\' + (it.dupOf || ''))}</div><div class="meta">Bản vừa tải lên còn ở thư mục 00 · Inbox, bạn xoá được nếu không cần.</div>`;
       if (['queued', 'reading', 'thinking'].includes(it.status)) body = `<div class="meta">Model local đang xử lý, thường mất 10 đến 40 giây.</div>`;
+      body += `<div class="meta"><button class="link reveal" data-rv="${it.id}" title="Mở File Explorer, chọn sẵn file này">Mở trong thư mục</button></div>`;   // (v1.00.37)
       return `<article class="file ${it.status === 'needs_choice' ? 'ask' : ''}"><div class="file-top"><span class="file-name">${esc(it.title && it.status === 'placed' ? it.title : it.name)}</span>${it.source === 'zalo' ? '<span class="badge" title="Tải từ Zalo (thư mục Zalo-Logistic-Checkpoint)">Zalo</span>' : ''}<span class="badge ${cls}">${label}</span></div>${body}</article>`;
     }).join('');
+    $('#files').querySelectorAll('.reveal[data-rv]').forEach(b => b.onclick = async () => {
+      const r = await fetch('/api/inbox/' + b.dataset.rv + '/reveal', { method: 'POST' }).then(x => x.json()).catch(() => ({ error: 'không gọi được UC' }));
+      if (r.error) { b.textContent = r.error; b.disabled = true; }
+    });
     $('#files').querySelectorAll('.btn[data-id]').forEach(b => b.onclick = async () => {
       b.disabled = true; const folder = b.previousElementSibling.value;
       const r = await fetch(`/api/inbox/${b.dataset.id}/assign`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder }) });

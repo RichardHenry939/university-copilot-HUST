@@ -1423,6 +1423,17 @@ class H(BaseHTTPRequestHandler):
                     st = load_state(); st["items"].append(item); save_state(st)
                 jobs.put(item["id"])
                 return self._send(200, item)
+            m = re.match(r"^/api/inbox/([0-9a-f-]{32,36})/reveal$", u.path)
+            if m:   # (v1.00.37) mở File Explorer, chọn sẵn file; CHỈ file nằm trong Uni-Documents
+                with lock: it = next((x for x in load_state()["items"] if x["id"] == m.group(1)), None)
+                if not it: return self._send(404, {"error": "không có file này trong Inbox"})
+                cands = [UNI / it[k] for k in ("relPath", "dupOf") if it.get(k)] + ([Path(it["path"])] if it.get("path") else [])
+                p = next((c for c in cands if c.is_file()), None)
+                if not p: return self._send(404, {"error": "file không còn ở chỗ cũ"})
+                try: p.resolve().relative_to(UNI.resolve())
+                except ValueError: return self._send(403, {"error": "chỉ mở file trong Uni-Documents"})
+                __import__("subprocess").Popen(["explorer", "/select," + str(p.resolve())])
+                return self._send(200, {"ok": True, "path": str(p)})
             m = re.match(r"^/api/inbox/([0-9a-f-]{36})/assign$", u.path)
             if m:
                 b = json.loads(self._body(100_000) or b"{}")

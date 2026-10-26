@@ -76,7 +76,8 @@ def build(post):
         rows = [x for x in rows if not start or x[0] >= start]
         absent = sum(1 for x in rows if x[1] == "Absent")
         if c.get("abs_school") is not None: absent = int(c["abs_school"])   # điểm danh của trường (qldt) là cao nhất
-        return {"absent": absent, "late": sum(1 for x in rows if x[1] == "Late")}
+        dates = sorted(x[0] for x in rows if x[1] == "Absent" and x[0])   # (v1.00.37) ngày vắng: tab Học kỳ hiện vắng ở môn nào, ngày nào
+        return {"absent": absent, "late": sum(1 for x in rows if x[1] == "Late"), "dates": dates}
     def g_of(c):
         return [x for x in g_by.get(c["id"], []) if not (c["retake"] or c["improve"]) or x["sem"] == c["semester"]]
     rl = {P(r, "Semester"): {"diem": P(r, "Điểm"), "xep_loai": conduct_rank(P(r, "Điểm")) if P(r, "Điểm") is not None else None} for r in conduct}

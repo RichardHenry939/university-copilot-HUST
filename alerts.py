@@ -95,7 +95,9 @@ def extra_alerts(now):
     except Exception as e:
         print('extra alerts:', e); return []
     import deadlines as D
-    muted = _load().get('dl_mute', {}); out = []
+    st = _load()
+    if st.get('extra_off'): return []   # (v1.00.37) bạn tắt mọi nhắc ngoại khoá (từ điện thoại hoặc UC) — bật lại bằng lệnh "bật ngoại khoá"
+    muted = st.get('dl_mute', {}); out = []
     for x in items:
         eid = f"ex|{x['key']}"
         if eid in muted: continue
@@ -136,7 +138,7 @@ def active(now=None, classes=None, dls=None):
             if ack.get('choice') == 'Sẽ đi' and lvl != 'day': continue        # đã hứa đi: chỉ nhắc lại trong ngày
             if ack.get('choice') == 'Đã biết' and ack.get('level') == lvl: continue   # "Đã biết" chỉ tắt đúng mức đó; lên mức là hiện lại
             going = ack.get('choice') == 'Sẽ đi'
-            if not e.get('kind') and not e.get('must') and not going:   # lời mời chung, bạn chưa nói sẽ đi: chỉ gợi ý trong UC, không toast/điện thoại
+            if not e.get('kind') and not me.must_remind(e, s, ack.get('choice')):   # lời mời chung / vòng sau chưa xác nhận đi: chỉ gợi ý trong UC, không toast/điện thoại
                 if (e.get('ack') or {}).get(k, {}).get('choice') == 'Đã biết': continue
                 out.append({'id': f"opt|{eid}|{k}", 'kind': 'stage', 'level': 'yellow', 'pinned': False, 'eid': eid, 'stage': k, 'when': w.isoformat(),
                             'stage_level': 'optional', 'going': False, 'title': f"Có thể bạn quan tâm: {e['ten']} · {s['ten']}",
@@ -152,6 +154,15 @@ def active(now=None, classes=None, dls=None):
                                    ['Sẽ đi', 'Bỏ'] if lvl == 'day' and not going else (['Đã biết'] if going else ['Sẽ đi', 'Bỏ', 'Đã biết'])})
     rank = {'class': 0, 'deadline': 1, 'extra': 2, 'day': 3, 'change': 4, 'red': 5, 'yellow': 6, 'optional': 7}
     return sorted(out, key=lambda a: (rank.get(a.get('stage_level') or a['kind'], 9), a.get('when') or ''))
+
+
+def set_extra_off(off):
+    """(v1.00.37) Bật / tắt MỌI nhắc ngoại khoá (toast + điện thoại). Mục ngoại khoá vẫn ở danh sách, chỉ thôi nhắc."""
+    s = _load()
+    if off: s['extra_off'] = dt.datetime.now(TZ).isoformat(timespec='minutes')
+    else: s.pop('extra_off', None)
+    _save(s)
+    return {'ok': True, 'extra_off': s.get('extra_off')}
 
 
 def ack(eid, choice, stage=None, change_at=None, post=None):

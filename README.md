@@ -180,6 +180,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.34** | 24/10/2026 | **Thi giữa kỳ từng môn**: mỗi môn đang học một dòng (lịch FAMI / thông báo Teams-mail / có thi chưa lịch / chưa có tin / không thi), hạn của mọi môn sẽ thi được tô đỏ. **Connector trên Firebase** (uc_mcp/cloud): máy chỉ gửi đi bản tóm tắt, Claude gọi qua đường dẫn bí mật, máy tắt thì báo máy tắt kèm bản cuối; chặn máy tìm kiếm. 323 test |
 | **v1.00.35** | 25/10/2026 | **Lịch thi là một loại hạn đặc biệt**: mục "Lịch thi" đầu tab Hôm nay (thẻ đỏ đặc, ngày, kíp, phòng, còn bao lâu), môn chưa có lịch / không thi chỉ còn 1 dòng ghi chú. **Lịch thi hiện trên tab Lịch** (tuần và tháng). Viền đỏ chỉ cho hạn của môn đã có lịch thi. 324 test |
 | **v1.00.36** | 26/10/2026 | **File Zalo vào kho tài liệu**: file tải từ Zalo vào thư mục riêng (`paths.zalo_inbox`, mặc định `Downloads\Zalo-Logistic-Checkpoint`) được chép vào Inbox, kiểm SHA rồi mới xoá bản gốc (máy chỉ giữ 1 bản), agent xếp vào Uni-Documents, sao lưu Drive và lên University Inbox (Notion). Trùng nội dung thì chỉ xoá bản Zalo. Tin nhắn Zalo bị mã hoá nên không đọc. 330 test |
+| **v1.00.37** | 26/10/2026 | **Inbox**: nút "Mở trong thư mục" (File Explorer, chỉ file trong Uni-Documents). **Ngoại khoá**: tắt nhắc từ điện thoại (từng mục, hoặc cả loại bằng "tắt / bật ngoại khoá"), luôn hỏi Xác nhận rồi huỷ tin đã hẹn; hạn minh chứng chỉ nhắc 2 lần (24 giờ, 3 giờ) và có nút "Đã nộp MC"; vòng 2 / bán kết / chung kết chỉ nhắc khi bạn bấm Sẽ đi. **Học kỳ**: vắng ở môn nào, ngày nào. 333 test |
 
 ## Chạy thử
 

@@ -110,6 +110,18 @@ def _sane(x):
     return {**x, 'chang': out}
 
 
+LATER_ROUND = re.compile(r'vòng\s*([2-9]|\d{2,})\b|bán\s*kết|chung\s*kết', re.I)
+
+
+def must_remind(e, sg, ack_choice=None):
+    """(v1.00.37) Chặng này có được nhắc như việc bắt buộc (toast + điện thoại) không.
+    Vòng 2 trở lên / bán kết / chung kết: chỉ khi BẠN bấm "Sẽ đi" — đăng ký từ đầu không có nghĩa là bạn đã qua vòng trước
+    (vd Olympic Vật lý: lỡ vòng 1 mà UC vẫn nhắc đi thi vòng 2)."""
+    if ack_choice == 'Sẽ đi': return True
+    if not e.get('must'): return False
+    return not LATER_ROUND.search(sg.get('ten') or '')
+
+
 def when_of(sg):
     if not sg.get('ngay'): return None
     try:

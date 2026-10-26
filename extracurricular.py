@@ -201,5 +201,7 @@ def alert_items(data, now):
             if (en - st) <= dt.timedelta(days=1) and st > now and x['status'] != 'Không đạt':
                 out.append({**x, 'when': x['start'], 'marks': (1440, 120)})
         elif x['loai'] == 'Hạn nộp minh chứng' and x.get('han'):
-            out.append({**x, 'when': x['han'], 'marks': (72 * 60, 48 * 60, 36 * 60, 24 * 60, 420, 300, 180, 60, 30, 20, 10)})
+            # (v1.00.37) ngoại khoá KHÔNG nhắc dày như hạn môn học: 2 lần (24 giờ, 3 giờ). iCTSV không cho biết bạn đã nộp MC chưa
+            # (ua=1 "chờ xác nhận" cả khi chưa nộp lẫn đã nộp) -> nộp rồi thì bấm "Đã nộp MC" trên thông báo / "Tắt nhắc" ở UC.
+            out.append({**x, 'when': x['han'], 'marks': (24 * 60, 180)})
     return out
