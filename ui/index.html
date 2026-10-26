@@ -541,6 +541,46 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
 .mi.ex { border-left-color: var(--red); background: var(--red); color: #fff; font-weight: 700; } .mi.ex time { color: #fff; }
 li.gk { border-left: 4px solid var(--red) !important; }
 li.gk .tname, li.gk small { color: var(--red); }
+
+/* (v1.00.38) lịch tuần dạng lưới giờ */
+.wgrid-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--sheet); }
+.wgrid { display: grid; grid-template-columns: 56px repeat(7, minmax(104px, 1fr)); min-width: 780px; }
+.wg-corner { border-bottom: 1px solid var(--line); }
+.wg-head { all: unset; box-sizing: border-box; padding: 10px 8px; border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wg-head b { font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
+.wg-head span { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.wg-head em { font-style: normal; font-size: 11px; background: var(--blue-wash); color: var(--blue); border-radius: 6px; padding: 1px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wg-head.today b, .wg-head.today span { color: var(--blue); }
+.wg-head.sel { background: var(--blue-wash); }
+.wg-head:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.wg-axis { position: relative; height: var(--h); }
+.wg-axis i { position: absolute; right: 8px; font-style: normal; font-size: 11px; color: var(--ink-3); transform: translateY(-50%); }
+.wg-axis i:first-child { transform: none; }
+.wg-col { position: relative; height: var(--h); border-left: 1px solid var(--line); cursor: pointer;
+  background-image: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 52px); }
+.wg-col.sel { background-color: var(--blue-wash); }
+.ev.wev { position: absolute; margin: 0 2px; padding: 4px 7px; border-radius: 8px; overflow: hidden; box-sizing: border-box; font-size: 12px; line-height: 1.25; z-index: 1; }
+.ev.wev time { display: block; font-size: 11px; font-weight: 600; }
+.ev.wev b { display: block; font-size: 12.5px; }
+.ev.wev .md { display: inline-block; margin-top: 3px; }
+.ev.wev small { display: block; color: var(--ink-3); }
+.wdl { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--red); z-index: 2; }
+.wdl span { position: absolute; right: 3px; top: -10px; max-width: 94%; background: var(--red); color: #fff; font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wdl.past { opacity: .45; }
+.wnow { position: absolute; left: 0; right: 0; border-top: 2px solid var(--red); z-index: 3; pointer-events: none; }
+.wnow::before { content: ''; position: absolute; left: -5px; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
+
+/* (v1.00.38) thanh điều hướng DỌC trên màn hình rộng (điện thoại giữ dãy tab ngang) */
+@media (min-width: 900px) {
+  .main { display: grid; grid-template-columns: 196px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  .main > * { grid-column: 2; grid-row: 1; }
+  .main > .tabs { grid-column: 1; flex-direction: column; align-items: stretch; gap: 2px; padding: 18px 10px; border-bottom: 0;
+    border-right: 1px solid var(--line); overflow-y: auto; height: 100vh; box-sizing: border-box; }
+  .main > .tabs .tab { justify-content: space-between; text-align: left; border-bottom: 0; margin: 0; border-radius: 10px; padding: 9px 12px; }
+  .main > .tabs .tab:hover { background: var(--grid); }
+  .main > .tabs .tab[aria-selected="true"] { background: var(--blue-wash); color: var(--blue); font-weight: 600; border-bottom: 0; }
+  .main > .panel { height: 100vh; }
+}
 </style>
 </head>
 <body>
@@ -928,6 +968,7 @@ function renderCal() {
   renderWeek(); renderMonth(); calStamp(false);
 }
 function renderWeek() {
+  // (v1.00.38) lịch tuần dạng LƯỚI GIỜ: mỗi buổi đặt đúng giờ, cao theo thời lượng; hạn = mốc gạch đỏ đúng giờ hạn; vạch "bây giờ"
   const from = vnDate(calMon), to = vnDate(calMon + 6 * 864e5);
   const wk = Math.floor((calMon - WEEK1) / (7 * 864e5)) + 1;
   const fmt = (x) => x.slice(8, 10) + '/' + x.slice(5, 7);
@@ -938,24 +979,49 @@ function renderWeek() {
   const evs = CAL.events.filter(e => (e.end || e.start).slice(0, 10) >= from && e.start.slice(0, 10) <= to);
   const days = Array.from({ length: 7 }, (_, i) => ({ date: vnDate(calMon + i * 864e5), items: [] }));
   for (const e of evs) { if (isLong(e)) continue; const d = days.find(x => x.date === evDay(e)); if (d) d.items.push(e); }
+  const mins = s => { const t = s && s.includes('T') ? vnHM(s) : ''; if (!t) return null; const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  let h0 = 6, h1 = 22;   // khung mặc định 06–22, tự nới khi có mục ngoài khung
+  for (const d of days) for (const e of d.items) {
+    const a = mins(e.start); if (a == null) continue;
+    const b = Math.max(mins(e.end) ?? a + 30, a + 30);
+    h0 = Math.min(h0, Math.floor(a / 60)); h1 = Math.max(h1, Math.ceil(b / 60));
+  }
+  h1 = Math.min(24, h1);
+  const HR = 52, H = (h1 - h0) * HR, y = m => (m - h0 * 60) / 60 * HR;
+  const nowMin = mins(new Date(now).toISOString());
   let html = evs.filter(isLong).map(e => '<div class="banner">' + esc(e.title) + (e.notes ? ' · ' + esc(e.notes) : '') + '</div>').join('');
-  html += '<div class="week">' + days.map((d, i) => {
-    const items = d.items.map(e => {
-      const x = evInfo(e, now);
-      const t = x.dl ? 'Hạn ' + (vnHM(e.start) || 'cả ngày') : vnHM(e.start) + '–' + vnHM(e.end);
-      const md = x.dl ? '' : '<span class="md">' + (x.online ? 'Online' : esc(e.location || 'Offline')) + '</span>';
+  html += '<div class="wgrid-wrap"><div class="wgrid" style="--h:' + H + 'px"><div class="wg-corner"></div>';
+  html += days.map((d, i) => {
+    const allday = d.items.filter(e => mins(e.start) == null && e.kind !== 'Deadline');
+    return '<button class="wg-head' + (d.date === today ? ' today' : '') + (d.date === calSel ? ' sel' : '') + '" data-d="' + d.date + '" aria-pressed="' + (d.date === calSel) + '">' +
+      '<b>' + DOW[i] + (d.date === today ? ' · Hôm nay' : '') + '</b><span>' + d.date.slice(8, 10) + '/' + d.date.slice(5, 7) + '</span>' +
+      allday.map(e => '<em>' + esc(evInfo(e, now).short) + '</em>').join('') + '</button>';
+  }).join('');
+  html += '<div class="wg-axis">' + Array.from({ length: h1 - h0 }, (_, k) => '<i style="top:' + (k * HR) + 'px">' + String(h0 + k).padStart(2, '0') + ':00</i>').join('') + '</div>';
+  html += days.map(d => {
+    const timed = d.items.filter(e => mins(e.start) != null && e.kind !== 'Deadline').sort((a, b) => a.start.localeCompare(b.start));
+    const laneEnd = [], lanes = timed.map(e => {   // chồng giờ: chia làn
+      const a = mins(e.start); let k = laneEnd.findIndex(t => t <= a); if (k < 0) k = laneEnd.length;
+      laneEnd[k] = Math.max(mins(e.end) ?? a + 30, a + 30); return k;
+    });
+    const n = Math.max(1, laneEnd.length);
+    let col = timed.map((e, j) => {
+      const x = evInfo(e, now), a = mins(e.start), b = Math.max(mins(e.end) ?? a + 30, a + 30), h = Math.max(22, y(b) - y(a) - 2);
+      const md = '<span class="md">' + (x.online ? 'Online' : esc(e.location || 'Offline')) + '</span>';
       const gv = (e.notes || '').match(/GV ([^·]+)/);
-      const extra = x.online && /B1-103/.test(e.location || '') ? '<small>Nếu được gọi đi học: B1-103</small>' : '';
-      return '<div class="ev ' + x.cls + (x.past ? ' past' : '') + '"><time>' + t + '</time><b>' + esc(x.name) + '</b>' + md +
-             (gv ? '<small>' + esc(gv[1].trim()) + '</small>' : '') + extra + '</div>';
-    }).join('') || '<span class="none">Trống</span>';
-    const sel = d.date === calSel;
-    return '<div class="day' + (d.date === today ? ' today' : '') + (sel ? ' sel' : '') + '" data-d="' + d.date + '" role="button" tabindex="0" aria-pressed="' + sel + '">' +
-           '<h3><span>' + DOW[i] + (d.date === today ? '<span class="tag">Hôm nay</span>' : '') + '</span><span>' +
-           d.date.slice(8, 10) + '/' + d.date.slice(5, 7) + '</span></h3>' + items + '</div>';
-  }).join('') + '</div>';
+      return '<div class="ev wev ' + x.cls + (x.past ? ' past' : '') + '" title="' + esc(x.name) + '" style="top:' + y(a) + 'px;height:' + h + 'px;left:calc(' + lanes[j] + ' * 100% / ' + n + ');width:calc(100% / ' + n + ' - 4px)">' +
+        '<time>' + vnHM(e.start) + (e.end ? '–' + vnHM(e.end) : '') + '</time><b>' + esc(x.name) + '</b>' + (h >= 60 ? md : '') + (h >= 90 && gv ? '<small>' + esc(gv[1].trim()) + '</small>' : '') + '</div>';
+    }).join('');
+    col += d.items.filter(e => e.kind === 'Deadline').map(e => {
+      const m = mins(e.start) ?? (h1 * 60 - 1), x = evInfo(e, now);
+      return '<div class="wdl' + (x.past ? ' past' : '') + '" style="top:' + y(Math.min(Math.max(m, h0 * 60), h1 * 60 - 1)) + 'px" title="' + esc(x.name) + '"><span>Hạn ' + (vnHM(e.start) || 'cả ngày') + ' · ' + esc(x.short) + '</span></div>';
+    }).join('');
+    if (d.date === today && nowMin != null && nowMin >= h0 * 60 && nowMin <= h1 * 60) col += '<div class="wnow" style="top:' + y(nowMin) + 'px"></div>';
+    return '<div class="wg-col day' + (d.date === today ? ' today' : '') + (d.date === calSel ? ' sel' : '') + '" data-d="' + d.date + '">' + col + '</div>';
+  }).join('');
+  html += '</div></div>';
   body.innerHTML = html;
-  body.querySelectorAll('.day').forEach(c => {
+  body.querySelectorAll('[data-d]').forEach(c => {
     c.onclick = () => selectDay(c.dataset.d, 'week');
     c.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); selectDay(c.dataset.d, 'week'); } };
   });
