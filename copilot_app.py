@@ -1064,6 +1064,10 @@ class H(BaseHTTPRequestHandler):
                     import fami
                     if isinstance(tt, dict) and isinstance(tt.get("events"), list): tt = dict(tt, events=tt["events"] + fami.exam_events())
                 except Exception: pass
+                try:   # (v1.00.41) đổi lịch từ Teams đè lên qldt / eHUST (Teams đứng đầu về thứ tự ưu tiên nguồn)
+                    import teams_overrides
+                    if isinstance(tt, dict) and isinstance(tt.get("events"), list): tt = dict(tt, events=teams_overrides.apply(tt["events"]))
+                except Exception as e: print("teams overrides:", e)
                 return self._send(200, tt)
             if u.path == "/api/study":   # GPA kỳ, CPA, rèn luyện — tính bằng academic.py
                 import academic

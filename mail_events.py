@@ -224,13 +224,45 @@ SKIP_CHANNEL = re.compile(r'trao đổi|thảo luận|discussion', re.I)
 HINT_TEAMS = re.compile(r'quiz|due |bài tập|btvn|nộp|phòng|buổi|lịch|thi\b|kiểm tra|nghỉ|bù|online|offline|đổi|hạn', re.I)
 
 
+TEAMS_REPLIES = HERE / 'school' / 'teams' / 'replies.json'
+# (31/10) đính chính thường nằm trong PHẦN TRẢ LỜI của bài (vd thầy trả lời "chậm nhất 16h"), không nằm trong bài gốc.
+REPLY_KEEP = re.compile(r'đính chính|chậm nhất|có mặt|tập hợp|đổi (?:lịch|phòng|giờ)|học bù|nghỉ học|\d{1,2}\s?h\d{0,2}|\d{1,2}:\d{2}', re.I)
+REPLY_DAYS = 30
+
+
+def _reply_items():
+    """Trả lời trong luồng Teams (30 ngày gần nhất) có nội dung về lịch/giờ/địa điểm. Gắn kèm bài gốc để AI hiểu ngữ cảnh."""
+    try: rows = json.loads(TEAMS_REPLIES.read_text(encoding='utf-8'))['items']
+    except Exception: return []
+    try: posts = json.loads(TEAMS_POSTS.read_text(encoding='utf-8'))['items']
+    except Exception: posts = []
+    cutoff = (dt.datetime.now(TZ) - dt.timedelta(days=REPLY_DAYS)).strftime('%Y-%m-%dT%H:%M:%S')
+    out = []
+    for r in rows:
+        created = r.get('created') or ''
+        if not created or created[:19] < cutoff: continue
+        body = clean(r.get('body') or '')
+        if not body: continue
+        conv = 'teams:' + str(r.get('parent') or '')
+        par = next((p for p in posts if p.get('ConversationId') == conv), None)
+        parent_body = clean(par.get('Body') or '')[:1500] if par else ''
+        text = (('[Bài gốc] ' + parent_body + '\n') if parent_body else '') + '[Trả lời của ' + str(r.get('from') or '') + '] ' + body
+        if not REPLY_KEEP.search(text): continue
+        subj = (par or {}).get('Subject') or r.get('parentSubject') or ''
+        out.append({'Id': 'reply:' + str(r.get('id')), 'Subject': ('Trả lời: ' + subj)[:200], 'Body': text,
+                    'FromName': str(r.get('from') or ''), 'FromAddress': str(r.get('team') or '') + ' › ' + str(r.get('channel') or ''),
+                    'ReceivedDateTime': created, 'Created': created, 'Team': r.get('team') or '', 'Channel': r.get('channel') or '',
+                    'ConversationId': conv, 'Source': 'teams', 'IsReply': True})
+    return out
+
+
 def sources():
     """Thư trường + bài đăng Teams, theo thời gian. Bài Teams mang theo môn của lớp (nếu nhận ra)."""
     items = [dict(m, Source='mail') for m in json.loads(BOX.read_text(encoding='utf-8'))['items']]
     try:
         import teams_files
         tab = teams_files.course_table()
-        for m in json.loads(TEAMS_POSTS.read_text(encoding='utf-8'))['items']:
+        for m in json.loads(TEAMS_POSTS.read_text(encoding='utf-8'))['items'] + _reply_items():
             code, name = teams_files.course_of_team(m.get('Team') or '', tab)
             items.append(dict(m, CourseCode=code, CourseName=name))
     except FileNotFoundError: pass
