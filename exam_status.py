@@ -82,14 +82,19 @@ def overview(now=None):
     """Mỗi môn đang học 1 dòng: {ma_hp, ten_hp, trang_thai, ngay?, kip?, phong?, trich?, nguon?, luc?}. Môn có lịch FAMI lên đầu."""
     today = (now or dt.datetime.now(TZ)).date().isoformat()
     fami = {}
-    for e in (_load('fami.json') or {}).get('exams') or []:
+    import exam_pdf
+    for e in exam_pdf.merge((_load('fami.json') or {}).get('exams') or []):
         if (e.get('ngay') or '') >= today and e.get('ma_hp'): fami.setdefault(e['ma_hp'], e)
     rows = []
-    for code, rule in _courses().items():
+    courses = _courses()
+    for code in fami: courses.setdefault(code, {})
+    for code, rule in courses.items():
         if code in fami:
             e = fami[code]
             rows.append({'ma_hp': code, 'ten_hp': e.get('ten_hp') or code, 'trang_thai': 'co_lich', 'ngay': e.get('ngay'),
-                         'kip': e.get('kip'), 'phong': e.get('phong'), 'nguon': 'FAMI'})
+                         'kip': e.get('kip'), 'phong': e.get('phong'), 'nguon': e.get('nguon') or 'FAMI',
+                         'source_file': e.get('source_file'), 'source_page': e.get('source_page'),
+                         'source_warning': e.get('source_warning'), 'pdf_source': e.get('pdf_source')})
             continue
         n = _notices(code)
         row = {'ma_hp': code, 'ten_hp': NAMES.get(code, code)}

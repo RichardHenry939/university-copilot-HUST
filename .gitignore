@@ -33,3 +33,7 @@ uc_mcp/cloud/.firebaserc
 uc_mcp/cloud/.firebase/
 uc_mcp/cloud/functions/.env*
 uc_mcp/cloud/functions/node_modules/
+
+# Private local PDF source settings and optional dependencies
+exam_pdf_config.json
+vendor/

@@ -995,6 +995,9 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/translate/search":   # 📄 dịch PDF: tìm PDF trong Uni-Documents (chỉ đọc)
                 import pdf_translate
                 return self._send(200, pdf_translate.search(q.get("q", [""])[0]))
+            if u.path == "/api/zalo/status":
+                import zalo_files
+                return self._send(200, zalo_files.status())
             if u.path == "/api/translate/jobs":
                 import pdf_translate
                 return self._send(200, pdf_translate.jobs())
@@ -1464,6 +1467,7 @@ if __name__ == "__main__":
         if it.get("status") in ("queued", "reading", "thinking") and Path(it["path"]).exists():
             jobs.put(it["id"])
     threading.Thread(target=worker, daemon=True).start()
+    threading.Thread(target=lambda: __import__("exam_pdf").loop(), daemon=True).start()
     _tt_refresh()   # làm nóng lịch: tab Lịch hiện ngay lần bấm đầu
     threading.Thread(target=uni_sync_loop, daemon=True).start()
     threading.Thread(target=lambda: __import__("zalo_files").loop(), daemon=True).start()   # (v1.00.36) file tải từ Zalo -> Inbox -> Uni-Documents + Notion

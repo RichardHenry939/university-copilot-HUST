@@ -23,6 +23,8 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: { days: { type: 'integer', default: 21 } } } },
   { name: 'uc_exams', description: 'Thi giữa kỳ: lịch chính thức (FAMI) và trạng thái từng môn (dự kiến / chưa có lịch / không thi).', inputSchema: NO_ARGS },
   { name: 'uc_briefing', description: 'Báo cáo sơ bộ một trang. Khi máy tắt: báo máy đang tắt kèm bản cuối.', inputSchema: NO_ARGS },
+  { name: 'uc_ngoai_khoa', description: 'Hoạt động ngoại khoá từ iCTSV: đã đăng ký, đang mở, hạn nộp minh chứng; có tên, thời gian, địa điểm, trạng thái.', inputSchema: NO_ARGS },
+  { name: 'uc_inbox', description: 'Danh sách file trong University Inbox của UC: tên, trạng thái xếp, thư mục, môn. Chỉ danh sách, không có nội dung file.', inputSchema: NO_ARGS },
 ];
 
 function same(a, b) {
@@ -42,6 +44,8 @@ function toolData(name, args, snap) {
   if (name === 'uc_today') return { ...t, han_dang_mo: liveDeadlines(snap).slice(0, 30) };
   if (name === 'uc_deadlines') { const h = liveDeadlines(snap, Number(args.days) || 21); return { so_luong: h.length, han: h }; }
   if (name === 'uc_exams') return { lich_thi_giua_ki: t.lich_thi_giua_ki || [], thi_giua_ki_tung_mon: t.thi_giua_ki_tung_mon || [] };
+  if (name === 'uc_ngoai_khoa') return { ngoai_khoa: snap.ngoai_khoa || [], loi: snap.ngoai_khoa_loi || null };
+  if (name === 'uc_inbox') return { inbox: snap.inbox || [], loi: snap.inbox_loi || null };
   if (name === 'uc_briefing') return { bao_cao: snap.bao_cao || '' };
   return {};
 }

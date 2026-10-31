@@ -16,6 +16,31 @@ import server as S  # noqa: E402
 CONF = HERE / 'cloud.local.json'
 
 
+def _ngoai_khoa_inbox():
+    """(v1.00.40) Ngoại khoá (iCTSV) và danh sách Inbox: chỉ tên, trạng thái, thư mục, môn. KHÔNG đưa nội dung file lên mây."""
+    out = {"ngoai_khoa": [], "inbox": []}
+    try:
+        sys.path.insert(0, str(HERE.parent))
+        import extracurricular as X
+        keep = ('key', 'name', 'loai', 'start', 'end', 'han', 'place', 'org', 'type', 'status', 'note')
+        out["ngoai_khoa"] = [{k: it.get(k) for k in keep} for it in X.load().get('items', [])][:300]
+    except Exception as e:
+        out["ngoai_khoa_loi"] = f"{type(e).__name__}: {e}"[:160]
+    try:
+        st = json.loads((HERE.parent / 'inbox_state.json').read_text(encoding='utf-8'))
+        keep = ('name', 'status', 'folder', 'relPath', 'source', 'courseCode', 'reason')
+        rows = []
+        for it in st.get('items', [])[-200:]:
+            r = {k: it.get(k) for k in keep}
+            ts = it.get('createdAt')
+            if isinstance(ts, (int, float)): r['nhan_luc'] = dt.datetime.fromtimestamp(ts, S.TZ).isoformat(timespec='minutes')
+            rows.append(r)
+        out["inbox"] = rows
+    except Exception as e:
+        out["inbox_loi"] = f"{type(e).__name__}: {e}"[:160]
+    return out
+
+
 def snapshot():
     """-> bản tóm tắt (dict) hoặc None khi UC không trả lời. Chỉ đọc /api/today MỘT lần."""
     d, err = S._fetch()
@@ -26,7 +51,8 @@ def snapshot():
         return {"at": dt.datetime.now(S.TZ).isoformat(timespec="seconds"),
                 "today": S.t_today({}),
                 "han_tat_ca": [S._deadline_view(x) for x in S._song(d)],
-                "bao_cao": S.t_briefing({})["bao_cao"]}
+                "bao_cao": S.t_briefing({})["bao_cao"],
+                **_ngoai_khoa_inbox()}
     finally:
         S._fetch = real
 

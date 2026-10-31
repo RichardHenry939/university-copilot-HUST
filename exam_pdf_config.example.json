@@ -1,0 +1,9 @@
+{
+  "class_name": "Tên lớp của bạn",
+  "sources": [
+    {
+      "directory": "/path/to/exam-pdfs",
+      "pattern": "LTGK*.pdf"
+    }
+  ]
+}

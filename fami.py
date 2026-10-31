@@ -79,7 +79,8 @@ def fetch():
 def exams_upcoming(now=None):
     """Lịch thi giữa kỳ sắp tới (ngày >= hôm nay), từ school/fami.json."""
     try: d = json.loads(OUT.read_text(encoding='utf-8'))
-    except Exception: return []
+    except Exception: d = {}
+    import exam_pdf; d['exams'] = exam_pdf.merge(d.get('exams') or [])
     today = (now or dt.datetime.now(TZ)).date().isoformat()
     def _gio(kip):   # '14h25-15h05' -> (14, 25); so chuỗi sẽ đặt '14h' trước '8h'
         m = re.match(r'\s*(\d{1,2})h(\d{2})', kip or '')
@@ -91,15 +92,16 @@ def exam_events():
     """(v1.00.35) Lịch thi thành sự kiện cho tab Lịch (cùng dạng sự kiện của timetable.py), kind 'Exam'.
     Kíp '8h10-8h50' -> giờ bắt đầu / kết thúc; không đọc được kíp thì để cả ngày."""
     try: d = json.loads(OUT.read_text(encoding='utf-8'))
-    except Exception: return []
+    except Exception: d = {}
+    import exam_pdf; d['exams'] = exam_pdf.merge(d.get('exams') or [])
     out = []
     for e in d.get('exams') or []:
         day = e.get('ngay') or ''
         if not re.match(r'\d{4}-\d{2}-\d{2}$', day): continue
         hm = re.findall(r'(\d{1,2})h(\d{2})', e.get('kip') or '')
         iso = lambda h, m: f"{day}T{int(h):02d}:{m}:00+07:00"
-        start, end = (iso(*hm[0]), iso(*hm[-1])) if len(hm) >= 2 else (day, None)
-        out.append({'kind': 'Exam', 'title': f"Thi GK: {e.get('ten_hp') or e.get('ma_hp')}", 'start': start, 'end': end or start,
+        start, end = (iso(*hm[0]), iso(*hm[-1])) if len(hm) >= 2 else ((iso(*hm[0]), None) if hm else (day, None))
+        out.append({'kind': 'Exam', 'title': f"Thi{' GK' if e.get('loai') == 'GK' else ''}: {e.get('ten_hp') or e.get('ma_hp')}", 'start': start, 'end': end or start,
                     'location': e.get('phong') or '', 'notes': f"{e.get('ma_hp') or ''} · {e.get('loai') or 'GK'}"})
     return out
 

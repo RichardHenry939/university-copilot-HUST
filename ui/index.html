@@ -672,6 +672,7 @@ li.gk .tname, li.gk small { color: var(--red); }
           <b>Thả file vào đây hoặc bấm để chọn</b>
           <span>PDF, Word, PowerPoint, Excel, ảnh, file code. Tối đa 200 MB mỗi file.</span>
         </label>
+        <p class="note" id="zalo-source" role="status"></p>
         <div class="files" id="files"></div>
         <h2 style="font-size:17px;margin:26px 0 6px">Dịch tài liệu PDF sang tiếng Việt</h2>
         <p class="note" style="margin:0 0 8px">Dịch trên máy (không tốn quota), giữ nguyên bố cục và công thức. Ra 2 file trong thư mục "Bản dịch" cạnh bản gốc: bản tiếng Việt và bản song ngữ, rồi tự nạp vào kho như file bạn thả vào. Khoảng 30 giây mỗi trang.</p>
@@ -1792,7 +1793,7 @@ function renderDay() {
     const w = new Date(x.due), asking = dlAsk === x.id;
     return '<li class="' + (x.minsLeft < 1440 ? 'soon' : '') + (x.gkExam ? ' gk' : '') + '"><button class="chk dlchk" data-dl="' + x.id + '" aria-label="Hoàn tất ' + esc(x.name) + '"></button>' +
       '<div><button class="link tname dlopen" data-dlo="' + x.id + '" title="Mở thẳng chỗ làm bài (tự đăng nhập nếu cần)" style="text-align:left;padding:0;font:inherit;font-weight:600">' + esc(x.name) + ' ↗</button>' +
-      (DLO[x.id] ? '<small class="note" style="color:var(--' + (DLO[x.id].bad ? 'red' : 'ink') + ')">' + esc(DLO[x.id].msg) + '</small>' : '') + '<small>' + (x.course ? esc(x.course) + ' · ' : '') + '<span class="kind k-' + (x.kind === 'Môn học' ? 'mh' : x.kind === 'Tự luyện cốt lõi' ? 'cl' : 'tl') + '">' + esc(x.kind) + '</span> · hạn ' +
+      (DLO[x.id] ? '<small class="note" style="color:var(--' + (DLO[x.id].bad ? 'red' : 'ink') + ')">' + esc(DLO[x.id].msg) + '</small>' : '') + '<small>' + (x.course ? esc(x.course) + ' · ' : '') + '<span class="kind k-' + (x.kind === 'Môn học' ? 'mh' : x.kind === 'Tự luyện cốt lõi' ? 'cl' : 'tl') + '">' + esc(x.self ? 'Lịch ôn tập' : x.kind) + '</span> · ' + (x.self ? 'lịch ' : 'hạn ') +
       String(w.getHours()).padStart(2, '0') + ':' + String(w.getMinutes()).padStart(2, '0') + ' ' + w.getDate() + '/' + (w.getMonth() + 1) + '</small>' +
       (x.review ? '<small style="color:var(--red)">⚠ ' + esc(x.review) + '</small>' : '') +
       (x.extended ? '<small style="color:var(--' + (x.extWarn ? 'red' : 'ink-3') + ')">↻ đã tự gia hạn ' + x.extended + ' lần' + (x.extWarn ? ' — cảnh báo: việc này đang bị dời mãi' : '') + '</small>' : '') +
@@ -1809,8 +1810,11 @@ function renderDay() {
     const hm = (r.kip || '').match(/(\d{1,2})h(\d{2})/);
     const at = Date.parse(r.ngay + 'T' + (hm ? hm[1].padStart(2, '0') + ':' + hm[2] : '07:00') + ':00+07:00');
     const wd = DOWN[new Date(r.ngay + 'T12:00:00+07:00').getUTCDay()];
-    return '<li class="exam"><span class="exmark" aria-hidden="true">Thi</span><div><span class="tname">Giữa kỳ: ' + esc(r.ten_hp) + '</span>' +
-      '<small>' + esc(r.ma_hp) + ' · ' + wd + ' ' + r.ngay.slice(8, 10) + '/' + r.ngay.slice(5, 7) + (r.kip ? ' · ' + esc(r.kip) : '') + (r.phong ? ' · phòng ' + esc(r.phong) : '') + '</small></div>' +
+    return '<li class="exam"><span class="exmark" aria-hidden="true">Thi</span><div><span class="tname">Thi: ' + esc(r.ten_hp) + '</span>' +
+      '<small>' + esc(r.ma_hp) + ' · ' + wd + ' ' + r.ngay.slice(8, 10) + '/' + r.ngay.slice(5, 7) + (r.kip ? ' · ' + esc(r.kip) : '') + (r.phong ? ' · phòng ' + esc(r.phong) : '') + '</small><small>' + esc(r.nguon || '') +
+      (r.source_file ? ' · ' + esc(r.source_file) + ' · trang ' + esc(r.source_page) : '') +
+      (r.pdf_source ? ' · đối chiếu PDF trang ' + esc(r.pdf_source.page) : '') + '</small>' +
+      (r.source_warning ? '<small>' + esc(r.source_warning) + '</small>' : '') + '</div>' +
       '<span class="h">' + leftTxt(Math.round((at - Date.now()) / 60000)) + '</span></li>';
   };
   if (exRows.length || exOther.length) {
@@ -1820,8 +1824,8 @@ function renderDay() {
   }
   html += '<h2 style="font-size:17px;margin:0 0 8px">Hạn môn học</h2><ul class="tasks dls">' +
     (dlLive.filter(x => !x.self).map(dlLi).join('') || '<span class="empty">Không có hạn môn học nào trong 3 tuần tới.</span>') + '</ul>';
-  html += '<h2 style="font-size:17px;margin:0 0 8px">Hạn tự luyện</h2><ul class="tasks dls">' +
-    (dlLive.filter(x => x.self).map(dlLi).join('') || '<span class="empty">Không có hạn tự luyện nào trong 3 tuần tới.</span>') + '</ul>';
+  html += '<h2 style="font-size:17px;margin:0 0 8px">Lịch ôn tập</h2><ul class="tasks dls">' +
+    (dlLive.filter(x => x.self).map(dlLi).join('') || '<span class="empty">Không có lịch ôn tập nào trong 3 tuần tới.</span>') + '</ul>';
   html += '<h2 style="font-size:17px;margin:0 0 8px">Việc hôm nay</h2><ul class="tasks">' + (d.items.map(x => {
     const dn = x.status === 'Done';
     const note = (x.note || '').replace(/runtime.*$/, '').trim();
@@ -1844,7 +1848,7 @@ function renderDay() {
   if (dayAsk && (dayPick || dayAsk.date !== t)) html += askBox(d);
   if (w.focus) html += '<div class="weekbox"><b class="v-' + String(w.verdict || '').split(' ')[0] + '">' + esc(w.verdict || '') + '</b> · ' + esc(w.focus) + (w.pattern ? '<br><small style="color:var(--ink-3)">' + esc(w.pattern) + '</small>' : '') + '</div>';
   if (dlDead.length) html += '<details class="dldead" style="margin-top:14px"' + (dlDead.some(x => dlAsk === x.id) ? ' open' : '') + '><summary style="font-size:17px;font-weight:600;cursor:pointer">Hạn đã qua (' + dlDead.length + ')</summary>' +
-    '<p class="note" style="padding:4px 0">Hạn đã chết, chưa đánh dấu hoàn tất. Không còn nhắc. Hạn tự luyện thì UC tự gia hạn +1 tuần nên thường không nằm ở đây.</p>' +
+    '<p class="note" style="padding:4px 0">Hạn đã chết, chưa đánh dấu hoàn tất. Không còn nhắc. Lịch ôn tập thì UC tự gia hạn +1 tuần nên thường không nằm ở đây.</p>' +
     '<ul class="tasks dls">' + dlDead.map(dlLi).join('') + '</ul></details>';
   body.innerHTML = html;
   body.querySelectorAll('.modebar .seg button').forEach(b => b.onclick = () => { dayPick = null; askMode(t, b.dataset.m, $('#day-hours').value); });
@@ -2022,6 +2026,10 @@ async function refreshInbox() {
   try {
     if (!folders.length) folders = (await (await fetch('/api/folders')).json()).folders || [];
     const { items = [] } = await (await fetch('/api/inbox')).json();
+    try {
+      const zs = await fetch('/api/zalo/status').then(r => r.json());
+      $('#zalo-source').textContent = 'Zalo: ' + (zs.folderExists ? zs.readyFiles + ' file đang chờ trong checkpoint. ' : 'Chưa có thư mục checkpoint. ') + zs.message;
+    } catch (_) { $('#zalo-source').textContent = 'Zalo: chưa đọc được trạng thái nguồn.'; }
     const waiting = items.filter(i => i.status === 'needs_choice').length;
     $('#c-ib').hidden = !waiting; $('#c-ib').textContent = waiting;
     $('#files').innerHTML = items.map(it => {
@@ -2052,7 +2060,8 @@ async function refreshInbox() {
       if (!r.ok) { b.disabled = false; alert((await r.json()).error); } refreshInbox();
     });
     clearTimeout(refreshInbox.t);
-    if (items.some(i => ['queued', 'reading', 'thinking'].includes(i.status) || i.notion === 'sending')) refreshInbox.t = setTimeout(refreshInbox, 2500);
+    if ($('#p-ib').classList.contains('on')) refreshInbox.t = setTimeout(refreshInbox,
+      items.some(i => ['queued', 'reading', 'thinking'].includes(i.status) || i.notion === 'sending') ? 2500 : 10000);
   } catch (e) { $('#files').innerHTML = `<p class="skeleton">Không đọc được Inbox: ${esc(e.message)}</p>`; }
 }
 async function upload(fileList) {
