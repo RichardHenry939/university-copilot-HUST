@@ -115,6 +115,8 @@ def resume(st, now):
     a = st['active']
     if a and a.get('paused_at'):
         a['paused_s'] = a.get('paused_s', 0) + (now - _t(a['paused_at'])).total_seconds(); a['paused_at'] = None
+        if a['type'] == 'focus':   # tạm dừng làm phiên dài ra -> lùi giờ hết hạn của tín hiệu chặn
+            _signal(True, _iso(now + dt.timedelta(seconds=a['total'] * 60 - _elapsed_s(a, now))), now)
 
 
 def end_focus(st, now):
