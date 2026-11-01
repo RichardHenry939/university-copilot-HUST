@@ -7,6 +7,12 @@ import pytest
 import wallet as W
 
 T0 = dt.datetime(2026, 11, 2, 8, 0, tzinfo=W.TZ)
+
+
+@pytest.fixture(autouse=True)
+def no_real_signal(tmp_path, monkeypatch):
+    # (01/11) test từng ghi vào tệp tín hiệu THẬT (máy đã bật tín hiệu) -> có thể bật chặn trang thật. Luôn trỏ ra chỗ tạm.
+    monkeypatch.setattr(W, 'SIGNAL_CFG', tmp_path / 'chua-cau-hinh.json')
 m = lambda k: dt.timedelta(minutes=k)
 
 
@@ -28,12 +34,15 @@ def test_moi_khoi_25_phut_tron_cong_5_phut():
     assert st['active'] is None and st['sessions'][0]['focus_min'] == 50
 
 
-def test_ket_thuc_som_chi_tinh_khoi_da_tron():
+def test_da_bat_dau_thi_khong_huy_som():
+    # (01/11) chủ chốt: vào phiên rồi thì không huỷ. Phiên chỉ kết thúc khi hết giờ.
     st = new()
     W.start_focus(st, 100, '', T0)
-    r = W.end_focus(st, T0 + m(40))          # khối 1 trọn (25), khối 2 mới 10 phút
-    assert r['blocks'] == 1 and W.balance(st) == 5
-    assert st['sessions'][0]['focus_min'] == 35
+    with pytest.raises(ValueError):
+        W.end_focus(st, T0 + m(40))
+    assert st['active'] is not None and W.balance(st) == 0
+    v = W.view(st, T0 + m(100))              # hết giờ -> tự kết thúc: 25+5+25+5+25+5+10 = 3 khối trọn
+    assert v['active'] is None and v['balance'] == 15
 
 
 def test_tam_dung_khong_tinh_thoi_gian():

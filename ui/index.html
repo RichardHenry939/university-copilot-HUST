@@ -733,9 +733,9 @@ button.link:hover { text-decoration: underline; }
 .wrap.cal { container-type: inline-size; }
 .exhead { font-size: 17px; margin: 18px 0 8px; }
 .nav .tab[hidden] { display: none; }
-#cal-exams .tasks.exams { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin: 0 0 8px; border: 0; background: none; overflow: visible; }
-#cal-exams .tasks.exams li { border: 0; border-radius: var(--r-l); padding: 14px 16px; }
-#cal-exams .tasks.exams li .tname { font-family: var(--display); font-size: 17px; }
+#wal-exams .tasks.exams, #cal-exams .tasks.exams { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin: 0 0 8px; border: 0; background: none; overflow: visible; }
+#wal-exams .tasks.exams li, #cal-exams .tasks.exams li { border: 0; border-radius: var(--r-l); padding: 14px 16px; }
+#wal-exams .tasks.exams li .tname, #cal-exams .tasks.exams li .tname { font-family: var(--display); font-size: 17px; }
 .calrow { display: grid; grid-template-columns: minmax(0, 1fr) 272px; gap: 16px; align-items: start; }
 .calmain { min-width: 0; }
 .daycard { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 14px; }
@@ -871,6 +871,7 @@ button.link:hover { text-decoration: underline; }
           <section class="wcard wfocus" id="w-focus" aria-label="Phiên tập trung" aria-live="polite"></section>
         </div>
         <div class="calstats" id="w-stats"></div>
+        <div id="wal-exams"></div>
         <details class="wlog"><summary>Sổ ví gần đây</summary><ul id="w-log"></ul></details>
         <!-- (v1.00.40) gộp tab "Hôm nay": việc trong ngày, chế độ ngày, lịch thi và hạn nộp hiện ngay dưới lịch -->
         <div class="sem" id="cal-day">
@@ -2120,12 +2121,17 @@ let wSound = 'brown'; try { wSound = localStorage.getItem('w-sound') || 'brown';
 async function loadWallet() {
   try { WAL = await fetch('/api/wallet', { cache: 'no-store' }).then(r => r.json()); walAt = Date.now(); renderWallet(); } catch (e) {}
 }
+// (01/11) nhiều tab / cửa sổ UC cùng mở: tab này bắt đầu hay dừng thì báo các tab kia đọc lại ngay,
+// nếu không tab kia vẫn tưởng phiên đang chạy và brown noise phát tiếp (lỗi chủ gặp sáng 01/11).
+let walBC = null; try { walBC = new BroadcastChannel('uc-wallet'); walBC.onmessage = () => loadWallet(); } catch (e) {}
 async function walPost(body) {
-  if (walBusy) return; walBusy = true;
-  try { const r = await api('/api/wallet', body); if (!r.ok) alert(r.loi || 'Không làm được.'); else { WAL = r; walAt = Date.now(); renderWallet(); } }
+  if (walBusy) return false; walBusy = true; let ok = false;
+  try { const r = await api('/api/wallet', body); if (!r.ok) alert(r.loi || 'Không làm được.'); else { ok = true; WAL = r; walAt = Date.now(); renderWallet(); if (walBC) walBC.postMessage('changed'); } }
   catch (e) { alert('Không gọi được UC.'); }
-  walBusy = false;
+  walBusy = false; return ok;
 }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadWallet(); });
+setInterval(() => { if (WAL && WAL.active && !walBusy) loadWallet(); }, 10000);   // phiên đang chạy: hỏi lại máy chủ mỗi 10 giây
 const mmss = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
   return (h ? h + ':' + String(m).padStart(2, '0') : String(m).padStart(2, '0')) + ':' + String(x).padStart(2, '0'); };
 const fmtMin = n => n >= 60 ? Math.floor(n / 60) + ' giờ ' + (n % 60 ? (n % 60) + ' phút' : '') : n + ' phút';
@@ -2139,37 +2145,47 @@ function renderWallet() {
   fun.textContent = a && a.type === 'fun' ? 'Dừng giải trí' : 'Bắt đầu giải trí';
   fun.disabled = !!(a && a.type === 'focus') || (!a && WAL.balance <= 0);
   const f = $('#w-focus');
+  // chỉ vẽ lại thẻ khi trạng thái phiên đổi (vẽ lại sẽ tạo lại khung Claude Radio -> video phát lại từ đầu)
+  const key = a && a.type === 'focus' ? [a.id, a.phase, a.index, a.paused, a.blocks_done].join('|') : 'idle';
+  if (f.dataset.key === key && f.firstChild) { soundSync(false); return renderWalletStats(S); }
+  f.dataset.key = key;
   if (!a || a.type !== 'focus') {
     const sel = (n, v) => '<option value="' + v + '"' + (v === 50 ? ' selected' : '') + '>' + n + '</option>';
     const subj = [...new Set([...(DAY && DAY.deadlines || []).filter(x => !x.overdue).map(x => x.name), ...((PRG && PRG.courses) || []).map(c => c.code + ' ' + (c.name || ''))])].slice(0, 40);
-    f.innerHTML = '<h2>Phiên tập trung</h2><p class="wnote">Chọn tổng thời gian; UC chia khối 25 phút tập trung + 5 phút nghỉ. Kết thúc sớm vẫn được, chỉ tính khối đã trọn.</p>' +
+    f.innerHTML = '<h2>Phiên tập trung</h2><p class="wnote">Chọn tổng thời gian; UC chia khối 25 phút tập trung + 5 phút nghỉ. <b>Đã bắt đầu thì không huỷ được</b>: phiên tự kết thúc khi hết giờ, trong lúc đó mạng xã hội, Shorts và game bị chặn.</p>' +
       '<div class="wform"><label>Tổng thời gian<select id="w-total">' + sel('25 phút · 1 khối', 25) + sel('50 phút · 2 khối', 50) + sel('1 giờ 30 · 3 khối', 85) + sel('2 giờ · 4 khối', 115) + sel('3 giờ · 6 khối', 175) + '</select></label>' +
       '<label>Gắn với môn / hạn<input id="w-subj" list="w-subj-l" placeholder="không bắt buộc"><datalist id="w-subj-l">' + subj.map(s => '<option value="' + esc(s) + '">').join('') + '</datalist></label>' +
       '<label>Âm nền<select id="w-sound"><option value="brown">Brown noise</option><option value="radio">Claude Radio</option><option value="off">Tắt</option></select></label></div>' +
-      '<button class="primary wgo" id="w-start">Bắt đầu tập trung</button>';
+      '<div class="wform"><label>Nhập lại MSSV để xác nhận<input id="w-mssv" type="password" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="8–9 chữ số"></label></div>' +
+      '<button class="primary wgo" id="w-start" disabled>Bắt đầu tập trung</button>';
     $('#w-sound').value = wSound;
     $('#w-sound').onchange = e => { wSound = e.target.value; try { localStorage.setItem('w-sound', wSound); } catch (x) {} };
-    $('#w-start').onclick = () => walPost({ action: 'focus_start', total: Number($('#w-total').value), subject: $('#w-subj').value });
+    const mi = $('#w-mssv');   // số chỉ đi một chiều lên máy chủ để so; xoá khỏi ô ngay sau khi gửi
+    mi.oninput = () => { $('#w-start').disabled = !/^2\d{7,8}$/.test(mi.value.trim()); };
+    $('#w-start').onclick = async () => { const v = mi.value.trim(); mi.value = ''; $('#w-start').disabled = true;
+      await walPost({ action: 'focus_start', total: Number($('#w-total').value), subject: $('#w-subj').value, mssv: v }); };
   } else {
     const isF = a.phase === 'focus', nth = Math.min(a.focus_count, Math.floor(a.index / 2) + 1);
     f.innerHTML = '<h2>' + (isF ? 'Tập trung · khối ' + nth + '/' + a.focus_count : 'Nghỉ ' + a.phase_min + ' phút') + (a.paused ? ' · tạm dừng' : '') + '</h2>' +
       (a.subject ? '<p class="wnote">' + esc(a.subject) + '</p>' : '') +
       '<div class="wclock' + (isF ? '' : ' brk') + '" id="w-clock">' + mmss(walLeft()) + '</div>' +
       '<p class="wnote">Đã trọn ' + a.blocks_done + ' khối (+' + a.blocks_done * 5 + ' phút) · tổng ' + a.total + ' phút</p>' +
-      '<div class="row"><button class="ghost" id="w-pause">' + (a.paused ? 'Tiếp tục' : 'Tạm dừng') + '</button><button class="ghost" id="w-end">Kết thúc</button>' +
+      '<div class="row"><button class="ghost" id="w-pause">' + (a.paused ? 'Tiếp tục' : 'Tạm dừng') + '</button>' +
       '<label class="wsnd">Âm nền <select id="w-sound"><option value="brown">Brown noise</option><option value="radio">Claude Radio</option><option value="off">Tắt</option></select></label></div>' +
-      '<div id="w-radio"></div><p class="wnote" id="w-recnote"></p>';
+      '<div id="w-radio"></div><p class="wnote" id="w-recnote"></p><p class="wnote">Không huỷ được phiên. Tạm dừng không gỡ chặn; tiếp tục thì giờ kết thúc lùi theo.</p>';
     $('#w-sound').value = wSound;
     $('#w-sound').onchange = e => { wSound = e.target.value; try { localStorage.setItem('w-sound', wSound); } catch (x) {} soundSync(true); };
     $('#w-pause').onclick = () => walPost({ action: a.paused ? 'resume' : 'pause' });
-    $('#w-end').onclick = () => { if (a.blocks_done < a.blocks_total && !confirm('Kết thúc sớm? Chỉ tính ' + a.blocks_done + ' khối đã trọn (+' + a.blocks_done * 5 + ' phút).')) return; walPost({ action: 'focus_end' }); };
   }
+  renderWalletStats(S);
+  soundSync(false);
+}
+function renderWalletStats(S) {
   const st = (k, n) => { const s = S[k] || {}; return '<div class="stat"><span>' + n + '</span><strong>' + fmtMin(s.focus_min || 0) + '</strong><em>' + (s.blocks || 0) + ' khối · +' + (s.earned || 0) + ' / −' + (s.spent || 0) + ' phút ví</em></div>'; };
   $('#w-stats').innerHTML = st('ngay', 'Tập trung hôm nay') + st('tuan', 'Tập trung tuần này') + st('thang', 'Tập trung tháng này');
   const kindVi = { focus: 'Tập trung', deadline: 'Hoàn tất hạn', fun: 'Giải trí', revoke: 'Thu hồi' };
   $('#w-log').innerHTML = (WAL.recent || []).map(x => '<li><b class="' + (x.min < 0 ? 'neg' : 'pos') + '">' + (x.min > 0 ? '+' : '−') + Math.abs(x.min) + '</b> ' + esc(kindVi[x.kind] || x.kind) +
     (x.note ? ' · ' + esc(x.note) : '') + '<small>' + esc(x.at.slice(11, 16) + ' ' + x.at.slice(8, 10) + '/' + x.at.slice(5, 7)) + '</small></li>').join('') || '<li class="note">Chưa có gì.</li>';
-  soundSync(false);
 }
 /* âm nền: brown noise tự sinh bằng Web Audio (không tải file); Claude Radio nhúng YouTube. Không phát khi recorder đang ghi. */
 let AC = null, BN = null;
@@ -2181,7 +2197,10 @@ function brownOn() {
   const src = AC.createBufferSource(), g = AC.createGain(); src.buffer = buf; src.loop = true; g.gain.value = 0.35;
   src.connect(g).connect(AC.destination); src.start(); BN = src; if (AC.state === 'suspended') AC.resume();
 }
-function brownOff() { if (BN) { try { BN.stop(); } catch (e) {} BN = null; } }
+function brownOff() {   // dừng nguồn VÀ tạm ngưng cả bộ phát của trang: không còn đường nào phát tiếp
+  if (BN) { try { BN.stop(); BN.disconnect(); } catch (e) {} BN = null; }
+  if (AC && AC.state === 'running') AC.suspend().catch(() => {});
+}
 function soundSync(force) {
   let rec = false; try { rec = !!(recState && recState.recording); } catch (e) {}   // recState khai báo phía dưới file
   const a = WAL && WAL.active;
@@ -2299,6 +2318,7 @@ function renderDay() {
       (r.trich && r.nguon !== 'cách tính điểm' ? ' (“' + esc(r.trich) + '”, ' + esc(r.nguon || '') + ')' : '')).join(' · ') + '</p>';
   }
   $('#cal-exams').innerHTML = exHtml;
+  $('#wal-exams').innerHTML = exHtml;   // (v1.00.44) lịch thi cũng hiện ở tab Ví thời gian (cùng một dữ liệu)
   html += VIEC_HOM_NAY();
   html += '<h2 style="font-size:17px;margin:0 0 8px">Hạn môn học</h2><ul class="tasks dls">' +
     (dlLive.filter(x => !x.self).map(dlLi).join('') || '<span class="empty">Không có hạn môn học nào trong 3 tuần tới.</span>') + '</ul>';

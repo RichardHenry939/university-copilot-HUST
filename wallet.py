@@ -3,7 +3,8 @@
 
 Quy tắc (chủ chốt 26/10 và 31/10):
 - Chủ chọn tổng thời gian; UC chia khối 25 phút tập trung + 5 phút nghỉ. Mỗi khối 25 phút TRỌN -> +5 phút ví.
-- Kết thúc sớm được, nhưng chỉ tính khối đã trọn (câu "có cho kết thúc sớm không" chủ chưa chốt; đây là cách an toàn).
+- Đã bắt đầu thì KHÔNG huỷ (chủ chốt 01/11): phiên chỉ kết thúc khi hết giờ. Tạm dừng được, nhưng không gỡ chặn;
+  tiếp tục thì giờ hết hạn của tín hiệu lùi theo. Bắt đầu phải nhập lại MSSV (máy chủ so, xem copilot_app) để tránh bấm nhầm.
 - Hoàn tất một hạn -> +15 phút, một lần cho mỗi hạn. Bỏ hoàn tất -> thu hồi đúng phần đã cộng.
 - "Giải trí" trừ phút theo thời gian thật (làm tròn lên phút), không vượt số dư; hết số dư thì tự dừng.
 Dữ liệu: school/wallet.json (sổ cái + phiên). Chỉ chạy trên máy này.
@@ -123,6 +124,7 @@ def end_focus(st, now):
     a = st['active']
     if not a or a['type'] != 'focus': raise ValueError('Không có phiên tập trung nào.')
     p = progress(st, now)
+    if not p['done']: raise ValueError('Đã vào phiên tập trung thì không huỷ được. Phiên tự kết thúc khi hết giờ.')
     blocks, reward = p['blocks_done'], p['blocks_done'] * BLOCK_REWARD
     st['sessions'].append({'id': a['id'], 'start': a['start'], 'end': _iso(now), 'total': a['total'], 'subject': a['subject'],
                            'focus_min': p['focus_s'] // 60, 'blocks': blocks})

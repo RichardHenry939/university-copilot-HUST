@@ -906,6 +906,11 @@ def alert_loop():
             import timetable
             sent = alerts.tick(classes=timetable.get(_npost)["events"], dls=_dls(400))   # (6/10) mọi hạn mở: hạn mới báo ngay lúc xuất hiện
             if sent: print("toast:", sent)
+            try:   # (v1.00.44) thúc đi học: còn việc hôm nay + tập trung chưa đủ -> thông báo (không khoá)
+                import nudge
+                r = nudge.run(_npost, timetable.get(_npost)["events"], lambda t, x: alerts.notify(t, x, level="nudge"))
+                if r: print("nudge:", r["title"])
+            except Exception as e: print("nudge:", e)
             alert_loop.n = getattr(alert_loop, "n", 0) + 1
             if alert_loop.n % 5 == 1: phone_refresh()   # mỗi 5 phút: đối chiếu lịch hẹn ntfy + trang 📱 UC
         except Exception as e: print("alerts:", e)
@@ -1280,6 +1285,12 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/wallet":   # (v1.00.42 W8) bắt đầu / tạm dừng / kết thúc phiên tập trung hoặc giải trí
                 import wallet, datetime as _dt
                 b = json.loads(self._body(4 * 1024) or b"{}"); act = b.get("action")
+                if act == "focus_start":   # (01/11) nhập lại MSSV để tránh bấm nhầm; so trong bộ nhớ, không ghi, không trả số
+                    import mssv_store, hmac as _hmac   # tên riêng: "import hmac" trong hàm làm hmac thành biến cục bộ, hỏng endpoint khác
+                    saved = mssv_store.load()
+                    if not saved: return self._send(200, {"ok": False, "loi": "Chưa lưu MSSV. Lưu ở tab Giới thiệu trước khi bắt đầu tập trung."})
+                    if not _hmac.compare_digest(str(b.get("mssv") or "").strip().encode(), saved.encode()):
+                        return self._send(200, {"ok": False, "loi": "MSSV không khớp. Chưa bắt đầu phiên."})
                 with wallet.lock:
                     st = wallet.load(); now = _dt.datetime.now(wallet.TZ)
                     wallet.view(st, now)   # phiên đã hết giờ thì chốt trước
