@@ -22,6 +22,22 @@ DEFAULT = {'start_target_steps': 2200, 'weekly_increase': 0.10, 'daily_cap_ratio
            'windows': [[6, 8], [17, 19]]}   # khung đi bộ ưa thích của chủ; không bao giờ sau 19h
 
 
+MANUAL = HERE / 'school' / 'walk_manual.json'   # {'YYYY-MM-DD': số bước cả ngày theo app iCTSV, chủ tự nhập}
+
+
+def manual():
+    try: return {k: int(v) for k, v in json.loads(MANUAL.read_text(encoding='utf-8')).items()}
+    except Exception: return {}
+
+
+def set_manual(day, n):
+    dt.date.fromisoformat(day); n = int(n)
+    if not 0 <= n <= 100000: raise ValueError('Số bước từ 0 đến 100000.')
+    m = manual(); m[day] = n
+    MANUAL.parent.mkdir(parents=True, exist_ok=True); MANUAL.write_text(json.dumps(m), encoding='utf-8')
+    return m
+
+
 def cfg():
     c = dict(DEFAULT)
     try: c.update(json.loads(CFG_FILE.read_text(encoding='utf-8')))
@@ -102,18 +118,24 @@ def view(now=None):
     import walk_ctsv
     now = (now or dt.datetime.now(TZ)).astimezone(TZ); today = now.date().isoformat()
     c, ev, w = cfg(), _events(), walk_ctsv.view()
-    steps = {_d(r.get('DayRun')): r.get('steps', 0) for r in (w.get('days') or [])}
+    # (01/11 tối) CTSV chỉ trả quãng đường GIẢI ghi nhận (có vẻ bỏ lượt chậm hơn ~15 phút/km), không phải tổng cả ngày như app.
+    # Tổng cả ngày = max(số chủ nhập theo app, số quy từ CTSV). Số giải ghi nhận vẫn trả riêng (contest).
+    contest = {_d(r.get('DayRun')): r.get('steps', 0) for r in (w.get('days') or [])}
+    man = manual()
+    steps = {d: max(contest.get(d, 0), man.get(d, 0)) for d in set(contest) | set(man)}
     exam_days = {_d(e.get('start')) for e in ev if e.get('kind') == 'Exam'}
     tgt = target_for(now.date(), steps, exam_days, c)
     mil = military(ev, today)
     sl = slot(ev, today, max(10, math.ceil(tgt / c['steps_per_min'])), c, after=now)
     done = steps.get(today, 0)
+    extra = {'contestSteps': contest.get(today, 0), 'manualSteps': man.get(today)}
     month = today[:7]; prev = (now.date().replace(day=1) - dt.timedelta(days=1)).isoformat()[:7]
     return {'ok': bool(w.get('ok')), 'at': w.get('at'), 'error': w.get('error'), 'competition': w.get('competition'),
             'myRank': w.get('myRank'), 'top100Km': w.get('top100Km'), 'stepsPerKm': w.get('stepsPerKm'),
+            'board': w.get('board') or [],
             'days': w.get('days') or [], 'today': today, 'target': tgt, 'cap': round(tgt * c['daily_cap_ratio']),
             'steps': done, 'met': done >= tgt, 'capped': done >= round(tgt * c['daily_cap_ratio']),
             'examWeek': tgt == c['exam_week_target_steps'] and any(_monday(now.date()) <= dt.date.fromisoformat(x) < _monday(now.date()) + dt.timedelta(days=7) for x in exam_days if x),
             'slot': sl, 'military': mil, 'remind': not mil['active'],
             'monthSteps': sum(v for k, v in steps.items() if k.startswith(month)),
-            'prevMonthSteps': sum(v for k, v in steps.items() if k.startswith(prev))}
+            'prevMonthSteps': sum(v for k, v in steps.items() if k.startswith(prev)), **extra}

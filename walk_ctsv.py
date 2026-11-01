@@ -34,6 +34,8 @@ RUN_JS = """async (code) => {
     competition: top.CompetitionName || null, topCount: (top.TopRunLst || []).length,
     myRank: me ? me.TopRank : null, myDistance: me ? me.Distance : null,
     top100Km: (top.TopRunLst || []).length ? top.TopRunLst[top.TopRunLst.length - 1].Distance : null,   // chỉ mốc km của hạng cuối top, không giữ tên ai
+    // (01/11 tối) bảng xếp hạng như trang CTSV hiện cho người đã đăng nhập: hạng, họ tên, khoa, km. KHÔNG giữ mã SV của ai.
+    board: (top.TopRunLst || []).map(x => ({r: x.TopRank, ten: x.StudentName || x.FullName || '', khoa: x.Faculty || '', km: x.Distance, me: String(x.StudentID) === String(code)})),
     dayKeys: Object.keys(day).filter(k => k !== 'DayRunLst'),
     dayExtra: Object.fromEntries(Object.entries(day).filter(([k, v]) => k !== 'DayRunLst' && typeof v !== 'object')),
     days: day.DayRunLst || []};

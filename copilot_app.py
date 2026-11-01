@@ -56,6 +56,8 @@ COURSE_FOLDERS = {
     r"Toán Cao Cấp - HUST\Đại số Tuyến Tính": ("MI1141", "Đại số"),
     r"Nhập môn Công Nghệ Thông Tin và Truyền Thông": ("IT2000", "Nhập môn CNTT và TT"),
     r"Nhập môn Lập Trình": ("IT1108", "Nhập môn lập trình"),
+    # (01/11 tối, chủ) giấy tờ hành chính coi như một "môn" đặc biệt, ngang hàng các môn; mã giả HANHCHINH (không phải học phần thật)
+    r"Hành chính": ("HANHCHINH", "Hành chính"),
 }
 # Chủ đề đặc trưng từng môn: vừa đưa cho model làm gợi ý, vừa chấm điểm từ khoá độc lập để bắt lỗi model.
 COURSE_HINTS = {
@@ -64,6 +66,8 @@ COURSE_HINTS = {
     "MI1141": ["ma trận", "định thức", "hạng", "hệ phương trình tuyến tính", "cramer", "không gian vector", "ánh xạ tuyến tính",
                "trị riêng", "véc tơ riêng", "dạng toàn phương", "logic mệnh đề", "tập hợp", "số phức"],
     "IT2000": ["website", "wordpress", "iot", "arduino", "firebase", "aws", "tên miền", "internet", "mạng máy tính", "soict"],
+    "HANHCHINH": ["học phí", "nộp tiền", "biên lai", "giấy triệu tập", "giấy xác nhận", "đơn đề nghị", "thủ tục", "biểu mẫu",
+                  "quyết định", "ký túc xá", "bảo hiểm y tế", "thẻ sinh viên", "miễn giảm", "ngân hàng", "chuyển khoản", "hồ sơ"],
     "IT1108": ["lập trình", "thuật toán", "biến", "vòng lặp", "con trỏ", "hàm main", "printf", "scanf", "c++", "mảng", "chương trình"],
 }
 # Thư mục con chuẩn (theo cách bạn đang đặt tên)
@@ -304,6 +308,19 @@ def place(item_id, rel_folder, decision, how):
         update_item(item_id, notion="done"); return
     threading.Thread(target=ingest, args=(item_id,), daemon=True).start()
 
+ADMIN_CODE = "HANHCHINH"
+
+
+def admin_mark(inbox_url):
+    """Dòng 📥 University Inbox của giấy tờ hành chính: đánh dấu đã phân loại, không phải môn -> A2 không gắn vào môn / học liệu."""
+    try:
+        import academic
+        pid = re.search(r"([0-9a-f]{32})", inbox_url.replace("-", "")).group(1)
+        academic.Notion(_npost).patch(pid, {"Triage Status": {"status": {"name": "Done"}},
+            "Triage Notes": {"rich_text": [{"text": {"content": "Giấy tờ hành chính: không thuộc môn học nào, không đưa vào học liệu. Ở máy xếp trong Uni-Documents › Hành chính."}}]}})
+    except Exception as e:
+        print("admin_mark:", e)
+
 def ingest(item_id):
     it = get_item(item_id)
     try:
@@ -314,12 +331,15 @@ def ingest(item_id):
     update_item(item_id, notion="sending")
     try:
         drive_name = it["relPath"].replace(os.sep, " › ")
+        # (01/11 tối, chủ) "Hành chính" chỉ là cách xếp thư mục ở máy; trên Notion TUYỆT ĐỐI không ghi là môn học -> gửi trống mã/tên môn
+        admin = it.get("courseCode") == ADMIN_CODE
         r = n8n("copilot-file-ingest", {
             "relPath": it["relPath"], "fileName": os.path.basename(it["relPath"]), "title": it.get("title"),
-            "courseCode": it.get("courseCode"), "courseName": it.get("courseName"), "summary": it.get("summary"),
-            "category": it.get("category"), "driveName": drive_name,
+            "courseCode": "" if admin else it.get("courseCode"), "courseName": "" if admin else it.get("courseName"), "summary": it.get("summary"),
+            "category": "Hành chính" if admin else it.get("category"), "driveName": drive_name,
             "downloadUrl": f"http://host.docker.internal:{PORT}/files/{item_id}?k={sign(item_id)}"}, timeout=300)
         update_item(item_id, notion="done" if r.get("ok") else "error", inboxUrl=r.get("inboxUrl"), driveLink=r.get("driveLink"))
+        if admin and r.get("ok") and r.get("inboxUrl"): admin_mark(r["inboxUrl"])
         backup_log(get_item(item_id), bool(r.get("ok")), r.get("driveLink"))
         threading.Thread(target=a2_pump, daemon=True).start()   # A2 xếp vào kho, tuần tự từng dòng
         sup = get_item(item_id).get("supersedes")
@@ -1154,6 +1174,9 @@ class H(BaseHTTPRequestHandler):
                 with wallet.lock:
                     st = wallet.load(); v = wallet.view(st, _dt.datetime.now(wallet.TZ)); wallet.save(st)
                 return self._send(200, v)
+            if u.path == "/api/weather":   # (v1.00.45 tiếp) thời tiết + không khí quanh trường, điểm "phù hợp để ra ngoài" (Open-Meteo, đệm 15 phút)
+                import weather
+                return self._send(200, weather.view())
             if u.path == "/api/walk":   # (v1.00.45 tiếp) thể dục: km/bước theo ngày trên CTSV (đã gỡ MSSV/tên) + mục tiêu, giờ đi, quân sự
                 import walk
                 return self._send(200, walk.view())
@@ -1380,6 +1403,12 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/offline/refresh":   # (v1.00.42) đọc lại DS học offline ngay
                 import offline_list
                 return self._send(200, offline_list.summary(offline_list.refresh()))
+            if u.path == "/api/walk/manual":   # (01/11 tối) chủ nhập tổng bước cả ngày theo app iCTSV (CTSV web chỉ có quãng đường giải tính)
+                import walk
+                b = json.loads(self._body(4 * 1024) or b"{}")
+                try: walk.set_manual(str(b.get("date") or "")[:10], b.get("steps"))
+                except Exception as e: return self._send(200, {"ok": False, "loi": str(e)[:200]})
+                return self._send(200, {"ok": True, **walk.view()})
             if u.path == "/api/walk/refresh":   # (v1.00.45 tiếp) đọc lại thành tích 10000 bước trên CTSV ngay (chỉ đọc)
                 import walk_ctsv
                 return self._send(200, walk_ctsv.fetch())

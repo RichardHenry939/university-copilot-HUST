@@ -1023,6 +1023,10 @@ button.link:hover { text-decoration: underline; }
 .clk24 .c-key { display: flex; gap: 14px; font-size: 12.5px; color: var(--ink-3); }
 .clk24 .c-key i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
 /* (01/11 tối) thể dục: dòng mục tiêu ở TKB, thẻ nhiệm vụ ở Ví, lời nhắc đi tập, tab con 10000 bước chạy */
+.dc-walk { background: var(--green-wash); border: 1px solid color-mix(in srgb, var(--green) 35%, transparent); border-radius: var(--r-m); padding: 10px 12px; display: grid; gap: 6px; }
+.dc-walk h3 { margin: 0; display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--green); }
+.dc-walk h3 span { font-family: var(--display); font-size: 14px; color: var(--ink); }
+.dc-walk p { margin: 0; font-size: 12.5px; color: var(--ink-2); } .dc-walk .ghost { justify-self: start; font-size: 12.5px; padding: 4px 10px; }
 .walkline { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; background: var(--green-wash); border: 1px solid color-mix(in srgb, var(--green) 35%, transparent); border-radius: var(--r-m); padding: 10px 14px; margin: 0 0 12px; font-size: 14px; }
 .walkline b { font-family: var(--display); font-size: 15.5px; color: var(--green); }
 .walkline span { color: var(--ink-2); flex: 1 1 260px; }
@@ -1031,6 +1035,7 @@ button.link:hover { text-decoration: underline; }
 .wwalk p { margin: 0; color: var(--ink-2); font-size: 14px; }
 .wbar { height: 8px; background: var(--grid); border-radius: 99px; overflow: hidden; } .wbar i { display: block; height: 100%; background: var(--green); border-radius: 99px; }
 .walknag { position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: var(--green); color: #fff; padding: 12px 18px; font-size: 15px; }
+.walknag[hidden] { display: none; }   /* display:flex ở trên đè thuộc tính hidden -> dải xanh trống */
 .walknag b { font-family: var(--display); font-size: 17px; } .walknag .ghost { margin-left: auto; background: #fff; color: var(--green); border-color: #fff; }
 .runhero { background: linear-gradient(135deg, var(--deep, #1d3f9a), color-mix(in srgb, var(--deep, #1d3f9a) 60%, var(--green))); color: #fff; border-radius: var(--r-l); padding: 22px 26px; margin: 8px 0 16px; }
 .runhero span { font-size: 13px; opacity: .85; } .runhero h2 { margin: 6px 0 0; font-size: clamp(19px, 2vw, 25px); line-height: 1.25; color: #fff; }
@@ -1041,6 +1046,21 @@ button.link:hover { text-decoration: underline; }
 .runtab th, .runtab td { padding: 10px 14px; text-align: left; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
 .runtab th { font-size: 13px; color: var(--ink-3); font-weight: 600; border-top: 0; }
 .runtab .rbar { width: 32%; } .runtab .rbar i { display: block; height: 10px; border-radius: 99px; background: var(--blue); min-width: 3px; }
+.wxtop { background: var(--sheet); border: 1px solid var(--line); border-left: 6px solid var(--green); border-radius: var(--r-l); padding: 18px 22px; margin: 8px 0 14px; }
+.wxtop.mid { border-left-color: var(--amber); } .wxtop.bad { border-left-color: var(--red); }
+.wxsay { margin: 0; font-family: var(--display); font-size: clamp(22px, 2.6vw, 32px); font-weight: 700; }
+.wxtop.ok .wxsay b { color: var(--green); } .wxtop.mid .wxsay b { color: var(--amber); } .wxtop.bad .wxsay b { color: var(--red); }
+.wxwhy { margin: 4px 0 12px; color: var(--ink-2); }
+.wxgrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.wxgrid div { background: var(--paper); border-radius: var(--r-m); padding: 10px 12px; display: grid; gap: 2px; }
+.wxgrid strong { font-family: var(--display); font-size: 21px; } .wxgrid span { font-size: 12.5px; color: var(--ink-3); }
+.runboard summary { cursor: pointer; list-style: none; } .runboard summary::-webkit-details-marker { display: none; }
+.runboard summary .xsec::after { content: " ▾"; color: var(--ink-3); font-size: .8em; } .runboard[open] summary .xsec::after { content: " ▴"; }
+.runtab tr.me td { background: var(--blue-wash); font-weight: 700; }
+@media (max-width: 900px) { .wxgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.runman { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 14px; margin: 0 0 8px; }
+.runman label { font-weight: 600; display: flex; align-items: center; gap: 10px; } .runman input { width: 110px; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); }
+.runman small { flex-basis: 100%; color: var(--ink-3); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 @media (max-width: 760px) { .runstats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .clk24-w { flex-direction: row; justify-content: center; gap: 28px; margin: 4px 0 18px; }
@@ -1498,7 +1518,6 @@ a.wk:hover { border-color: var(--blue); }
       <div class="wrap wide cal">
         <h1>Thời khoá biểu toàn kỳ</h1>
         <p class="lead">Thời khoá biểu và deadline trong Notion: tuần ở trên, cả tháng ở dưới. Muốn đổi lịch, nhắn cho Copilot.</p>
-        <div class="walkline" id="cal-walk" hidden></div>   <!-- (01/11 tối) mục tiêu đi bộ hằng ngày, trên cùng lịch -->
         <div id="cal-exams"></div>
         <div class="calstats" id="cal-stats" aria-live="polite"></div>
         <div class="cal-nav">
@@ -1910,13 +1929,7 @@ function renderWalk() {
   const mil = w.military || {}, sl = w.slot || {};
   const when = sl.indoor ? 'đi trong nhà (hôm nay hết khung 6–8h và 17–19h)' : 'đi lúc ' + hhmm(sl.start) + '–' + hhmm(sl.end) + (sl.rush ? ' (giờ cao điểm: chọn đường trong trường, xa đường lớn)' : '');
   const milTxt = mil.active ? 'Đang học quân sự (' + hDM(mil.from) + '–' + hDM(mil.to) + '): UC không nhắc đi bộ hằng ngày. ' : '';
-  const cl = $('#cal-walk');
-  if (cl) {
-    cl.hidden = false;
-    cl.innerHTML = '<b>🚶 Mục tiêu hôm nay: ' + nf(w.target) + ' bước' + (w.examWeek ? ' (tuần thi)' : '') + '</b>' +
-      '<span>' + (w.remind ? esc(when) + ' · ' : esc(milTxt)) + 'đã đi ' + nf(w.steps) + ' bước · ' + esc(walkSum(w)) + '</span><button class="ghost" id="cal-walk-go">Xem bước chạy</button>';
-    $('#cal-walk-go').onclick = () => goTo('extra:run');
-  }
+  if (typeof CAL !== 'undefined' && CAL) renderDayCard();   // (01/11 tối, chủ) mục tiêu đi bộ nằm trong tờ lịch ngày, ngay dưới tờ lịch
   const wc = $('#w-walk');
   if (wc) {
     wc.hidden = false;
@@ -1928,19 +1941,56 @@ function renderWalk() {
   if (exTab === 'run' && $('#p-extra') && $('#p-extra').classList.contains('on')) renderExtra();
   walkNag();
 }
+// (01/11 tối) thời tiết ngoài trời gần thời gian thực (Open-Meteo, 15 phút/lần) + câu chốt "phù hợp để ra ngoài bao nhiêu %"
+let WX = null, wxAt = 0;
+function wxLoad() {
+  wxAt = Date.now();
+  fetch('/api/weather', { cache: 'no-store' }).then(r => r.json()).then(j => { WX = j; if (exTab === 'run' && $('#p-extra').classList.contains('on')) renderExtra(); }).catch(() => {});
+}
+setInterval(() => { if (exTab === 'run' && $('#p-extra') && $('#p-extra').classList.contains('on')) wxLoad(); }, 10 * 6e4);
+function wxHTML() {
+  const x = WX;
+  if (!x) return '<section class="wxtop"><p class="skeleton">Đang đọc thời tiết…</p></section>';
+  if (!x.ok) return '<section class="wxtop"><p class="note">Không đọc được thời tiết: ' + esc(x.error || '') + '. Luật nắng nóng và không khí tạm bỏ qua.</p></section>';
+  const n = v => v == null ? '–' : String(Math.round(v * 10) / 10).replace('.', ',');
+  const lv = x.score >= 75 ? 'ok' : x.score >= 45 ? 'mid' : 'bad';
+  const aqiTxt = x.aqi == null ? '–' : x.aqi <= 50 ? 'Tốt' : x.aqi <= 100 ? 'Trung bình' : x.aqi <= 150 ? 'Kém (nhạy cảm)' : x.aqi <= 200 ? 'Xấu' : 'Rất xấu';
+  return '<section class="wxtop ' + lv + '"><p class="wxsay">Phù hợp để ra ngoài: <b>' + x.score + '%</b></p>' +
+    '<p class="wxwhy">' + (x.why.length ? 'Trừ điểm vì ' + esc(x.why.join(', ')) + '.' : 'Không có gì cản trở.') + '</p>' +
+    '<div class="wxgrid">' +
+      '<div><strong>' + n(x.temp) + '°C</strong><span>' + esc(x.sky) + ' · cảm giác ' + n(x.feels) + '°C</span></div>' +
+      '<div><strong>' + n(x.humidity) + '%</strong><span>độ ẩm</span></div>' +
+      '<div><strong>' + n(x.rain) + ' mm</strong><span>mưa · khả năng ' + (x.rainProb == null ? '–' : x.rainProb + '%') + ' trong 2 giờ</span></div>' +
+      '<div><strong>' + n(x.wind) + '</strong><span>gió km/h</span></div>' +
+      '<div><strong>' + n(x.uv) + '</strong><span>chỉ số UV</span></div>' +
+      '<div><strong>' + (x.aqi == null ? '–' : x.aqi) + '</strong><span>AQI (US) · ' + aqiTxt + ' · PM2.5 ' + n(x.pm25) + '</span></div></div>' +
+    '<p class="cal-sync">Khu Bách khoa · ' + esc(x.source) + ' · số liệu lúc ' + esc(hhmm(x.time || '') || '') + (x.stale ? ' (không đọc được bản mới, đang dùng bản cũ)' : '') +
+    '. Điểm do UC tự tính từ nhiệt độ, mưa, UV, không khí, gió, trời tối và giờ cao điểm.</p></section>';
+}
+function boardHTML(w) {
+  const b = w.board || [];
+  if (!b.length) return '<h2 class="xsec">Bảng xếp hạng</h2><p class="note">Chưa có bảng xếp hạng. Bấm "Đọc lại ngay" ở cuối trang để đọc từ CTSV.</p>';
+  return '<details class="runboard"' + (b.length <= 20 ? ' open' : '') + '><summary><h2 class="xsec">Bảng xếp hạng <small>top ' + b.length + '</small></h2></summary>' +
+    '<table class="runtab"><thead><tr><th>Hạng</th><th>Họ tên</th><th>Khoa / trường</th><th>Quãng đường</th></tr></thead><tbody>' +
+    b.map(x => '<tr' + (x.me ? ' class="me"' : '') + '><td>' + esc(x.r) + '</td><td>' + esc(x.ten) + (x.me ? ' (bạn)' : '') + '</td><td>' + esc(x.khoa) + '</td><td>' +
+      (runKm(x.km) || 0).toFixed(2).replace('.', ',') + ' km</td></tr>').join('') + '</tbody></table></details>';
+}
 function runHTML() {
   const w = WALK;
   if (!w) return '<p class="skeleton">Đang đọc…</p>';
   const days = (w.days || []).slice().sort((a, b) => String(b.DayRun).localeCompare(String(a.DayRun)));
   const totKm = days.reduce((t, r) => t + (r.km || 0), 0), maxKm = Math.max(1, ...days.map(r => r.km || 0));
   const cut = runKm(w.top100Km), k2 = v => v.toFixed(2).replace('.', ',');
-  return '<section class="runhero"><span>Giải chạy sinh viên · iCTSV</span><h2>' + esc(w.competition || 'Giải 10000 bước chân vì sức khoẻ mỗi ngày') + '</h2></section>' +
+  return wxHTML() + '<section class="runhero"><span>Giải chạy sinh viên · iCTSV</span><h2>' + esc(w.competition || 'Giải 10000 bước chân vì sức khoẻ mỗi ngày') + '</h2></section>' +
     '<div class="runstats">' +
       '<div><strong>' + k2(totKm) + '</strong><span>km đã ghi nhận</span></div>' +
       '<div><strong>' + nf(Math.round(totKm * (w.stepsPerKm || 1385))) + '</strong><span>bước (km × ' + nf(w.stepsPerKm || 1385) + ')</span></div>' +
       '<div><strong>' + (w.myRank ? '#' + w.myRank : '–') + '</strong><span>' + (w.myRank ? 'hạng của bạn' : cut != null ? 'ngoài top 100 · mốc vào top ' + k2(cut) + ' km' : 'chưa có hạng') + '</span></div>' +
-      '<div><strong>' + nf(w.steps) + '</strong><span>bước hôm nay / mục tiêu ' + nf(w.target) + '</span></div></div>' +
+      '<div><strong>' + nf(w.steps) + '</strong><span>bước cả ngày / mục tiêu ' + nf(w.target) + (w.manualSteps == null ? ' · chưa nhập theo app' : '') + '</span></div></div>' +
+    '<form class="runman" id="run-man"><label>Tổng bước hôm nay theo app iCTSV <input type="number" min="0" max="100000" inputmode="numeric" id="run-man-n" value="' + (w.manualSteps == null ? '' : w.manualSteps) + '"></label>' +
+      '<button class="primary" type="submit">Lưu</button><small>CTSV web chỉ cho biết quãng đường giải tính (hôm nay ' + nf(w.contestSteps) + ' bước); lượt đi chậm có vẻ không được tính. UC lấy số lớn hơn làm tổng cả ngày.</small></form>' +
     (w.military && w.military.active ? '<p class="note">Đang học quân sự: UC không nhắc đi bộ hằng ngày, số bước vẫn được ghi.</p>' : '') +
+    boardHTML(w) +
     '<h2 class="xsec">Thành tích theo ngày <small>' + days.length + '</small></h2>' +
     (days.length ? '<table class="runtab"><thead><tr><th>Ngày</th><th>Quãng đường (km)</th><th>Bước (ước tính)</th><th><span class="sr">Biểu đồ</span></th></tr></thead><tbody>' +
       days.map(r => '<tr><td>' + hDM(r.DayRun) + '/' + String(r.DayRun).slice(0, 4) + '</td><td>' + k2(r.km || 0) + '</td><td>' + nf(r.steps) +
@@ -2047,17 +2097,31 @@ function renderDayCard() {
   const el = $('#cal-daycard'); if (!el || !CAL) return;
   const d = calSel, now = Date.now(), today = vnDate(now), dt = new Date(dayMs(d));
   const dow = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', timeZone: 'Asia/Ho_Chi_Minh' }).format(dt);
-  const { dls, sch } = dayEvents(d);
+  const { dls, sch: sch0 } = dayEvents(d);
   const li = (e, dl) => dayLi(e, dl, now);
+  // (01/11 tối, chủ) ngay dưới tờ lịch: lịch thi của ngày (nếu có) rồi tới mục tiêu đi bộ (chỉ hôm nay)
+  const exams = sch0.filter(e => e.kind === 'Exam'), sch = sch0.filter(e => e.kind !== 'Exam');
   renderHomeTime();
   el.innerHTML = '<div class="bloc' + (d === today ? ' is-today' : '') + '"><span class="bloc-dow">' + esc(dow.charAt(0).toUpperCase() + dow.slice(1)) + (d === today ? ' · Hôm nay' : '') + '</span>' +
     '<span class="bloc-n">' + dt.getUTCDate() + '</span><span class="bloc-m">Tháng ' + (dt.getUTCMonth() + 1) + ' · ' + dt.getUTCFullYear() + '</span></div>' +
     (d !== today ? '<button class="ghost dc-back" id="dc-today">Về hôm nay</button>' : '') +
+    (exams.length ? '<ul class="dc-list dc-exams">' + exams.map(e => li(e, false)).join('') + '</ul>' : '') +
+    (d === today ? walkDayHTML() : '') +
     '<section class="dc-sec"><h3>Hạn trong ngày <span>' + dls.length + '</span></h3>' +
       (dls.length ? '<ul class="dc-list dl">' + dls.map(e => li(e, true)).join('') + '</ul>' : '<p class="dc-empty">Không có hạn nào.</p>') + '</section>' +
     '<section class="dc-sec"><h3>Lịch trong ngày <span>' + sch.length + '</span></h3>' +
       (sch.length ? '<ul class="dc-list">' + sch.map(e => li(e, false)).join('') + '</ul>' : '<p class="dc-empty">Không có buổi học hay sự kiện.</p>') + '</section>';
   const b = $('#dc-today'); if (b) b.onclick = () => selectDay(today);
+  const g = $('#dc-walk-go'); if (g) g.onclick = () => goTo('extra:run');
+}
+function walkDayHTML() {
+  const w = typeof WALK !== 'undefined' ? WALK : null; if (!w) return '';
+  const sl = w.slot || {}, mil = w.military || {};
+  const when = !w.remind ? 'Học quân sự: không nhắc' : sl.indoor ? 'Đi trong nhà' : 'Đi lúc ' + hhmm(sl.start) + '–' + hhmm(sl.end);
+  const pct = Math.min(100, Math.round(w.steps / Math.max(1, w.target) * 100));
+  return '<section class="dc-walk"><h3>🚶 Mục tiêu đi bộ <span>' + nf(w.target) + ' bước' + (w.examWeek ? ' · tuần thi' : '') + '</span></h3>' +
+    '<div class="wbar"><i style="width:' + pct + '%"></i></div>' +
+    '<p>Đã đi ' + nf(w.steps) + ' bước · ' + esc(when) + '</p><button class="ghost" id="dc-walk-go">Xem bước chạy</button></section>';
 }
 function renderTodaySlots() {   // (v1.00.42) dải Hôm nay đọc cùng nguồn với tab lịch (đã có lịch đè Teams + trực tiếp/online)
   if (!CAL) return false;
@@ -2302,7 +2366,14 @@ function renderAdm() {
 function renderExtra() {
   if (!$('#ex-body')) return;
   renderDrl();
-  if (exTab === 'run') { $('#ex-body').innerHTML = runHTML(); const b = $('#run-refresh'); if (b) b.onclick = walkRefresh; return; }
+  if (exTab === 'run') {
+    if (Date.now() - wxAt > 5 * 6e4) wxLoad();
+    $('#ex-body').innerHTML = runHTML(); const b = $('#run-refresh'); if (b) b.onclick = walkRefresh;
+    const f = $('#run-man'); if (f) f.onsubmit = async ev => { ev.preventDefault();
+      const r = await api('/api/walk/manual', { date: WALK.today, steps: Number($('#run-man-n').value) }).catch(() => ({ ok: false, loi: 'Không gọi được UC.' }));
+      if (!r.ok) return alert(r.loi || 'Không lưu được.'); WALK = r; renderWalk(); };
+    return;
+  }
   if (!EX) { $('#ex-body').innerHTML = '<p class="skeleton">Đang đọc…</p>'; return; }
   const items = EX.items || [], now = Date.now();
   const endOf = x => Date.parse(x.han || x.end || x.start || 0);
