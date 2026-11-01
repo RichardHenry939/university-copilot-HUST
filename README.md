@@ -94,7 +94,7 @@ UC chạy trên laptop, đọc lại các nguồn đúng khung 5 phút suốt 24
 
 UC không do một công cụ làm ra. Tôi **điều phối nhiều AI theo từng giai đoạn**. Mỗi khi một công cụ chạm giới hạn (hết quota, quên ngữ cảnh vì dự án quá lớn), tôi chuyển dự án sang công cụ tiếp theo. Bài toán, kiến trúc và luật của cả hệ thống thì tôi giữ xuyên suốt.
 
-Từ lúc nảy ra ý tưởng (18/08/2026) đến bản hiện tại là **khoảng 7 tuần**. (Câu hỏi đầu tiên với Notion AI, "How to use notion ?" ngày 01/03, chỉ là lúc tôi mới cài Notion khi đang ôn thi TSA. Khi đó chưa có dự án hay ý tưởng nào.)
+Từ lúc nảy ra ý tưởng (18/08/2026) đến v1.00.47 (01/11/2026) là **khoảng 11 tuần**. (Câu hỏi đầu tiên với Notion AI, "How to use notion ?" ngày 01/03, chỉ là lúc tôi mới cài Notion khi đang ôn thi TSA. Khi đó chưa có dự án hay ý tưởng nào.)
 
 | Giai đoạn | Thời gian | Ai làm | Kết quả |
 |---|---|---|---|
@@ -183,6 +183,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.37** | 26/10/2026 | **Inbox**: nút "Mở trong thư mục" (File Explorer, chỉ file trong Uni-Documents). **Ngoại khoá**: tắt nhắc từ điện thoại (từng mục, hoặc cả loại bằng "tắt / bật ngoại khoá"), luôn hỏi Xác nhận rồi huỷ tin đã hẹn; hạn minh chứng chỉ nhắc 2 lần (24 giờ, 3 giờ) và có nút "Đã nộp MC"; vòng 2 / bán kết / chung kết chỉ nhắc khi bạn bấm Sẽ đi. **Học kỳ**: vắng ở môn nào, ngày nào. 333 test |
 | **v1.00.38** | 26/10/2026 | **Giao diện**: lịch tuần dạng lưới giờ (mỗi buổi đặt đúng giờ, cao theo thời lượng, chồng giờ chia làn, hạn nộp là mốc đỏ đúng giờ, vạch "bây giờ", lịch thi khối đỏ); thanh điều hướng dọc trên màn hình rộng. 333 test |
 | **v1.00.39** | 26/10/2026 | **Giao diện**: tab Lịch đổi tên **Thời khoá biểu toàn kỳ**, đứng đầu và mở mặc định; tab **Hôm nay** được gộp vào cuối tab này (bấm một ngày ở lịch thì phía dưới hiện việc hôm nay, chế độ ngày, lịch thi và hạn nộp); **Trò chuyện** đổi tên **Chatbot hỗ trợ**, xếp thứ 2. **Vá lỗi**: chatbot từng xếp hoạt động ngoại khoá *chưa đăng ký* (đang mở đăng ký / sự kiện trường) vào "lịch của bạn" theo ngày; nay ngữ cảnh ghi rõ các mục đó không phải lịch của bạn, và prompt thêm luật lịch: chỉ buổi học, lịch thi, hạn nộp và hoạt động đã đăng ký mới vào lịch, phần còn lại để riêng ở mục "Có thể đăng ký". |
+| **v1.00.40** | 31/10/2026 | **Nguồn dữ liệu sát thực tế hơn**: MOOC đọc hạn qua API (giữ dữ liệu cũ khi API lỗi, không coi điểm > 0 là bằng chứng đã nộp); lịch thi đọc từ PDF bảng (`exam_pdf.py`, chỉ lấy hàng đúng lớp, gộp với FAMI); Zalo chỉ nhận file đã tải về thư mục checkpoint, không tự đọc tin nhắn; connector có thêm ngoại khoá và Inbox. Kèm bản vá 26/10: chatbot không xếp ngoại khoá chưa đăng ký vào lịch. Phát hành lên GitHub ngày 31/10 cùng v1.00.41 |
 | **v1.00.41** | 31/10/2026 | **Nguồn dữ liệu sát thực tế**: đọc deadline MOOC qua API; lịch thi từ PDF đúng lớp; **lịch đè từ Teams** (đổi buổi/phòng/giờ trong Teams thắng eHUST và qldt); **đọc cả phần trả lời trong luồng Teams** (đính chính của giảng viên); Zalo nhận file trong thư mục checkpoint; connector có thêm ngoại khoá và danh sách Inbox. 352 test |
 | **v1.00.42** | 01/11/2026 | **Giao diện mới** ("mực tím + tờ lịch xé"): điều hướng dọc có icon, cột Hôm nay, thanh GDTC/Hè/Học lại thành ngăn kéo. **Tab Ví thời gian** đứng đầu: phiên tập trung 25 + 5 (mỗi khối 25 phút trọn +5 phút ví, hoàn tất hạn +15 phút, giải trí trừ theo phút thật), brown noise hoặc Claude Radio, thống kê ngày/tuần/tháng; việc hôm nay, Camp/Rest, hạn môn học, lịch ôn tập và Gợi ý gộp vào đây. **Thời khoá biểu**: lịch thi trên cùng, mục Ngày cạnh lịch tuần, mọi loại hạn hiện trên lịch, lưới giờ tới 24:00. **MSSV** lưu mã hoá DPAPI (tab Giới thiệu), đối chiếu danh sách học offline của lớp để ghi "trực tiếp / online" lên đúng buổi. MOOC: báo bài chưa có hạn kỳ này. Thi giữa kỳ: bỏ tin của sinh viên trong team lớp. Connector thêm lịch, cảnh báo, chứng chỉ, MOOC. 370 test |
 | **v1.00.43** | 01/11/2026 | **Vá CI**: bộ test chạy xanh trên cả Ubuntu (trước đó một test Zalo so đường dẫn kiểu Windows nên hỏng trên Linux từ v1.00.41). **Ví thời gian**: tín hiệu "đang tập trung đến giờ X" (cho công cụ chặn trang chạy riêng trên máy, tuỳ chọn) lùi giờ hết hạn khi tiếp tục sau tạm dừng. 370 test |
@@ -192,7 +193,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.47** | 01/11/2026 | **Đổi giấy phép sang PolyForm Noncommercial 1.0.0**: dùng cá nhân, học tập, nghiên cứu, tổ chức phi lợi nhuận thì tự do; dùng thương mại phải xin phép tác giả. Các bản đến v1.00.46 đã phát hành theo MIT vẫn giữ MIT. Thư mục `agentchattr/` (mã của Ben Curtis) giữ giấy phép MIT gốc, có file `agentchattr/LICENSE` |
 
 
-### Bản vá v1.00.40 đang kiểm thử (chưa phát hành)
+### Ghi chú cài đặt: lịch thi từ PDF, MOOC, Zalo (từ v1.00.40)
 
 Đọc lịch thi từ PDF bảng bằng `exam_pdf.py`: cài `pdfplumber`, sao chép
 `exam_pdf_config.example.json` thành `exam_pdf_config.json`, điền lớp và thư mục nguồn.
@@ -205,9 +206,7 @@ là bằng chứng đã nộp. Inbox tự làm mới khi mở; file Zalo chỉ b
 khi bản đích thật đã được kiểm SHA. UC chỉ nhận file đã tải về checkpoint, không tự
 đọc/tải tin nhắn Zalo. Cần bật tải file và chọn đúng thư mục trong Zalo.
 
-Số phiên bản của giao diện ngày 26/10 được chủ dự án chỉnh thành **v1.00.39**;
-các commit/tag cũ còn mang tên v1.00.40 được giữ nguyên lịch sử. Đợt tiếp theo là
-**v1.00.40**. Các tính năng đang lên kế hoạch không được tính là đã phát hành.
+Về đánh số: giao diện ngày 26/10 (commit `bc6f670`) được chủ dự án đánh số lại thành **v1.00.39**. Các commit mang tên v1.00.40 (`5bc859c`, `2ff9301`) đã phát hành lên GitHub ngày 31/10 cùng v1.00.41. Tính năng chỉ ghi vào nhật ký khi đã phát hành.
 
 ## Chạy thử
 
