@@ -45,3 +45,13 @@ def n8n_legacy(key, default=None):
     Thiếu khoá -> trả default (None nếu không đưa); build.py cần khoá A1…S6 để mở file mẫu <ID>.json."""
     v = _load().get("n8n_legacy_workflows", {}).get(key)
     return v if v and not v.startswith("<") else default
+
+
+def owner():
+    """(v1.00.45 tiếp) Dòng liên hệ ở footer trang chủ (khoá "owner": name/email/phone).
+    Thiếu config.json / thiếu khoá / giá trị giữ chỗ "<...>" -> bỏ qua, không lỗi."""
+    try:
+        o = _load().get('owner') or {}
+    except FileNotFoundError:
+        return {}
+    return {k: str(v) for k, v in o.items() if k in ('name', 'email', 'phone') and v and not str(v).startswith('<')}

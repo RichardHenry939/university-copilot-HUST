@@ -30,6 +30,23 @@ SORT_MODEL = "qwen3-14b"   # việc nền: ưu tiên đúng hơn nhanh (8B xếp
 CONFIDENCE_OK = 0.7
 PORT = 8320
 ORIGIN = f"http://127.0.0.1:{PORT}"
+HERO_MAX = 8 * 1024 * 1024   # (v1.00.45 tiếp) ảnh nền trang chủ tối đa 8 MB
+
+
+def _owner():
+    """(v1.00.45 tiếp) tên + liên hệ ở footer trang chủ, từ khoá "owner" trong config.json. Thiếu -> {} (footer chỉ ghi University Copilot)."""
+    try:
+        return cfg.owner()
+    except Exception:
+        return {}
+
+
+def _hero_kind(b):
+    """Nhận diện ảnh theo byte đầu (không tin tên file / Content-Type): png | jpg | webp | None."""
+    if b[:8] == b"\x89PNG\r\n\x1a\n": return "png"
+    if b[:3] == b"\xff\xd8\xff": return "jpg"
+    if b[:4] == b"RIFF" and b[8:12] == b"WEBP": return "webp"
+    return None
 
 # Thư mục môn đã có -> mã môn (đối chiếu với Courses trong Notion). Agent dùng để biết "thư mục này là môn gì".
 COURSE_FOLDERS = {
@@ -1125,6 +1142,13 @@ class H(BaseHTTPRequestHandler):
                     p_hero = HERE / "ui" / "assets" / f"hero.{ext}"
                     if p_hero.exists(): return self._send(200, raw=p_hero.read_bytes(), ctype=ct)
                 return self._send(404, {"error": "chưa có ảnh nền"})
+            if u.path == "/api/owner":   # (v1.00.45 tiếp) tên + liên hệ ở footer trang chủ; thiếu cấu hình -> {} (footer chỉ ghi University Copilot)
+                return self._send(200, _owner())
+            m_as = re.fullmatch(r"/assets/([a-z0-9-]{1,40}\.(svg|png))", u.path)
+            if m_as:   # (v1.00.45 tiếp) ảnh tĩnh trang chủ (map.svg, school-logo.png nếu bạn tự đặt): chỉ tên chữ thường, chỉ .svg/.png, chỉ trong ui/assets
+                p_as = HERE / "ui" / "assets" / m_as.group(1)
+                if not p_as.is_file(): return self._send(404, {"error": "không có"})
+                return self._send(200, raw=p_as.read_bytes(), ctype="image/svg+xml" if m_as.group(2) == "svg" else "image/png")
             if u.path == "/api/wallet":   # (v1.00.42 W8) ví thời gian: số dư, phiên đang chạy, thống kê
                 import wallet, datetime as _dt
                 with wallet.lock:
@@ -1154,6 +1178,17 @@ class H(BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query)
         if not self._same_origin():   # chặn trước MỌI endpoint ghi: trang web lạ không được POST thay bạn (n8n / curl không gửi Origin)
             return self._send(403, {"error": "cross-origin blocked"})
+        if u.path == "/api/hero":   # (v1.00.45 tiếp) nút "Đổi ảnh nền" trên trang chủ: thân là byte ảnh, chỉ JPG/PNG/WebP <= 8 MB
+            n = int(self.headers.get("Content-Length", "0") or 0)
+            if n <= 0: return self._send(400, {"ok": False, "loi": "Không có ảnh."})
+            if n > HERO_MAX: return self._send(413, {"ok": False, "loi": "Ảnh lớn hơn 8 MB."})
+            b = self.rfile.read(n); kind = _hero_kind(b)
+            if not kind: return self._send(415, {"ok": False, "loi": "Chỉ nhận ảnh JPG, PNG hoặc WebP."})
+            d = HERE / "ui" / "assets"; d.mkdir(parents=True, exist_ok=True)
+            tmp = d / f"hero.{kind}.tmp"; tmp.write_bytes(b)
+            for e in ("jpg", "jpeg", "png", "webp"): (d / f"hero.{e}").unlink(missing_ok=True)   # một ảnh duy nhất: /hero-img đọc theo thứ tự đuôi
+            tmp.replace(d / f"hero.{kind}")
+            return self._send(200, {"ok": True, "kind": kind, "bytes": n})
         # (Claude 2026-10-03) công cụ ghi_hoc_tap của não Copilot (n8n trong Docker) -> logic điểm/luật môn/chuyên cần
         # (Claude 2026-10-05) công cụ doi_han: dời hạn TỰ ĐẶT (Tự luyện / cốt lõi); hạn Môn học của trường bị từ chối
         if u.path == "/api/translate":   # 📄 bạn bấm (đã xác nhận) -> dịch PDF trên máy, bản dịch vào thư mục "Bản dịch" cạnh bản gốc
