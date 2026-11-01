@@ -188,6 +188,8 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.43** | 01/11/2026 | **Vá CI**: bộ test chạy xanh trên cả Ubuntu (trước đó một test Zalo so đường dẫn kiểu Windows nên hỏng trên Linux từ v1.00.41). **Ví thời gian**: tín hiệu "đang tập trung đến giờ X" (cho công cụ chặn trang chạy riêng trên máy, tuỳ chọn) lùi giờ hết hạn khi tiếp tục sau tạm dừng. 370 test |
 | **v1.00.44** | 01/11/2026 | **Ví thời gian chặt hơn**: bắt đầu phiên tập trung phải nhập lại MSSV (máy chủ so với số đã lưu, không trả số về) để tránh bấm nhầm; đã bắt đầu thì không huỷ được, phiên tự kết thúc khi hết giờ (tạm dừng không gỡ chặn). **Thúc đi học**: còn việc hôm nay mà phút tập trung chưa đạt tổng giờ dự kiến thì nhắc bằng thông báo (máy + điện thoại), tối đa 1 lần/giờ, 08:00–21:30, không nhắc khi đang học, đang tập trung hay ngày Rest; nhắc không khoá gì. **Lịch thi** hiện cả ở tab Ví thời gian. **Vá**: âm nền tắt hẳn khi phiên kết thúc và đồng bộ giữa nhiều tab UC; test ví không còn ghi vào tệp tín hiệu thật. 376 test |
 | **v1.00.45** | 01/11/2026 | **Ngoại khoá kiểu CTSV**: thanh điểm rèn luyện (đọc tổng SV tự chấm trên CTSV) + nút Chấm lại (UC chấm thử, chỉ lưu lên CTSV khi bạn bấm Xác nhận); mục con "Sự kiện & hoạt động" dạng thẻ có ảnh bìa CTSV (ảnh tải về máy, phục vụ qua `/ctsv-img/<mã>`), nhóm Sắp diễn ra / Đang diễn ra, ẩn mục hết hạn; mục con "Hoạt động của tôi" (4 ô số liệu, hạn nộp minh chứng nổi bật, chờ xác nhận lên trên). **Thời khoá biểu toàn kỳ** hiện hạn nộp minh chứng, hạn đăng ký và hoạt động đã đăng ký (màu hổ phách). Mục con **Học bổng** (thẻ: số tiền, hạn, số suất, Đang mở / Hết hạn — mặc định ẩn hết hạn, xem chi tiết) và **Hành chính & đặt vé** (vé của bạn, sự kiện đang mở đặt vé, giấy tờ đã xin, thủ tục có thể xin; UC chỉ hiện và dẫn link CTSV, không tự đặt vé hay gửi đơn). "Hoạt động của tôi": mục đăng ký qua mail / Teams đứng riêng, không đếm vào "Chờ xác nhận"; hoạt động CTSV đã qua hơn 2 tuần mà chưa xác nhận gom vào nhóm thu gọn. **Trang chủ** (bấm logo; trên điện thoại có nút Trang chủ): ảnh nền + chữ lớn — đặt ảnh của bạn vào `ui/assets/hero.jpg` (hoặc .png / .webp; tệp này không đưa lên git), chưa có thì dùng nền màu; hạn môn học dạng thẻ, hạn đã qua gom vào nhóm thu gọn. 383 test |
+| **v1.00.46** | 01/11/2026 | **Tab 10000 bước chạy**: câu chốt "Phù hợp để ra ngoài: X%", thời tiết và không khí quanh trường (Open-Meteo), bảng xếp hạng top 100 như trang CTSV (không giữ mã sinh viên của ai); nhập tổng bước cả ngày theo app vì CTSV web chỉ có quãng đường giải tính. Mục tiêu đi bộ nằm trong tờ lịch ngày ở Thời khoá biểu, ngày thi thì lịch thi lên trên. Thư mục "Hành chính" xếp như một môn ở máy nhưng gửi Notion không gắn môn. 408 test |
+| **v1.00.47** | 01/11/2026 | **Đổi giấy phép sang PolyForm Noncommercial 1.0.0**: dùng cá nhân, học tập, nghiên cứu, tổ chức phi lợi nhuận thì tự do; dùng thương mại phải xin phép tác giả. Các bản đến v1.00.46 đã phát hành theo MIT vẫn giữ MIT. Thư mục `agentchattr/` (mã của Ben Curtis) giữ giấy phép MIT gốc, có file `agentchattr/LICENSE` |
 
 
 ### Bản vá v1.00.40 đang kiểm thử (chưa phát hành)
@@ -231,6 +233,16 @@ python -m pytest
 ```
 
 GitHub Actions (`.github/workflows/tests.yml`) chạy bộ test này trên mỗi PR (Ubuntu + Windows, Python 3.12 / 3.13).
+
+## Giấy phép
+
+Từ **v1.00.47**, mã nguồn của UC dùng giấy phép **[PolyForm Noncommercial 1.0.0](LICENSE)**:
+
+- **Được**: tải về, chạy trên máy của bạn, sửa, học và nghiên cứu, dùng cho việc cá nhân hay tổ chức phi lợi nhuận.
+- **Không được** khi chưa có phép của tác giả: dùng vào mục đích thương mại (bán, cho thuê, đóng gói thành dịch vụ thu tiền, dùng trong doanh nghiệp).
+- Mọi bản sao phải giữ dòng `Required Notice` trong `LICENSE`. Muốn dùng thương mại: liên hệ tác giả qua GitHub.
+
+Các bản đến **v1.00.46** đã phát hành theo giấy phép MIT và vẫn giữ MIT. Thư mục `agentchattr/` là bản vá trên [agentchattr](https://github.com/bcurts/agentchattr) của Ben Curtis, giữ giấy phép MIT gốc (`agentchattr/LICENSE`).
 
 ## Quyền riêng tư
 
