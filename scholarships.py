@@ -26,7 +26,7 @@ def view():
         dl = _t(s.get('deadline'))
         items.append({'name': html.unescape(s.get('name') or ''), 'deadline': dl and dl.isoformat(), 'open': bool(dl and dl > now and str(s.get('expired')) != '1'),
                       'type': s.get('type'), 'quantity': s.get('quantity'), 'price': s.get('price'), 'applied': str(s.get('applied')) not in ('0', '', 'None'),
-                      'desc': html.unescape(s.get('desc') or '')[:1200], 'more': html.unescape(s.get('more') or ''), 'contact': s.get('contact'),
+                      'desc': html.unescape(s.get('desc') or '')[:1200], 'content': html.unescape(s.get('content') or '')[:3000], 'more': html.unescape(s.get('more') or ''), 'contact': s.get('contact'),
                       'announced': _t(s.get('created')) and _t(s.get('created')).isoformat(), 'url': f"{CTSV}/hoc-bong/{s.get('id')}/chi-tiet", 'nguon': 'iCTSV'})
     try:
         import mail_kinds

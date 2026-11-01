@@ -286,7 +286,8 @@ CTSV_API_JS = """async (user) => {
           scholarships: (sch.ScholarshipLst || []).map(x => ({id: x.DocumentId, name: x.Title, deadline: x.Deadline, type: x.TypeInfo,
                                                                quantity: x.Quantity, applied: x.StatusApply, expired: x.Expired,
                                                                price: x.TotalPrice, created: x.CreateTime, contact: [x.ContactName, x.ContactEmail].filter(Boolean).join(' · '),
-                                                               desc: strip(x.Description || x.Content), more: strip(x.MoreInfo).slice(0, 300)}))};
+                                                               desc: strip(x.Description || x.Content), more: strip(x.MoreInfo).slice(0, 300),
+                                                               content: strip(x.Content).slice(0, 3000)}))};   // (v1.00.45) nội dung chi tiết cho thẻ học bổng
 }"""
 
 

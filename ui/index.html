@@ -780,6 +780,18 @@ button.link:hover { text-decoration: underline; }
 .xst.ok { background: var(--green-wash); color: var(--green); } .xst.wait { background: var(--amber-wash); color: var(--amber); } .xst.bad { background: var(--red-wash); color: var(--red); }
 .xrows a.ghost { text-decoration: none; font-size: 13px; padding: 6px 12px; }
 @container (max-width: 700px) { .xstats { grid-template-columns: 1fr 1fr; } .xrows li { grid-template-columns: 1fr auto; } .xrows li .xwhen { grid-column: 1; } }
+/* (v1.00.45) mục con Học bổng / Hành chính & đặt vé: cùng hệ thẻ */
+.xtabs { flex-wrap: wrap; max-width: 100%; }
+.xcard.plain h3 { min-height: 0; padding-bottom: 4px; }
+.xprice { padding: 0 12px; font-family: var(--display); font-weight: 800; font-size: 19px; color: var(--blue); line-height: 1.2; overflow-wrap: anywhere; }
+.xcard .xmore { position: relative; z-index: 2; margin: auto 12px 12px; font-size: 13px; }
+.xcard .xmore summary { cursor: pointer; color: var(--blue); font-weight: 600; }
+.xcard .xmore p { white-space: pre-wrap; color: var(--ink-2); max-height: 260px; overflow: auto; margin: 6px 0 0; }
+.xcard .xgo { position: relative; z-index: 2; margin: auto 12px 12px; align-self: flex-start; text-decoration: none; font-size: 13px; padding: 6px 12px; }
+.xmeta .xst { align-self: flex-start; }
+.xcard.off { opacity: .6; } .xdate.red { background: var(--red); }
+.xbar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin: 4px 0 2px; font-size: 13.5px; color: var(--ink-2); }
+.xbar label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
 /* (v1.00.45) hoạt động ngoại khoá đã đăng ký trên lịch: màu hổ phách */
 .ev.xk { border-left-color: var(--amber); background: var(--amber-wash); } .ev.xk .md { color: var(--amber); }
 .mi.xk { border-left-color: var(--amber); }
@@ -1040,6 +1052,8 @@ button.link:hover { text-decoration: underline; }
         <div class="xtabs" role="tablist" aria-label="Mục ngoại khoá">
           <button role="tab" data-x="act" aria-selected="true">Sự kiện &amp; hoạt động</button>
           <button role="tab" data-x="mine" aria-selected="false">Hoạt động của tôi</button>
+          <button role="tab" data-x="schol" aria-selected="false">Học bổng</button>
+          <button role="tab" data-x="adm" aria-selected="false">Hành chính &amp; đặt vé</button>
         </div>
         <div id="ex-body"><p class="skeleton">Đang đọc…</p></div>
         <p class="cal-sync" id="ex-sync"></p>
@@ -1551,6 +1565,69 @@ function renderDrl() {
     };
   };
 }
+// (v1.00.45) mục con Học bổng và Hành chính & đặt vé: chỉ hiện + dẫn link CTSV; UC không nộp hồ sơ, không gửi đơn, không đặt vé
+let XSCH = null, XADM = null, schShowOld = false;
+function exLoad(k) {
+  const u = k === 'schol' ? '/api/scholarships' : '/api/admin';
+  return api(u).then(d => { if (k === 'schol') XSCH = d; else XADM = d; }).catch(e => { const v = { ok: false, error: e.message }; if (k === 'schol') XSCH = v; else XADM = v; }).then(() => { if (exTab === k) renderExtra(); });
+}
+const xDate = (t, red) => { if (!t) return ''; const s = String(t).replace(' ', 'T'); return '<div class="xdate' + (red ? ' red' : '') + '"><b>' + Number(s.slice(8, 10)) + '</b><span>Tháng ' + Number(s.slice(5, 7)) + '</span><span>' + s.slice(0, 4) + '</span></div>'; };
+const xHM = t => t && String(t).includes(':') ? String(t).replace(' ', 'T').slice(11, 16) : '';
+function schCard(x, open) {
+  const price = x.price ? (isNaN(+x.price) ? String(x.price) : Number(x.price).toLocaleString('vi-VN') + ' đ') : '';
+  const body = [x.content, x.desc && x.desc !== x.content && x.desc.length > 12 ? x.desc : '', x.more].filter(Boolean).join('\n\n');
+  return '<article class="xcard plain' + (open ? '' : ' off') + '">' + (x.url ? '<a class="xlink" href="' + esc(x.url) + '" target="_blank" rel="noopener" aria-label="' + esc(x.name) + '"></a>' : '') +
+    '<h3>' + esc(x.name) + '</h3>' + (price ? '<div class="xprice">' + esc(price) + '</div>' : '') +
+    '<div class="xfoot">' + xDate(x.deadline, open) + '<div class="xmeta">' +
+    '<span class="xst ' + (open ? 'ok' : '') + '">' + (open ? 'Đang mở' : 'Hết hạn') + '</span>' + (x.applied ? '<span class="xst ok">Đã nộp hồ sơ</span>' : '') +
+    (x.type ? '<span>' + esc(x.type) + '</span>' : '') + (x.quantity ? '<span>' + esc(x.quantity) + ' suất</span>' : '') +
+    (x.deadline ? '<span class="' + (open ? 'xhan' : '') + '">Hạn ' + esc(xHM(x.deadline)) + ' ' + esc(String(x.deadline).slice(8, 10) + '/' + String(x.deadline).slice(5, 7)) + '</span>' : '') +
+    (x.contact ? '<span>' + esc(x.contact) + '</span>' : '') + (x.nguon && x.nguon !== 'iCTSV' ? '<span class="xsrc">Nguồn: ' + esc(x.nguon) + '</span>' : '') + '</div></div>' +
+    (body ? '<details class="xmore"><summary>Xem chi tiết</summary><p>' + esc(body) + '</p></details>' : '') + '</article>';
+}
+function renderSchol() {
+  if (!XSCH) { exLoad('schol'); return '<p class="skeleton">Đang đọc học bổng…</p>'; }
+  if (XSCH.ok === false) return '<p class="note">Chưa đọc được học bổng' + (XSCH.error ? ': ' + esc(XSCH.error) : '') + '.</p>';
+  const op = XSCH.open || [], cl = XSCH.closed || [];
+  return '<div class="xbar"><span>' + op.length + ' đang mở · ' + cl.length + ' hết hạn gần đây</span><label><input type="checkbox" id="xs-old"' + (schShowOld ? ' checked' : '') + '> Hiện học bổng đã hết hạn</label>' +
+    '<a href="' + esc(XSCH.list || 'https://ctsv.hust.edu.vn/hoc-bong') + '" target="_blank" rel="noopener">Danh sách trên CTSV</a></div>' +
+    '<h2 class="xsec">Đang mở <small>' + op.length + '</small></h2>' + (op.length ? '<div class="xgrid">' + op.map(x => schCard(x, true)).join('') + '</div>' : '<p class="note">Không có học bổng nào đang nhận hồ sơ.</p>') +
+    (schShowOld && cl.length ? '<h2 class="xsec">Hết hạn <small>' + cl.length + '</small></h2><div class="xgrid">' + cl.map(x => schCard(x, false)).join('') + '</div>' : '') +
+    '<p class="wnote">UC chỉ hiện thông tin. Nộp hồ sơ trên trang CTSV của từng học bổng.</p>';
+}
+function renderAdm() {
+  if (!XADM) { exLoad('adm'); return '<p class="skeleton">Đang đọc hành chính…</p>'; }
+  if (XADM.ok === false) return '<p class="note">Chưa đọc được dữ liệu hành chính' + (XADM.error ? ': ' + esc(XADM.error) : '') + '.</p>';
+  const L = XADM.links || {}, now = Date.now(), T = t => Date.parse(String(t || '').replace(' ', 'T') + (String(t || '').length <= 19 ? '+07:00' : ''));
+  const tk = XADM.tickets || [];
+  const mineT = tk.filter(t => t.ticket && !(T(t.end || t.start) < now));
+  const openT = tk.filter(t => !t.ticket && t.isOpen && (!t.start || T(t.start) > now)).sort((a, b) => T(a.start) - T(b.start));
+  const tCard = (t, mine) => {
+    const left = (t.seats || 0) - (t.taken || 0);
+    return '<article class="xcard plain"><h3>' + esc(t.name) + '</h3><div class="xfoot">' + xDate(t.start) + '<div class="xmeta">' +
+      (mine ? '<span class="xst ok">Đã có vé' + (t.ticket.seat ? ' · ghế ' + esc(t.ticket.seat) : '') + '</span>' + (t.ticket.checkedIn ? '<span>Đã check-in</span>' : '') :
+        '<span class="xst ' + (left > 0 ? 'ok' : 'bad') + '">' + (left > 0 ? 'Còn ' + left + ' chỗ' : 'Hết chỗ') + '</span>') +
+      (xHM(t.start) ? '<span>🕒 ' + esc(xHM(t.start)) + '</span>' : '') + (t.place ? '<span>📍 ' + esc(t.place) + '</span>' : '') +
+      (!mine && t.close ? '<span class="xhan">Đóng đặt vé ' + esc(xHM(t.close)) + ' ' + esc(String(t.close).slice(8, 10) + '/' + String(t.close).slice(5, 7)) + '</span>' : '') + '</div></div>' +
+      '<a class="ghost xgo" href="' + esc(t.url || L.datVe) + '" target="_blank" rel="noopener">' + (mine ? 'Xem vé trên CTSV' : 'Đặt vé trên CTSV') + '</a></article>';
+  };
+  const ST = { 0: ['Chờ tiếp nhận', 'wait'], 1: ['Đang xử lý', 'wait'], 2: ['Đã xong', 'ok'], 3: ['Từ chối', 'bad'] };
+  const dmy = t => t ? String(t).slice(8, 10) + '/' + String(t).slice(5, 7) + '/' + String(t).slice(0, 4) : '';
+  const papers = XADM.papers || [], procs = XADM.procedures || [];
+  return (XADM.lastError ? '<p class="note">Lần đọc gần nhất lỗi: ' + esc(XADM.lastError) + ' — đang hiện dữ liệu cũ.</p>' : '') +
+    '<h2 class="xsec">Vé sự kiện của bạn <small>' + mineT.length + '</small></h2>' + (mineT.length ? '<div class="xgrid">' + mineT.map(t => tCard(t, true)).join('') + '</div>' : '<p class="note">Không có vé cho sự kiện sắp tới.</p>') +
+    '<h2 class="xsec">Đang mở đặt vé <small>' + openT.length + '</small></h2>' + (openT.length ? '<div class="xgrid">' + openT.map(t => tCard(t, false)).join('') + '</div>' : '<p class="note">Không có sự kiện nào đang mở đặt vé.</p>') +
+    '<h2 class="xsec">Giấy tờ, thủ tục bạn đã xin <small>' + papers.length + '</small></h2>' +
+    (papers.length ? '<ul class="xrows">' + papers.map(x => { const s = ST[x.status] || ['Trạng thái ' + x.status, 'wait'];
+      return '<li class="' + (x.status === 2 ? 'done' : '') + '"><div><b>' + esc(x.name) + '</b><small>' + esc([x.office, x.note].filter(Boolean).join(' · ')) + '</small></div><span class="xwhen">gửi ' + dmy(x.created) + '</span>' +
+        '<span class="xst ' + s[1] + '">' + esc(s[0]) + '</span>' + (x.url ? '<a class="ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener">Chi tiết</a>' : '') + '</li>'; }).join('') + '</ul>' : '<p class="note">Chưa xin giấy tờ nào.</p>') +
+    '<h2 class="xsec">Thủ tục có thể xin <small>' + procs.length + '</small></h2>' +
+    (procs.length ? '<div class="xgrid">' + procs.map(x => '<article class="xcard plain"><h3>' + esc(x.name) + '</h3><div class="xfoot"><div class="xmeta">' +
+      (x.office ? '<span>' + esc(x.office) + '</span>' : '') + (x.service ? '<span>' + esc(x.service) + '</span>' : '') + (x.auto ? '<span class="xst ok">Cấp tự động</span>' : '') + '</div></div>' +
+      (x.desc && x.desc !== x.name ? '<details class="xmore"><summary>Xem mô tả</summary><p>' + esc(x.desc) + '</p></details>' : '') +
+      '<a class="ghost xgo" href="' + esc(x.url || L.xinGiay) + '" target="_blank" rel="noopener">Mở form trên CTSV</a></article>').join('') + '</div>' : '') +
+    '<p class="wnote">UC không gửi đơn và không đặt vé thay bạn: các nút trên mở trang CTSV để bạn tự làm. Thông báo CTSV, thư hành chính và công nợ ở tab Hành chính.</p>';
+}
 function renderExtra() {
   if (!$('#ex-body')) return;
   renderDrl();
@@ -1568,23 +1645,40 @@ function renderExtra() {
     html = (sec('Sắp diễn ra', soon) + sec('Đang diễn ra · còn đăng ký', going)) || '<p class="note">Không có hoạt động nào đang mở.</p>';
     if (notes.length) html += '<details class="xnotes"><summary>Thông báo từ mail / Teams trong 3 tuần (' + notes.length + ')</summary><ul>' +
       notes.map(x => '<li>' + (x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.name) + '</a>' : esc(x.name)) + '<small>' + esc(x.nguon || x.src || '') + '</small></li>').join('') + '</ul></details>';
-  } else {
-    const mine = items.filter(x => x.loai === 'Đã đăng ký' || (x.loai === 'Sự kiện (mail/Teams)' && x.status === 'Đã đăng ký'));
+  } else if (exTab === 'mine') {
+    // (v1.00.45) ô số liệu chỉ đếm hoạt động CTSV; mục mail/Teams "Đã đăng ký" không có bước xác nhận nên đứng riêng.
+    // CTSV đã qua > 14 ngày mà vẫn chờ xác nhận -> nhóm thu gọn, không đếm vào "Chờ xác nhận".
+    // Đi tắt: chỉ luật theo ngày; chưa đọc mail để ghi kết quả (đỗ / trượt / đã tham gia) — việc (g) bước AI còn mở.
+    const ctsv = items.filter(x => x.loai === 'Đã đăng ký');
+    const viaMail = items.filter(x => x.loai === 'Sự kiện (mail/Teams)' && x.status === 'Đã đăng ký');
     const mc = items.filter(x => x.loai === 'Hạn nộp minh chứng' && live(x));
     const rank = x => x.status === 'Đã xác nhận' ? 2 : x.status === 'Không đạt' ? 1 : 0;   // chờ xác nhận lên trên, đã xác nhận xuống cuối
-    const sorted = mine.slice().sort((a, b) => rank(a) - rank(b) || (b.start || '').localeCompare(a.start || ''));
+    const stale = x => rank(x) === 0 && endOf(x) < now - 14 * 864e5;
+    const sorted = ctsv.filter(x => !stale(x)).sort((a, b) => rank(a) - rank(b) || (b.start || '').localeCompare(a.start || ''));
+    const old = ctsv.filter(stale);
     const chip = st => '<span class="xst ' + (st === 'Đã xác nhận' ? 'ok' : st === 'Không đạt' ? 'bad' : 'wait') + '">' + esc(st || 'Chờ xác nhận') + '</span>';
-    html = '<div class="xstats"><div class="xs-all"><b>' + mine.length + '</b>Đã đăng ký</div><div class="xs-ok"><b>' + mine.filter(x => rank(x) === 2).length + '</b>Đã xác nhận</div>' +
-      '<div class="xs-wait"><b>' + mine.filter(x => rank(x) === 0).length + '</b>Chờ xác nhận</div><div class="xs-bad"><b>' + mine.filter(x => rank(x) === 1).length + '</b>Không đạt</div></div>' +
+    const dmy = t => t ? t.slice(8, 10) + '/' + t.slice(5, 7) + '/' + t.slice(0, 4) : '';
+    const row = (x, cls, st) => '<li class="' + cls + '"><div><b>' + esc(x.name) + '</b><small>' + esc([x.org, x.place, x.src !== 'CTSV' ? 'Nguồn: ' + (x.nguon || x.src) : ''].filter(Boolean).join(' · ')) + '</small></div>' +
+      '<span class="xwhen">' + dmy(x.start || x.han) + '</span>' + st +
+      (x.url ? '<a class="ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener">Chi tiết</a>' : '') + '</li>';
+    const mailUp = viaMail.filter(live), mailPast = viaMail.filter(x => !live(x));
+    html = '<div class="xstats"><div class="xs-all"><b>' + ctsv.length + '</b>Đã đăng ký trên CTSV</div><div class="xs-ok"><b>' + ctsv.filter(x => rank(x) === 2).length + '</b>Đã xác nhận</div>' +
+      '<div class="xs-wait"><b>' + sorted.filter(x => rank(x) === 0).length + '</b>Chờ xác nhận</div><div class="xs-bad"><b>' + ctsv.filter(x => rank(x) === 1).length + '</b>Không đạt</div></div>' +
       (mc.length ? '<h2 class="xsec">Hạn nộp minh chứng <small>' + mc.length + '</small></h2><ul class="xrows">' + mc.sort((a, b) => endOf(a) - endOf(b)).map(x =>
         '<li class="urgent"><div><b>' + esc(x.name) + '</b><small>Nộp minh chứng trên CTSV để được tính điểm rèn luyện</small></div><span class="xwhen">hạn ' + x.han.slice(8, 10) + '/' + x.han.slice(5, 7) + '</span>' +
         (x.url ? '<a class="ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener">Mở</a>' : '') + '</li>').join('') + '</ul>' : '') +
-      '<h2 class="xsec">Hoạt động đã đăng ký <small>chờ xác nhận ở trên, đã xác nhận ở cuối</small></h2><ul class="xrows">' + sorted.map(x =>
-        '<li class="' + (rank(x) === 2 ? 'done' : '') + '"><div><b>' + esc(x.name) + '</b><small>' + esc([x.org, x.place].filter(Boolean).join(' · ')) + '</small></div>' +
-        '<span class="xwhen">' + (x.start ? x.start.slice(8, 10) + '/' + x.start.slice(5, 7) + '/' + x.start.slice(0, 4) : '') + '</span>' + chip(x.status) +
-        (x.url ? '<a class="ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener">Chi tiết</a>' : '') + '</li>').join('') + '</ul>';
-  }
+      '<h2 class="xsec">Hoạt động đã đăng ký trên CTSV <small>chờ xác nhận ở trên, đã xác nhận ở cuối</small></h2><ul class="xrows">' +
+      (sorted.map(x => row(x, rank(x) === 2 ? 'done' : '', chip(x.status))).join('') || '<li><div><small>Chưa có hoạt động nào.</small></div></li>') + '</ul>' +
+      (old.length ? '<details class="xnotes"><summary>Đã qua hơn 2 tuần, CTSV chưa xác nhận (' + old.length + ')</summary><ul class="xrows">' +
+        old.map(x => row(x, 'done', chip(x.status))).join('') + '</ul></details>' : '') +
+      (mailUp.length ? '<h2 class="xsec">Đăng ký qua mail / Teams <small>không có bước xác nhận trên CTSV</small></h2><ul class="xrows">' +
+        mailUp.map(x => row(x, '', '<span class="xst wait">Đã đăng ký</span>')).join('') + '</ul>' : '') +
+      (mailPast.length ? '<details class="xnotes"><summary>Đăng ký qua mail / Teams, đã qua ngày (' + mailPast.length + ')</summary><ul class="xrows">' +
+        mailPast.map(x => row(x, 'done', '<span class="xst">Đã qua</span>')).join('') + '</ul></details>' : '');
+  } else if (exTab === 'schol') html = renderSchol();
+  else html = renderAdm();
   $('#ex-body').innerHTML = html;
+  const sh = $('#xs-old'); if (sh) sh.onchange = () => { schShowOld = sh.checked; renderExtra(); };
   const t = EX.ctsv_at ? EX.ctsv_at.slice(11, 16) + ' ' + EX.ctsv_at.slice(8, 10) + '/' + EX.ctsv_at.slice(5, 7) : '?';
   $('#ex-sync').textContent = 'iCTSV đọc lúc ' + t + ' · mọi nguồn (iCTSV, mail, Teams) tự cập nhật đúng khung 5 phút suốt 24 giờ';
 }
