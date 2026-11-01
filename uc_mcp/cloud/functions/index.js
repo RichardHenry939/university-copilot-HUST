@@ -25,6 +25,12 @@ const TOOLS = [
   { name: 'uc_briefing', description: 'Báo cáo sơ bộ một trang. Khi máy tắt: báo máy đang tắt kèm bản cuối.', inputSchema: NO_ARGS },
   { name: 'uc_ngoai_khoa', description: 'Hoạt động ngoại khoá từ iCTSV: đã đăng ký, đang mở, hạn nộp minh chứng; có tên, thời gian, địa điểm, trạng thái.', inputSchema: NO_ARGS },
   { name: 'uc_inbox', description: 'Danh sách file trong University Inbox của UC: tên, trạng thái xếp, thư mục, môn. Chỉ danh sách, không có nội dung file.', inputSchema: NO_ARGS },
+  // (v1.00.42) mở rộng: lịch, cảnh báo, chứng chỉ, MOOC
+  { name: 'uc_lich', description: 'Lịch học/thi/hạn/sự kiện từ hôm qua tới 21 ngày tới, ĐÃ áp lịch đè từ thông báo Teams (đổi buổi, đổi phòng, nghỉ). Tham số days (mặc định 7, tối đa 21).',
+    inputSchema: { type: 'object', properties: { days: { type: 'integer', default: 7 } } } },
+  { name: 'uc_canh_bao', description: 'Các cảnh báo đang hiện trên UC: thay đổi lịch, hạn gấp, sự kiện sắp tới, bài MOOC chưa có hạn.', inputSchema: NO_ARGS },
+  { name: 'uc_chung_chi', description: 'Chứng chỉ ngoại ngữ đã khai trong UC: loại, điểm, bậc, ngày cấp, hạn, còn hiệu lực, học phần được miễn, chuẩn đầu ra.', inputSchema: NO_ARGS },
+  { name: 'uc_mooc', description: 'MOOC SoICT: từng bài có điểm (hạn, điểm đạt/tối đa) và danh sách bài chưa có hạn đúng kỳ (UC không tự xếp lịch được).', inputSchema: NO_ARGS },
 ];
 
 function same(a, b) {
@@ -47,6 +53,14 @@ function toolData(name, args, snap) {
   if (name === 'uc_ngoai_khoa') return { ngoai_khoa: snap.ngoai_khoa || [], loi: snap.ngoai_khoa_loi || null };
   if (name === 'uc_inbox') return { inbox: snap.inbox || [], loi: snap.inbox_loi || null };
   if (name === 'uc_briefing') return { bao_cao: snap.bao_cao || '' };
+  if (name === 'uc_lich') {
+    const days = Math.min(Math.max(Number(args.days) || 7, 1), 21), now = Date.now();
+    const lich = (snap.lich || []).filter(e => { const t = Date.parse(e.bat_dau); return t >= now - 86400000 && t <= now + days * 86400000; });
+    return { so_luong: lich.length, lich, loi: snap.lich_loi || null };
+  }
+  if (name === 'uc_canh_bao') return { canh_bao: snap.canh_bao || [], loi: snap.canh_bao_loi || null };
+  if (name === 'uc_chung_chi') return { ...(snap.chung_chi || {}), loi: snap.chung_chi_loi || null };
+  if (name === 'uc_mooc') return { ...(snap.mooc || {}), loi: snap.mooc_loi || null };
   return {};
 }
 
@@ -72,7 +86,7 @@ async function rpc(msg) {
   try {
     if (method === 'initialize') {
       const v = PROTOS.includes(params.protocolVersion) ? params.protocolVersion : PROTOS[1];
-      return ok({ protocolVersion: v, capabilities: { tools: {} }, serverInfo: { name: 'uc', version: '1.1.0' },
+      return ok({ protocolVersion: v, capabilities: { tools: {} }, serverInfo: { name: 'uc', version: '1.2.0' },
         instructions: 'Dữ liệu học tập cá nhân của chủ UC, chỉ đọc. Luôn xem trường online; khi false thì nói rõ máy đang tắt.' });
     }
     if (method === 'tools/list') return ok({ tools: TOOLS });

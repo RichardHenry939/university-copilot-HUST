@@ -92,9 +92,10 @@ def apply(cal_events, now=None, events=None):
                 ev['location'] = o['location'] or ev.get('location')
                 ev['notes'] = 'Đổi theo Teams' + (f" · {o['notes']}" if o['notes'] else '')
                 ev['source'] = 'teams'
+                ev['label'] = o['label']   # (v1.00.42) offline_list nhận buổi đã dời qua nhãn này
             continue
         kept.append({'kind': 'Class', 'title': f"{o['code']} · {o['name']} · Teams đổi lịch",
                      'start': new_start, 'end': o['end'].isoformat(timespec='milliseconds'),
                      'location': o['location'], 'notes': ('Đổi theo Teams' + (f" · {o['notes']}" if o['notes'] else '')),
-                     'source': 'teams'})
+                     'source': 'teams', 'label': o['label']})
     return kept

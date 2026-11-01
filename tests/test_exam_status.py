@@ -69,3 +69,20 @@ def test_midterm_codes_chi_lay_mon_da_co_lich():
     rows = [{'ma_hp': 'A', 'trang_thai': 'co_lich'}, {'ma_hp': 'B', 'trang_thai': 'du_kien'}, {'ma_hp': 'C', 'trang_thai': 'chua_lich'},
             {'ma_hp': 'D', 'trang_thai': 'chua_co'}, {'ma_hp': 'E', 'trang_thai': 'khong_thi'}]
     assert X.midterm_codes(rows) == {'A'}   # (v1.00.35) chưa có lịch thì hạn để màu thường
+
+
+def test_bai_cua_sinh_vien_trong_team_lop_khong_phai_thong_bao_thi(tmp_path, monkeypatch):
+    # (v1.00.42) tin sinh viên xin chuyển buổi vì "lịch thi bằng lái" từng bị ghi thành IT2000 "dự kiến thi giữa kỳ"
+    team = '2026.1 - Nhập môn CNTT&TT - 000000'
+    _school(tmp_path, monkeypatch, posts=[
+        {'Team': team, 'FromName': 'Sinh Vien A 202600000', 'ReceivedDateTime': '2026-10-29T08:56:13Z',
+         'Body': 'Sáng chủ nhật em có lịch thi bằng lái xe bị trùng lịch học nên em xin phép học online ạ.'}])
+    assert _by(X.overview(NOW))['IT2000']['trang_thai'] == 'chua_co'
+
+
+def test_cau_xin_phep_cua_giang_vien_cung_khong_tinh(tmp_path, monkeypatch):
+    team = '2026.1 - Nhập môn CNTT&TT - 000000'
+    _school(tmp_path, monkeypatch, posts=[
+        {'Team': team, 'FromName': 'Giang Vien', 'ReceivedDateTime': '2026-10-29T08:56:13Z',
+         'Body': 'Bạn nào có lịch thi bằng lái thì xin phép qua mail.'}])
+    assert _by(X.overview(NOW))['IT2000']['trang_thai'] == 'chua_co'

@@ -1068,6 +1068,10 @@ class H(BaseHTTPRequestHandler):
                     import teams_overrides
                     if isinstance(tt, dict) and isinstance(tt.get("events"), list): tt = dict(tt, events=teams_overrides.apply(tt["events"]))
                 except Exception as e: print("teams overrides:", e)
+                try:   # (v1.00.42) DS học offline (Google Sheet của lớp) -> ghi chú "trực tiếp / online" trên đúng buổi
+                    import offline_list
+                    if isinstance(tt, dict) and isinstance(tt.get("events"), list): tt = dict(tt, events=offline_list.annotate(tt["events"]))
+                except Exception as e: print("offline list:", e)
                 return self._send(200, tt)
             if u.path == "/api/study":   # GPA kỳ, CPA, rèn luyện — tính bằng academic.py
                 import academic
@@ -1101,6 +1105,17 @@ class H(BaseHTTPRequestHandler):
                 import timetable
                 import deadlines
                 return self._send(200, {"alerts": alerts.active(classes=timetable.get(_npost)["events"], dls=_dls()), "mail": {**(_mail["last"] or {}), "running": _mail["running"]}})
+            if u.path == "/api/mssv/status":   # (v1.00.42) chỉ trả đã lưu / chưa lưu, KHÔNG BAO GIỜ trả số
+                import mssv_store
+                return self._send(200, mssv_store.status())
+            if u.path == "/api/wallet":   # (v1.00.42 W8) ví thời gian: số dư, phiên đang chạy, thống kê
+                import wallet, datetime as _dt
+                with wallet.lock:
+                    st = wallet.load(); v = wallet.view(st, _dt.datetime.now(wallet.TZ)); wallet.save(st)
+                return self._send(200, v)
+            if u.path == "/api/offline":   # (v1.00.42) kết quả đối chiếu DS học offline (không có MSSV)
+                import offline_list
+                return self._send(200, offline_list.summary())
             if u.path == "/api/school":   # 🏫 trạng thái đồng bộ dữ liệu trường (qldt + iCTSV)
                 return self._send(200, school_status())
             if u.path == "/api/semester":
@@ -1251,6 +1266,48 @@ class H(BaseHTTPRequestHandler):
                 mime = mimetypes.guess_type(name)[0] or "application/octet-stream"
                 is_image = mime.startswith("image/")
                 return self._send(200, {"fid": fid, "name": name, "mime": mime, "size": len(data), "isImage": is_image})
+            if u.path == "/api/mssv":   # (v1.00.42) lưu / xoá MSSV mã hoá DPAPI. Không ghi giá trị vào log hay phản hồi.
+                import mssv_store, offline_list
+                b = json.loads(self._body(1024) or b"{}")
+                if b.get("action") == "delete":
+                    r = mssv_store.delete()
+                    try: offline_list.OUT.unlink()
+                    except FileNotFoundError: pass
+                    return self._send(200, r)
+                r = mssv_store.save(b.get("mssv"))
+                if r.get("ok"): r["offline"] = offline_list.summary(offline_list.refresh())
+                return self._send(200, r)
+            if u.path == "/api/wallet":   # (v1.00.42 W8) bắt đầu / tạm dừng / kết thúc phiên tập trung hoặc giải trí
+                import wallet, datetime as _dt
+                b = json.loads(self._body(4 * 1024) or b"{}"); act = b.get("action")
+                with wallet.lock:
+                    st = wallet.load(); now = _dt.datetime.now(wallet.TZ)
+                    wallet.view(st, now)   # phiên đã hết giờ thì chốt trước
+                    try:
+                        if act == "focus_start": wallet.start_focus(st, b.get("total") or 50, b.get("subject"), now)
+                        elif act == "pause": wallet.pause(st, now)
+                        elif act == "resume": wallet.resume(st, now)
+                        elif act == "focus_end": wallet.end_focus(st, now)
+                        elif act == "fun_start": wallet.start_fun(st, now)
+                        elif act == "fun_end": wallet.end_fun(st, now)
+                        else: return self._send(400, {"ok": False, "loi": "Thao tác không hợp lệ."})
+                    except ValueError as e: return self._send(200, {"ok": False, "loi": str(e)})
+                    wallet.save(st)
+                    return self._send(200, {"ok": True, **wallet.view(st, now)})
+            if u.path == "/api/mssv/reveal":   # (v1.00.42) hiện lại MSSV CHỈ cho trang UC mở trong trình duyệt ở localhost
+                # Chặn lệnh gọi kiểu agent (curl/script không có header Sec-Fetch của trình duyệt). Giới hạn: tiến trình
+                # chạy dưới cùng tài khoản Windows vẫn giả được header hoặc tự giải DPAPI; đây là rào chắn + luật, không phải két sắt.
+                import mssv_store
+                h = self.headers
+                if not (self.client_address[0] == "127.0.0.1" and h.get("Origin") in (ORIGIN, f"http://localhost:{PORT}")
+                        and h.get("Sec-Fetch-Site") == "same-origin" and h.get("Sec-Fetch-Mode") == "cors"
+                        and h.get("X-UC-Reveal") == "1"):
+                    return self._send(403, {"ok": False, "loi": "Chỉ xem được trong trang UC trên trình duyệt."})
+                v = mssv_store.load()
+                return self._send(200, {"ok": bool(v), "mssv": v})
+            if u.path == "/api/offline/refresh":   # (v1.00.42) đọc lại DS học offline ngay
+                import offline_list
+                return self._send(200, offline_list.summary(offline_list.refresh()))
             if u.path == "/api/certs":   # thêm / sửa / xoá chứng chỉ ngoại ngữ (certs.py)
                 import program, certs
                 r = certs.save(_npost, json.loads(self._body(16 * 1024) or b"{}"))
@@ -1320,6 +1377,11 @@ class H(BaseHTTPRequestHandler):
                     return self._send(200, {"ok": False, "loi": "Cần bấm Xác nhận trước."})
                 try: deadlines.complete(_npost, str(b.get("id") or ""))
                 except Exception as e: return self._send(200, {"ok": False, "loi": f"{type(e).__name__}: {e}"[:300]})
+                try:   # (v1.00.42 W8) hoàn tất hạn -> +15 phút ví (mỗi hạn một lần)
+                    import wallet, datetime as _dt
+                    with wallet.lock:
+                        st = wallet.load(); wallet.credit_deadline(st, str(b.get("id") or ""), b.get("name") or "", _dt.datetime.now(wallet.TZ)); wallet.save(st)
+                except Exception as e: print("wallet:", e)
                 dls = _dls(); phone_refresh()
                 return self._send(200, {"ok": True, "deadlines": dls, "alerts": alerts.active(classes=timetable.get(_npost)["events"], dls=dls)})
             if u.path == "/api/mail-check":   # 📡 đọc mail trường ngay — chỉ khi đã Xác nhận

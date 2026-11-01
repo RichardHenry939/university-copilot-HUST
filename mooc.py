@@ -150,6 +150,29 @@ def sync(post):
 
 
 
+def undated(m=None):
+    """(v1.00.42) Bài MOOC có điểm mà UC KHÔNG đưa được vào lịch: chưa có hạn, hoặc hạn ghi trước ngày mở khoá (GV chưa cập nhật đợt này).
+    Trước đây sync() bỏ ngầm hai loại này -> bài không có trên Teams thì UC "mù". Chỉ lấy bài chưa có điểm (earned 0) và chưa có cờ đã nộp.
+    -> {code: [{'name','why','possible'}]}. Giới hạn: bài GV chưa mở trên MOOC (không có trong trang tiến độ) thì vẫn không thấy."""
+    if m is None:
+        try: m = json.loads(OUT.read_text(encoding='utf-8'))
+        except Exception: return {}
+    out = {}
+    for cid, c in (m.get('courses') or {}).items():
+        mc = re.search(r'\+([A-Z]{2,4}\d{4})\+', cid); code = mc.group(1) if mc else None
+        if not code: continue
+        cstart = dt.datetime.fromisoformat(c['start'].replace('Z', '+00:00')) if c.get('start') else None
+        for it in c.get('items') or []:
+            if it.get('submitted') is True or (it.get('earned') or 0) > 0 or not (it.get('possible') or 0) > 0: continue
+            if not it.get('due'): why = 'chưa có hạn trên MOOC'
+            else:
+                due = dt.datetime.fromisoformat(it['due'].replace('Z', '+00:00'))
+                if not (cstart and due < cstart): continue
+                why = f'hạn trên MOOC còn ghi {due.astimezone(TZ):%d/%m/%Y} (đợt cũ)'
+            out.setdefault(code, []).append({'name': it['name'], 'why': why, 'possible': it['possible']})
+    return out
+
+
 def work_url(item, cid):
     from urllib.parse import urljoin, urlsplit
     url = urljoin(BASE, item.get('url') or ('/courses/' + cid + '/course/'))

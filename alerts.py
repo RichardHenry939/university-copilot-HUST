@@ -112,10 +112,29 @@ def extra_alerts(now):
     return out
 
 
+def mooc_alerts():
+    """(v1.00.42) 📚 MOOC: bài có điểm nhưng chưa có hạn đúng kỳ (mooc.undated) — mỗi môn MỘT banner vàng, chỉ trong UC (không toast).
+    "Tắt nhắc" gắn với đúng danh sách bài hiện tại: có bài mới chưa hạn thì banner hiện lại."""
+    try:
+        import mooc
+        groups = mooc.undated()
+    except Exception as e:
+        print('mooc alerts:', e); return []
+    muted = _load().get('dl_mute', {}); out = []
+    for code, items in sorted(groups.items()):
+        eid = 'mooc|' + code + '|' + base64.urlsafe_b64encode('|'.join(sorted(i['name'] for i in items)).encode()).decode()[:40]
+        if eid in muted: continue
+        out.append({'id': eid, 'kind': 'mooc', 'level': 'yellow', 'eid': eid, 'stage_level': 'mooc',
+                    'title': f"MOOC {code}: {len(items)} bài chưa có hạn kỳ này — UC không tự xếp lịch được",
+                    'text': ' · '.join(f"{i['name']} (0/{i['possible']:g}, {i['why']})" for i in items),
+                    'note': 'Kiểm trên MOOC hoặc hỏi lớp xem hạn thật; UC không đoán hạn.', 'buttons': ['Tắt nhắc']})
+    return out
+
+
 def active(now=None, classes=None, dls=None):
     """Danh sách cảnh báo đang hiệu lực (cho banner UC và toast)."""
     now = now or dt.datetime.now(TZ)
-    st = me.load(); out = class_alerts(classes, now, st) + deadline_alerts(dls, now) + extra_alerts(now)
+    st = me.load(); out = class_alerts(classes, now, st) + deadline_alerts(dls, now) + extra_alerts(now) + mooc_alerts()
     for eid, e in st['events'].items():
         if e.get('status') != 'Đang theo dõi': continue
         for ch in e.get('changes', []):
@@ -152,7 +171,7 @@ def active(now=None, classes=None, dls=None):
                         'note': s.get('ghi_chu') or '',
                         'buttons': (['Đã nộp', 'Bỏ'] if lvl == 'day' else ['Đã nộp', 'Đã biết']) if dl else
                                    ['Sẽ đi', 'Bỏ'] if lvl == 'day' and not going else (['Đã biết'] if going else ['Sẽ đi', 'Bỏ', 'Đã biết'])})
-    rank = {'class': 0, 'deadline': 1, 'extra': 2, 'day': 3, 'change': 4, 'red': 5, 'yellow': 6, 'optional': 7}
+    rank = {'class': 0, 'deadline': 1, 'extra': 2, 'day': 3, 'change': 4, 'red': 5, 'yellow': 6, 'mooc': 7, 'optional': 8}
     return sorted(out, key=lambda a: (rank.get(a.get('stage_level') or a['kind'], 9), a.get('when') or ''))
 
 
@@ -166,7 +185,7 @@ def set_extra_off(off):
 
 
 def ack(eid, choice, stage=None, change_at=None, post=None):
-    if eid.startswith('dl|') or eid.startswith('ex|'):   # hạn nộp / ngoại khoá: "Tắt nhắc" chỉ dừng thông báo — mục vẫn ở danh sách
+    if eid.startswith(('dl|', 'ex|', 'mooc|')):   # hạn nộp / ngoại khoá: "Tắt nhắc" chỉ dừng thông báo — mục vẫn ở danh sách
         s = _load(); s.setdefault('dl_mute', {})[eid] = dt.datetime.now(TZ).isoformat(timespec='minutes'); _save(s)
         return {'ok': True}
     if eid.startswith('cls|'):   # tiết học: chỉ ẩn nhắc của buổi này
@@ -293,7 +312,7 @@ def tick(now=None, send=notify, classes=None, dls=None):
             send(f"Còn {mark} giờ: " + a["title"], a['text'] + (f"\n{a['note']}" if a.get('note') else ''), level='red', alert=a)
             s['sent'][k2] = now.isoformat(timespec='seconds'); sent.append(k2); continue
         if quiet: continue
-        if lvl == 'optional': continue   # gợi ý: chỉ banner trong UC
+        if lvl in ('optional', 'mooc'): continue   # gợi ý / MOOC chưa hạn: chỉ banner trong UC
         last = s['sent'].get(key)
         every = EVERY[lvl]
         if a.get('going') and lvl == 'day':   # đã chọn "Sẽ đi": chỉ nhắc 2 giờ và 30 phút trước

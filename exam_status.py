@@ -21,7 +21,10 @@ NAMES = {'IT2000': 'Nhập môn CNTT&TT', 'MI1111': 'Giải tích I', 'MI1141': 
 
 NONE_RE = re.compile(r'không\s+(?:tổ\s+chức\s+)?(?:thi|kiểm\s+tra)\s+giữa\s+k[ỳì]', re.I)
 PLAN_RE = re.compile(r'lịch\s+thi|thi\s+giữa\s+k[ỳì]|kiểm\s+tra\s+giữa\s+k[ỳì]|thi\s+GK\b', re.I)
-NOT_PLAN_RE = re.compile(r'thi\s+thử|cuối\s+k[ỳì]|thi\s+đấu|olympic', re.I)
+NOT_PLAN_RE = re.compile(r'thi\s+thử|cuối\s+k[ỳì]|thi\s+đấu|olympic|xin\s+phép|bằng\s+lái|thi\s+bằng', re.I)
+# (v1.00.42) bài của sinh viên trong team lớp (tên người gửi có kèm MSSV) không phải thông báo của giảng viên.
+# Trước đây tin "em có lịch thi bằng lái xe... xin phép học online" bị ghi thành IT2000 "dự kiến thi giữa kỳ".
+STUDENT_RE = re.compile(r'\b2\d{7,8}\b')
 DATE_RE = re.compile(r'\b(\d{1,2})/(\d{1,2})(?:/(\d{4}))?\b|(?:đầu|giữa|cuối)\s+tháng\s+\d{1,2}', re.I)
 
 
@@ -59,7 +62,7 @@ def _notices(code):
     """Câu thông báo thi giữa kỳ mới nhất của môn: (kind, câu, nguồn, lúc) hoặc None."""
     found = []
     for x in _items(_load('teams/posts.json')):
-        if _belongs(code, x.get('Team') or ''): found.append(('Teams', x))
+        if _belongs(code, x.get('Team') or '') and not STUDENT_RE.search(x.get('FromName') or ''): found.append(('Teams', x))
     for x in _items(_load('mail/inbox.json')):
         if _belongs(code, (x.get('Subject') or '') + ' ' + (x.get('Body') or '')[:3000]): found.append(('mail', x))
     best = None

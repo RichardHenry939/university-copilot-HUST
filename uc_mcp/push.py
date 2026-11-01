@@ -41,6 +41,43 @@ def _ngoai_khoa_inbox():
     return out
 
 
+def _local(path, timeout=60):
+    import urllib.request
+    with urllib.request.urlopen('http://127.0.0.1:8320' + path, timeout=timeout) as r:
+        return json.loads(r.read().decode('utf-8'))
+
+
+def _mo_rong():
+    """(v1.00.42) Phần mở rộng cho connector: lịch 21 ngày (đã gồm lịch đè Teams), cảnh báo đang hiện trên UC, chứng chỉ, MOOC.
+    Chỉ đọc API cục bộ của UC (không gọi Notion thêm). Mỗi phần lỗi riêng thì ghi <phần>_loi, không làm hỏng cả bản."""
+    out = {}
+    now = dt.datetime.now(S.TZ)
+    try:
+        lo, hi = (now - dt.timedelta(days=1)).isoformat(), (now + dt.timedelta(days=21)).isoformat()
+        ev = [e for e in _local('/api/timetable/all').get('events', []) if lo <= (e.get('start') or '') <= hi]
+        out['lich'] = [{'tieu_de': e.get('title'), 'loai': e.get('kind'), 'bat_dau': e.get('start'), 'ket_thuc': e.get('end'),
+                        'dia_diem': e.get('location'), 'ghi_chu': (e.get('notes') or '')[:400]} for e in sorted(ev, key=lambda e: e['start'])][:300]
+    except Exception as e: out['lich_loi'] = f"{type(e).__name__}: {e}"[:160]
+    try:
+        out['canh_bao'] = [{k: a.get(k) for k in ('level', 'title', 'text', 'note', 'when')} for a in _local('/api/alerts').get('alerts', [])][:60]
+    except Exception as e: out['canh_bao_loi'] = f"{type(e).__name__}: {e}"[:160]
+    try:
+        pg = _local('/api/program', timeout=90)
+        keep = ('muc', 'cert', 'band', 'lvLabel', 'cefr', 'issued', 'expiry', 'daysLeft', 'valid', 'grad', 'exempt', 'lang', 'note')
+        out['chung_chi'] = {'danh_sach': [{k: c.get(k) for k in keep} for c in (pg.get('certs') or {}).get('items', [])],
+                            'chuan_dau_ra': (pg.get('graduation') or {}).get('cert')}
+    except Exception as e: out['chung_chi_loi'] = f"{type(e).__name__}: {e}"[:160]
+    try:
+        sys.path.insert(0, str(HERE.parent))
+        import mooc
+        m = json.loads(mooc.OUT.read_text(encoding='utf-8'))
+        out['mooc'] = {'doc_luc': m.get('at'), 'chua_co_han': mooc.undated(m),
+                       'khoa': {cid: {'ten': c.get('name'), 'bai': [{k: it.get(k) for k in ('name', 'due', 'format', 'earned', 'possible')} for it in c.get('items') or []]}
+                                for cid, c in (m.get('courses') or {}).items()}}
+    except Exception as e: out['mooc_loi'] = f"{type(e).__name__}: {e}"[:160]
+    return out
+
+
 def snapshot():
     """-> bản tóm tắt (dict) hoặc None khi UC không trả lời. Chỉ đọc /api/today MỘT lần."""
     d, err = S._fetch()
@@ -52,7 +89,7 @@ def snapshot():
                 "today": S.t_today({}),
                 "han_tat_ca": [S._deadline_view(x) for x in S._song(d)],
                 "bao_cao": S.t_briefing({})["bao_cao"],
-                **_ngoai_khoa_inbox()}
+                **_ngoai_khoa_inbox(), **_mo_rong()}
     finally:
         S._fetch = real
 
