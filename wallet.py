@@ -115,7 +115,8 @@ def pause(st, now):
 def resume(st, now):
     a = st['active']
     if a and a.get('paused_at'):
-        a['paused_s'] = a.get('paused_s', 0) + (now - _t(a['paused_at'])).total_seconds(); a['paused_at'] = None
+        a['paused_s'] = a.get('paused_s', 0) + (now - _t(a['paused_at'])).total_seconds()
+        a.setdefault('pauses', []).append([a['paused_at'], _iso(now)]); a['paused_at'] = None   # (01/11 tối) để đồng hồ 24h bỏ khoảng tạm dừng
         if a['type'] == 'focus':   # tạm dừng làm phiên dài ra -> lùi giờ hết hạn của tín hiệu chặn
             _signal(True, _iso(now + dt.timedelta(seconds=a['total'] * 60 - _elapsed_s(a, now))), now)
 
@@ -127,7 +128,7 @@ def end_focus(st, now):
     if not p['done']: raise ValueError('Đã vào phiên tập trung thì không huỷ được. Phiên tự kết thúc khi hết giờ.')
     blocks, reward = p['blocks_done'], p['blocks_done'] * BLOCK_REWARD
     st['sessions'].append({'id': a['id'], 'start': a['start'], 'end': _iso(now), 'total': a['total'], 'subject': a['subject'],
-                           'focus_min': p['focus_s'] // 60, 'blocks': blocks})
+                           'focus_min': p['focus_s'] // 60, 'blocks': blocks, 'pauses': a.get('pauses', [])})
     if reward: _add(st, 'focus', reward, now, ref=a['id'], note=f'{blocks} khối 25 phút' + (f' · {a["subject"]}' if a['subject'] else ''))
     st['active'] = None
     _signal(False, None, now)
@@ -181,6 +182,25 @@ def stats(st, now):
     return out
 
 
+def spans_today(st, now):
+    """(01/11 tối) Các khoảng đã bật chế độ tập trung trong hôm nay (trừ lúc tạm dừng), cho đồng hồ 24 giờ tô xanh.
+    -> [[giờ bắt đầu, giờ kết thúc], ...] dạng ISO GMT+7, đã cắt về trong ngày. Phiên cũ trước bản này không có 'pauses' -> tính trọn."""
+    now = now.astimezone(TZ); day0 = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    items = [(_t(x['start']), _t(x['end']), x.get('pauses') or []) for x in st['sessions']]
+    a = st['active']
+    if a and a['type'] == 'focus':
+        ps = list(a.get('pauses') or []) + ([[a['paused_at'], _iso(now)]] if a.get('paused_at') else [])
+        items.append((_t(a['start']), now, ps))
+    out = []
+    for s0, s1, ps in items:
+        cuts, cur = sorted((_t(p0), _t(p1)) for p0, p1 in ps), s0
+        for p0, p1 in cuts + [(s1, s1)]:
+            lo, hi = max(cur, day0), min(p0, now)
+            if hi > lo: out.append([_iso(lo), _iso(hi)])
+            cur = max(cur, p1)
+    return out
+
+
 def view(st, now):
     """Trạng thái cho giao diện. Phiên đã hết giờ (hoặc giải trí hết số dư) thì tự kết thúc ở đây."""
     a = st['active']
@@ -190,5 +210,5 @@ def view(st, now):
     act = None
     if a and a['type'] == 'focus': act = {**a, **progress(st, now)}
     elif a: act = {**a, 'left_s': max(0, int(a['cap'] * 60 - (now - _t(a['start'])).total_seconds()))}
-    return {'balance': balance(st), 'active': act, 'stats': stats(st, now), 'recent': st['ledger'][-12:][::-1],
+    return {'balance': balance(st), 'active': act, 'stats': stats(st, now), 'spans': spans_today(st, now), 'recent': st['ledger'][-12:][::-1],
             'rules': {'focus': FOCUS, 'break': BREAK, 'block_reward': BLOCK_REWARD, 'deadline_reward': DEADLINE_REWARD}}

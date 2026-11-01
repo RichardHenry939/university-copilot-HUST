@@ -115,3 +115,12 @@ def test_tin_hieu_chi_ghi_khi_chu_da_dat_cau_hinh(tmp_path, monkeypatch):
     monkeypatch.setattr(W, 'SIGNAL_CFG', cfg)
     W.end_focus(st, T0 + m(25))
     assert '"focus": false' in target.read_text(encoding='utf-8')
+
+
+def test_khoang_tap_trung_hom_nay_bo_luc_tam_dung():
+    st = new()
+    W.start_focus(st, 60, 'x', T0)
+    W.pause(st, T0 + m(20)); W.resume(st, T0 + m(30))
+    assert W.spans_today(st, T0 + m(40)) == [[W._iso(T0), W._iso(T0 + m(20))], [W._iso(T0 + m(30)), W._iso(T0 + m(40))]]
+    W.pause(st, T0 + m(45))   # đang tạm dừng: không tô phần sau 45'
+    assert W.spans_today(st, T0 + m(50))[-1] == [W._iso(T0 + m(30)), W._iso(T0 + m(45))]

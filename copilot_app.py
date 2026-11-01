@@ -1154,6 +1154,9 @@ class H(BaseHTTPRequestHandler):
                 with wallet.lock:
                     st = wallet.load(); v = wallet.view(st, _dt.datetime.now(wallet.TZ)); wallet.save(st)
                 return self._send(200, v)
+            if u.path == "/api/walk":   # (v1.00.45 tiếp) thể dục: km/bước theo ngày trên CTSV (đã gỡ MSSV/tên) + mục tiêu, giờ đi, quân sự
+                import walk
+                return self._send(200, walk.view())
             if u.path == "/api/offline":   # (v1.00.42) kết quả đối chiếu DS học offline (không có MSSV)
                 import offline_list
                 return self._send(200, offline_list.summary())
@@ -1377,6 +1380,9 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/offline/refresh":   # (v1.00.42) đọc lại DS học offline ngay
                 import offline_list
                 return self._send(200, offline_list.summary(offline_list.refresh()))
+            if u.path == "/api/walk/refresh":   # (v1.00.45 tiếp) đọc lại thành tích 10000 bước trên CTSV ngay (chỉ đọc)
+                import walk_ctsv
+                return self._send(200, walk_ctsv.fetch())
             if u.path == "/api/certs":   # thêm / sửa / xoá chứng chỉ ngoại ngữ (certs.py)
                 import program, certs
                 r = certs.save(_npost, json.loads(self._body(16 * 1024) or b"{}"))

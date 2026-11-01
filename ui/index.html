@@ -580,13 +580,13 @@ li.gk .tname, li.gk small { color: var(--red); }
 .wnow::before { content: ''; position: absolute; left: -5px; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
 
 /* ======================================================================
-   (v1.00.42) W7 tân trang: "mực tím + tờ lịch bloc"
+   (v1.00.42) W7 tân trang: "mực tím + tờ lịch bloc" — (01/11 tối) đổi lại xanh dương bản v1.00.38 theo chủ
    Bố cục: điều hướng (trái) | nội dung | Hôm nay (phải); GDTC/Hè/Học lại = ngăn kéo trượt.
    Token cũ (--blue...) giữ tên để không phải sửa ~2000 dòng JS/CSS, chỉ đổi giá trị.
    ====================================================================== */
 :root {
-  --paper: #f3f3f8; --grid: #e9e8f1; --sheet: #ffffff; --ink: #1b1830; --ink-2: #4b4862; --ink-3: #8a87a0;
-  --line: #e2e0ec; --blue: #5534c8; --blue-wash: #eeeafb; --blue-ink: #ffffff; --red: #d22f3c; --red-wash: #fcebec;
+  --paper: #f5f7fa; --grid: #e6ebf2; --sheet: #ffffff; --ink: #1b2433; --ink-2: #4a5568; --ink-3: #8592a6;
+  --line: #dce3ee; --blue: #2d55c8; --blue-wash: #e8eefb; --blue-ink: #ffffff; --red: #cf3434; --red-wash: #fbeaea;
   --green: #1f8a5b; --green-wash: #e5f4ec; --amber: #a3600a; --amber-wash: #fbf0df;
   --r-s: 8px; --r-m: 12px; --r-l: 16px;
   --nav: 232px; --rail: 292px;
@@ -594,8 +594,8 @@ li.gk .tname, li.gk small { color: var(--red); }
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #14121f; --grid: #1c1a2b; --sheet: #1c1a2a; --ink: #ecebf5; --ink-2: #b9b6cc; --ink-3: #7f7c96;
-    --line: #2d2a40; --blue: #a690ff; --blue-wash: #2a2350; --blue-ink: #14121f; --red: #ff7a80; --red-wash: #3b1f26;
+    --paper: #131a26; --grid: #1a2232; --sheet: #1a2333; --ink: #e9edf4; --ink-2: #b4bdcc; --ink-3: #7d889b;
+    --line: #2a3447; --blue: #7d9cff; --blue-wash: #22305a; --blue-ink: #0f1522; --red: #ff7a72; --red-wash: #3a2024;
     --green: #6fd3a0; --green-wash: #183428; --amber: #f2b04e; --amber-wash: #3a2d17;
   }
 }
@@ -691,7 +691,7 @@ button.link:hover { text-decoration: underline; }
 
 /* ngăn kéo GDTC · Hè · Học lại: trượt ra bên phải, không chiếm cột */
 .side-r { display: block; position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 100vw); height: 100vh; z-index: 30;
-  transform: translateX(105%); transition: transform .22s ease; box-shadow: -18px 0 40px rgba(27, 24, 48, .16); visibility: hidden; }
+  transform: translateX(105%); transition: transform .22s ease; box-shadow: -18px 0 40px rgba(20, 30, 50, .16); visibility: hidden; }
 .app.r-open .side-r { transform: none; visibility: visible; }
 
 /* 900–1279: điều hướng chỉ còn icon, Hôm nay hẹp lại */
@@ -744,7 +744,7 @@ button.link:hover { text-decoration: underline; }
 .drl-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--blue), color-mix(in srgb, var(--blue) 60%, var(--green))); }
 .xtabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--grid); border-radius: 12px; margin: 4px 0 6px; }
 .xtabs button { border: 0; background: none; padding: 8px 16px; border-radius: 9px; font: inherit; font-weight: 600; color: var(--ink-2); cursor: pointer; }
-.xtabs button[aria-selected="true"] { background: var(--sheet); color: var(--blue); box-shadow: 0 1px 2px rgba(27, 24, 48, .08); }
+.xtabs button[aria-selected="true"] { background: var(--sheet); color: var(--blue); box-shadow: 0 1px 2px rgba(20, 30, 50, .08); }
 .xsec { font-size: 18px; margin: 22px 0 10px; }
 .xsec small { font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--ink-3); margin-left: 4px; }
 .xgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
@@ -787,7 +787,7 @@ button.link:hover { text-decoration: underline; }
 .hero { position: relative; overflow: hidden; border-radius: var(--r-l); min-height: 260px; display: flex; align-items: flex-end; margin: 6px 0 8px;
   background: linear-gradient(135deg, var(--blue), color-mix(in srgb, var(--blue) 55%, #000)); color: #fff; }
 .hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20, 16, 40, 0) 30%, rgba(20, 16, 40, .72)); }
+.hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14, 22, 40, 0) 30%, rgba(14, 22, 40, .72)); }
 .hero-txt { position: relative; z-index: 1; padding: 28px 32px; }
 .hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(34px, 6vw, 64px); line-height: 1; margin: 0 0 6px; color: #fff; letter-spacing: -.02em; }
 .hero p { margin: 0; font-size: 17px; opacity: .92; } .hero .hero-kicker { font-size: 14px; margin-bottom: 8px; }
@@ -913,7 +913,7 @@ button.link:hover { text-decoration: underline; }
 .topnav .gsolo:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; border-radius: 8px; }
 /* hộp tab con: nền tờ, mỗi dòng icon + tên (như menu Ngoại khoá của CTSV) */
 .dd { position: absolute; top: calc(100% - 6px); left: 0; min-width: 250px; padding: 8px; background: var(--sheet); border: 1px solid var(--line);
-  border-radius: 14px; box-shadow: 0 14px 36px rgba(27, 24, 48, .16), 0 2px 6px rgba(27, 24, 48, .06); display: flex; flex-direction: column; gap: 1px; }
+  border-radius: 14px; box-shadow: 0 14px 36px rgba(20, 30, 50, .16), 0 2px 6px rgba(20, 30, 50, .06); display: flex; flex-direction: column; gap: 1px; }
 .dd[hidden] { display: none; }
 .dd.dd-end { left: auto; right: 0; }
 .dd .tab, .dd-i { display: flex; align-items: center; gap: 11px; width: 100%; margin: 0; padding: 9px 12px; border: 0; border-radius: 9px; background: none;
@@ -944,7 +944,7 @@ button.link:hover { text-decoration: underline; }
   .topnav .bell { margin-left: auto; }
   .gburger { display: grid; }
   .gnav { display: none; position: absolute; top: 100%; left: 0; right: 0; margin: 0; flex-direction: column; gap: 0; padding: 6px 10px 12px;
-    background: var(--sheet); border-bottom: 1px solid var(--line); box-shadow: 0 18px 30px rgba(27, 24, 48, .14); max-height: calc(100vh - 56px); overflow-y: auto; }
+    background: var(--sheet); border-bottom: 1px solid var(--line); box-shadow: 0 18px 30px rgba(20, 30, 50, .14); max-height: calc(100vh - 56px); overflow-y: auto; }
   .topnav.open .gnav { display: flex; }
   .grp { flex-direction: column; }
   .gbtn { min-height: 48px; width: 100%; padding: 0 8px; font-size: 15.5px; border-radius: 10px; }
@@ -961,22 +961,22 @@ button.link:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .gbtn .caret { transition: none; } }
 
 /* ---- Trang chủ ---- */
-#p-home { background: var(--paper); --deep: #4b2cb8; }   /* nền luôn mang chữ trắng (hero, footer, thẻ sự kiện): tím đậm cố định cả sáng lẫn tối */
+#p-home { background: var(--paper); --deep: #1d3f9a; }   /* nền luôn mang chữ trắng (hero, footer, thẻ sự kiện): xanh đậm cố định cả sáng lẫn tối */
 #p-home > * { flex: none; }   /* panel là flex cột: không cho khối nào (nhất là footer overflow:hidden) bị co về 0 */
 .h-hero { position: relative; flex: none; min-height: clamp(360px, 62vh, 620px); display: flex; align-items: flex-end; overflow: hidden; color: #fff;
   background: var(--deep); }
 .h-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .h-hero-img[hidden] { display: none; }
-.h-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20, 16, 40, .05) 35%, rgba(20, 16, 40, .7)); pointer-events: none; }
+.h-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14, 22, 40, .05) 35%, rgba(14, 22, 40, .7)); pointer-events: none; }
 .h-hero-txt { position: relative; z-index: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 32px 46px; }
 .h-hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(46px, 9vw, 128px); line-height: .9; letter-spacing: -.045em; margin: 0 0 14px; color: #fff; max-width: 11ch; }
 .h-date { margin: 0 0 12px; font-size: 15px; font-weight: 600; opacity: .9; }
 .h-sub { margin: 0; font-size: clamp(16px, 1.6vw, 19px); max-width: 46ch; opacity: .94; }
 .h-hero-btn { position: absolute; z-index: 2; right: 20px; top: 18px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px;
-  background: rgba(20, 16, 40, .45); color: #fff; font-size: 13.5px; font-weight: 600; cursor: pointer; border: 1px solid rgba(255, 255, 255, .35); backdrop-filter: blur(6px); }
-.h-hero-btn:hover { background: rgba(20, 16, 40, .65); }
+  background: rgba(14, 22, 40, .45); color: #fff; font-size: 13.5px; font-weight: 600; cursor: pointer; border: 1px solid rgba(255, 255, 255, .35); backdrop-filter: blur(6px); }
+.h-hero-btn:hover { background: rgba(14, 22, 40, .65); }
 .h-hero-btn:focus-within { outline: 2px solid #fff; outline-offset: 2px; }
-.h-hero-msg { position: absolute; z-index: 2; right: 20px; top: 60px; margin: 0; font-size: 13px; background: rgba(20, 16, 40, .6); padding: 4px 10px; border-radius: 8px; }
+.h-hero-msg { position: absolute; z-index: 2; right: 20px; top: 60px; margin: 0; font-size: 13px; background: rgba(14, 22, 40, .6); padding: 4px 10px; border-radius: 8px; }
 .h-hero-msg:empty { display: none; }
 .h-body { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 32px; }
 .h-sec { padding: 56px 0 0; }
@@ -990,15 +990,73 @@ button.link:hover { text-decoration: underline; }
 .h-wcard h2 { font-size: clamp(24px, 2.4vw, 30px); line-height: 1.15; margin: 0 0 14px; }
 .h-wcard p { margin: 0 0 12px; color: var(--ink-2); max-width: 62ch; }
 .h-wbtns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+/* 1b. (01/11 tối) Lịch và thời gian: tờ lịch | đồng hồ 24 giờ; dưới: lịch trong ngày | hạn trong ngày */
+.ht-top, .ht-lists { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
+.ht-top { align-items: stretch; }
+.ht-lists { margin-top: 24px; align-items: start; }
+.ht-bloc { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); overflow: hidden; display: grid; grid-template-rows: auto 1fr auto; text-align: center; }
+.ht-bloc .bloc-dow { font-size: 17px; padding: 12px 0 10px; }
+.ht-bloc .bloc-n { font-size: clamp(120px, 15vw, 210px); align-self: center; padding: 0; }
+.ht-bloc .bloc-m { font-size: 17px; padding: 0 0 20px; }
+.ht-lists h3 { font-family: var(--display); font-size: 19px; display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 10px; }
+.ht-lists h3 span { color: var(--ink-3); font-size: 16px; }
+.ht-lists .dc-list li { font-size: 14.5px; padding: 11px 14px; }
+/* đồng hồ 24 giờ: 0 giờ ở đỉnh, kim giờ đi một vòng mỗi ngày; 22:00–06:00 tô vàng (giờ ngủ) */
+.clk24 { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); padding: 22px 22px 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.clk24 svg { width: min(100%, 340px); height: auto; display: block; }
+.clk24 .c-face { fill: var(--sheet); stroke: var(--ink); stroke-width: 2.5; }
+.clk24 .c-sleep { fill: #f6c945; opacity: .55; }
+.clk24 .c-left { fill: var(--blue-wash); }
+.clk24 .c-fz { fill: var(--green); opacity: .6; }
+.clk24 .c-msg b.c-fsum { color: var(--green); }
+.clk24 .c-tick { stroke: var(--ink-3); stroke-width: 1; } .clk24 .c-tick.h { stroke: var(--ink); stroke-width: 2.2; }
+.clk24 .c-num { font-family: var(--display); font-size: 11px; font-weight: 700; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+.clk24 .c-num.k { font-size: 14px; }
+.clk24 .c-hh { stroke: var(--ink); stroke-width: 5; stroke-linecap: round; }
+.clk24 .c-mm { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+.clk24 .c-ss { stroke: var(--red); stroke-width: 1.4; stroke-linecap: round; }
+.clk24 .c-hub { fill: var(--red); }
+.clk24 .c-dig { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 3.4vw, 44px); letter-spacing: .02em; font-variant-numeric: tabular-nums; line-height: 1; color: var(--ink); }
+.clk24 .c-msg { margin: 0; font-size: 14.5px; color: var(--ink-2); text-align: center; }
+.clk24 .c-msg b { color: var(--ink); }
+.clk24 .c-msg.night b { color: var(--amber); }
+.clk24 .c-key { display: flex; gap: 14px; font-size: 12.5px; color: var(--ink-3); }
+.clk24 .c-key i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+/* (01/11 tối) thể dục: dòng mục tiêu ở TKB, thẻ nhiệm vụ ở Ví, lời nhắc đi tập, tab con 10000 bước chạy */
+.walkline { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; background: var(--green-wash); border: 1px solid color-mix(in srgb, var(--green) 35%, transparent); border-radius: var(--r-m); padding: 10px 14px; margin: 0 0 12px; font-size: 14px; }
+.walkline b { font-family: var(--display); font-size: 15.5px; color: var(--green); }
+.walkline span { color: var(--ink-2); flex: 1 1 260px; }
+.wwalk { margin: 0 0 18px; display: grid; gap: 6px; }
+.wwalk strong { font-family: var(--display); font-size: 30px; } .wwalk strong small { font-size: 15px; color: var(--ink-3); font-weight: 600; }
+.wwalk p { margin: 0; color: var(--ink-2); font-size: 14px; }
+.wbar { height: 8px; background: var(--grid); border-radius: 99px; overflow: hidden; } .wbar i { display: block; height: 100%; background: var(--green); border-radius: 99px; }
+.walknag { position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: var(--green); color: #fff; padding: 12px 18px; font-size: 15px; }
+.walknag b { font-family: var(--display); font-size: 17px; } .walknag .ghost { margin-left: auto; background: #fff; color: var(--green); border-color: #fff; }
+.runhero { background: linear-gradient(135deg, var(--deep, #1d3f9a), color-mix(in srgb, var(--deep, #1d3f9a) 60%, var(--green))); color: #fff; border-radius: var(--r-l); padding: 22px 26px; margin: 8px 0 16px; }
+.runhero span { font-size: 13px; opacity: .85; } .runhero h2 { margin: 6px 0 0; font-size: clamp(19px, 2vw, 25px); line-height: 1.25; color: #fff; }
+.runstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 8px; }
+.runstats div { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 14px 16px; display: grid; gap: 2px; }
+.runstats strong { font-family: var(--display); font-size: 26px; color: var(--blue); } .runstats span { font-size: 13px; color: var(--ink-3); }
+.runtab { width: 100%; border-collapse: collapse; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; font-size: 14.5px; }
+.runtab th, .runtab td { padding: 10px 14px; text-align: left; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.runtab th { font-size: 13px; color: var(--ink-3); font-weight: 600; border-top: 0; }
+.runtab .rbar { width: 32%; } .runtab .rbar i { display: block; height: 10px; border-radius: 99px; background: var(--blue); min-width: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+@media (max-width: 760px) { .runstats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.clk24-w { flex-direction: row; justify-content: center; gap: 28px; margin: 4px 0 18px; }
+.clk24-w svg { width: 230px; }
+.clk24-w .c-side { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.clk24-w .c-msg { text-align: left; max-width: 34ch; }
+@media (max-width: 760px) { .ht-top, .ht-lists { grid-template-columns: 1fr; } .clk24-w { flex-direction: column; } .clk24-w .c-side { align-items: center; } .clk24-w .c-msg { text-align: center; } }
 .h-wbtns .primary, .h-wbtns .ghost, .h-more .ghost { padding: 9px 16px; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; }
 /* 2. Sự kiện: lớn | 2 thẻ xếp dọc + ‹ › | danh sách 01–04 */
 .h-ev { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .9fr) minmax(0, 1fr); gap: 18px; align-items: stretch; }
 .hev { position: relative; display: block; border-radius: var(--r-l); overflow: hidden; color: #fff; text-decoration: none; background: var(--deep); min-height: 180px; }
 .hev.big { min-height: 420px; height: 100%; }
 .hev img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.hev.noimg { background: linear-gradient(150deg, var(--deep), color-mix(in srgb, var(--deep) 55%, #c0283a)); }
-.hev::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15, 12, 30, 0) 40%, rgba(15, 12, 30, .82)); }
-.hev-d { position: absolute; z-index: 1; left: 14px; top: 14px; background: #c0283a; color: #fff; border-radius: 10px; text-align: center; padding: 6px 10px; line-height: 1.05; min-width: 54px; }
+.hev.noimg { background: linear-gradient(150deg, var(--deep), color-mix(in srgb, var(--deep) 55%, #2d55c8)); }
+.hev::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 16, 30, 0) 40%, rgba(10, 16, 30, .82)); }
+.hev-d { position: absolute; z-index: 1; left: 14px; top: 14px; background: #2d55c8; color: #fff; border-radius: 10px; text-align: center; padding: 6px 10px; line-height: 1.05; min-width: 54px; }
 .hev-d b { display: block; font-family: var(--display); font-size: 24px; font-weight: 800; }
 .hev-d span { font-size: 11.5px; font-weight: 600; }
 .hev.now .hev-d { background: var(--deep); }
@@ -1116,7 +1174,7 @@ a.wk:hover { border-color: var(--blue); }
    Hàng trên: logo trường + University Copilot / Đại học Bách khoa Hà Nội | Chào bạn + logo UC. Hàng dưới: menu.
    Các tab: nền tím đậm. Trang chủ: đè lên ảnh lớn, tím đậm nhạt dần vào ảnh (như mảng đỏ của CTSV); cuộn qua ảnh thì thành nền đặc.
    ====================================================================== */
-:root { --deep: #4b2cb8; }
+:root { --deep: #1d3f9a; }
 .app { position: relative; }
 .topnav { display: block; min-height: 0; padding: 0; background: var(--deep); border-bottom: 0; color: #fff; }
 .tn-bar { display: flex; align-items: center; gap: clamp(12px, 1.2vw, 26px); padding: clamp(14px, 1.9vw, 40px) clamp(16px, 1.6vw, 34px) clamp(8px, 1.4vw, 30px); }   /* (01/11) cỡ theo tỉ lệ header ảnh trang chủ CTSV */
@@ -1128,6 +1186,10 @@ a.wk:hover { border-color: var(--blue); }
 .tn-hello { margin-left: auto; display: flex; align-items: center; gap: 14px; font-family: var(--display); font-weight: 700; font-size: clamp(17px, 1.6vw, 34px); }
 .tn-hello .brand-mark { width: clamp(40px, 4.1vw, 84px); height: clamp(40px, 4.1vw, 84px); border-radius: clamp(10px, 1vw, 20px); background: #fff; color: var(--deep); font-size: clamp(15px, 1.5vw, 30px); box-shadow: 0 0 0 2px rgba(255, 255, 255, .35); }
 .topnav .bell { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .35); color: #fff; }
+/* (01/11 tối, chủ) chuông cùng cỡ ô "UC" cạnh nó để không chìm cạnh tiêu đề lớn */
+.topnav .bell { width: clamp(40px, 4.1vw, 84px); height: clamp(40px, 4.1vw, 84px); border-radius: clamp(10px, 1vw, 20px); border-width: 2px; }
+.topnav .bell svg { width: 56%; height: 56%; }
+.topnav .bell-n { top: -8px; right: -8px; min-width: clamp(20px, 1.6vw, 32px); height: clamp(20px, 1.6vw, 32px); border-radius: 99px; font-size: clamp(11px, .9vw, 17px); padding: 0 6px; box-shadow: 0 0 0 2px var(--deep); }
 .topnav .bell:hover, .topnav .bell[aria-expanded="true"] { border-color: #fff; color: #fff; background: rgba(255, 255, 255, .22); }
 .gnav { margin: 0; padding: 0 clamp(6px, 1vw, 20px); gap: clamp(0px, .9vw, 20px); flex-wrap: wrap; }   /* cửa sổ 900–1000px: thiếu chỗ thì xuống dòng, không tràn */
 .gbtn, .topnav .gsolo { color: #fff; min-height: clamp(44px, 3.3vw, 66px); font-size: clamp(13px, 1.2vw, 25px); font-weight: 700; text-transform: uppercase; letter-spacing: .01em; }
@@ -1143,10 +1205,10 @@ a.wk:hover { border-color: var(--blue); }
 .app.on-home > .main { grid-row: 1 / -1; }
 .app.on-home .topnav { position: absolute; left: 0; right: 0; top: 0; z-index: 46; padding-bottom: 40px;
   background: linear-gradient(180deg, var(--deep) 0%, color-mix(in srgb, var(--deep) 88%, transparent) 45%, color-mix(in srgb, var(--deep) 35%, transparent) 78%, transparent 100%); }
-.app.on-home .topnav.solid { background: var(--deep); padding-bottom: 0; box-shadow: 0 6px 18px rgba(20, 12, 50, .25); }
-.app.on-home .gbtn, .app.on-home .topnav .gsolo { text-shadow: 0 1px 3px rgba(10, 6, 30, .45); }
+.app.on-home .topnav.solid { background: var(--deep); padding-bottom: 0; box-shadow: 0 6px 18px rgba(12, 22, 50, .25); }
+.app.on-home .gbtn, .app.on-home .topnav .gsolo { text-shadow: 0 1px 3px rgba(6, 12, 30, .45); }
 .h-hero { min-height: max(560px, 100vh); }
-.h-hero::after { background: linear-gradient(180deg, transparent 60%, rgba(20, 16, 40, .35)); }
+.h-hero::after { background: linear-gradient(180deg, transparent 60%, rgba(14, 22, 40, .35)); }
 .h-hero-btn { top: auto; bottom: 22px; right: 24px; }
 .h-hero-msg { top: auto; bottom: 66px; right: 24px; }
 @media (max-width: 1279px) {
@@ -1213,6 +1275,7 @@ a.wk:hover { border-color: var(--blue); }
         <div class="dd" id="dd-extra" role="tablist" aria-orientation="vertical" aria-label="Ngoại khoá" hidden>
           <button class="tab" role="tab" id="t-extra" aria-selected="false" aria-controls="p-extra"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="2"/></svg><span class="tl">Sự kiện &amp; hoạt động</span></button>
           <button class="dd-i" data-go="extra:mine"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg><span class="tl">Hoạt động của tôi</span></button>
+          <button class="dd-i" data-go="extra:run"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="14" cy="4.5" r="2"/><path d="m6 21 3.5-6 3 2.5V22M8 11l3-3.5 3.5 2.5 3 1M11 7.5 9.5 13"/></svg><span class="tl">10000 bước chạy</span></button>
           <button class="dd-i" data-go="extra:drl"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span class="tl">Điểm rèn luyện</span></button>
         </div>
       </li>
@@ -1247,6 +1310,7 @@ a.wk:hover { border-color: var(--blue); }
 
 
   <main class="main">
+    <div class="walknag" id="walk-nag" role="alert" hidden></div>
     <button class="bell bell-m" id="bell-m" aria-label="Thông báo" aria-expanded="false" aria-controls="notif"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg><span class="bell-n" id="bell-n-m" hidden></span></button>
     <div class="notif" id="notif" role="dialog" aria-label="Thông báo" hidden>
       <div class="notif-head"><b>Thông báo</b><button class="ghost" id="notif-x" aria-label="Đóng">Đóng</button></div>
@@ -1295,6 +1359,16 @@ a.wk:hover { border-color: var(--blue); }
             <p>Sơ đồ bên cạnh là các nguồn UC đang đọc và nơi dữ liệu được ghi tới.</p>
             <div class="h-wbtns"><button class="primary" data-go="cal">Mở thời khoá biểu</button><button class="ghost" data-go="about">Giới thiệu và cài đặt</button></div>
           </div>
+        </section>
+
+        <!-- (01/11 tối, chủ) Lịch và thời gian: tờ lịch hôm nay | đồng hồ 24 giờ, dưới là lịch và hạn trong ngày -->
+        <section class="h-sec" id="home-time" aria-labelledby="ht-t">
+          <h2 class="h-title" id="ht-t">Lịch và thời gian</h2>
+          <div class="ht-top">
+            <div class="bloc is-today ht-bloc" id="ht-bloc"></div>
+            <div class="clk24" data-clk24></div>
+          </div>
+          <div class="ht-lists" id="ht-lists"><p class="skeleton">Đang đọc…</p></div>
         </section>
 
         <section class="h-sec" id="home-events" aria-labelledby="he-t">
@@ -1352,6 +1426,9 @@ a.wk:hover { border-color: var(--blue); }
       <div class="wrap wide sem wallet">
         <h1>Ví thời gian</h1>
         <p class="lead">Việc hôm nay, hạn môn học và lịch ôn tập, xếp theo lịch thi và hạn sắp tới. Chọn ⛺ Camp khi dồn sức, 💤 Rest khi nghỉ; cuối tuần xem thành tích.</p>
+        <div class="clk24 clk24-w" data-clk24></div>
+        <section class="wcard wwalk" id="w-walk" hidden aria-label="Nhiệm vụ đi bộ hôm nay"></section>   <!-- (01/11 tối) đồng hồ 24 giờ: ngày hôm nay còn bao nhiêu -->
+
         <!-- (v1.00.42 W8) ví phút + phiên tập trung 25/5 + âm nền -->
         <div class="wtop">
           <section class="wcard purse" aria-label="Số dư ví">
@@ -1421,6 +1498,7 @@ a.wk:hover { border-color: var(--blue); }
       <div class="wrap wide cal">
         <h1>Thời khoá biểu toàn kỳ</h1>
         <p class="lead">Thời khoá biểu và deadline trong Notion: tuần ở trên, cả tháng ở dưới. Muốn đổi lịch, nhắn cho Copilot.</p>
+        <div class="walkline" id="cal-walk" hidden></div>   <!-- (01/11 tối) mục tiêu đi bộ hằng ngày, trên cùng lịch -->
         <div id="cal-exams"></div>
         <div class="calstats" id="cal-stats" aria-live="polite"></div>
         <div class="cal-nav">
@@ -1485,6 +1563,7 @@ a.wk:hover { border-color: var(--blue); }
           <button role="tab" data-x="mine" aria-selected="false">Hoạt động của tôi</button>
           <button role="tab" data-x="schol" aria-selected="false">Học bổng</button>
           <button role="tab" data-x="adm" aria-selected="false">Hành chính &amp; đặt vé</button>
+          <button role="tab" data-x="run" aria-selected="false">10000 bước chạy</button>
         </div>
         <div id="ex-body"><p class="skeleton">Đang đọc…</p></div>
         <p class="cal-sync" id="ex-sync"></p>
@@ -1809,19 +1888,168 @@ function calEvents() {
   return base.concat(extra, xkEv);
 }
 // (v1.00.42) mục Ngày cạnh lịch tuần: tờ lịch xé của ngày đang chọn, hạn trong ngày và lịch theo giờ
+// ---- (01/11 tối) Thể dục thể thao: giải 10000 bước (walk.py). Hiện ở Ngoại khoá (tab con), Ví (nhiệm vụ), TKB (dòng mục tiêu).
+// Học quân sự: không nhắc đi hằng ngày (remind=false) nhưng vẫn hiện số bước.
+let WALK = null;
+const nf = n => Number(n || 0).toLocaleString('vi-VN');
+const hhmm = s => s ? s.slice(11, 16) : '';
+const runKm = v => v == null ? null : (v > 1000 ? v / 1000 : v);   // ngày: mét; bảng xếp hạng: km
+function walkLoad() { fetch('/api/walk', { cache: 'no-store' }).then(r => r.json()).then(j => { WALK = j; renderWalk(); }).catch(() => {}); }
+async function walkRefresh() {
+  const b = $('#run-refresh'); if (b) { b.disabled = true; b.textContent = 'Đang đọc CTSV… (có thể vài phút)'; }
+  try { await api('/api/walk/refresh', {}); } catch (e) {}
+  walkLoad();
+}
+function walkSum(w) {
+  const left = Math.max(0, w.target - w.steps);
+  return w.capped ? 'Đủ rồi, để dành cho mai (đã chạm trần ' + nf(w.cap) + ' bước).' : w.met ? 'Đã đạt mục tiêu hôm nay.'
+    : 'Còn ' + nf(left) + ' bước (≈ ' + (left / (w.stepsPerKm || 1385)).toFixed(1).replace('.', ',') + ' km).';
+}
+function renderWalk() {
+  const w = WALK; if (!w) return;
+  const mil = w.military || {}, sl = w.slot || {};
+  const when = sl.indoor ? 'đi trong nhà (hôm nay hết khung 6–8h và 17–19h)' : 'đi lúc ' + hhmm(sl.start) + '–' + hhmm(sl.end) + (sl.rush ? ' (giờ cao điểm: chọn đường trong trường, xa đường lớn)' : '');
+  const milTxt = mil.active ? 'Đang học quân sự (' + hDM(mil.from) + '–' + hDM(mil.to) + '): UC không nhắc đi bộ hằng ngày. ' : '';
+  const cl = $('#cal-walk');
+  if (cl) {
+    cl.hidden = false;
+    cl.innerHTML = '<b>🚶 Mục tiêu hôm nay: ' + nf(w.target) + ' bước' + (w.examWeek ? ' (tuần thi)' : '') + '</b>' +
+      '<span>' + (w.remind ? esc(when) + ' · ' : esc(milTxt)) + 'đã đi ' + nf(w.steps) + ' bước · ' + esc(walkSum(w)) + '</span><button class="ghost" id="cal-walk-go">Xem bước chạy</button>';
+    $('#cal-walk-go').onclick = () => goTo('extra:run');
+  }
+  const wc = $('#w-walk');
+  if (wc) {
+    wc.hidden = false;
+    const pct = Math.min(100, Math.round(w.steps / Math.max(1, w.target) * 100));
+    wc.innerHTML = '<span class="wl">Nhiệm vụ hôm nay · thể dục</span><strong>' + nf(w.steps) + ' <small>/ ' + nf(w.target) + ' bước</small></strong>' +
+      '<div class="wbar"><i style="width:' + pct + '%"></i></div><p>' +
+      (w.remind ? 'UC xếp ' + esc(when) + '. Tới giờ, phiên tập trung tự tạm dừng để bạn đi tập.' : esc(milTxt) + 'Số bước vẫn được ghi.') + ' ' + esc(walkSum(w)) + '</p>';
+  }
+  if (exTab === 'run' && $('#p-extra') && $('#p-extra').classList.contains('on')) renderExtra();
+  walkNag();
+}
+function runHTML() {
+  const w = WALK;
+  if (!w) return '<p class="skeleton">Đang đọc…</p>';
+  const days = (w.days || []).slice().sort((a, b) => String(b.DayRun).localeCompare(String(a.DayRun)));
+  const totKm = days.reduce((t, r) => t + (r.km || 0), 0), maxKm = Math.max(1, ...days.map(r => r.km || 0));
+  const cut = runKm(w.top100Km), k2 = v => v.toFixed(2).replace('.', ',');
+  return '<section class="runhero"><span>Giải chạy sinh viên · iCTSV</span><h2>' + esc(w.competition || 'Giải 10000 bước chân vì sức khoẻ mỗi ngày') + '</h2></section>' +
+    '<div class="runstats">' +
+      '<div><strong>' + k2(totKm) + '</strong><span>km đã ghi nhận</span></div>' +
+      '<div><strong>' + nf(Math.round(totKm * (w.stepsPerKm || 1385))) + '</strong><span>bước (km × ' + nf(w.stepsPerKm || 1385) + ')</span></div>' +
+      '<div><strong>' + (w.myRank ? '#' + w.myRank : '–') + '</strong><span>' + (w.myRank ? 'hạng của bạn' : cut != null ? 'ngoài top 100 · mốc vào top ' + k2(cut) + ' km' : 'chưa có hạng') + '</span></div>' +
+      '<div><strong>' + nf(w.steps) + '</strong><span>bước hôm nay / mục tiêu ' + nf(w.target) + '</span></div></div>' +
+    (w.military && w.military.active ? '<p class="note">Đang học quân sự: UC không nhắc đi bộ hằng ngày, số bước vẫn được ghi.</p>' : '') +
+    '<h2 class="xsec">Thành tích theo ngày <small>' + days.length + '</small></h2>' +
+    (days.length ? '<table class="runtab"><thead><tr><th>Ngày</th><th>Quãng đường (km)</th><th>Bước (ước tính)</th><th><span class="sr">Biểu đồ</span></th></tr></thead><tbody>' +
+      days.map(r => '<tr><td>' + hDM(r.DayRun) + '/' + String(r.DayRun).slice(0, 4) + '</td><td>' + k2(r.km || 0) + '</td><td>' + nf(r.steps) +
+        '</td><td class="rbar"><i style="width:' + Math.round((r.km || 0) / maxKm * 100) + '%"></i></td></tr>').join('') + '</tbody></table>'
+      : '<p class="note">CTSV chưa ghi nhận ngày nào.</p>') +
+    '<p class="cal-sync">' + (w.at ? 'Đọc từ CTSV lúc ' + hhmm(w.at) + ' ' + hDM(w.at) + ' · tự đọc lại mỗi 2 giờ (6h–22h). ' : 'Chưa đọc lần nào. ') +
+    (w.error ? 'Lỗi lần trước: ' + esc(w.error) + '. ' : '') + 'Số bước quy từ km như app trường. <button class="ghost" id="run-refresh">Đọc lại ngay</button></p>';
+}
+// Tới khung UC xếp: phiên tập trung đang chạy thì tự tạm dừng (một lần mỗi ngày) và hiện lời nhắc đi tập. Học quân sự: không nhắc.
+async function walkNag() {
+  const w = WALK, nag = $('#walk-nag'); if (!w || !nag) return;
+  const sl = w.slot || {}, now = Date.now();
+  let seen = false; try { seen = !!localStorage.getItem('walk-nag-' + w.today); } catch (e) {}
+  const inSlot = w.remind && !w.met && sl.start && now >= Date.parse(sl.start) && now < Date.parse(sl.end) + 30 * 6e4;
+  if (!inSlot || seen) { nag.hidden = true; return; }
+  nag.hidden = false;
+  nag.innerHTML = '<b>Dừng rồi đi tập thể dục.</b> Mục tiêu ' + nf(w.target) + ' bước, khung ' + hhmm(sl.start) + '–' + hhmm(sl.end) + '. <button class="ghost" id="walk-nag-x">Đã biết</button>';
+  $('#walk-nag-x').onclick = () => { nag.hidden = true; try { localStorage.setItem('walk-nag-' + w.today, '1'); } catch (e) {} };
+  let paused = false; try { paused = !!localStorage.getItem('walk-pause-' + w.today); } catch (e) {}
+  if (!paused && WAL && WAL.active && WAL.active.type === 'focus' && !WAL.active.paused_at) {
+    try { localStorage.setItem('walk-pause-' + w.today, '1'); } catch (e) {}
+    await walPost({ action: 'pause' });
+  }
+}
+walkLoad(); setInterval(walkLoad, 10 * 6e4); setInterval(walkNag, 20000);
+// (01/11 tối) tách ra để mục "Lịch và thời gian" ở trang chủ dùng chung với mục Ngày của tab lịch
+function dayEvents(d) {
+  const evs = calEvents().filter(e => evDay(e) === d && !isLong(e) && !/NGHỈ/.test(e.title)).sort((a, b) => a.start.localeCompare(b.start));
+  const isDl = e => e.kind === 'Deadline' || /·\s*Hạn (đăng ký|nộp)/i.test(e.title);   // tin Teams/mail "… · Hạn đăng ký" là hạn, không phải buổi diễn ra
+  return { dls: evs.filter(isDl), sch: evs.filter(e => !isDl(e)) };
+}
+function dayLi(e, dl, now) {
+  const x = evInfo(e, now), room = e.location && !/^online/i.test(e.location) ? e.location : '';
+  const where = e.attend === 'truc_tiep' ? '🏫 Trực tiếp' + (room ? ' · ' + room : '') : e.attend === 'online' ? '💻 Online' : x.online ? 'Online' : room;
+  const t = e.start.includes('T') ? vnHM(e.start) + (!dl && e.end ? '–' + vnHM(e.end) : '') : 'Cả ngày';
+  return '<li class="' + (x.past ? 'past ' : '') + (e.kind === 'Exam' ? 'ex' : '') + '"><time>' + (dl ? 'Hạn ' : '') + t + '</time>' + esc(dl && e.kind === 'Deadline' ? x.short : x.name) +
+    (dl && e.dlKind ? '<small>' + esc(e.dlKind) + (e.course ? ' · ' + esc(e.course) : '') + '</small>' : where ? '<small>' + esc(where) + '</small>' : '') + '</li>';
+}
+function renderHomeTime() {
+  const b = $('#ht-bloc'), box = $('#ht-lists'); if (!b || !box) return;
+  const now = Date.now(), today = vnDate(now), dt = new Date(dayMs(today));
+  const dow = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', timeZone: 'Asia/Ho_Chi_Minh' }).format(dt);
+  b.innerHTML = '<span class="bloc-dow">' + esc(dow.charAt(0).toUpperCase() + dow.slice(1)) + ' · Hôm nay</span><span class="bloc-n">' + dt.getUTCDate() +
+    '</span><span class="bloc-m">Tháng ' + (dt.getUTCMonth() + 1) + ' · ' + dt.getUTCFullYear() + '</span>';
+  if (!CAL) return;
+  const { dls, sch } = dayEvents(today);
+  box.innerHTML = '<section><h3>Lịch trong ngày <span>' + sch.length + '</span></h3>' +
+      (sch.length ? '<ul class="dc-list">' + sch.map(e => dayLi(e, false, now)).join('') + '</ul>' : '<p class="dc-empty">Hôm nay không có buổi học hay sự kiện.</p>') + '</section>' +
+    '<section><h3>Hạn trong ngày <span>' + dls.length + '</span></h3>' +
+      (dls.length ? '<ul class="dc-list dl">' + dls.map(e => dayLi(e, true, now)).join('') + '</ul>' : '<p class="dc-empty">Hôm nay không có hạn nào.</p>') + '</section>';
+}
+// Đồng hồ 24 giờ: 0 giờ ở đỉnh, kim giờ một vòng/ngày, kim phút một vòng/giờ, kim giây một vòng/phút.
+// Phần còn lại của ngày (bây giờ -> 24:00) tô xanh nhạt, 22:00–06:00 tô vàng = giờ ngủ. Giờ theo GMT+7.
+const SLEEP_H = 22, WAKE_H = 6;
+function clk24Build(el) {
+  const R = 100, P = (deg, r) => { const a = (deg - 90) * Math.PI / 180; return [(R + r * Math.cos(a)).toFixed(2), (R + r * Math.sin(a)).toFixed(2)]; };
+  const arc = (d0, d1, r) => { const [x0, y0] = P(d0, r), [x1, y1] = P(d1, r); return 'M' + R + ' ' + R + 'L' + x0 + ' ' + y0 + 'A' + r + ' ' + r + ' 0 ' + ((d1 - d0) % 360 > 180 ? 1 : 0) + ' 1 ' + x1 + ' ' + y1 + 'Z'; };
+  let t = '';
+  for (let i = 0; i < 96; i++) { const h = i % 4 === 0, [x0, y0] = P(i * 3.75, h ? 82 : 87), [x1, y1] = P(i * 3.75, 92); t += '<line class="c-tick' + (h ? ' h' : '') + '" x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y1 + '"/>'; }
+  for (let h = 0; h < 24; h++) { const [x, y] = P(h * 15, 71); t += '<text class="c-num' + (h % 6 === 0 ? ' k' : '') + '" x="' + x + '" y="' + y + '">' + h + '</text>'; }
+  el.innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="Đồng hồ 24 giờ"><circle class="c-face" cx="100" cy="100" r="96"/>' +
+    '<path class="c-left"/><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/><g class="c-focus"></g>' + t +
+    '<line class="c-hh" x1="100" y1="100" x2="100" y2="48"/><line class="c-mm" x1="100" y1="100" x2="100" y2="24"/><line class="c-ss" x1="100" y1="112" x2="100" y2="16"/><circle class="c-hub" cx="100" cy="100" r="4"/></svg>' +
+    '<div class="c-side"><div class="c-dig" aria-live="off"></div><p class="c-msg"></p>' +
+    '<div class="c-key"><span><i style="background:var(--green)"></i>Đã tập trung</span><span><i style="background:var(--blue-wash);border:1px solid var(--line)"></i>Còn lại hôm nay</span><span><i style="background:#f6c945"></i>Giờ ngủ 22:00–06:00</span></div></div>';
+  el._arc = arc;
+}
+// (01/11 tối, chủ) tô xanh lá các khoảng đã bật chế độ tập trung hôm nay: đồng hồ vừa nhắc vừa cho thấy mình không lười.
+// Nguồn: /api/wallet -> spans (đã trừ lúc tạm dừng). Đọc lại mỗi 30 giây; phiên đang chạy kéo dài tới bây giờ.
+let CLK_SP = { spans: [], live: false, at: 0 };
+function clk24Spans() {
+  if (Date.now() - CLK_SP.at < 30000) return; CLK_SP.at = Date.now();
+  fetch('/api/wallet', { cache: 'no-store' }).then(r => r.json()).then(j => {
+    const a = j.active; CLK_SP.spans = j.spans || []; CLK_SP.live = !!(a && a.type === 'focus' && !a.paused_at);
+  }).catch(() => {});
+}
+function clk24Tick() {
+  clk24Spans();
+  const v = new Date(Date.now() + 7 * 36e5), h = v.getUTCHours(), m = v.getUTCMinutes(), s = v.getUTCSeconds();
+  const p2 = n => String(n).padStart(2, '0'), sod = h * 3600 + m * 60 + s;
+  const toSleep = SLEEP_H * 3600 - sod, night = h >= SLEEP_H || h < WAKE_H;
+  const hm = x => Math.floor(x / 3600) + ' giờ ' + p2(Math.floor(x % 3600 / 60)) + ' phút';
+  document.querySelectorAll('[data-clk24]').forEach(el => {
+    if (!el.firstChild) clk24Build(el);
+    const g = (c, deg) => el.querySelector(c).setAttribute('transform', 'rotate(' + deg.toFixed(2) + ' 100 100)');
+    g('.c-hh', sod / 240); g('.c-mm', (m * 60 + s) / 10); g('.c-ss', s * 6);
+    const d = sod / 240; el.querySelector('.c-left').setAttribute('d', d < 359.9 ? el._arc(d, 360, 94) : '');
+    const day0 = Date.now() - sod * 1000, deg = iso => Math.max(0, Math.min(360, (Date.parse(iso) - day0) / 240000));
+    el.querySelector('.c-focus').innerHTML = CLK_SP.spans.map((sp, i) => {
+      const d0 = deg(sp[0]), d1 = CLK_SP.live && i === CLK_SP.spans.length - 1 ? sod / 240 : deg(sp[1]);
+      return d1 - d0 > .05 ? '<path class="c-fz" d="' + el._arc(d0, d1, 94) + '"/>' : '';
+    }).join('');
+    el.querySelector('.c-dig').textContent = p2(h) + ':' + p2(m) + ':' + p2(s);
+    const msg = el.querySelector('.c-msg');
+    msg.className = 'c-msg' + (night ? ' night' : '');
+    msg.innerHTML = night ? '<b>Đã tới giờ ngủ.</b> Hôm nay đã hết; để việc còn lại cho sáng mai.'
+      : 'Còn <b>' + hm(toSleep) + '</b> trước giờ ngủ (22:00). Hôm nay đã trôi qua ' + Math.round(sod / 864) + '%.';
+    const fs = CLK_SP.spans.reduce((t, sp, i) => t + ((CLK_SP.live && i === CLK_SP.spans.length - 1 ? Date.now() : Date.parse(sp[1])) - Date.parse(sp[0])) / 1000, 0);
+    msg.innerHTML += ' Đã tập trung <b class="c-fsum">' + (fs >= 60 ? hm(fs).replace(/^0 giờ /, '') : 'chưa phút nào') + '</b>.';
+  });
+}
+setInterval(clk24Tick, 1000); clk24Tick();
 function renderDayCard() {
   const el = $('#cal-daycard'); if (!el || !CAL) return;
   const d = calSel, now = Date.now(), today = vnDate(now), dt = new Date(dayMs(d));
   const dow = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', timeZone: 'Asia/Ho_Chi_Minh' }).format(dt);
-  const evs = calEvents().filter(e => evDay(e) === d && !isLong(e) && !/NGHỈ/.test(e.title)).sort((a, b) => a.start.localeCompare(b.start));
-  const dls = evs.filter(e => e.kind === 'Deadline'), sch = evs.filter(e => e.kind !== 'Deadline');
-  const li = (e, dl) => {
-    const x = evInfo(e, now), room = e.location && !/^online/i.test(e.location) ? e.location : '';
-    const where = e.attend === 'truc_tiep' ? '🏫 Trực tiếp' + (room ? ' · ' + room : '') : e.attend === 'online' ? '💻 Online' : x.online ? 'Online' : room;
-    const t = e.start.includes('T') ? vnHM(e.start) + (!dl && e.end ? '–' + vnHM(e.end) : '') : 'Cả ngày';
-    return '<li class="' + (x.past ? 'past ' : '') + (e.kind === 'Exam' ? 'ex' : '') + '"><time>' + (dl ? 'Hạn ' : '') + t + '</time>' + esc(dl ? x.short : x.name) +
-      (dl && e.dlKind ? '<small>' + esc(e.dlKind) + (e.course ? ' · ' + esc(e.course) : '') + '</small>' : where ? '<small>' + esc(where) + '</small>' : '') + '</li>';
-  };
+  const { dls, sch } = dayEvents(d);
+  const li = (e, dl) => dayLi(e, dl, now);
+  renderHomeTime();
   el.innerHTML = '<div class="bloc' + (d === today ? ' is-today' : '') + '"><span class="bloc-dow">' + esc(dow.charAt(0).toUpperCase() + dow.slice(1)) + (d === today ? ' · Hôm nay' : '') + '</span>' +
     '<span class="bloc-n">' + dt.getUTCDate() + '</span><span class="bloc-m">Tháng ' + (dt.getUTCMonth() + 1) + ' · ' + dt.getUTCFullYear() + '</span></div>' +
     (d !== today ? '<button class="ghost dc-back" id="dc-today">Về hôm nay</button>' : '') +
@@ -2074,6 +2302,7 @@ function renderAdm() {
 function renderExtra() {
   if (!$('#ex-body')) return;
   renderDrl();
+  if (exTab === 'run') { $('#ex-body').innerHTML = runHTML(); const b = $('#run-refresh'); if (b) b.onclick = walkRefresh; return; }
   if (!EX) { $('#ex-body').innerHTML = '<p class="skeleton">Đang đọc…</p>'; return; }
   const items = EX.items || [], now = Date.now();
   const endOf = x => Date.parse(x.han || x.end || x.start || 0);
@@ -3707,7 +3936,7 @@ function loadHome() {
 function renderHome() {
   const DOWN = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   const t = new Date(), hd = $('#home-date'); if (hd) hd.textContent = DOWN[t.getDay()] + ', ' + t.getDate() + '/' + (t.getMonth() + 1) + '/' + t.getFullYear();
-  hEvents(); hWork(); hSchol(); hProg(); hOwner();
+  renderHomeTime(); hEvents(); hWork(); hSchol(); hProg(); hOwner();
 }
 const hLeft = m => m < 0 ? 'quá hạn' : m >= 2880 ? 'còn ' + Math.floor(m / 1440) + ' ngày' : m >= 120 ? 'còn ' + Math.floor(m / 60) + ' giờ' : 'còn ' + m + ' phút';
 const hDM = s => s ? Number(String(s).slice(8, 10)) + '/' + Number(String(s).slice(5, 7)) : '';
@@ -3720,14 +3949,18 @@ function hEvents() {
   const byStart = (a, b) => T(a.start) - T(b.start);
   const up = its.filter(x => T(x.start) > now).sort(byStart);
   // sắp diễn ra gần nhất: ưu tiên mục CTSV có ảnh, nếu không có thì mục gần nhất
-  const lead = up.find(x => x.aid && up[0] && T(x.start) - T(up[0].start) <= 7 * 864e5) || up[0] || null;   // (soát 01/11) gần nhất trước; mục có ảnh chỉ thắng khi cách không quá 7 ngày
+  // (01/11 tối) lỗi "không hiện ảnh": mục sắp tới thường là tin Teams/mail (không có ảnh), CTSV hiếm khi có sự kiện tương lai.
+  // Ô lớn ưu tiên: sắp tới có ảnh -> đang diễn ra có ảnh -> sắp tới bất kỳ. Mục không ảnh rơi xuống danh sách bên phải.
+  const live = its.filter(x => x.aid && T(x.start) <= now && !isNaN(T(x.end)) && now <= T(x.end)).sort((a, b) => T(a.end) - T(b.end));
+  const lead = up.find(x => x.aid) || live[0] || up[0] || null;
   // tiêu biểu đang diễn ra: đang trong giờ diễn ra, hoặc còn hạn đăng ký
   const mid = its.filter(x => x !== lead && ((T(x.start) <= now && !isNaN(T(x.end)) && now <= T(x.end)) || (x.loai === 'Đang mở' && x.han && T(x.han) > now)))
     .sort((a, b) => (b.aid ? 1 : 0) - (a.aid ? 1 : 0) || byStart(a, b));
   const rest = up.filter(x => x !== lead && !mid.includes(x)).slice(0, 4);
+  // mục không có ảnh: dùng ảnh nền trang chủ làm phông (đã có lớp tối phía dưới), không để khối màu trơn
   if (!lead && !mid.length && !rest.length) { box.innerHTML = '<p class="h-empty" style="grid-column:1/-1">Chưa có sự kiện sắp tới.</p>'; return; }
   const card = (x, cls) => {
-    const img = x.aid ? '/ctsv-img/' + x.aid : '', tag = x.url ? 'a' : 'div', hm = vnHM(x.start);
+    const img = x.aid ? '/ctsv-img/' + x.aid : ($('#hero-img') && !$('#hero-img').hidden ? '/hero-img' : ''), tag = x.url ? 'a' : 'div', hm = vnHM(x.start);
     const sub = (hm && hm !== '00:00' ? hm : '') + (x.place ? (hm && hm !== '00:00' ? ' tại ' : '') + x.place : '');
     return '<' + tag + ' class="hev ' + cls + (img ? '' : ' noimg') + '"' + (x.url ? ' href="' + esc(x.url) + '" target="_blank" rel="noopener"' : '') + '>' +
       (img ? '<img loading="lazy" alt="" src="' + img + '" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' : '') +

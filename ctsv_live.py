@@ -72,6 +72,10 @@ def fetch():
             out['admin'] = page.evaluate(ADMIN_JS, user)
             try: out['images'] = _save_images(page, out['ctsv'])   # (v1.00.45) ảnh bìa hoạt động cho thẻ ở tab Ngoại khoá
             except Exception as e: out['images'] = {'error': f'{type(e).__name__}: {e}'[:200]}
+            try:   # (v1.00.45 tiếp) giải 10000 bước: đọc chung lượt này mỗi 2 giờ, khỏi giành trình duyệt với lượt khác
+                import walk_ctsv
+                if walk_ctsv.due(): walk_ctsv.read_in_page(page)
+            except Exception: pass
             try: out['drl'] = _read_drl(page)   # (v1.00.45) điểm rèn luyện SV tự chấm (chỉ đọc; UC không bấm Chấm / Lưu)
             except Exception as e: out['drl'] = {'error': f'{type(e).__name__}: {e}'[:200]}
             # Đặt vé: đọc phản hồi trang /dat-ve tự tải (bknexus/Event/GetEvents)
