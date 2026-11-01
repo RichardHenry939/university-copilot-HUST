@@ -60,7 +60,8 @@ def test_trung_voi_kho_thi_chi_xoa_khong_nap_lai(tmp_path, monkeypatch):
     monkeypatch.setattr(teams_files, 'local_index', lambda: {h: str(original.relative_to(app.INBOX.parent))})
     out = Z.sync_once()
     assert not (z / 'slide.pdf').exists() and app.state['items'] == [] and app.queued == []
-    assert out[0]['kq'] == 'trùng, đã xoá bản Zalo' and out[0]['rel'] == 'Đại số\\Slide\\slide.pdf'
+    assert out[0]['kq'] == 'trùng, đã xoá bản Zalo'
+    assert out[0]['rel'].replace('/', '\\') == 'Đại số\\Slide\\slide.pdf'   # Linux trả '/', Windows trả '\'
 
 
 def test_trung_voi_file_dang_cho_trong_inbox(tmp_path, monkeypatch):
