@@ -17,6 +17,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 OUT = HERE / 'school' / 'ctsv_live.json'
 TZ = dt.timezone(dt.timedelta(hours=7))
+CTSV_URL = 'https://ctsv.hust.edu.vn'
 EVERY_MIN = 4   # (5/10) người dùng: mọi nguồn 5 phút / lần
 
 ADMIN_JS = """async (user) => {
@@ -69,6 +70,10 @@ def fetch():
             user = m.group(0) if m else ''
             out['ctsv'] = page.evaluate(f.CTSV_API_JS, user)
             out['admin'] = page.evaluate(ADMIN_JS, user)
+            try: out['images'] = _save_images(page, out['ctsv'])   # (v1.00.45) ảnh bìa hoạt động cho thẻ ở tab Ngoại khoá
+            except Exception as e: out['images'] = {'error': f'{type(e).__name__}: {e}'[:200]}
+            try: out['drl'] = _read_drl(page)   # (v1.00.45) điểm rèn luyện SV tự chấm (chỉ đọc; UC không bấm Chấm / Lưu)
+            except Exception as e: out['drl'] = {'error': f'{type(e).__name__}: {e}'[:200]}
             # Đặt vé: đọc phản hồi trang /dat-ve tự tải (bknexus/Event/GetEvents)
             try:
                 with page.expect_response(lambda r: 'bknexus/Event/GetEvents' in r.url, timeout=30000) as rr:
@@ -103,6 +108,71 @@ def fetch():
     a = out.get('admin') or {}
     return {'ok': True, 'events': len(out['ctsv'].get('open') or []), 'messages': len(a.get('messages') or []),
             'papers': len(a.get('papers') or []), 'tickets': len((out.get('tickets') or {}).get('events') or [])}
+
+
+IMG = HERE / 'school' / 'ctsv_img'
+IMG_JS = """async (paths) => {
+  const tok = localStorage.getItem('adal.access.token.keyhttps://ctsv.hust.edu.vn'); const out = {};
+  for (const [id, p] of paths) {
+    try {
+      const r = await fetch('/api-t/' + p, {headers: {Authorization: 'Bearer ' + tok}, signal: AbortSignal.timeout(15000)});
+      if (!r.ok) continue;
+      const b = new Uint8Array(await r.arrayBuffer()); if (b.length < 200 || b.length > 3e6) continue;
+      let s = ''; for (let i = 0; i < b.length; i += 32768) s += String.fromCharCode.apply(null, b.subarray(i, i + 32768));
+      out[id] = btoa(s);
+    } catch (e) {}
+  }
+  return out;
+}"""
+
+
+def _save_images(page, ctsv, limit=60):
+    """Tải ảnh bìa của hoạt động CỦA BẠN + hoạt động chưa kết thúc (đã có thì bỏ qua). Chỉ đọc, lưu school/ctsv_img/<id>.img."""
+    import base64
+    IMG.mkdir(parents=True, exist_ok=True)
+    now = dt.datetime.now(TZ).strftime('%Y-%m-%d')
+    want = [a for a in (ctsv.get('mine') or [])] + [a for a in (ctsv.get('open') or []) if (a.get('end') or '')[:10] >= now]
+    todo = [(str(a['id']), a['avatar']) for a in want if a.get('avatar') and str(a.get('id', '')).isdigit() and not (IMG / f"{a['id']}.img").exists()][:limit]
+    got = page.evaluate(IMG_JS, todo) if todo else {}
+    for i, b64 in got.items(): (IMG / f'{i}.img').write_bytes(base64.b64decode(b64))
+    return {'new': len(got), 'tried': len(todo)}
+
+
+def _read_drl(page):
+    """Tổng điểm rèn luyện SV đã chấm & lưu trên /cham-diem-ren-luyen (đọc chữ trên trang; trang đổi chữ thì báo lỗi, không đoán)."""
+    page.goto(CTSV_URL + '/cham-diem-ren-luyen', wait_until='domcontentloaded'); page.wait_for_timeout(6000)
+    m = re.search(r'Tổng SV:\s*(\d+)\s*-\s*GV:\s*(\d+)', page.inner_text('body'))
+    if not m: return {'error': 'không thấy "Tổng SV" trên trang chấm điểm'}
+    return {'sv': int(m.group(1)), 'gv': int(m.group(2)), 'max': 100, 'at': dt.datetime.now(TZ).isoformat(timespec='minutes')}
+
+
+def rescore(save=False):
+    """(v1.00.45) Chấm lại điểm rèn luyện theo yêu cầu của chủ: bấm "Chấm tự động" trên CTSV, đọc tổng mới.
+    save=True: bấm thêm "Lưu lại" rồi đọc lại "Tổng SV". Chỉ chạy khi chủ bấm trong UC (lưu phải qua bước Xác nhận).
+    Chấm tự động tính lại từ hoạt động đã xác nhận nên hai lượt (xem trước / lưu) cho cùng một số."""
+    import school_fetch as f
+    from school_mail import ChromeLock
+    from playwright.sync_api import sync_playwright
+    with ChromeLock(), sync_playwright() as p:
+        ctx = f._launch(p, True)
+        page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        try:
+            f._open(page, CTSV_URL + '/thong-bao', 'ctsv.hust.edu.vn/thong-bao', f.ctsv_logged_in)
+            before = _read_drl(page)
+            page.get_by_role('button', name='Chấm tự động').click(); page.wait_for_timeout(4000)
+            btn = page.get_by_role('button', name=re.compile(r'Tổng:\s*\d+.*Lưu lại'))
+            m = re.search(r'Tổng:\s*(\d+)', btn.inner_text(timeout=10000))
+            new = int(m.group(1)) if m else None
+            if not save or new is None: return {'ok': new is not None, 'saved_sv': before.get('sv'), 'new': new}
+            btn.click(); page.wait_for_timeout(4000)
+            after = _read_drl(page)
+            try:   # ghi điểm mới vào ctsv_live.json để tab Ngoại khoá thấy ngay
+                d = json.loads(OUT.read_text(encoding='utf-8')); d['drl'] = after; OUT.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding='utf-8')
+            except Exception: pass
+            return {'ok': after.get('sv') == new, 'saved_sv': after.get('sv'), 'new': new}
+        finally:
+            try: ctx.close()
+            except Exception: pass
 
 
 def _tickets(j):

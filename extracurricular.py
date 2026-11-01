@@ -46,7 +46,7 @@ def build(now=None):
         status = a.get('status') or UA.get(str(a.get('ua')), 'Chờ xác nhận')
         items.append({'key': f"ctsv|mine|{a['id']}", 'name': a['name'], 'loai': 'Đã đăng ký', 'start': st and st.isoformat(),
                       'end': en and en.isoformat(), 'han': None, 'place': a.get('place') or '', 'org': a.get('org') or '', 'type': a.get('type') or '',
-                      'status': status, 'src': 'CTSV', 'url': f"{CTSV}/hoat-dong/{a['id']}/chi-tiet", 'note': a.get('note') or ''})
+                      'status': status, 'src': 'CTSV', 'url': f"{CTSV}/hoat-dong/{a['id']}/chi-tiet", 'note': a.get('note') or '', 'aid': str(a['id'])})
         # còn mở + chưa được xác nhận -> hạn nộp minh chứng (điểm rèn luyện)
         if dl and dl > now and status != 'Đã xác nhận':
             items.append({'key': f"ctsv|mc|{a['id']}", 'name': a['name'], 'loai': 'Hạn nộp minh chứng', 'start': None, 'end': None,
@@ -58,7 +58,7 @@ def build(now=None):
         st = _t(a['start'])
         items.append({'key': f"ctsv|open|{a['id']}", 'name': a['name'], 'loai': 'Đang mở', 'start': st and st.isoformat(), 'end': en.isoformat(),
                       'han': _t(a['deadline']) and _t(a['deadline']).isoformat(), 'place': a.get('place') or '', 'org': a.get('org') or '',
-                      'type': a.get('type') or '', 'status': 'Chưa đăng ký', 'src': 'CTSV', 'announced': (_t(a.get('created')) or st or now).isoformat(), 'url': f"{CTSV}/hoat-dong/{a['id']}/chi-tiet", 'note': __import__('html').unescape(a.get('desc') or '')[:400]})
+                      'type': a.get('type') or '', 'status': 'Chưa đăng ký', 'src': 'CTSV', 'announced': (_t(a.get('created')) or st or now).isoformat(), 'url': f"{CTSV}/hoat-dong/{a['id']}/chi-tiet", 'note': __import__('html').unescape(a.get('desc') or '')[:400], 'aid': str(a['id'])})
     for s in []:   # (5/10) học bổng -> tab Học bổng riêng (scholarships.py), không còn trong Ngoại khoá
         dl = _t(s['deadline'])
         if str(s.get('expired')) == '1' or not dl or dl < now: continue
@@ -157,7 +157,9 @@ def build(now=None):
     import stale_filter
     items = [i for i in items if i['loai'] != 'Thông báo (mail/Teams)' or stale_filter.keep(i.get('announced'), i['name'], i.get('note'))]
     items.sort(key=lambda x: x.get('start') or x.get('han') or '')
-    data = {'at': now.isoformat(timespec='minutes'), 'items': items, 'ctsv_at': (json.loads((HERE / 'school' / 'latest.json').read_text(encoding='utf-8')).get('at')
+    try: drl = json.loads((HERE / 'school' / 'ctsv_live.json').read_text(encoding='utf-8')).get('drl')   # (v1.00.45) điểm rèn luyện
+    except Exception: drl = None
+    data = {'at': now.isoformat(timespec='minutes'), 'items': items, 'drl': drl, 'ctsv_at': (json.loads((HERE / 'school' / 'latest.json').read_text(encoding='utf-8')).get('at')
                                                                              if (HERE / 'school' / 'latest.json').exists() else None), 'ctsv_raw': snap}
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding='utf-8')
     return data

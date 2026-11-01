@@ -277,7 +277,7 @@ CTSV_API_JS = """async (user) => {
   const strip = h => (h || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 1500);
   const act = x => ({id: x.AId, name: (x.AName || '').trim(), type: x.AType, start: x.StartTime, end: x.FinishTime, deadline: x.Deadline,
                      place: x.APlace, org: x.GName, ua: x.UAStatus, role: x.UserRole, note: x.UANote || '', desc: strip(x.ADesc),
-                     criteria: JSON.stringify(x.ACriteriaLst || []).slice(0, 400), created: x.CreateDate});
+                     criteria: JSON.stringify(x.ACriteriaLst || []).slice(0, 400), created: x.CreateDate, avatar: x.Avatar || ''});   // (v1.00.45) ảnh bìa
   const mine = await call('Activity/GetActivityByUser', {UserCode: user, Search: '', NumberRow: 100, PageNumber: 1});
   const pub = await call('Activity/GetPublishActivity', {NumberRow: 1000, PageNumber: 1});   // (5/10) như trang danh-sach-su-kien; 40 thì sót sự kiện
   const sch = await call('HWScholarship/GetApprovedScholarship', {NumberRow: 100, PageNumber: 1});

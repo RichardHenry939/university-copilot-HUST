@@ -733,6 +733,56 @@ button.link:hover { text-decoration: underline; }
 .wrap.cal { container-type: inline-size; }
 .exhead { font-size: 17px; margin: 18px 0 8px; }
 .nav .tab[hidden] { display: none; }
+/* (v1.00.45) tab Ngoại khoá kiểu CTSV */
+.drl { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); padding: 16px 20px; margin: 18px 0 16px; }
+.drl-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.drl .wl { display: block; font-size: 13px; color: var(--ink-2); font-weight: 600; }
+.drl strong { font-family: var(--display); font-weight: 800; font-size: 44px; line-height: 1; color: var(--blue); font-variant-numeric: tabular-nums; }
+.drl strong small { font-size: 18px; color: var(--ink-3); font-weight: 600; margin-left: 2px; }
+.drl-bar { height: 14px; border-radius: 999px; background: var(--grid); overflow: hidden; margin: 12px 0 8px; }
+.drl-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--blue), color-mix(in srgb, var(--blue) 60%, var(--green))); }
+.xtabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--grid); border-radius: 12px; margin: 4px 0 6px; }
+.xtabs button { border: 0; background: none; padding: 8px 16px; border-radius: 9px; font: inherit; font-weight: 600; color: var(--ink-2); cursor: pointer; }
+.xtabs button[aria-selected="true"] { background: var(--sheet); color: var(--blue); box-shadow: 0 1px 2px rgba(27, 24, 48, .08); }
+.xsec { font-size: 18px; margin: 22px 0 10px; }
+.xsec small { font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--ink-3); margin-left: 4px; }
+.xgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.xcard { position: relative; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); overflow: hidden; display: flex; flex-direction: column; }
+.xcard:hover { border-color: var(--blue); }
+.xlink { position: absolute; inset: 0; z-index: 1; }
+.xcard h3 { font-size: 14px; line-height: 1.35; margin: 0; padding: 10px 12px; min-height: 3.6em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ximg { aspect-ratio: 16 / 9; background: var(--blue-wash); overflow: hidden; }
+.ximg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ximg.none { background: linear-gradient(135deg, var(--blue-wash), var(--amber-wash)); }
+.xfoot { display: flex; gap: 10px; padding: 10px 12px 12px; align-items: flex-start; }
+.xdate { flex: none; width: 52px; border-radius: 10px; background: var(--blue); color: var(--blue-ink); text-align: center; padding: 5px 0; line-height: 1.1; }
+.xdate b { display: block; font-family: var(--display); font-size: 22px; }
+.xdate span { display: block; font-size: 10.5px; opacity: .9; }
+.xmeta { display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--ink-2); min-width: 0; }
+.xmeta span { overflow: hidden; text-overflow: ellipsis; }
+.xtype { align-self: flex-start; background: var(--red-wash); color: var(--red); font-weight: 600; border-radius: 999px; padding: 1px 8px; font-size: 11.5px; }
+.xhan { color: var(--red); font-weight: 600; }
+.xsrc { color: var(--ink-3); }
+.xnotes { margin: 20px 0 0; font-size: 13.5px; } .xnotes summary { cursor: pointer; font-weight: 600; color: var(--ink-2); }
+.xnotes ul { margin: 8px 0 0; padding-left: 18px; } .xnotes small { display: block; color: var(--ink-3); }
+.xstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 14px 0 4px; }
+.xstats div { border-radius: var(--r-l); padding: 14px 16px; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; border: 1px solid var(--line); background: var(--sheet); }
+.xstats b { display: block; font-family: var(--display); font-size: 32px; line-height: 1.05; }
+.xs-all { background: var(--blue) !important; color: var(--blue-ink); border-color: var(--blue) !important; }
+.xs-ok { background: var(--green-wash) !important; color: var(--green); } .xs-wait { background: var(--amber-wash) !important; color: var(--amber); } .xs-bad { background: var(--red-wash) !important; color: var(--red); }
+.xrows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-l); overflow: hidden; }
+.xrows li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 12px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
+.xrows li:first-child { border-top: 0; }
+.xrows li b { display: block; font-weight: 600; } .xrows li small { display: block; color: var(--ink-3); font-size: 12.5px; }
+.xrows li.done { opacity: .62; } .xrows li.urgent { background: var(--red-wash); }
+.xwhen { font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.xst { font-size: 12.5px; font-weight: 600; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.xst.ok { background: var(--green-wash); color: var(--green); } .xst.wait { background: var(--amber-wash); color: var(--amber); } .xst.bad { background: var(--red-wash); color: var(--red); }
+.xrows a.ghost { text-decoration: none; font-size: 13px; padding: 6px 12px; }
+@container (max-width: 700px) { .xstats { grid-template-columns: 1fr 1fr; } .xrows li { grid-template-columns: 1fr auto; } .xrows li .xwhen { grid-column: 1; } }
+/* (v1.00.45) hoạt động ngoại khoá đã đăng ký trên lịch: màu hổ phách */
+.ev.xk { border-left-color: var(--amber); background: var(--amber-wash); } .ev.xk .md { color: var(--amber); }
+.mi.xk { border-left-color: var(--amber); }
 #wal-exams .tasks.exams, #cal-exams .tasks.exams { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin: 0 0 8px; border: 0; background: none; overflow: visible; }
 #wal-exams .tasks.exams li, #cal-exams .tasks.exams li { border: 0; border-radius: var(--r-l); padding: 14px 16px; }
 #wal-exams .tasks.exams li .tname, #cal-exams .tasks.exams li .tname { font-family: var(--display); font-size: 17px; }
@@ -985,23 +1035,13 @@ button.link:hover { text-decoration: underline; }
     <section class="panel" id="p-extra" role="tabpanel" aria-labelledby="t-extra">
       <div class="wrap wide cal">
         <h1>Hoạt động ngoại khoá</h1>
-        <p class="lead">Hoạt động ngoại khoá có thể đăng ký, gộp từ iCTSV, mail và Teams; nguồn ghi dưới từng mục. Tách riêng khỏi lịch học. Học bổng ở tab Học bổng.</p>
-        <div class="cal-nav">
-          <span class="wk" id="ex-wk">Đang đọc…</span>
-          <button class="ghost" id="ex-prev">‹ Tuần trước</button>
-          <button class="ghost" id="ex-now">Tuần này</button>
-          <button class="ghost" id="ex-next">Tuần sau ›</button>
+        <p class="lead">Sự kiện, hoạt động và điểm rèn luyện, gộp từ iCTSV, mail và Teams. Hạn và hoạt động đã đăng ký cũng hiện trên Thời khoá biểu toàn kỳ. Mục đã hết hạn tự ẩn.</p>
+        <section class="drl" id="ex-drl" aria-live="polite"></section>
+        <div class="xtabs" role="tablist" aria-label="Mục ngoại khoá">
+          <button role="tab" data-x="act" aria-selected="true">Sự kiện &amp; hoạt động</button>
+          <button role="tab" data-x="mine" aria-selected="false">Hoạt động của tôi</button>
         </div>
-        <div id="ex-week"><p class="skeleton">Đang đọc…</p></div>
-        <div class="month-head">
-          <h2 id="ex-mtitle">Tháng</h2>
-          <button class="ghost" id="ex-mprev">‹ Tháng trước</button>
-          <button class="ghost" id="ex-mnow">Tháng này</button>
-          <button class="ghost" id="ex-mnext">Tháng sau ›</button>
-        </div>
-        <div id="ex-month"></div>
-        <div class="mlegend"><span style="--c: var(--green)">Đã đăng ký</span><span style="--c: var(--red)">Hạn (minh chứng / đăng ký / học bổng)</span><span style="--c: var(--blue)">Đang mở · sự kiện quan tâm</span></div>
-        <div id="ex-lists"></div>
+        <div id="ex-body"><p class="skeleton">Đang đọc…</p></div>
         <p class="cal-sync" id="ex-sync"></p>
       </div>
     </section>
@@ -1272,7 +1312,7 @@ const shiftMonth = (k) => { let [y, m] = calMonth.split('-').map(Number); m += k
 $('#cal-mprev').onclick = calNav(() => shiftMonth(-1));
 $('#cal-mnext').onclick = calNav(() => shiftMonth(1));
 $('#cal-mnow').onclick = () => selectDay(vnDate(Date.now()));
-function loadCal() { renderCal(); calSync(); }   // bấm tab: vẽ ngay từ dữ liệu đang có, cập nhật ngầm
+function loadCal() { renderCal(); calSync(); if (typeof exSync === 'function') exSync().then(() => renderCal()); }   // bấm tab: vẽ ngay từ dữ liệu đang có, cập nhật ngầm; (v1.00.45) kèm ngoại khoá
 
 const isLong = (e) => !e.start.includes('T') && e.end && e.end.slice(0, 10) !== e.start.slice(0, 10);
 const evDay = (e) => e.start.slice(0, 10);
@@ -1282,7 +1322,7 @@ function evInfo(e, now) {
   // (v1.00.42) attend = kết quả đối chiếu DS offline (offline_list.py), ưu tiên hơn chữ "Online" trong tên lớp
   const online = !dl && (e.attend ? e.attend === 'online' : (/· online$/i.test(e.title) || /^online/i.test(e.location || '')));
   const ex = e.kind === 'Exam';   // (v1.00.35) lịch thi FAMI: loại sự kiện riêng, thẻ đỏ đặc
-  return { dl, online, cls: ex ? 'ex' : dl ? 'dl' : (online ? 'on' : 'off'), past: Date.parse(e.end || e.start) < now,
+  return { dl, online, cls: ex ? 'ex' : dl ? 'dl' : e.xk ? 'xk' : (online ? 'on' : 'off'), past: Date.parse(e.end || e.start) < now,
            name: dl ? e.title : (parts.length >= 3 ? parts[1] + ' · ' + parts[2] : e.title), short: dl ? e.title : (parts[1] || e.title) + (parts[2] ? ' ' + parts[2] : '') };
 }
 function renderCal() {
@@ -1298,7 +1338,18 @@ function calEvents() {
     const st = /[zZ]|[+-]\d\d:\d\d$/.test(x.due) ? x.due : x.due + '+07:00';
     return { kind: 'Deadline', title: x.name, start: st, source: 'today', dlKind: x.self ? 'Lịch ôn tập' : x.kind, course: x.course };
   }).filter(e => !have.has(key(evDay(e), e.title)));
-  return extra.length ? base.concat(extra) : base;
+  // (v1.00.45) ngoại khoá lên Thời khoá biểu toàn kỳ: hạn nộp minh chứng, hạn đăng ký hoạt động đang mở,
+  // hoạt động BẠN đã đăng ký (theo giờ diễn ra). Mục chỉ "quan tâm" không vào lịch (không phải lịch của bạn).
+  let xk = []; try { xk = (EX && EX.items) || []; } catch (e) {}   // EX khai báo phía dưới file
+  const xkEv = [];
+  for (const x of xk) {
+    const reg = x.loai === 'Đã đăng ký' || (x.loai === 'Sự kiện (mail/Teams)' && x.status === 'Đã đăng ký');
+    if (x.loai === 'Hạn nộp minh chứng' && x.han) xkEv.push({ kind: 'Deadline', title: 'Nộp minh chứng: ' + x.name, start: x.han, dlKind: 'Ngoại khoá · điểm rèn luyện', xk: 1 });
+    else if (x.loai === 'Đang mở' && x.han) xkEv.push({ kind: 'Deadline', title: 'Hạn đăng ký: ' + x.name, start: x.han, dlKind: 'Ngoại khoá · ' + (x.type || 'hoạt động'), xk: 1 });
+    else if (reg && x.start && x.start.includes('T') && !(x.end && Date.parse(x.end) - Date.parse(x.start) > 864e5))
+      xkEv.push({ kind: 'Event', title: x.name, start: x.start, end: x.end || new Date(Date.parse(x.start) + 2 * 36e5).toISOString(), location: x.place || '', notes: 'Ngoại khoá · ' + (x.status || '') + (x.type ? ' · ' + x.type : ''), xk: 1 });
+  }
+  return base.concat(extra, xkEv);
 }
 // (v1.00.42) mục Ngày cạnh lịch tuần: tờ lịch xé của ngày đang chọn, hạn trong ngày và lịch theo giờ
 function renderDayCard() {
@@ -1454,7 +1505,7 @@ calSync();
 /* ---------- 🎯 Hoạt động ngoại khoá (Claude 2026-10-04): /api/extra -> extracurricular.py ---------- */
 let EX = null, exMon = mondayOf(Date.now()), exMonth = vnDate(Date.now()).slice(0, 7), exSel = vnDate(Date.now());
 function exSync() {
-  return fetch('/api/extra').then(r => r.json()).then(j => { EX = j; renderExtra(); }).catch(() => { $('#ex-week').innerHTML = '<p class="note">Không đọc được dữ liệu ngoại khoá.</p>'; });
+  return fetch('/api/extra').then(r => r.json()).then(j => { EX = j; renderExtra(); }).catch(() => { const b = $('#ex-body'); if (b) b.innerHTML = '<p class="note">Không đọc được dữ liệu ngoại khoá.</p>'; });
 }
 function loadExtra() { renderExtra(); exSync(); }
 // một mục -> ngày hiện trên lịch: sự kiện theo ngày bắt đầu (nếu ngắn), hạn theo ngày hạn; hoạt động kéo dài nhiều ngày -> dải "đang diễn ra"
@@ -1462,70 +1513,83 @@ function exDay(x) { return (x.han || x.start || '').slice(0, 10); }
 function exLong(x) { return x.start && x.end && (Date.parse(x.end) - Date.parse(x.start)) > 864e5 && !x.han; }
 function exCls(x) { return x.han ? 'dl' : x.loai === 'Đã đăng ký' ? 'off' : 'on'; }
 function exLabel(x) { return x.loai === 'Hạn nộp minh chứng' ? 'Nộp MC: ' : x.loai === 'Học bổng' ? 'Học bổng: ' : x.han ? 'Hạn: ' : ''; }
+// (v1.00.45) tab Ngoại khoá theo kiểu CTSV: thanh điểm rèn luyện + 2 mục con; lịch tuần/tháng riêng đã gộp vào Thời khoá biểu toàn kỳ
+let exTab = 'act', drlAsk = null;
+function exWhen(x) { const t = x.start || x.han; return t ? { d: Number(t.slice(8, 10)), m: Number(t.slice(5, 7)), y: t.slice(0, 4), hm: t.includes('T') ? vnHM(t) : '' } : null; }
+function exCard(x) {
+  const w = exWhen(x), img = x.aid ? '/ctsv-img/' + x.aid : '';
+  return '<article class="xcard">' + (x.url ? '<a class="xlink" href="' + esc(x.url) + '" target="_blank" rel="noopener" aria-label="' + esc(x.name) + '"></a>' : '') +
+    '<h3>' + esc(x.name) + '</h3>' +
+    '<div class="ximg' + (img ? '' : ' none') + '">' + (img ? '<img loading="lazy" alt="" src="' + img + '" onerror="this.parentNode.classList.add(\'none\');this.remove()">' : '') + '</div>' +
+    '<div class="xfoot">' + (w ? '<div class="xdate"><b>' + w.d + '</b><span>Tháng ' + w.m + '</span><span>' + w.y + '</span></div>' : '') +
+    '<div class="xmeta">' + (x.type ? '<span class="xtype">' + esc(x.type) + '</span>' : '') + (x.place ? '<span>📍 ' + esc(x.place) + '</span>' : '') +
+    (w && w.hm ? '<span>🕒 ' + w.hm + '</span>' : '') + (x.han && x.loai === 'Đang mở' ? '<span class="xhan">Hạn đăng ký ' + vnHM(x.han) + ' ' + x.han.slice(8, 10) + '/' + x.han.slice(5, 7) + '</span>' : '') +
+    (x.src && x.src !== 'CTSV' ? '<span class="xsrc">Nguồn: ' + esc(x.src) + '</span>' : '') + '</div></div></article>';
+}
+function renderDrl() {
+  const d = EX && EX.drl, el = $('#ex-drl'); if (!el) return;
+  if (!d || d.error) { el.innerHTML = '<p class="note">Chưa đọc được điểm rèn luyện' + (d && d.error ? ': ' + esc(d.error) : '') + '.</p>'; return; }
+  const pct = Math.max(0, Math.min(100, d.sv));
+  el.innerHTML = '<div class="drl-top"><div><span class="wl">Điểm rèn luyện kỳ này (bạn tự chấm, đã lưu)</span><strong>' + d.sv + '<small>/100</small></strong></div>' +
+    '<button class="ghost" id="drl-re">Chấm lại</button></div><div class="drl-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + d.sv + '"><i style="width:' + pct + '%"></i></div>' +
+    '<p class="wnote">Số này chỉ đổi khi bấm "Chấm tự động" và "Lưu lại" trên CTSV. Bấm Chấm lại: UC chấm thử và cho xem tổng mới; chỉ lưu khi bạn Xác nhận. Đọc lúc ' + esc((d.at || '').slice(11, 16)) + '.</p>' +
+    (drlAsk ? '<div class="sask" id="drl-ask">' + drlAsk + '</div>' : '');
+  $('#drl-re').onclick = async () => {
+    drlAsk = 'Đang chấm thử trên CTSV (khoảng 30 giây), chưa lưu gì…'; renderDrl();
+    const r = await api('/api/drl', { action: 'preview' }).catch(() => ({ ok: false, loi: 'Không gọi được UC.' }));
+    drlAsk = !r.ok ? 'Không chấm thử được: ' + esc(r.loi || '') :
+      '<b>Tổng mới: ' + r.new + '</b> (đang lưu ' + r.saved_sv + '). Lưu lên CTSV? <button class="primary" id="drl-ok">Xác nhận lưu</button> <button class="ghost" id="drl-no">Huỷ</button>';
+    renderDrl();
+    const ok = $('#drl-ok'), no = $('#drl-no');
+    if (no) no.onclick = () => { drlAsk = null; renderDrl(); };
+    if (ok) ok.onclick = async () => {
+      drlAsk = 'Đang lưu trên CTSV…'; renderDrl();
+      const s = await api('/api/drl', { action: 'save', confirmed: true }).catch(() => ({ ok: false, loi: 'Không gọi được UC.' }));
+      drlAsk = s.ok ? null : 'Chưa lưu được: ' + esc(s.loi || ('CTSV đang ghi ' + s.saved_sv));
+      if (s.ok && EX) EX.drl = Object.assign({}, EX.drl, { sv: s.saved_sv });
+      renderDrl(); exSync();
+    };
+  };
+}
 function renderExtra() {
-  if (!$('#ex-week')) return;
-  const from = vnDate(exMon), to = vnDate(exMon + 6 * 864e5), fmt = (d) => d.slice(8, 10) + '/' + d.slice(5, 7);
-  $('#ex-wk').innerHTML = 'Tuần <small>' + fmt(from) + ' – ' + fmt(to) + '/' + to.slice(0, 4) + '</small>';
-  if (!EX) { $('#ex-week').innerHTML = '<p class="skeleton">Đang đọc…</p>'; return; }
-  const items = EX.items || [], now = Date.now(), today = vnDate(now);
-  const longs = items.filter(x => exLong(x) && x.start.slice(0, 10) <= to && x.end.slice(0, 10) >= from);
-  let html = longs.map(x => '<div class="banner">' + esc(x.name) + ' · ' + fmt(x.start.slice(0, 10)) + ' → ' + fmt(x.end.slice(0, 10)) + (x.status ? ' · ' + esc(x.status) : '') + '</div>').join('');
-  html += '<div class="week">' + Array.from({ length: 7 }, (_, i) => {
-    const d = vnDate(exMon + i * 864e5);
-    const its = items.filter(x => !exLong(x) && exDay(x) === d).map(x => {
-      const t = x.han ? 'Hạn ' + vnHM(x.han) : vnHM(x.start) + (x.end ? '–' + vnHM(x.end) : '');
-      return '<div class="ev ' + exCls(x) + (Date.parse(x.han || x.end || x.start) < now ? ' past' : '') + '"><time>' + t + '</time><b>' + esc(exLabel(x) + x.name) + '</b>' +
-             (x.place ? '<span class="md">' + esc(x.place) + '</span>' : '') + '<small>' + esc([x.status, x.src].filter(Boolean).join(' · ')) + '</small></div>';
-    }).join('') || '<span class="none">Trống</span>';
-    return '<div class="day' + (d === today ? ' today' : '') + (d === exSel ? ' sel' : '') + '" data-d="' + d + '"><h3><span>' + DOW[i] + (d === today ? '<span class="tag">Hôm nay</span>' : '') +
-           '</span><span>' + fmt(d) + '</span></h3>' + its + '</div>';
-  }).join('') + '</div>';
-  $('#ex-week').innerHTML = html;
-  $('#ex-week').querySelectorAll('.day').forEach(c => c.onclick = () => { exSel = c.dataset.d; renderExtra(); });
-  // tháng
-  const [y, m] = exMonth.split('-').map(Number);
-  $('#ex-mtitle').textContent = 'Tháng ' + m + '/' + y;
-  const first = Date.parse(exMonth + '-01T00:00:00+07:00'), start = mondayOf(first), lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  const end = Date.parse(exMonth + '-' + String(lastDay).padStart(2, '0') + 'T00:00:00+07:00'), weeks = Math.ceil((end - start) / (7 * 864e5) + 1 / 7);
-  let mh = '<div class="mgrid">' + ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => '<div class="dow">' + d + '</div>').join('');
-  for (let i = 0; i < weeks * 7; i++) {
-    const d = vnDate(start + i * 864e5);
-    const its = items.filter(x => !exLong(x) && exDay(x) === d);
-    const cls = ['mcell', d.slice(0, 7) !== exMonth ? 'out' : '', d === today ? 'today' : '', d >= from && d <= to ? 'inweek' : '', d === exSel ? 'sel' : ''].filter(Boolean).join(' ');
-    mh += '<button class="' + cls + '" data-d="' + d + '"><span class="dn"><b>' + Number(d.slice(8, 10)) + '</b></span>' +
-          its.slice(0, 3).map(x => '<div class="mi ' + exCls(x) + '" title="' + esc(x.name) + '">' + esc(exLabel(x) + x.name) + '</div>').join('') +
-          (its.length > 3 ? '<span class="mmore">+' + (its.length - 3) + ' mục</span>' : '') + '</button>';
+  if (!$('#ex-body')) return;
+  renderDrl();
+  if (!EX) { $('#ex-body').innerHTML = '<p class="skeleton">Đang đọc…</p>'; return; }
+  const items = EX.items || [], now = Date.now();
+  const endOf = x => Date.parse(x.han || x.end || x.start || 0);
+  const live = x => !(x.han || x.end || x.start) || endOf(x) >= now;   // mục đã hết hạn / đã qua: ẩn
+  let html = '';
+  if (exTab === 'act') {
+    const pool = items.filter(x => (x.loai === 'Đang mở' || (x.loai === 'Sự kiện (mail/Teams)' && x.status !== 'Đã đăng ký')) && live(x));
+    const soon = pool.filter(x => x.start && Date.parse(x.start) > now).sort((a, b) => a.start.localeCompare(b.start));
+    const going = pool.filter(x => !soon.includes(x)).sort((a, b) => endOf(a) - endOf(b));
+    const sec = (t, arr) => arr.length ? '<h2 class="xsec">' + t + ' <small>' + arr.length + '</small></h2><div class="xgrid">' + arr.map(exCard).join('') + '</div>' : '';
+    const notes = items.filter(x => x.loai === 'Thông báo (mail/Teams)' && (!x.announced || Date.parse(x.announced) > now - 21 * 864e5));
+    html = (sec('Sắp diễn ra', soon) + sec('Đang diễn ra · còn đăng ký', going)) || '<p class="note">Không có hoạt động nào đang mở.</p>';
+    if (notes.length) html += '<details class="xnotes"><summary>Thông báo từ mail / Teams trong 3 tuần (' + notes.length + ')</summary><ul>' +
+      notes.map(x => '<li>' + (x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.name) + '</a>' : esc(x.name)) + '<small>' + esc(x.nguon || x.src || '') + '</small></li>').join('') + '</ul></details>';
+  } else {
+    const mine = items.filter(x => x.loai === 'Đã đăng ký' || (x.loai === 'Sự kiện (mail/Teams)' && x.status === 'Đã đăng ký'));
+    const mc = items.filter(x => x.loai === 'Hạn nộp minh chứng' && live(x));
+    const rank = x => x.status === 'Đã xác nhận' ? 2 : x.status === 'Không đạt' ? 1 : 0;   // chờ xác nhận lên trên, đã xác nhận xuống cuối
+    const sorted = mine.slice().sort((a, b) => rank(a) - rank(b) || (b.start || '').localeCompare(a.start || ''));
+    const chip = st => '<span class="xst ' + (st === 'Đã xác nhận' ? 'ok' : st === 'Không đạt' ? 'bad' : 'wait') + '">' + esc(st || 'Chờ xác nhận') + '</span>';
+    html = '<div class="xstats"><div class="xs-all"><b>' + mine.length + '</b>Đã đăng ký</div><div class="xs-ok"><b>' + mine.filter(x => rank(x) === 2).length + '</b>Đã xác nhận</div>' +
+      '<div class="xs-wait"><b>' + mine.filter(x => rank(x) === 0).length + '</b>Chờ xác nhận</div><div class="xs-bad"><b>' + mine.filter(x => rank(x) === 1).length + '</b>Không đạt</div></div>' +
+      (mc.length ? '<h2 class="xsec">Hạn nộp minh chứng <small>' + mc.length + '</small></h2><ul class="xrows">' + mc.sort((a, b) => endOf(a) - endOf(b)).map(x =>
+        '<li class="urgent"><div><b>' + esc(x.name) + '</b><small>Nộp minh chứng trên CTSV để được tính điểm rèn luyện</small></div><span class="xwhen">hạn ' + x.han.slice(8, 10) + '/' + x.han.slice(5, 7) + '</span>' +
+        (x.url ? '<a class="ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener">Mở</a>' : '') + '</li>').join('') + '</ul>' : '') +
+      '<h2 class="xsec">Hoạt động đã đăng ký <small>chờ xác nhận ở trên, đã xác nhận ở cuối</small></h2><ul class="xrows">' + sorted.map(x =>
+        '<li class="' + (rank(x) === 2 ? 'done' : '') + '"><div><b>' + esc(x.name) + '</b><small>' + esc([x.org, x.place].filter(Boolean).join(' · ')) + '</small></div>' +
+        '<span class="xwhen">' + (x.start ? x.start.slice(8, 10) + '/' + x.start.slice(5, 7) + '/' + x.start.slice(0, 4) : '') + '</span>' + chip(x.status) +
+        (x.url ? '<a class="ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener">Chi tiết</a>' : '') + '</li>').join('') + '</ul>';
   }
-  $('#ex-month').innerHTML = mh + '</div>';
-  $('#ex-month').querySelectorAll('.mcell').forEach(c => c.onclick = () => { exSel = c.dataset.d; exMon = mondayOf(Date.parse(exSel + 'T12:00:00+07:00')); renderExtra(); });
-  // danh sách
-  const up = (x) => Date.parse(x.han || x.end || x.start || 0) >= now - 864e5;
-  const sec = (title, arr, empty) => '<h2 style="font-size:17px;margin:18px 0 6px">' + title + ' <small style="color:var(--ink-3);font-weight:400">' + arr.length + '</small></h2>' +
-    (arr.length ? '<ul class="tasks exlist">' + arr.map(x => '<li><div><span class="tname">' + (x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.name) + '</a>' : esc(x.name)) + '</span><small>' +
-      esc([x.org, x.place, x.type].filter(Boolean).join(' · ')) + (x.note ? ' — ' + esc(x.note) : '') + '</small></div><span class="h">' +
-      (x.han ? 'hạn ' + vnHM(x.han) + ' ' + fmt(x.han.slice(0, 10)) : x.start ? fmt(x.start.slice(0, 10)) + (x.end && x.end.slice(0, 10) !== x.start.slice(0, 10) ? ' → ' + fmt(x.end.slice(0, 10)) : '') : '') +
-      (x.status ? '<br>' + esc(x.status) : '') + '</span></li>').join('') + '</ul>' : '<span class="empty">' + empty + '</span>');
-  $('#ex-lists').innerHTML =
-    sec('Hạn nộp minh chứng (điểm rèn luyện)', items.filter(x => x.loai === 'Hạn nộp minh chứng' && up(x)), 'Không có hạn nộp minh chứng nào đang mở.') +
-    sec('Hoạt động bạn đã đăng ký', items.filter(x => x.loai === 'Đã đăng ký').slice().reverse(), 'Chưa đăng ký hoạt động nào trên CTSV.') +
-    '';
-  const reg = items.filter(x => ['Đang mở', 'Sự kiện (mail/Teams)', 'Thông báo (mail/Teams)'].includes(x.loai) && (x.loai !== 'Sự kiện (mail/Teams)' || up(x)))
-    .sort((a, b) => (b.announced || '').localeCompare(a.announced || ''));
-  $('#ex-lists').innerHTML = '<h2 style="font-size:17px;margin:18px 0 6px">Hoạt động ngoại khoá có thể đăng ký <small style="color:var(--ink-3);font-weight:400">' + reg.length + ' · mới thông báo lên trước</small></h2>' +
-    (reg.length ? '<ul class="tasks exlist">' + reg.map(x => '<li><div><span class="tname">' + (x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.name) + '</a>' : esc(x.name)) + '</span><small>' +
-      esc([x.place, x.type !== 'Thông báo' ? x.type : ''].filter(Boolean).join(' · ')) + (x.note ? (x.place ? ' — ' : '') + esc(x.note.slice(0, 220)) : '') + '</small>' +
-      '<small style="display:block;color:var(--ink-3)">Nguồn: ' + esc(x.nguon || x.src) + (x.repeats > 1 ? ' (nhắc ' + x.repeats + ' lần)' : '') + (x.announced ? ' · đăng ' + fmt(x.announced.slice(0, 10)) : '') + '</small></div><span class="h">' +
-      (x.han ? 'hạn ' + vnHM(x.han) + ' ' + fmt(x.han.slice(0, 10)) : x.start ? fmt(x.start.slice(0, 10)) + (x.end && x.end.slice(0, 10) !== x.start.slice(0, 10) ? ' → ' + fmt(x.end.slice(0, 10)) : '') : '') +
-      '</span></li>').join('') + '</ul>' : '<span class="empty">Không có hoạt động nào đang mở.</span>') + $('#ex-lists').innerHTML;
+  $('#ex-body').innerHTML = html;
   const t = EX.ctsv_at ? EX.ctsv_at.slice(11, 16) + ' ' + EX.ctsv_at.slice(8, 10) + '/' + EX.ctsv_at.slice(5, 7) : '?';
   $('#ex-sync').textContent = 'iCTSV đọc lúc ' + t + ' · mọi nguồn (iCTSV, mail, Teams) tự cập nhật đúng khung 5 phút suốt 24 giờ';
 }
-$('#ex-prev').onclick = () => { exMon -= 7 * 864e5; renderExtra(); };
-$('#ex-next').onclick = () => { exMon += 7 * 864e5; renderExtra(); };
-$('#ex-now').onclick = () => { exMon = mondayOf(Date.now()); exSel = vnDate(Date.now()); exMonth = exSel.slice(0, 7); renderExtra(); };
-const exShift = (k) => { let [y, m] = exMonth.split('-').map(Number); m += k; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } exMonth = y + '-' + String(m).padStart(2, '0'); renderExtra(); };
-$('#ex-mprev').onclick = () => exShift(-1); $('#ex-mnext').onclick = () => exShift(1);
-$('#ex-mnow').onclick = () => { exMonth = vnDate(Date.now()).slice(0, 7); renderExtra(); };
+document.querySelectorAll('.xtabs [data-x]').forEach(b => b.onclick = () => {
+  exTab = b.dataset.x; document.querySelectorAll('.xtabs [data-x]').forEach(x => x.setAttribute('aria-selected', x === b)); renderExtra(); });
 $('#t-extra').onclick = () => show('extra'); $('#t-admin').onclick = () => show('admin'); $('#t-schol').onclick = () => show('schol');
 
 

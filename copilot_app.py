@@ -1103,7 +1103,7 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/extra":   # 🎯 tab Ngoại khoá
                 import extracurricular
                 d = extracurricular.load()
-                return self._send(200, {k: d.get(k) for k in ("at", "items", "ctsv_at")})
+                return self._send(200, {k: d.get(k) for k in ("at", "items", "ctsv_at", "drl")})   # (v1.00.45) + điểm rèn luyện
             if u.path == "/api/alerts":   # 📡 cảnh báo sự kiện (banner mọi tab)
                 import importlib, alerts
                 importlib.reload(alerts)
@@ -1113,6 +1113,13 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/mssv/status":   # (v1.00.42) chỉ trả đã lưu / chưa lưu, KHÔNG BAO GIỜ trả số
                 import mssv_store
                 return self._send(200, mssv_store.status())
+            m_img = re.fullmatch(r"/ctsv-img/(\d{1,9})", u.path)
+            if m_img:   # (v1.00.45) ảnh bìa hoạt động CTSV đã tải về máy (ctsv_live); chỉ nhận mã số
+                p_img = HERE / "school" / "ctsv_img" / f"{m_img.group(1)}.img"
+                if not p_img.exists(): return self._send(404, {"error": "chưa có ảnh"})
+                b_img = p_img.read_bytes()
+                ct = "image/png" if b_img[:4] == b"\x89PNG" else "image/webp" if b_img[8:12] == b"WEBP" else "image/jpeg"
+                return self._send(200, raw=b_img, ctype=ct)
             if u.path == "/api/wallet":   # (v1.00.42 W8) ví thời gian: số dư, phiên đang chạy, thống kê
                 import wallet, datetime as _dt
                 with wallet.lock:
@@ -1281,6 +1288,17 @@ class H(BaseHTTPRequestHandler):
                     return self._send(200, r)
                 r = mssv_store.save(b.get("mssv"))
                 if r.get("ok"): r["offline"] = offline_list.summary(offline_list.refresh())
+                return self._send(200, r)
+            if u.path == "/api/drl":   # (v1.00.45) chấm lại điểm rèn luyện trên CTSV: xem trước, rồi Lưu chỉ khi chủ Xác nhận
+                import ctsv_live
+                b = json.loads(self._body(1024) or b"{}")
+                if b.get("action") == "save" and b.get("confirmed") is not True:
+                    return self._send(200, {"ok": False, "loi": "Cần bấm Xác nhận trước khi lưu lên CTSV."})
+                try: r = ctsv_live.rescore(save=b.get("action") == "save")
+                except Exception as e: r = {"ok": False, "loi": f"{type(e).__name__}: {e}"[:300]}
+                if r.get("ok") and b.get("action") == "save":
+                    try: import extracurricular; extracurricular.build()
+                    except Exception: pass
                 return self._send(200, r)
             if u.path == "/api/wallet":   # (v1.00.42 W8) bắt đầu / tạm dừng / kết thúc phiên tập trung hoặc giải trí
                 import wallet, datetime as _dt
