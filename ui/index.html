@@ -698,7 +698,7 @@ button.link:hover { text-decoration: underline; }
 @media (max-width: 1279px) {
   :root { --nav: 68px; --rail: 260px; }
   .nav { padding: 18px 10px; align-items: center; }
-  .nav .brand > div:not(.brand-mark), .nav .tl, .nav .rail-foot { display: none; }
+  .nav .brand > div:not(.brand-mark), .nav .brand-home > div:not(.brand-mark), .nav .tl, .nav .rail-foot { display: none; }   /* (v1.00.45) chữ logo nằm trong nút trang chủ */
   .nav .brand { flex-direction: column; padding: 0; }
   .nav .brand .bell { margin: 8px 0 0; }
   .nav .tab { justify-content: center; padding: 10px; }
@@ -711,6 +711,7 @@ button.link:hover { text-decoration: underline; }
   .app, .app.r-open { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: 100vh; }
   .nav { grid-row: 1; height: auto; flex-direction: row; align-items: center; padding: 8px 56px 8px 10px; gap: 8px; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
   .nav .brand, .nav .rail-foot { display: none; }
+  .nav #t-home[hidden] { display: flex; }   /* (v1.00.45) logo ẩn trên điện thoại -> hiện nút Trang chủ */
   .nav .tabs { flex-direction: row; }
   .nav .tab { width: auto; flex: none; padding: 8px 10px; gap: 7px; }
   .nav .tl { display: inline; white-space: nowrap; }
@@ -780,6 +781,16 @@ button.link:hover { text-decoration: underline; }
 .xst.ok { background: var(--green-wash); color: var(--green); } .xst.wait { background: var(--amber-wash); color: var(--amber); } .xst.bad { background: var(--red-wash); color: var(--red); }
 .xrows a.ghost { text-decoration: none; font-size: 13px; padding: 6px 12px; }
 @container (max-width: 700px) { .xstats { grid-template-columns: 1fr 1fr; } .xrows li { grid-template-columns: 1fr auto; } .xrows li .xwhen { grid-column: 1; } }
+/* (v1.00.45) trang chủ: ảnh nền + chữ lớn; nút logo */
+.brand-home { display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; border-radius: 10px; min-width: 0; }
+.brand-home:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.hero { position: relative; overflow: hidden; border-radius: var(--r-l); min-height: 260px; display: flex; align-items: flex-end; margin: 6px 0 8px;
+  background: linear-gradient(135deg, var(--blue), color-mix(in srgb, var(--blue) 55%, #000)); color: #fff; }
+.hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20, 16, 40, 0) 30%, rgba(20, 16, 40, .72)); }
+.hero-txt { position: relative; z-index: 1; padding: 28px 32px; }
+.hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(34px, 6vw, 64px); line-height: 1; margin: 0 0 6px; color: #fff; letter-spacing: -.02em; }
+.hero p { margin: 0; font-size: 17px; opacity: .92; } .hero .hero-kicker { font-size: 14px; margin-bottom: 8px; }
 /* (v1.00.45) mục con Học bổng / Hành chính & đặt vé: cùng hệ thẻ */
 .xtabs { flex-wrap: wrap; max-width: 100%; }
 .xcard.plain h3 { min-height: 0; padding-bottom: 4px; }
@@ -858,10 +869,11 @@ button.link:hover { text-decoration: underline; }
 <body>
 <div class="app on-cal">
   <nav class="nav" aria-label="Điều hướng">
-    <div class="brand"><div class="brand-mark" aria-hidden="true">UC</div><div><b>University Copilot</b><span>Hậu phương học tập 4 năm</span></div>
+    <div class="brand"><button class="brand-home" id="go-home" title="Trang chủ"><div class="brand-mark" aria-hidden="true">UC</div><div><b>University Copilot</b><span>Hậu phương học tập 4 năm</span></div></button>
       <button class="bell" id="bell" aria-label="Thông báo" aria-expanded="false" aria-controls="notif"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg><span class="bell-n" id="bell-n" hidden></span></button></div>
     <div class="tabs" role="tablist">
       <!-- (v1.00.40) Thời khoá biểu toàn kỳ lên đầu (gộp tab Hôm nay vào cuối tab này); Trò chuyện đổi tên thành Chatbot hỗ trợ, xếp thứ 2 -->
+      <button class="tab" role="tab" id="t-home" aria-selected="false" aria-controls="p-home" hidden>Trang chủ</button>   <!-- (v1.00.45) mở bằng logo -->
       <button class="tab" role="tab" id="t-wallet" aria-selected="false" aria-controls="p-wallet" title="Ví thời gian"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3"/><path d="M4 7.5V18a1.5 1.5 0 0 0 1.5 1.5H20V8H6.5A2.5 2.5 0 0 1 4 7.5z"/><circle cx="16" cy="13.8" r="1.3"/></svg><span class="tl">Ví thời gian</span> <span class="count" id="c-sg" hidden></span></button>
       <button class="tab" role="tab" id="t-cal" aria-selected="true" aria-controls="p-cal" title="Thời khoá biểu toàn kỳ"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h3"/></svg><span class="tl">Thời khoá biểu toàn kỳ</span></button>
       <button class="tab" role="tab" id="t-chat" aria-selected="false" aria-controls="p-chat" title="Chatbot hỗ trợ"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 4V16A1.5 1.5 0 0 1 4 14.5z"/><path d="M8.5 9.5h7M8.5 12.5h4"/></svg><span class="tl">Chatbot hỗ trợ</span></button>
@@ -915,6 +927,17 @@ button.link:hover { text-decoration: underline; }
         </form>
         <p class="hint">Enter để gửi, Shift + Enter để xuống dòng. Kéo ảnh hoặc tài liệu vào đây để hỏi về nó. Copilot ghi thẳng vào Notion, nên xem lại những thay đổi quan trọng.</p>
       </div></div>
+    </section>
+
+    <!-- (v1.00.45) trang chủ: bấm logo / tên UC. Ảnh nền đọc từ ui/assets/hero.(jpg|png|webp) nếu bạn đặt vào; không có thì dùng nền màu -->
+    <section class="panel" id="p-home" role="tabpanel" aria-labelledby="t-home">
+      <div class="wrap wide">
+        <header class="hero"><img class="hero-img" src="/hero-img" alt="" onerror="this.remove()">
+          <div class="hero-txt"><p class="hero-kicker" id="home-date"></p><h1>University Copilot</h1><p>Đại học Bách khoa Hà Nội</p></div></header>
+        <h2 class="xsec">Hạn môn học <small id="home-dl-n"></small></h2>
+        <div id="home-dl"><p class="skeleton">Đang đọc…</p></div>
+        <p class="wnote">Ảnh nền: đặt một ảnh tên <code>hero.jpg</code> (hoặc .png, .webp) vào thư mục <code>ui/assets</code> của UC rồi tải lại trang.</p>
+      </div>
     </section>
 
     <section class="panel" id="p-wallet" role="tabpanel" aria-labelledby="t-wallet">
@@ -1207,7 +1230,7 @@ setInterval(() => {
   if (!draft) location.reload();
 }, 15 * 60 * 1000);
 /* ---------- tabs ---------- */
-const tabs = { wallet: ['#t-wallet', '#p-wallet'], chat: ['#t-chat', '#p-chat'], ib: ['#t-ib', '#p-ib'], cal: ['#t-cal', '#p-cal'], extra: ['#t-extra', '#p-extra'], admin: ['#t-admin', '#p-admin'], schol: ['#t-schol', '#p-schol'], sem: ['#t-sem', '#p-sem'], lang: ['#t-lang', '#p-lang'], about: ['#t-about', '#p-about'], grad: ['#t-grad', '#p-grad'], rec: ['#t-rec', '#p-rec'] };
+const tabs = { home: ['#t-home', '#p-home'], wallet: ['#t-wallet', '#p-wallet'], chat: ['#t-chat', '#p-chat'], ib: ['#t-ib', '#p-ib'], cal: ['#t-cal', '#p-cal'], extra: ['#t-extra', '#p-extra'], admin: ['#t-admin', '#p-admin'], schol: ['#t-schol', '#p-schol'], sem: ['#t-sem', '#p-sem'], lang: ['#t-lang', '#p-lang'], about: ['#t-about', '#p-about'], grad: ['#t-grad', '#p-grad'], rec: ['#t-rec', '#p-rec'] };
 function show(name) {
   if (name === 'sg') name = 'wallet';   // (v1.00.42) Gợi ý gộp vào Ví thời gian
   $('.app').classList.toggle('on-cal', name === 'cal');   // tab lịch có mục Ngày riêng -> ẩn cột Hôm nay chung
@@ -1218,6 +1241,7 @@ function show(name) {
   if (name === 'cal') { loadCal(); loadDay(); }   // (v1.00.40) phần Hôm nay nằm trong tab này
   if (name === 'day') { show('cal'); return; }    // (v1.00.40) lối vào cũ của tab Hôm nay
   if (name === 'extra') loadExtra();
+  if (name === 'home') { renderHome(); fetch('/api/today').then(r => r.json()).then(j => { daySet(j); renderHome(); }).catch(() => {}); }
   if (name === 'admin') loadAdmin();
   if (name === 'ib' && !NLM.loaded) { NLM.loaded = 1; nlmSearch(); nlmNotebooks(); trSearch(); trJobs(); }
   if (name === 'schol') loadSchol();
@@ -1228,6 +1252,7 @@ function show(name) {
   if (name === 'day') loadDay();
   if (name === 'chat') $('#input').focus();
 }
+$('#go-home').onclick = $('#t-home').onclick = () => show('home');
 $('#t-chat').onclick = () => show('chat'); $('#t-sg').onclick = () => show('wallet'); $('#t-wallet').onclick = () => show('wallet'); $('#t-ib').onclick = () => show('ib'); $('#t-rec').onclick = () => show('rec'); $('#t-cal').onclick = () => show('cal'); $('#t-sem').onclick = () => show('sem'); $('#t-grad').onclick = () => show('grad'); $('#t-lang').onclick = () => show('lang'); $('#t-about').onclick = () => show('about');
 // (v1.00.42) tab Giới thiệu: MSSV chỉ đi một chiều (ô nhập -> máy chủ). Máy chủ chỉ trả "đã lưu / chưa lưu".
 function renderOffline(o) {
@@ -2270,6 +2295,27 @@ function cfWire(C) {
 let DAY = null, dayPick = null, dayAsk = null;   // dayAsk = thay đổi đang chờ bạn xác nhận
 try { DAY = JSON.parse(localStorage.getItem('day-cache') || 'null'); } catch (e) { DAY = null; }
 function daySet(j) { if (!j || !j.today) return; DAY = j; try { localStorage.setItem('day-cache', JSON.stringify(j)); } catch (e) {} renderDay(); }
+// (v1.00.45) trang chủ: hạn môn học dạng thẻ (cùng dữ liệu /api/today với tab Ví thời gian). Ảnh minh hoạ AI cho từng hạn: chưa làm, chỉ có kế hoạch.
+function renderHome() {
+  const box = $('#home-dl'); if (!box) return;
+  const DOWN = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+  const leftTxt = m => m < 0 ? 'quá hạn' : m >= 2880 ? 'còn ' + Math.floor(m / 1440) + ' ngày' : m >= 120 ? 'còn ' + Math.floor(m / 60) + ' giờ' : 'còn ' + m + ' phút';
+  const t = new Date(); $('#home-date').textContent = DOWN[t.getDay()] + ', ' + t.getDate() + '/' + (t.getMonth() + 1) + '/' + t.getFullYear();
+  if (!DAY) return;
+  const dls = (DAY.deadlines || []).filter(x => !x.self && x.status !== 'Done').sort((a, b) => (a.due || '').localeCompare(b.due || ''));
+  const live = dls.filter(x => !x.overdue), past = dls.filter(x => x.overdue);
+  $('#home-dl-n').textContent = live.length;
+  const card = x => {
+    const u = x.url || x.link, urgent = x.overdue || (x.minsLeft != null && x.minsLeft < 2 * 1440);
+    return '<article class="xcard plain">' + (u ? '<a class="xlink" href="' + esc(u) + '" target="_blank" rel="noopener" aria-label="' + esc(x.name) + '"></a>' : '') +
+      '<h3>' + esc(x.name) + '</h3><div class="xfoot">' + xDate(x.due, urgent) + '<div class="xmeta">' +
+      '<span class="xtype">' + esc(x.course || x.kind || 'Hạn') + '</span>' + (x.courseName ? '<span>' + esc(x.courseName) + '</span>' : '') +
+      (x.due ? '<span class="' + (urgent ? 'xhan' : '') + '">' + (x.overdue ? 'Quá hạn' : 'Hạn ' + esc(xHM(x.due))) + (x.minsLeft != null && !x.overdue ? ' · ' + leftTxt(x.minsLeft) : '') + '</span>' : '') +
+      (x.gkExam ? '<span class="xhan">Môn có thi giữa kỳ</span>' : '') + '</div></div></article>';
+  };
+  box.innerHTML = (live.length ? '<div class="xgrid">' + live.map(card).join('') + '</div>' : '<p class="note">Không có hạn môn học nào sắp tới.</p>') +
+    (past.length ? '<details class="xnotes"><summary>Đã qua hạn, chưa đánh dấu xong (' + past.length + ')</summary><div class="xgrid" style="margin-top:10px">' + past.map(card).join('') + '</div></details>' : '');
+}
 function loadDay() { renderDay(); fetch('/api/today').then(r => r.json()).then(daySet).catch(() => {}); }
 
 /* ---------- (v1.00.42 W8) Ví thời gian: số dư, phiên tập trung 25 + 5, giải trí, âm nền ---------- */

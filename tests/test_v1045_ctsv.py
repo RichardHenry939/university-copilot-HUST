@@ -71,3 +71,25 @@ def test_save_images_filters(monkeypatch, tmp_path):
     r = ctsv_live._save_images(page, ctsv)
     assert sorted(i for i, _ in page.asked) == ['1', '2']   # 3 đã có, 4 không ảnh, 5 đã kết thúc, '../x' không phải số
     assert r == {'new': 2, 'tried': 2} and (tmp_path / '1.img').read_bytes() == b'anh'
+
+
+def get(app, path):
+    h = app.H.__new__(app.H)
+    h.path, h.headers = path, {}
+    out = {}
+    h._send = lambda code, obj=None, raw=None, ctype=None: out.update(code=code, raw=raw, ctype=ctype)
+    h.do_GET()
+    return out
+
+
+def test_hero_img_and_ctsv_img(app, monkeypatch, tmp_path):
+    monkeypatch.setattr(app, 'HERE', tmp_path)
+    assert get(app, '/hero-img')['code'] == 404                      # chưa đặt ảnh -> trang dùng nền màu
+    (tmp_path / 'ui' / 'assets').mkdir(parents=True)
+    (tmp_path / 'ui' / 'assets' / 'hero.png').write_bytes(b'\x89PNG anh')
+    r = get(app, '/hero-img'); assert r['code'] == 200 and r['ctype'] == 'image/png'
+    (tmp_path / 'school' / 'ctsv_img').mkdir(parents=True)
+    (tmp_path / 'school' / 'ctsv_img' / '7.img').write_bytes(b'\xff\xd8 jpg')
+    r = get(app, '/ctsv-img/7'); assert r['code'] == 200 and r['ctype'] == 'image/jpeg'
+    assert get(app, '/ctsv-img/8')['code'] == 404
+    assert get(app, '/ctsv-img/..%2Fx').get('raw') is None             # chỉ nhận mã số

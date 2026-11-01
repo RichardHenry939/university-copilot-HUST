@@ -1120,6 +1120,11 @@ class H(BaseHTTPRequestHandler):
                 b_img = p_img.read_bytes()
                 ct = "image/png" if b_img[:4] == b"\x89PNG" else "image/webp" if b_img[8:12] == b"WEBP" else "image/jpeg"
                 return self._send(200, raw=b_img, ctype=ct)
+            if u.path == "/hero-img":   # (v1.00.45) ảnh nền trang chủ: người dùng tự đặt ui/assets/hero.(jpg|jpeg|png|webp)
+                for ext, ct in (("jpg", "image/jpeg"), ("jpeg", "image/jpeg"), ("png", "image/png"), ("webp", "image/webp")):
+                    p_hero = HERE / "ui" / "assets" / f"hero.{ext}"
+                    if p_hero.exists(): return self._send(200, raw=p_hero.read_bytes(), ctype=ct)
+                return self._send(404, {"error": "chưa có ảnh nền"})
             if u.path == "/api/wallet":   # (v1.00.42 W8) ví thời gian: số dư, phiên đang chạy, thống kê
                 import wallet, datetime as _dt
                 with wallet.lock:
