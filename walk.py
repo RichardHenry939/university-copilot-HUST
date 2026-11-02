@@ -122,13 +122,17 @@ def view(now=None):
     # Tổng cả ngày = max(số chủ nhập theo app, số quy từ CTSV). Số giải ghi nhận vẫn trả riêng (contest).
     contest = {_d(r.get('DayRun')): r.get('steps', 0) for r in (w.get('days') or [])}
     man = manual()
-    steps = {d: max(contest.get(d, 0), man.get(d, 0)) for d in set(contest) | set(man)}
+    # (v1.00.49) số THẬT từ app iCTSV (đủ mọi lượt, kể cả lượt chậm giải không tính) — walk_app.py
+    import walk_app
+    wa = walk_app.load(); app = wa.get('days') or {}
+    steps = {d: max(contest.get(d, 0), man.get(d, 0), (app.get(d) or {}).get('steps', 0)) for d in set(contest) | set(man) | set(app)}
     exam_days = {_d(e.get('start')) for e in ev if e.get('kind') == 'Exam'}
     tgt = target_for(now.date(), steps, exam_days, c)
     mil = military(ev, today)
     sl = slot(ev, today, max(10, math.ceil(tgt / c['steps_per_min'])), c, after=now)
     done = steps.get(today, 0)
-    extra = {'contestSteps': contest.get(today, 0), 'manualSteps': man.get(today)}
+    extra = {'contestSteps': contest.get(today, 0), 'manualSteps': man.get(today),
+             'appSteps': (app.get(today) or {}).get('steps'), 'app': app, 'appAt': wa.get('at')}
     month = today[:7]; prev = (now.date().replace(day=1) - dt.timedelta(days=1)).isoformat()[:7]
     return {'ok': bool(w.get('ok')), 'at': w.get('at'), 'error': w.get('error'), 'competition': w.get('competition'),
             'myRank': w.get('myRank'), 'top100Km': w.get('top100Km'), 'stepsPerKm': w.get('stepsPerKm'),

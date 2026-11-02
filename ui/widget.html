@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UC hình nền</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&display=swap" rel="stylesheet">
+<!--
+(v1.00.49) Hình nền động cho Lively Wallpaper. Mỗi màn hình một địa chỉ:
+  màn laptop:  http://127.0.0.1:8320/widget?screen=laptop
+  màn rời:     http://127.0.0.1:8320/widget?screen=ext
+Màn laptop tự đổi bố cục theo số màn hình (/api/widget): chỉ laptop -> đồng hồ nhỏ + hạn ở góc trên (chỗ bạn chọn 02/11);
+có màn rời -> đồng hồ + hôm nay + hạn ở nửa trái. Màn rời: góc phải dưới.
+Chỉnh vị trí bố cục chỉ-laptop: thêm &x=28&y=2&w=13 (phần trăm bề ngang / bề cao màn).
+Đồng hồ chép từ ui/index.html (clk24*). Đi tắt: hai bản code, sửa luật màu thì sửa cả hai chỗ.
+-->
+<style>
+:root { --ink: #12233d; --ink-2: #3c4c66; --frost: rgba(255,255,255,.58); --edge: rgba(255,255,255,.75);
+  --waste: #2f343b; --cls: #1f6fd1; --focus: #2f7d4f; --sleep: #f6c945; --red: #cf3434; --review: #d9730d; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body { background: #8fb3c4 url(/widget/bg.jpg) center / cover no-repeat; font-family: 'Bricolage Grotesque', system-ui, sans-serif; color: var(--ink);
+  font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+.grp { position: absolute; display: flex; gap: 2.2vmin; align-items: flex-start; }
+.sheet { background: var(--frost); border: 1px solid var(--edge); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
+.clock { border-radius: 50%; padding: 1.6%; flex: 0 0 auto; aspect-ratio: 1; position: relative; }
+.clock svg { width: 100%; height: 100%; display: block; }
+.face { fill: rgba(255,255,255,.72); stroke: var(--ink); stroke-width: 2.5; }
+.now-t { margin: 0 0 .7em; color: var(--ink-2); font-weight: 600; } .now-t .dig { font-size: 2em; font-weight: 800; color: var(--ink); letter-spacing: .01em; margin-right: .2em; }
+.waste { fill: var(--waste); opacity: .62; } .cl { fill: var(--cls); opacity: .75; } .fz { fill: var(--focus); opacity: .85; } .slp { fill: var(--sleep); opacity: .55; }
+.tk { stroke: var(--ink-2); stroke-width: 1; } .tk.h { stroke: var(--ink); stroke-width: 2.2; }
+.num { font-size: 11px; font-weight: 700; fill: var(--ink); text-anchor: middle; dominant-baseline: central; } .num.k { font-size: 14px; }
+.hh { stroke: var(--ink); stroke-width: 5; stroke-linecap: round; } .mm { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+.ss { stroke: var(--red); stroke-width: 1.4; stroke-linecap: round; } .hub { fill: var(--red); }
+.panel { border-radius: 2.2vmin; padding: 1.6em 1.8em; min-width: 0; }
+.panel h2 { margin: 0 0 .5em; font-size: 1.05em; font-weight: 700; color: var(--ink-2); }
+.panel h2 + ul { margin-bottom: 1.1em; } .panel ul:last-child { margin-bottom: 0; }
+.panel ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .45em; }
+.panel li { display: grid; grid-template-columns: 5.8em 1fr; gap: .8em; align-items: baseline; line-height: 1.25; }
+.panel li time { font-weight: 700; white-space: nowrap; }
+.panel li span { overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.panel li.past { opacity: .45; } .panel li.now time { color: var(--cls); } .panel li.urgent time { color: var(--red); }
+.panel .empty { color: var(--ink-2); margin: 0 0 1em; }
+.off { position: absolute; left: 50%; top: 2vh; transform: translateX(-50%); padding: .4em 1em; border-radius: 99px; font-size: 14px; display: none; }
+.off.on { display: block; }
+/* bố cục */
+.m-lap1 { flex-direction: column; align-items: center; gap: 1.2vmin; font-size: clamp(11px, .78vw, 15px); }
+.m-lap1 .panel { width: 100%; padding: 1em 1.1em; }
+.m-lap2 { left: 5vw; top: 50%; transform: translateY(-40%); font-size: clamp(13px, 1vw, 18px); align-items: center; }
+.m-lap2 .clock { width: min(38vh, 26vw); } .m-lap2 .panel { width: min(30vw, 34em); }
+/* màn rời: dải ngang, cao <= 17vh, ở vùng chủ khoanh 02/11 (lề phải, dưới hàng icon Dashboard/Notion, trên BIDV: y ~29–46%) */
+.m-ext { right: 1.2vw; top: 29vh; font-size: clamp(11px, .68vw, 14px); align-items: center; }
+/* (02/11, chủ) bề ngang giữ nguyên; chiều dọc tự do: hiện TOÀN BỘ việc hôm nay, chữ to dễ đọc, không cắt */
+.m-ext { align-items: flex-start; font-size: clamp(11px, .7vw, 14px); }   /* 02/11: 17px quá to, đè icon BIDV -> nhỏ lại (bề ngang không đổi) */
+.m-ext .clock { width: 17vh; } .m-ext .panel { width: min(26vw, 34em); padding: 1em 1.2em; }
+.m-ext .now-t .dig { font-size: 1.6em; }
+.panel li.rev time, .panel li.rev span { color: var(--review); font-weight: 700; }   /* chủ chọn 02/11: ôn thi = vàng đỏ, cả chữ */
+.panel .exams li span { font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .ss { display: none; } }
+</style>
+</head>
+<body>
+<div class="off sheet" id="off">UC đang tắt · số liệu lần cuối</div>
+<div class="grp" id="grp"><div class="clock sheet" id="clk"></div><div class="panel sheet" id="pan"></div></div>
+<script>
+const Q = new URLSearchParams(location.search), SCREEN = Q.get('screen') || 'laptop';
+const SLEEP_H = 22, WAKE_H = 6, TZ = 7 * 36e5;
+const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const p2 = n => String(n).padStart(2, '0');
+const vn = ms => new Date(ms + TZ), vnDay = ms => vn(ms).toISOString().slice(0, 10), vnHM = ms => { const v = vn(ms); return p2(v.getUTCHours()) + ':' + p2(v.getUTCMinutes()); };
+let EV = [], SP = { spans: [], live: false }, RUNS = [], MON = 1, OFF = false;
+
+// ---- dữ liệu (đọc lại định kỳ; UC tắt thì giữ số lần cuối) ----
+async function j(u) { const r = await fetch(u, { cache: 'no-store' }); if (!r.ok) throw new Error(r.status); return r.json(); }
+let REV = [], DL = null;   // REV: "Ôn thi định kỳ hằng ngày môn X" (không tắt được) · DL: danh sách hạn đầy đủ của UC (/api/today; lịch chỉ có một phần)
+async function loadDl() { try { const t = await j('/api/today'); DL = (t.deadlines || []).filter(x => !x.overdue && x.due); } catch (e) {} render(); }
+async function loadEv() { try { const t = await j('/api/timetable/all'); EV = (t && t.events) || []; REV = (t && t.review) || []; OFF = false; } catch (e) { OFF = true; } render(); }
+async function loadSp() { try { const w = await j('/api/wallet'); const a = w.active; SP = { spans: w.spans || [], live: !!(a && a.type === 'focus' && !a.paused_at) }; } catch (e) {} }
+async function loadWalk() { try { const w = await j('/api/walk'); RUNS = ((w.app || {})[w.today] || {}).runs || []; } catch (e) {} }
+let VER = null;   // widget.html đổi -> tự tải lại (Lively không tự tải lại trang)
+async function loadMon() { try { const w = await j('/api/widget'); MON = +Q.get('mon') || w.monitors || 1;
+  if (VER && w.ver && w.ver !== VER) return location.reload(); VER = w.ver; } catch (e) {} layout(); }   // &mon=1: xem thử bố cục chỉ-laptop
+
+// ---- bố cục theo màn hình ----
+function layout() {
+  const g = $('#grp'), mode = SCREEN === 'ext' ? 'ext' : MON > 1 ? 'lap2' : 'lap1';
+  g.className = 'grp m-' + mode; g.dataset.mode = mode; g.removeAttribute('style'); $('#clk').removeAttribute('style');
+  if (mode === 'lap1') {   // chỗ bạn khoanh (02/11): khoảng x 28–41%, y 0–42% của màn laptop
+    const x = +Q.get('x') || 28, y = +Q.get('y') || 2, w = +Q.get('w') || 13;
+    Object.assign(g.style, { left: x + 'vw', top: y + 'vh', width: w + 'vw' });
+    $('#clk').style.width = '72%';
+  }
+  render();
+}
+
+// ---- danh sách: hôm nay + hạn sắp tới ----
+function render() {
+  $('#off').classList.toggle('on', OFF);
+  const now = Date.now(), today = vnDay(now), mode = $('#grp').dataset.mode;
+  const real = e => e.start && !/NGHỈ/.test(e.title || '');
+  // Lịch hôm nay: tối đa 4 mục; thừa thì bỏ buổi đã qua trước (chủ 02/11)
+  let sch = EV.filter(e => real(e) && e.kind !== 'Deadline' && e.kind !== 'Exam' && e.start.includes('T') && vnDay(Date.parse(e.start)) === today)
+    .sort((a, b) => a.start.localeCompare(b.start));
+  while (sch.length > 4 && Date.parse(sch[0].end || sch[0].start) < now) sch.shift();
+  sch = sch.slice(0, 4);
+  // Lịch thi: trên cùng, bỏ TDTT / QP-AN (cùng luật exam_watch.py)
+  const exempt = e => /^(PE|MIL)\d/i.test(String(e.notes || '')) || /quốc phòng|gdqp|an ninh|thể dục|thể chất|tdtt/i.test(e.title || '');
+  const exams = EV.filter(e => e.kind === 'Exam' && !exempt(e) && Date.parse(e.end || e.start) > now).sort((a, b) => a.start.localeCompare(b.start));
+  // Việc cần làm hôm nay: ôn thi (không tắt được) -> mọi hạn hôm nay -> bù hạn gần nhất cho đủ 6 (chủ 02/11: hiện TOÀN BỘ việc hôm nay)
+  const open = (DL ? DL.map(x => ({ start: x.due, title: x.name + (x.course && !String(x.name).includes(x.course) ? ' · ' + x.course : '') }))
+    : EV.filter(e => e.kind === 'Deadline')).filter(e => Date.parse(e.start) > now).sort((a, b) => a.start.localeCompare(b.start));
+  const dToday = open.filter(e => vnDay(Date.parse(e.start)) === today);
+  const dls = dToday.concat(open.filter(e => vnDay(Date.parse(e.start)) !== today).slice(0, Math.max(0, 6 - REV.length - dToday.length)));
+  const name = e => (e.title || '').replace(/ · (LT|BT|LT\+BT|Thực nghiệm|Online|Offline|Teams đổi lịch)\b/g, '').replace(/^📡 /, '');
+  const when = ms => { const d = Math.round((Date.parse(vnDay(ms)) - Date.parse(today)) / 864e5);
+    return d === 0 ? vnHM(ms) : d === 1 ? 'Mai ' + vnHM(ms) : ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][vn(ms).getUTCDay()] + ' ' + vn(ms).getUTCDate() + '/' + (vn(ms).getUTCMonth() + 1); };
+  const dow = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][vn(now).getUTCDay()];
+  const top = '<p class="now-t"><b class="dig">' + vnHM(now) + ':' + p2(vn(now).getUTCSeconds()) + '</b> ' + dow + ', ' + vn(now).getUTCDate() + '/' + (vn(now).getUTCMonth() + 1) + '</p>';
+  const schHTML = '<h2>Hôm nay</h2>' + (sch.length ? '<ul>' + sch.map(e => { const s = Date.parse(e.start), en = Date.parse(e.end || e.start);
+      return '<li class="' + (en < now ? 'past' : s <= now ? 'now' : '') + '"><time>' + vnHM(s) + '</time><span>' + esc(name(e)) + (e.location ? ' · ' + esc(e.location) : '') + '</span></li>'; }).join('') + '</ul>'
+    : '<p class="empty">Không có buổi học hay sự kiện.</p>');
+  const exHTML = exams.length ? '<section class="exams"><h2>Lịch thi</h2><ul>' + exams.map(e => { const s = Date.parse(e.start);
+      return '<li class="urgent"><time>' + when(s) + '</time><span>' + esc((e.title || '').replace(/^Thi( GK)?:\s*/, 'Thi ')) + (e.location ? ' · ' + esc(e.location) : '') + '</span></li>'; }).join('') + '</ul></section>' : '';
+  const revHTML = REV.map(r => '<li class="rev"><time>Đến ' + vn(Date.parse(r.exam)).getUTCDate() + '/' + (vn(Date.parse(r.exam)).getUTCMonth() + 1) + '</time><span>' + esc(r.title) + '</span></li>').join('');
+  const dlHTML = '<h2>Việc cần làm hôm nay</h2>' + (REV.length || dls.length ? '<ul>' + revHTML + dls.map(e => { const s = Date.parse(e.start);
+      return '<li class="' + (vnDay(s) === today ? 'urgent' : '') + '"><time>' + when(s) + '</time><span>' + esc(name(e)) + '</span></li>'; }).join('') + '</ul>'
+    : '<p class="empty">Hôm nay không có việc nào có hạn.</p>');
+  $('#pan').innerHTML = top + exHTML + (mode === 'lap1' ? '' : '<section>' + schHTML + '</section>') + '<section>' + dlHTML + '</section>';
+}
+
+// ---- đồng hồ 24 giờ (cùng luật màu với ui/index.html) ----
+const R = 100, P = (deg, r) => { const a = (deg - 90) * Math.PI / 180; return [(R + r * Math.cos(a)).toFixed(2), (R + r * Math.sin(a)).toFixed(2)]; };
+const arc = (d0, d1, r) => { const [x0, y0] = P(d0, r), [x1, y1] = P(d1, r); return 'M' + R + ' ' + R + 'L' + x0 + ' ' + y0 + 'A' + r + ' ' + r + ' 0 ' + ((d1 - d0) % 360 > 180 ? 1 : 0) + ' 1 ' + x1 + ' ' + y1 + 'Z'; };
+(function build() {
+  let t = '';
+  for (let i = 0; i < 96; i++) { const h = i % 4 === 0, [x0, y0] = P(i * 3.75, h ? 82 : 87), [x1, y1] = P(i * 3.75, 92); t += '<line class="tk' + (h ? ' h' : '') + '" x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y1 + '"/>'; }
+  for (let h = 0; h < 24; h++) { const [x, y] = P(h * 15, 71); t += '<text class="num' + (h % 6 === 0 ? ' k' : '') + '" x="' + x + '" y="' + y + '">' + h + '</text>'; }
+  $('#clk').innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="Đồng hồ 24 giờ"><circle class="face" cx="100" cy="100" r="96"/><path class="waste"/><g class="cls"></g><g class="fzs"></g>' +
+    '<path class="slp" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/>' + t +
+    '<line class="hh" x1="100" y1="100" x2="100" y2="48"/><line class="mm" x1="100" y1="100" x2="100" y2="24"/><line class="ss" x1="100" y1="112" x2="100" y2="16"/><circle class="hub" cx="100" cy="100" r="4"/></svg>';
+})();
+function tick() {
+  const now = Date.now(), v = vn(now), h = v.getUTCHours(), m = v.getUTCMinutes(), s = v.getUTCSeconds(), sod = h * 3600 + m * 60 + s;
+  const today = vnDay(now), d = sod / 240, day0 = now - sod * 1000, svg = $('#clk svg');
+  const rot = (c, deg) => svg.querySelector(c).setAttribute('transform', 'rotate(' + deg.toFixed(2) + ' 100 100)');
+  rot('.hh', d); rot('.mm', (m * 60 + s) / 10); rot('.ss', s * 6);
+  const deg = t => Math.max(0, Math.min(d, ((typeof t === 'number' ? t : Date.parse(t)) - day0) / 240000));
+  const paths = (sp, c) => sp.map(x => { const a = deg(x[0]), b = deg(x[1]); return b - a > .05 ? '<path class="' + c + '" d="' + arc(a, b, 94) + '"/>' : ''; }).join('');
+  svg.querySelector('.waste').setAttribute('d', d > WAKE_H * 15 + .05 ? arc(WAKE_H * 15, Math.min(d, SLEEP_H * 15), 94) : '');
+  const cls = EV.filter(e => e.start && e.end && e.start.includes('T') && vnDay(Date.parse(e.start)) === today && e.kind === 'Class' && !/NGHỈ/.test(e.title || ''))
+    .map(e => [Date.parse(e.start), Date.parse(e.end)]);
+  for (const r of RUNS) { const st = Date.parse(today + 'T' + r.at + ':00+07:00'), q = String(r.dur || '').split(':').map(Number);
+    if (!isNaN(st)) cls.push([st, st + ((q[0] || 0) * 3600 + (q[1] || 0) * 60 + (q[2] || 0)) * 1000]); }
+  svg.querySelector('.cls').innerHTML = paths(cls, 'cl');
+  svg.querySelector('.fzs').innerHTML = paths(SP.spans.map((x, i) => [x[0], SP.live && i === SP.spans.length - 1 ? now : x[1]]), 'fz');
+  const dg = $('.dig'); if (dg) dg.textContent = p2(h) + ':' + p2(m) + ':' + p2(s);   // HH:MM:SS ở mọi bố cục (chủ, 02/11)
+}
+// ảnh nền: tải lỗi (vd đúng lúc UC khởi động lại) thì CSS không tự thử lại -> tự thử mỗi 15 giây tới khi được (02/11)
+(function loadBg() { const i = new Image(); i.onload = () => { document.body.style.backgroundImage = 'url(' + i.src + ')'; }; i.onerror = () => setTimeout(loadBg, 15000); i.src = '/widget/bg.jpg?t=' + Date.now(); })();
+loadMon(); loadEv(); loadDl(); loadSp(); loadWalk(); tick();
+setInterval(tick, 1000); setInterval(loadEv, 60e3); setInterval(loadDl, 2 * 60e3); setInterval(loadSp, 30e3); setInterval(loadWalk, 5 * 60e3); setInterval(loadMon, 20e3);
+</script>
+</body>
+</html>

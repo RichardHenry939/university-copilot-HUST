@@ -541,6 +541,14 @@ details.catalog td, details.catalog th { text-align: left; padding: 4px 8px; bor
 @media (max-width: 860px) { .bell-m { display: grid; } .notif { left: auto; right: 12px; top: 56px; } .tabs { padding-right: 56px; } }
 @media (max-width: 600px) { .tasks.exlist li { grid-template-columns: 1fr; } .tasks.exlist .h { grid-column: 1; text-align: left; } }
 .plan-box{margin-top:28px}.plan-t{border-collapse:collapse;margin:10px 0;font-size:14px}.plan-t td,.plan-t th{border:1px solid var(--line,#ddd);padding:4px 8px;text-align:left}.plan-t .warn,p.warn{color:var(--red,#c0392b)}.plan-week{font-size:14px;line-height:1.6}
+/* (20/10) khoá riêng tư tạm thời: chỉ để lại Lịch và Ngoại khoá */
+body.privacy #t-chat, body.privacy #t-day, body.privacy #t-sg, body.privacy #t-ib, body.privacy #t-admin, body.privacy #t-schol,
+body.privacy #t-sem, body.privacy #t-lang, body.privacy #t-grad, body.privacy #t-rec,
+body.privacy #p-chat, body.privacy #p-day, body.privacy #cal-day, body.privacy #p-wallet, body.privacy #t-wallet, body.privacy #cal-exams, body.privacy #p-ib, body.privacy #p-admin, body.privacy #p-schol,
+body.privacy #p-sem, body.privacy #p-lang, body.privacy #p-grad, body.privacy #p-rec { display: none !important; }
+#privacy-bar { display: none; position: sticky; top: 0; z-index: 50; background: #fff4d6; border-bottom: 1px solid #e0b84c; padding: 6px 12px; font-size: 13px; }
+body.privacy #privacy-bar { display: block; }
+body.privacy .grp[data-g="wallet"], body.privacy .grp[data-g="docs"], body.privacy .grp[data-g="study"], body.privacy .grp[data-g="schol"], body.privacy .grp[data-g="help"] { display: none !important; }   /* (v1.00.45 tiếp) menu ngang: ẩn tab lớn chỉ còn tab con bị khoá */
 /* (v1.00.35) lịch thi: thẻ đỏ đặc (loại hạn đặc biệt); hạn của môn đã có lịch thi: viền đỏ */
 .tasks.exams li.exam { background: var(--red); color: #fff; border-color: var(--red); }
 .tasks.exams li.exam .tname, .tasks.exams li.exam small, .tasks.exams li.exam .h { color: #fff; font-weight: 600; }
@@ -1006,8 +1014,12 @@ button.link:hover { text-decoration: underline; }
 .clk24 svg { width: min(100%, 340px); height: auto; display: block; }
 .clk24 .c-face { fill: var(--sheet); stroke: var(--ink); stroke-width: 2.5; }
 .clk24 .c-sleep { fill: #f6c945; opacity: .55; }
-.clk24 .c-left { fill: var(--blue-wash); }
-.clk24 .c-fz { fill: var(--green); opacity: .6; }
+.clk24 .c-waste { fill: #2f343b; opacity: .62; }
+.clk24 .c-cl { fill: #1f6fd1; opacity: .75; }
+.clk24 .c-fz { fill: var(--green); opacity: .85; }
+.clk24 .c-key { flex-wrap: wrap; justify-content: center; }
+.clk24 .c-key .k-waste { background: #2f343b; opacity: .62; } .clk24 .c-key .k-cls { background: #1f6fd1; opacity: .75; }
+.clk24 .c-key .k-fz { background: var(--green); } .clk24 .c-key .k-sleep { background: #f6c945; } .clk24 .c-key .k-left { background: var(--sheet); border: 1px solid var(--line); }
 .clk24 .c-msg b.c-fsum { color: var(--green); }
 .clk24 .c-tick { stroke: var(--ink-3); stroke-width: 1; } .clk24 .c-tick.h { stroke: var(--ink); stroke-width: 2.2; }
 .clk24 .c-num { font-family: var(--display); font-size: 11px; font-weight: 700; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
@@ -1061,10 +1073,25 @@ button.link:hover { text-decoration: underline; }
 .runman { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 14px; margin: 0 0 8px; }
 .runman label { font-weight: 600; display: flex; align-items: center; gap: 10px; } .runman input { width: 110px; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); }
 .runman small { flex-basis: 100%; color: var(--ink-3); }
+/* (02/11, chủ) ôn thi định kỳ = vàng đỏ, cả chữ */
+.dc-list li.rev, .dc-list li.rev time, .revtask .tname, .revtask .exmark { color: #d9730d; } .dc-list li.rev { font-weight: 700; } .revtask .exmark { background: #fdebd3; }
+.runman-d { margin: 0 0 8px; } .runman-d summary { cursor: pointer; color: var(--ink-3); font-size: 13px; margin-bottom: 6px; }
+.walkday { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 10px 14px; margin: 0 0 8px; }
+.walkday h3 { margin: 0 0 6px; display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; } .walkday h3 span { font-family: var(--display); color: var(--green); }
+.walkruns { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.walkruns li { display: grid; grid-template-columns: 48px 92px 1fr; gap: 8px; align-items: baseline; font-size: 12.5px; color: var(--ink-2); }
+.walkruns time { font-family: var(--display); font-weight: 700; color: var(--ink); } .walkruns b { color: var(--green); }
+.walkruns li.slow b { color: var(--ink-3); } .walkruns li.slow span { color: var(--ink-3); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 @media (max-width: 760px) { .runstats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .clk24-w { flex-direction: row; justify-content: center; gap: 28px; margin: 4px 0 18px; }
-.clk24-w svg { width: 230px; }
+.clk24-w { flex-wrap: wrap; }
+.clk24-w svg { width: min(460px, 100%); flex: 0 0 auto; }   /* (02/11, chủ) gấp đôi 230px; chữ chú thích xuống dưới khi hẹp */
+.clk24 .c-key em { display: none; }
+.clk24-w .c-key { flex-direction: column; align-items: flex-start; gap: 8px; font-size: 13.5px; color: var(--ink); }
+.clk24-w .c-key span { display: grid; grid-template-columns: 16px 1fr; column-gap: 8px; }
+.clk24-w .c-key i { width: 14px; height: 14px; grid-row: span 2; margin: 2px 0 0; }
+.clk24-w .c-key em { display: block; font-style: normal; font-size: 12px; color: var(--ink-3); }
 .clk24-w .c-side { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 .clk24-w .c-msg { text-align: left; max-width: 34ch; }
 @media (max-width: 760px) { .ht-top, .ht-lists { grid-template-columns: 1fr; } .clk24-w { flex-direction: column; } .clk24-w .c-side { align-items: center; } .clk24-w .c-msg { text-align: center; } }
@@ -1833,9 +1860,16 @@ function selectDay(d, from) {
 let CAL = null;
 try { CAL = JSON.parse(localStorage.getItem('cal-cache') || 'null'); } catch (e) { CAL = null; }
 let calSyncing = null;
+let REVIEW = [];   // (v1.00.49, chủ 02/11) "Ôn thi định kỳ hằng ngày môn X" từ /api/timetable/all (exam_watch.review) — KHÔNG có nút tắt
+function reviewLi(r) {
+  const x = new Date(Date.parse(r.exam) + 7 * 36e5);
+  return '<li class="rev"><time>Đến ' + x.getUTCDate() + '/' + (x.getUTCMonth() + 1) + '</time>' + esc(r.title) + '<small>Thi ' + x.getUTCDate() + '/' + (x.getUTCMonth() + 1) + ' ' +
+    String(x.getUTCHours()).padStart(2, '0') + ':' + String(x.getUTCMinutes()).padStart(2, '0') + (r.examLocation ? ' · ' + esc(r.examLocation) : '') + ' · không tắt được tới ngày thi</small></li>';
+}
 function calSync(force) {
   if (calSyncing) return calSyncing;
   calSyncing = fetch('/api/timetable/all' + (force ? '?force=1' : '')).then(r => r.json()).then(j => {
+    if (j && Array.isArray(j.review)) { const ch = JSON.stringify(j.review) !== JSON.stringify(REVIEW); REVIEW = j.review; if (ch) { renderHomeTime(); if (typeof DAY !== 'undefined' && DAY) renderDay(); } }
     if (j && Array.isArray(j.events) && (!CAL || j.fetchedAt !== CAL.fetchedAt || JSON.stringify(j.events) !== JSON.stringify(CAL.events))) {
       CAL = { events: j.events, fetchedAt: j.fetchedAt };
       try { localStorage.setItem('cal-cache', JSON.stringify(CAL)); } catch (e) {}
@@ -1988,9 +2022,10 @@ function runHTML() {
       '<div><strong>' + k2(totKm) + '</strong><span>km đã ghi nhận</span></div>' +
       '<div><strong>' + nf(Math.round(totKm * (w.stepsPerKm || 1385))) + '</strong><span>bước (km × ' + nf(w.stepsPerKm || 1385) + ')</span></div>' +
       '<div><strong>' + (w.myRank ? '#' + w.myRank : '–') + '</strong><span>' + (w.myRank ? 'hạng của bạn' : cut != null ? 'ngoài top 100 · mốc vào top ' + k2(cut) + ' km' : 'chưa có hạng') + '</span></div>' +
-      '<div><strong>' + nf(w.steps) + '</strong><span>bước cả ngày / mục tiêu ' + nf(w.target) + (w.manualSteps == null ? ' · chưa nhập theo app' : '') + '</span></div></div>' +
-    '<form class="runman" id="run-man"><label>Tổng bước hôm nay theo app iCTSV <input type="number" min="0" max="100000" inputmode="numeric" id="run-man-n" value="' + (w.manualSteps == null ? '' : w.manualSteps) + '"></label>' +
-      '<button class="primary" type="submit">Lưu</button><small>CTSV web chỉ cho biết quãng đường giải tính (hôm nay ' + nf(w.contestSteps) + ' bước); lượt đi chậm có vẻ không được tính. UC lấy số lớn hơn làm tổng cả ngày.</small></form>' +
+      '<div><strong>' + nf(w.steps) + '</strong><span>bước cả ngày / mục tiêu ' + nf(w.target) + (w.appAt ? ' · theo app iCTSV' : '') + '</span></div></div>' +
+    walkAppHTML(w) +
+    '<details class="runman-d"><summary>Nhập tay (khi máy ảo tắt)</summary><form class="runman" id="run-man"><label>Tổng bước hôm nay theo app iCTSV <input type="number" min="0" max="100000" inputmode="numeric" id="run-man-n" value="' + (w.manualSteps == null ? '' : w.manualSteps) + '"></label>' +
+      '<button class="primary" type="submit">Lưu</button><small>CTSV web chỉ cho biết quãng đường giải tính (hôm nay ' + nf(w.contestSteps) + ' bước), bỏ các lượt đi chậm. UC lấy số lớn nhất trong: app iCTSV, số nhập tay, số giải tính.</small></form></details>' +
     (w.military && w.military.active ? '<p class="note">Đang học quân sự: UC không nhắc đi bộ hằng ngày, số bước vẫn được ghi.</p>' : '') +
     boardHTML(w) +
     '<h2 class="xsec">Thành tích theo ngày <small>' + days.length + '</small></h2>' +
@@ -2000,6 +2035,21 @@ function runHTML() {
       : '<p class="note">CTSV chưa ghi nhận ngày nào.</p>') +
     '<p class="cal-sync">' + (w.at ? 'Đọc từ CTSV lúc ' + hhmm(w.at) + ' ' + hDM(w.at) + ' · tự đọc lại mỗi 2 giờ (6h–22h). ' : 'Chưa đọc lần nào. ') +
     (w.error ? 'Lỗi lần trước: ' + esc(w.error) + '. ' : '') + 'Số bước quy từ km như app trường. <button class="ghost" id="run-refresh">Đọc lại ngay</button></p>';
+}
+// (v1.00.49) từng lượt đi THẬT đọc từ app iCTSV trong máy ảo (walk_app.py); lượt chậm hơn 15 phút/km thường không được giải tính
+function walkRunsList(day) {
+  const d = (WALK && WALK.app || {})[day]; if (!d || !d.runs || !d.runs.length) return '';
+  const slow = p => { const m = /^(\d+):(\d+)$/.exec(p || ''); return m && (+m[1] * 60 + +m[2]) > 15 * 60; };
+  return '<ul class="walkruns">' + d.runs.map(r => '<li' + (slow(r.pace) ? ' class="slow"' : '') + '><time>' + esc(r.at) + '</time><b>' + nf(r.steps) + ' bước</b><span>' +
+    String(r.km).replace('.', ',') + ' km · ' + esc(String(r.dur).replace(/^00:/, '')) + ' · ' + esc(r.pace) + ' /km' + (slow(r.pace) ? ' · có thể không được giải tính' : '') + '</span></li>').join('') + '</ul>';
+}
+function walkAppHTML(w) {
+  const days = Object.keys(w.app || {}).sort().reverse();
+  if (!w.appAt) return '<p class="note">Chưa đọc được app iCTSV (máy ảo tắt hoặc chưa tới lượt đọc). Đang dùng số giải tính / nhập tay.</p>';
+  return '<h2 class="xsec">Từng lượt đi <small>app iCTSV · đọc lúc ' + hhmm(w.appAt) + ' ' + hDM(w.appAt) + ' · tự đọc mỗi giờ</small></h2>' +
+    (days.length ? days.map(d => { const x = w.app[d]; return '<div class="walkday"><h3>' + hDM(d) + '/' + d.slice(0, 4) + ' <span>' + nf(x.steps) + ' bước · ' +
+      String(x.km).replace('.', ',') + ' km · ' + esc(x.time) + '</span></h3>' + walkRunsList(d) + '</div>'; }).join('')
+      : '<p class="note">Tháng này app chưa ghi lượt nào.</p>');
 }
 // Tới khung UC xếp: phiên tập trung đang chạy thì tự tạm dừng (một lần mỗi ngày) và hiện lời nhắc đi tập. Học quân sự: không nhắc.
 async function walkNag() {
@@ -2047,11 +2097,25 @@ function renderHomeTime() {
   b.innerHTML = '<span class="bloc-dow">' + esc(dow.charAt(0).toUpperCase() + dow.slice(1)) + ' · Hôm nay</span><span class="bloc-n">' + dt.getUTCDate() +
     '</span><span class="bloc-m">Tháng ' + (dt.getUTCMonth() + 1) + ' · ' + dt.getUTCFullYear() + '</span>';
   if (!CAL) return;
-  const { dls, sch } = dayEvents(today);
-  box.innerHTML = '<section><h3>Lịch trong ngày <span>' + sch.length + '</span></h3>' +
+  const { dls, sch: sch0 } = dayEvents(today);
+  // (v1.00.49, chủ 02/11) giống hình nền: Lịch thi trên cùng · Lịch tối đa 4 (bỏ buổi đã qua trước) ·
+  // "Việc cần làm hôm nay" = ôn thi (không tắt được) + mọi hạn hôm nay + bù hạn gần nhất cho đủ 6
+  const exempt = e => /^(PE|MIL)\d/i.test(String(e.notes || '')) || /quốc phòng|gdqp|an ninh|thể dục|thể chất|tdtt/i.test(e.title || '');
+  const exams = CAL.events.filter(e => e.kind === 'Exam' && !exempt(e) && Date.parse(e.end || e.start) > now).sort((a, b) => a.start.localeCompare(b.start));
+  let sch = sch0.filter(e => e.kind !== 'Exam');
+  while (sch.length > 4 && Date.parse(sch[0].end || sch[0].start) < now) sch.shift();
+  sch = sch.slice(0, 4);
+  // hạn: lấy danh sách đầy đủ của UC (/api/today, biến DAY) khi đã có — lịch chỉ chứa một phần (vd thiếu hạn FAMI)
+  const full = typeof DAY !== 'undefined' && DAY && DAY.deadlines ? DAY.deadlines.filter(x => !x.overdue && x.due && Date.parse(x.due) > now)
+    .map(x => ({ kind: 'Deadline', start: x.due, title: x.name + (x.course && !String(x.name).includes(x.course) ? ' · ' + x.course : ''), dlKind: x.kind })) : null;
+  const today0 = full ? full.filter(e => evDay(e) === today) : dls.filter(e => Date.parse(e.start) > now);
+  const later = (full || CAL.events.filter(e => e.kind === 'Deadline' && Date.parse(e.start) > now)).filter(e => evDay(e) !== today).sort((a, b) => a.start.localeCompare(b.start));
+  const todo = today0.concat(later.slice(0, Math.max(0, 6 - REVIEW.length - today0.length)));
+  box.innerHTML = (exams.length ? '<section class="ht-exams"><h3>Lịch thi <span>' + exams.length + '</span></h3><ul class="dc-list dc-exams">' + exams.map(e => dayLi(e, false, now)).join('') + '</ul></section>' : '') +
+    '<section><h3>Lịch trong ngày <span>' + sch.length + '</span></h3>' +
       (sch.length ? '<ul class="dc-list">' + sch.map(e => dayLi(e, false, now)).join('') + '</ul>' : '<p class="dc-empty">Hôm nay không có buổi học hay sự kiện.</p>') + '</section>' +
-    '<section><h3>Hạn trong ngày <span>' + dls.length + '</span></h3>' +
-      (dls.length ? '<ul class="dc-list dl">' + dls.map(e => dayLi(e, true, now)).join('') + '</ul>' : '<p class="dc-empty">Hôm nay không có hạn nào.</p>') + '</section>';
+    '<section><h3>Việc cần làm hôm nay <span>' + (REVIEW.length + todo.length) + '</span></h3>' +
+      (REVIEW.length || todo.length ? '<ul class="dc-list dl">' + REVIEW.map(reviewLi).join('') + todo.map(e => evDay(e) === today ? dayLi(e, true, now) : dayLi(e, true, now).replace('<time>Hạn ', '<time>Hạn ' + hDM(e.start) + ' ')).join('') + '</ul>' : '<p class="dc-empty">Hôm nay không có việc nào có hạn.</p>') + '</section>';
 }
 // Đồng hồ 24 giờ: 0 giờ ở đỉnh, kim giờ một vòng/ngày, kim phút một vòng/giờ, kim giây một vòng/phút.
 // Phần còn lại của ngày (bây giờ -> 24:00) tô xanh nhạt, 22:00–06:00 tô vàng = giờ ngủ. Giờ theo GMT+7.
@@ -2063,10 +2127,14 @@ function clk24Build(el) {
   for (let i = 0; i < 96; i++) { const h = i % 4 === 0, [x0, y0] = P(i * 3.75, h ? 82 : 87), [x1, y1] = P(i * 3.75, 92); t += '<line class="c-tick' + (h ? ' h' : '') + '" x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y1 + '"/>'; }
   for (let h = 0; h < 24; h++) { const [x, y] = P(h * 15, 71); t += '<text class="c-num' + (h % 6 === 0 ? ' k' : '') + '" x="' + x + '" y="' + y + '">' + h + '</text>'; }
   el.innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="Đồng hồ 24 giờ"><circle class="c-face" cx="100" cy="100" r="96"/>' +
-    '<path class="c-left"/><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/><g class="c-focus"></g>' + t +
+    '<path class="c-waste"/><g class="c-cls"></g><g class="c-focus"></g><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/>' + t +
     '<line class="c-hh" x1="100" y1="100" x2="100" y2="48"/><line class="c-mm" x1="100" y1="100" x2="100" y2="24"/><line class="c-ss" x1="100" y1="112" x2="100" y2="16"/><circle class="c-hub" cx="100" cy="100" r="4"/></svg>' +
     '<div class="c-side"><div class="c-dig" aria-live="off"></div><p class="c-msg"></p>' +
-    '<div class="c-key"><span><i style="background:var(--green)"></i>Đã tập trung</span><span><i style="background:var(--blue-wash);border:1px solid var(--line)"></i>Còn lại hôm nay</span><span><i style="background:#f6c945"></i>Giờ ngủ 22:00–06:00</span></div></div>';
+    '<div class="c-key"><span><i class="k-waste"></i>Đã lãng phí<em>Giờ thức (từ 06:00) đã trôi qua mà không học, không tập trung, không vận động</em></span>' +
+    '<span><i class="k-cls"></i>Lịch học · chạy bộ · ngoại khoá<em>Buổi học (cả online), các lượt đi ghi trong app iCTSV, hoạt động ngoại khoá đã đăng ký</em></span>' +
+    '<span><i class="k-fz"></i>Tập trung<em>Thời gian bật chế độ tập trung ở Ví (đã trừ lúc tạm dừng)</em></span>' +
+    '<span><i class="k-sleep"></i>Giờ ngủ 22:00–06:00<em>Không tính là lãng phí</em></span>' +
+    '<span><i class="k-left"></i>Chưa tới<em>Phần còn lại của hôm nay trước giờ ngủ</em></span></div></div>';
   el._arc = arc;
 }
 // (01/11 tối, chủ) tô xanh lá các khoảng đã bật chế độ tập trung hôm nay: đồng hồ vừa nhắc vừa cho thấy mình không lười.
@@ -2078,22 +2146,48 @@ function clk24Spans() {
     const a = j.active; CLK_SP.spans = j.spans || []; CLK_SP.live = !!(a && a.type === 'focus' && !a.paused_at);
   }).catch(() => {});
 }
+// (02/11, chủ) đồng hồ cả hệ thống tô theo việc đã làm: xám đen = giờ thức đã trôi mà không làm gì (lãng phí),
+// xanh biển = buổi học (kể cả học online) + chạy bộ (app iCTSV) + ngoại khoá đã đăng ký, xanh lục = chế độ tập trung,
+// vàng = giờ ngủ, trắng = chưa tới. Chỉ tô phần đã qua (tới bây giờ). Lớp sau đè lớp trước: xám < xanh biển < xanh lục < vàng.
+// Giới hạn: ngoại khoá đã đăng ký được coi là đã đi (UC chưa có bằng chứng điểm danh); học online coi là đã học.
+function clk24Busy(today) {
+  const cls = [], grn = [];
+  if (typeof CAL !== 'undefined' && CAL) {
+    try {
+      for (const e of dayEvents(today).sch) {
+        if (!e.start || !e.start.includes('T') || !e.end) continue;
+        const sp = [Date.parse(e.start), Date.parse(e.end)];
+        if (e.kind === 'Class' && !/NGHỈ/.test(e.title || '')) cls.push(sp);
+        else if (e.xk && !e.maybe && e.kind === 'Event') cls.push(sp);   // ngoại khoá đã đăng ký: xanh biển như lịch học
+      }
+    } catch (err) {}
+  }
+  const runs = ((typeof WALK !== 'undefined' && WALK && WALK.app) || {})[today];
+  for (const r of (runs && runs.runs) || []) {
+    const s = Date.parse(today + 'T' + r.at + ':00+07:00'), p = String(r.dur || '').split(':').map(Number);
+    if (!isNaN(s)) cls.push([s, s + ((p[0] || 0) * 3600 + (p[1] || 0) * 60 + (p[2] || 0)) * 1000]);   // chạy bộ: xanh biển
+  }
+  return { cls, grn };
+}
 function clk24Tick() {
   clk24Spans();
   const v = new Date(Date.now() + 7 * 36e5), h = v.getUTCHours(), m = v.getUTCMinutes(), s = v.getUTCSeconds();
   const p2 = n => String(n).padStart(2, '0'), sod = h * 3600 + m * 60 + s;
   const toSleep = SLEEP_H * 3600 - sod, night = h >= SLEEP_H || h < WAKE_H;
   const hm = x => Math.floor(x / 3600) + ' giờ ' + p2(Math.floor(x % 3600 / 60)) + ' phút';
+  const today = p2(v.getUTCFullYear()) + '-' + p2(v.getUTCMonth() + 1) + '-' + p2(v.getUTCDate());
+  const busy = clk24Busy(today), nowMs = Date.now();
   document.querySelectorAll('[data-clk24]').forEach(el => {
     if (!el.firstChild) clk24Build(el);
     const g = (c, deg) => el.querySelector(c).setAttribute('transform', 'rotate(' + deg.toFixed(2) + ' 100 100)');
     g('.c-hh', sod / 240); g('.c-mm', (m * 60 + s) / 10); g('.c-ss', s * 6);
-    const d = sod / 240; el.querySelector('.c-left').setAttribute('d', d < 359.9 ? el._arc(d, 360, 94) : '');
-    const day0 = Date.now() - sod * 1000, deg = iso => Math.max(0, Math.min(360, (Date.parse(iso) - day0) / 240000));
-    el.querySelector('.c-focus').innerHTML = CLK_SP.spans.map((sp, i) => {
-      const d0 = deg(sp[0]), d1 = CLK_SP.live && i === CLK_SP.spans.length - 1 ? sod / 240 : deg(sp[1]);
-      return d1 - d0 > .05 ? '<path class="c-fz" d="' + el._arc(d0, d1, 94) + '"/>' : '';
-    }).join('');
+    const d = sod / 240, day0 = nowMs - sod * 1000;
+    const deg = t => Math.max(0, Math.min(d, ((typeof t === 'number' ? t : Date.parse(t)) - day0) / 240000));   // cắt tại bây giờ
+    const paths = (spans, cls) => spans.map(sp => { const d0 = deg(sp[0]), d1 = deg(sp[1]); return d1 - d0 > .05 ? '<path class="' + cls + '" d="' + el._arc(d0, d1, 94) + '"/>' : ''; }).join('');
+    el.querySelector('.c-waste').setAttribute('d', d > WAKE_H * 15 + .05 ? el._arc(WAKE_H * 15, Math.min(d, SLEEP_H * 15), 94) : '');
+    el.querySelector('.c-cls').innerHTML = paths(busy.cls, 'c-cl');
+    const fz = CLK_SP.spans.map((sp, i) => [sp[0], CLK_SP.live && i === CLK_SP.spans.length - 1 ? nowMs : sp[1]]);
+    el.querySelector('.c-focus').innerHTML = paths(fz.concat(busy.grn), 'c-fz');
     el.querySelector('.c-dig').textContent = p2(h) + ':' + p2(m) + ':' + p2(s);
     const msg = el.querySelector('.c-msg');
     msg.className = 'c-msg' + (night ? ' night' : '');
@@ -2117,7 +2211,7 @@ function renderDayCard() {
     '<span class="bloc-n">' + dt.getUTCDate() + '</span><span class="bloc-m">Tháng ' + (dt.getUTCMonth() + 1) + ' · ' + dt.getUTCFullYear() + '</span></div>' +
     (d !== today ? '<button class="ghost dc-back" id="dc-today">Về hôm nay</button>' : '') +
     (exams.length ? '<ul class="dc-list dc-exams">' + exams.map(e => li(e, false)).join('') + '</ul>' : '') +
-    (d === today ? walkDayHTML() : '') +
+    (d === today ? walkDayHTML() : walkPastHTML(d)) +
     '<section class="dc-sec"><h3>Hạn trong ngày <span>' + dls.length + '</span></h3>' +
       (dls.length ? '<ul class="dc-list dl">' + dls.map(e => li(e, true)).join('') + '</ul>' : '<p class="dc-empty">Không có hạn nào.</p>') + '</section>' +
     '<section class="dc-sec"><h3>Lịch trong ngày <span>' + sch.length + '</span></h3>' +
@@ -2132,7 +2226,12 @@ function walkDayHTML() {
   const pct = Math.min(100, Math.round(w.steps / Math.max(1, w.target) * 100));
   return '<section class="dc-walk"><h3>🚶 Mục tiêu đi bộ <span>' + nf(w.target) + ' bước' + (w.examWeek ? ' · tuần thi' : '') + '</span></h3>' +
     '<div class="wbar"><i style="width:' + pct + '%"></i></div>' +
-    '<p>Đã đi ' + nf(w.steps) + ' bước · ' + esc(when) + '</p><button class="ghost" id="dc-walk-go">Xem bước chạy</button></section>';
+    '<p>Đã đi ' + nf(w.steps) + ' bước · ' + esc(when) + '</p>' + walkRunsList(w.today) + '<button class="ghost" id="dc-walk-go">Xem bước chạy</button></section>';
+}
+function walkPastHTML(day) {   // (v1.00.49) ngày khác trong TKB toàn kỳ: hiện các lượt đi đã ghi (nếu có)
+  const w = typeof WALK !== 'undefined' ? WALK : null, x = w && (w.app || {})[day]; if (!x) return '';
+  return '<section class="dc-walk"><h3>🚶 Đi bộ <span>' + nf(x.steps) + ' bước · ' + String(x.km).replace('.', ',') + ' km</span></h3>' + walkRunsList(day) +
+    '<button class="ghost" id="dc-walk-go">Xem bước chạy</button></section>';
 }
 function renderTodaySlots() {   // (v1.00.42) dải Hôm nay đọc cùng nguồn với tab lịch (đã có lịch đè Teams + trực tiếp/online)
   if (!CAL) return false;
@@ -3236,7 +3335,9 @@ function renderDay() {
     (dlLive.filter(x => !x.self).map(dlLi).join('') || '<span class="empty">Không có hạn môn học nào trong 3 tuần tới.</span>') + '</ul>';
   html += '<h2 style="font-size:17px;margin:0 0 8px">Lịch ôn tập</h2><ul class="tasks dls">' +
     (dlLive.filter(x => x.self).map(dlLi).join('') || '<span class="empty">Không có lịch ôn tập nào trong 3 tuần tới.</span>') + '</ul>';
-  function VIEC_HOM_NAY() { return '<h2 style="font-size:17px;margin:0 0 8px">Việc hôm nay</h2><ul class="tasks">' + (d.items.map(x => {
+  function VIEC_HOM_NAY() { return '<h2 style="font-size:17px;margin:0 0 8px">Việc cần làm hôm nay</h2><ul class="tasks">' +
+    REVIEW.map(r => '<li class="revtask"><span class="exmark" aria-hidden="true">Ôn</span><div><span class="tname">' + esc(r.title) + '</span><small>' +
+      reviewLi(r).replace(/^.*<small>|<\/small>.*$/g, '') + '</small></div></li>').join('') + (d.items.map(x => {
     const dn = x.status === 'Done';
     const note = (x.note || '').replace(/runtime.*$/, '').trim();
     return '<li class="' + (dn ? 'done' : '') + '"><button class="chk" data-id="' + x.id + '" data-done="' + (dn ? 0 : 1) + '" aria-label="' + (dn ? 'Bỏ đánh dấu' : 'Đánh dấu xong') + '">' + (dn ? '✓' : '') + '</button>' +
@@ -4159,6 +4260,22 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#not
 document.addEventListener('click', (e) => { const n = $('#notif'); if (!e.target.isConnected) return;   // nút trong bảng vừa vẽ lại -> không phải bấm ra ngoài
   if (!n.hidden && !n.contains(e.target) && !e.target.closest('.bell')) notifToggle(false); });
 alertsTick();
+</script>
+<div id="privacy-bar"></div>
+<script>
+/* (20/10) khoá riêng tư: hỏi máy chủ mỗi 30 giây; hết giờ thì tự mở lại, không cần làm gì */
+(function () {
+  async function chk() {
+    let u = null;
+    try { u = (await (await fetch('/api/privacy')).json()).until; } catch (e) { return; }
+    const on = !!u; document.body.classList.toggle('privacy', on);
+    if (on) {
+      const t = new Date(u); document.getElementById('privacy-bar').textContent = '🔒 Đang khoá dữ liệu riêng tư đến ' + String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0') + ' — chỉ mở Lịch và Ngoại khoá. Hết giờ tự mở.';
+      const cal = document.getElementById('t-cal'); if (cal && cal.getAttribute('aria-selected') !== 'true' && !['t-cal', 't-extra'].includes((document.querySelector('[role=tab][aria-selected=true]') || {}).id)) cal.click();
+    }
+  }
+  chk(); setInterval(chk, 30000);
+})();
 </script>
 </body>
 </html>

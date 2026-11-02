@@ -61,25 +61,33 @@ def plan(post, now=None):
         if x['overdue'] or f"dl|{x['id']}" in muted or x.get('extended'): continue   # (19/10) hạn tự luyện đã tự gia hạn: không nhắc ra ngoài (toast / ntfy)
         due = dt.datetime.fromisoformat(x['due']).astimezone(TZ)
         link = D.work_link(x)   # (19/10) bấm thông báo -> mở thẳng chỗ làm bài trên điện thoại
+        title = alerts.head(x['name'] + (f" · {x['course']}" if x['course'] else ''), due)   # (02/11, chủ) tên + giờ hạn ngay ở tiêu đề
         for m in D.MARKS.get(x['kind'], D.MARKS['Môn học']):
             t = _quiet_shift(due - dt.timedelta(minutes=m), m, due)
             if not t or t <= now or t > end: continue
             left = (due - t).total_seconds() / 60
-            out[f"dl|{x['id']}|{m}"] = {'at': t, 'title': f"Còn {D.say_left(left)}: {x['name']}" + (f" · {x['course']}" if x['course'] else ''),
-                                        'text': f"{x['kind']} — hạn {due:%H:%M} {due.day}/{due.month}", 'priority': 5 if m <= 60 else 4,
+            out[f"dl|{x['id']}|{m}"] = {'at': t, 'title': title, 'text': f"Còn {D.say_left(left)} · {x['kind']}", 'priority': 5 if m <= 60 else 4,
                                         'click': link}
+        for t in alerts.night_slots(due, D.MARKS.get(x['kind'], D.MARKS['Môn học'])):   # (02/11) hạn rơi vào giờ ngủ: nhắc thêm 08:00 / 14:00 / 20:00 / 21:30 ngày thức trước đó
+            if t <= now or t > end: continue
+            out[f"dl|{x['id']}|n{t:%H%M}"] = {'at': t, 'title': title, 'priority': 5 if (t.hour, t.minute) == alerts.NIGHT_AT[-1] else 4, 'click': link,
+                                              'text': f"Còn {D.say_left((due - t).total_seconds() / 60)} · {x['kind']}\nRơi vào giờ ngủ — làm xong trước 22:00."}
     # ngoại khoá
     for x in ([] if st_al.get('extra_off') else X.alert_items(X.load(), now)):   # (v1.00.37) tắt mọi nhắc ngoại khoá -> không hẹn tin nào
         if f"ex|{x['key']}" in muted: continue
         w = dt.datetime.fromisoformat(x['when']).astimezone(TZ)
         mc = x['loai'] == 'Hạn nộp minh chứng'
+        title = alerts.head(('Minh chứng: ' if mc else 'Ngoại khoá: ') + x['name'], w, 'hạn' if mc else 'lúc')   # (02/11, chủ) tên + giờ ở tiêu đề
+        place = f" · {x['place']}" if x.get('place') and not mc else ''
         for m in x['marks']:
             t = _quiet_shift(w - dt.timedelta(minutes=m), m, w)
             if not t or t <= now or t > end: continue
             left = (w - t).total_seconds() / 60
-            out[f"ex|{x['key']}|{m}"] = {'at': t, 'title': f"Còn {D.say_left(left)}: " + ('Hạn nộp minh chứng: ' if mc else 'Ngoại khoá: ') + x['name'],
-                                         'text': (f"hạn {w:%H:%M} {w.day}/{w.month}" if mc else f"{w:%H:%M} {w.day}/{w.month}" + (f" · {x['place']}" if x.get('place') else '')),
-                                         'priority': 4}
+            out[f"ex|{x['key']}|{m}"] = {'at': t, 'title': title, 'text': f"Còn {D.say_left(left)}{place}", 'priority': 4}
+        for t in alerts.night_slots(w, x['marks']):   # (02/11) rơi vào giờ ngủ: nhắc thêm trong ngày thức trước đó
+            if t <= now or t > end: continue
+            out[f"ex|{x['key']}|n{t:%H%M}"] = {'at': t, 'title': title, 'priority': 5 if (t.hour, t.minute) == alerts.NIGHT_AT[-1] else 4,
+                                               'text': f"Còn {D.say_left((w - t).total_seconds() / 60)}{place}\nRơi vào giờ ngủ — xong trước 22:00."}
     # sự kiện bạn tham gia (mail / Teams), không phải lịch lớp / bài tập
     for eid, e in me.load()['events'].items():
         if e.get('status') != 'Đang theo dõi' or e.get('kind'): continue
@@ -92,8 +100,8 @@ def plan(post, now=None):
                 t = _quiet_shift(w - dt.timedelta(minutes=m), m, w)
                 if not t or t <= now or t > end: continue
                 left = (w - t).total_seconds() / 60
-                out[f"ev|{eid}|{k}|{m}"] = {'at': t, 'title': f"Còn {D.say_left(left)}: {e['ten']} · {s['ten']}",
-                                            'text': me.fmt(s) + (f"\n{s['ghi_chu']}" if s.get('ghi_chu') else ''), 'priority': 5 if m <= 120 else 4}
+                out[f"ev|{eid}|{k}|{m}"] = {'at': t, 'title': alerts.head(f"{e['ten']} · {s['ten']}", w, 'lúc'),   # (02/11) tên + giờ ở tiêu đề
+                                            'text': f"Còn {D.say_left(left)} — " + me.fmt(s) + (f"\n{s['ghi_chu']}" if s.get('ghi_chu') else ''), 'priority': 5 if m <= 120 else 4}
     return out
 
 

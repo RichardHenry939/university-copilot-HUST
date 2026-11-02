@@ -946,9 +946,14 @@ def alert_loop():
             if sent: print("toast:", sent)
             try:   # (v1.00.44) thúc đi học: còn việc hôm nay + tập trung chưa đủ -> thông báo (không khoá)
                 import nudge
-                r = nudge.run(_npost, timetable.get(_npost)["events"], lambda t, x: alerts.notify(t, x, level="nudge"))
+                r = nudge.run(_npost, timetable.get(_npost)["events"], lambda t, x: alerts.notify(t, x, level="nudge", phone_ok=False))   # (02/11, chủ) tin gộp chỉ toast trên máy, không lên điện thoại: che mất tin hạn riêng
                 if r: print("nudge:", r["title"])
             except Exception as e: print("nudge:", e)
+            try:   # (v1.00.49, chủ 02/11) quét được lịch thi mới -> báo động ngay, mỗi môn 1 tin (trừ TDTT / QP-AN)
+                import exam_watch
+                ex = exam_watch.tick(lambda t, x: alerts.notify(t, x, persistent=True, level="red"))
+                if ex: print("exam alarm:", ex)
+            except Exception as e: print("exam alarm:", e)
             alert_loop.n = getattr(alert_loop, "n", 0) + 1
             if alert_loop.n % 5 == 1: phone_refresh()   # mỗi 5 phút: đối chiếu lịch hẹn ntfy + trang 📱 UC
         except Exception as e: print("alerts:", e)
@@ -1005,6 +1010,14 @@ class H(BaseHTTPRequestHandler):
                 page = re.sub(r"\{\{notion:(\w+)\}\}", lambda m: cfg.notion(m.group(1)).replace("-", ""),
                               (HERE / "ui" / "index.html").read_text(encoding="utf-8"))
                 return self._send(200, raw=page.encode("utf-8"), ctype="text/html; charset=utf-8")
+            if u.path == "/widget":   # (v1.00.49) hình nền động (vd Lively Wallpaper): đồng hồ 24 giờ + lịch hôm nay + việc cần làm
+                return self._send(200, raw=(HERE / "ui" / "widget.html").read_bytes(), ctype="text/html; charset=utf-8")
+            if u.path == "/widget/bg.jpg":   # ảnh nền do bạn tự đặt ở ui/assets/wallpaper.jpg (không lên Git); thiếu -> trang dùng màu nền
+                bg = HERE / "ui" / "assets" / "wallpaper.jpg"
+                return self._send(200, raw=bg.read_bytes(), ctype="image/jpeg") if bg.exists() else self._send(404, {"error": "chưa có ui/assets/wallpaper.jpg"})
+            if u.path == "/api/widget":
+                import desktop_icons
+                return self._send(200, {"monitors": desktop_icons.monitors(), "ver": int((HERE / "ui" / "widget.html").stat().st_mtime)})
             if u.path == "/manifest.webmanifest":
                 man = {"name": "University Copilot", "short_name": "Uni Copilot", "id": "/", "start_url": "/", "scope": "/",
                        "display": "standalone", "background_color": "#f5f7fa", "theme_color": "#2d55c8", "lang": "vi",
@@ -1115,6 +1128,10 @@ class H(BaseHTTPRequestHandler):
                     import offline_list
                     if isinstance(tt, dict) and isinstance(tt.get("events"), list): tt = dict(tt, events=offline_list.annotate(tt["events"]))
                 except Exception as e: print("offline list:", e)
+                try:   # (v1.00.49, chủ 02/11) có lịch thi -> mỗi ngày "Ôn thi định kỳ hằng ngày môn X" (không tắt được), trừ TDTT / QP-AN
+                    import exam_watch
+                    if isinstance(tt, dict): tt = dict(tt, review=exam_watch.review())
+                except Exception as e: print("exam review:", e)
                 return self._send(200, tt)
             if u.path == "/api/study":   # GPA kỳ, CPA, rèn luyện — tính bằng academic.py
                 import academic
@@ -1644,6 +1661,9 @@ if __name__ == "__main__":
     threading.Thread(target=lambda: __import__("zalo_files").loop(), daemon=True).start()   # (v1.00.36) file tải từ Zalo -> Inbox -> Uni-Documents + Notion
     threading.Thread(target=mail_loop, daemon=True).start()    # 📡 mọi nguồn đúng khung 5 phút, 24 giờ
     threading.Thread(target=alert_loop, daemon=True).start()
+    threading.Thread(target=lambda: __import__("ictsv_login").loop(), daemon=True).start()   # (v1.00.49) iCTSV trong máy ảo bị đăng xuất -> UC tự đăng nhập lại + báo
+    threading.Thread(target=lambda: __import__("desktop_icons").loop(), daemon=True).start()   # (v1.00.49) tập trung + chỉ màn laptop -> ẩn icon màn hình nền
+    threading.Thread(target=lambda: __import__("ehust_check").loop(), daemon=True).start()   # (v1.00.49) mỗi 3 giờ: lịch tuần trên app eHUST vs lịch UC (Teams > eHUST > qldt)
     threading.Thread(target=_audio_priority_loop, daemon=True).start()   # 🎙️ (12/10) LUẬT TỐI CAO: tiếng CABLE Input ưu tiên tuyệt đối
     threading.Thread(target=lambda: __import__("lecture_monitor").loop(lambda path: n8n(path, timeout=60)), daemon=True).start()   # 🎙️ giám sát Ghi bài giảng mỗi 60 s (0 AI)
     threading.Thread(target=lambda: __import__('phone_link').listen(_npost), daemon=True).start()   # 📱 lệnh từ điện thoại qua ntfy   # 📡 cảnh báo leo thang + toast

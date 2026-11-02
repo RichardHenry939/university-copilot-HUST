@@ -41,6 +41,22 @@ def left(w, now):
 
 CLASS_SLOTS = (30, 15)   # nhắc tiết học trước 30 và 15 phút
 DL_MARKS = (72, 48, 36, 24)   # nhắc hạn nộp ở các mốc (giờ)
+NIGHT_AT = ((8, 0), (14, 0), (20, 0), (21, 30))   # (02/11, chủ) hạn / sự kiện rơi vào giờ ngủ 22:00–06:00: nhắc thêm trong ngày thức trước đó, lần cuối 21:30
+
+
+def head(name, w, what='hạn'):
+    """(02/11, chủ) tiêu đề điện thoại = tên việc + giờ hạn, đọc liếc là hiểu (trước: "Còn 10 giờ: ..." — giờ hạn nằm ở dòng dưới)."""
+    return f"{name} — {what} {w:%H:%M} {w.day}/{w.month}"
+
+
+def night_slots(w, marks=()):
+    """Mốc giờ thức cho việc rơi vào 22:00–06:00 (vụ MI1141 01/11: hạn 23:59, tin rõ đầu tiên 22:59 đã vào giờ ngủ).
+    Ngày thức = ngày của (w − 6 giờ): hạn 23:59 1/11 và hạn 02:00 2/11 đều nhắc 08:00 / 14:00 / 20:00 / 21:30 ngày 1/11.
+    marks (phút trước hạn): bỏ giờ trùng một mốc sẵn có (hạn 23:00: mốc 3 giờ = 20:00) để không gửi 2 tin y hệt."""
+    if 6 <= w.hour < 22: return []
+    day = (w - dt.timedelta(hours=6)).date()
+    ts = [dt.datetime.combine(day, dt.time(h, m), w.tzinfo) for h, m in NIGHT_AT]
+    return [t for t in ts if not any(abs((w - t).total_seconds() / 60 - m) < 1 for m in marks)]
 
 
 def class_alerts(classes, now, st=None):
@@ -105,7 +121,7 @@ def extra_alerts(now):
         if left <= 0 or left > (72 * 60 if x['loai'] == 'Hạn nộp minh chứng' else 24 * 60): continue
         mc = x['loai'] == 'Hạn nộp minh chứng'
         out.append({'id': eid, 'kind': 'extra', 'level': 'red' if left <= 24 * 60 else 'yellow', 'eid': eid, 'when': w.isoformat(),
-                    'stage_level': 'extra', 'mins': left, 'marks': x['marks'],
+                    'stage_level': 'extra', 'mins': left, 'marks': x['marks'], 'name': x['name'], 'mc': mc, 'place': x.get('place') or '',
                     'title': ('Hạn nộp minh chứng: ' if mc else 'Ngoại khoá sắp diễn ra: ') + x['name'],
                     'text': (f"hạn {w:%H:%M} {w.day}/{w.month}" if mc else f"{w:%H:%M} {w.day}/{w.month}" + (f" · {x['place']}" if x.get('place') else '')) + f" — còn {D.say_left(left)}",
                     'note': x.get('note') or '', 'buttons': ['Tắt nhắc']})
@@ -275,26 +291,36 @@ def tick(now=None, send=notify, classes=None, dls=None):
             seen[x['id']] = x['due']
             if boot or x['overdue']: continue
             w = dt.datetime.fromisoformat(x['due']).astimezone(TZ)
-            send(f"Hạn mới: {x['name']}" + (f" · {x['course']}" if x['course'] else ''),
-                 f"{x['kind']} — hạn {w:%H:%M} {w.day}/{w.month} — còn {D.say_left((w - now).total_seconds() / 60)}", level='red', alert=None)
+            send('Hạn mới: ' + head(x['name'] + (f" · {x['course']}" if x['course'] else ''), w),
+                 f"Còn {D.say_left((w - now).total_seconds() / 60)} · {x['kind']}", level='red', alert=None)
             sent.append(f"new|{x['id']}")
     for a in active(now, classes, dls):
         key = a['id']; lvl = a.get('stage_level') or a['kind']
-        if lvl == 'deadline':   # mốc theo loại hạn; đêm vẫn nhắc các mốc ≤1 giờ (hạn 23:59 cần nhắc 30/20/10/5/2/1 phút)
+        if lvl in ('deadline', 'extra'):   # (02/11, chủ) mỗi hạn / ngoại khoá = tin riêng, tiêu đề = tên + giờ; việc rơi vào giờ ngủ nhắc thêm theo night_slots
             import deadlines as D
+            w = dt.datetime.fromisoformat(a['when'])
+            if lvl == 'deadline':
+                x = a['dl']; title = head(x['name'] + (f" · {x['course']}" if x['course'] else ''), w); tail = f" · {x['kind']}"
+            else:
+                title = head(('Minh chứng: ' if a['mc'] else 'Ngoại khoá: ') + a['name'], w, 'hạn' if a['mc'] else 'lúc')
+                tail = (f" · {a['place']}" if a.get('place') else '') + (f"\n{a['note']}" if a.get('note') else '')
+            for t in night_slots(w, D.MARKS.get(a['dl']['kind'], D.MARKS['Môn học']) if lvl == 'deadline' else a['marks']):
+                k3 = f"{key}|n{t:%H%M}"
+                if not (0 <= (now - t).total_seconds() <= D.GRACE * 60) or s['sent'].get(k3): continue   # đúng giờ, lỡ thì bỏ (như mark_at)
+                send(title, f"Còn {D.say_left((w - now).total_seconds() / 60)}{tail}\nRơi vào giờ ngủ — làm xong trước 22:00.",
+                     persistent=(t.hour, t.minute) == NIGHT_AT[-1], level='red', alert=a, phone_ok=k3 not in sched)
+                s['sent'][k3] = now.isoformat(timespec='seconds'); sent.append(k3)
+        if lvl == 'deadline':   # mốc theo loại hạn; đêm vẫn nhắc các mốc ≤1 giờ (hạn 23:59 cần nhắc 30/20/10/5/2/1 phút)
             mark, left = D.mark_due(a['dl'], now)
             k2 = f"{key}|{mark}"
             if mark is None or s['sent'].get(k2): continue   # LUẬT (06/10): kệ giờ, phải đúng mốc — thông báo không tự mất đi
-            x = a['dl']
-            send(f"Còn {D.say_left(mark)}: {x['name']}" + (f" · {x['course']}" if x['course'] else ''),
-                 f"{x['kind']} — {a['text'].split(' — ')[0]}", persistent=mark <= 60, level='red', alert=a, phone_ok=k2 not in sched)
+            send(title, f"Còn {D.say_left(mark)}{tail}", persistent=mark <= 60, level='red', alert=a, phone_ok=k2 not in sched)
             s['sent'][k2] = now.isoformat(timespec='seconds'); sent.append(k2); continue
         if lvl == 'extra':   # ngoại khoá: đúng các mốc của mục (sự kiện 24h/2h · hạn MC như tự luyện cốt lõi)
-            import deadlines as D
             mark = D.mark_at(a['marks'], a['mins'])
             k2 = f"{key}|{mark}"
             if mark is None or s['sent'].get(k2): continue   # LUẬT (06/10): kệ giờ, phải đúng mốc — thông báo không tự mất đi
-            send(f"Còn {D.say_left(mark)}: " + a['title'], a['text'] + (f"\n{a['note']}" if a.get('note') else ''), level='red', alert=a, phone_ok=k2 not in sched)
+            send(title, f"Còn {D.say_left(mark)}{tail}", level='red', alert=a, phone_ok=k2 not in sched)
             s['sent'][k2] = now.isoformat(timespec='seconds'); sent.append(k2); continue
         if lvl == 'class':   # tiết học: đúng 2 lần, trước 30 và 15 phút
             import deadlines as D
@@ -309,7 +335,7 @@ def tick(now=None, send=notify, classes=None, dls=None):
             mark = next((m for m in DL_MARKS if m - D.GRACE / 60 <= hours <= m), None)   # đúng mốc, lỡ thì bỏ qua
             k2 = f"dl|{a['eid']}|{a['stage']}|{mark}"
             if mark is None or s['sent'].get(k2): continue
-            send(f"Còn {mark} giờ: " + a["title"], a['text'] + (f"\n{a['note']}" if a.get('note') else ''), level='red', alert=a)
+            send(head(a['title'], dt.datetime.fromisoformat(a['when'])), f"Còn {mark} giờ — " + a['text'] + (f"\n{a['note']}" if a.get('note') else ''), level='red', alert=a)
             s['sent'][k2] = now.isoformat(timespec='seconds'); sent.append(k2); continue
         if quiet: continue
         if lvl in ('optional', 'mooc'): continue   # gợi ý / MOOC chưa hạn: chỉ banner trong UC
@@ -323,7 +349,8 @@ def tick(now=None, send=notify, classes=None, dls=None):
             last = None
         if last and (every is None or (now - dt.datetime.fromisoformat(last)).total_seconds() < every): continue
         ev_sched = a.get('kind') == 'stage' and any(k.startswith(f"ev|{a['eid']}|{a.get('stage')}|") for k in sched)
-        send(a['title'], a['text'] + (f"\n{a['note']}" if a.get('note') else ''), persistent=a.get('pinned', False), level=a['level'], alert=a,
+        wa = dt.datetime.fromisoformat(a['when']) if a.get('when') else None   # (02/11) tiêu đề kèm giờ của việc
+        send(a['title'] + (f" — {wa:%H:%M} {wa.day}/{wa.month}" if wa else ''), a['text'] + (f"\n{a['note']}" if a.get('note') else ''), persistent=a.get('pinned', False), level=a['level'], alert=a,
              phone_ok=not ev_sched or lvl == 'day')   # 24h / 2h / 30 phút đã hẹn trên ntfy; nhắc ghim trong ngày vẫn đẩy
         s['sent'][key] = now.isoformat(timespec='seconds'); sent.append(a['id'])
     _save(s)
