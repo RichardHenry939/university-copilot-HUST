@@ -1016,6 +1016,7 @@ button.link:hover { text-decoration: underline; }
 .clk24 .c-sleep { fill: #f6c945; opacity: .55; }
 .clk24 .c-waste { fill: #2f343b; opacity: .62; }
 .clk24 .c-cl { fill: #1f6fd1; opacity: .75; }
+.clk24 .c-life-p { fill: #8e44ad; opacity: .6; } .clk24 .c-key .k-life { background: #8e44ad; opacity: .6; }
 .clk24 .c-fz { fill: var(--green); opacity: .85; }
 .clk24 .c-key { flex-wrap: wrap; justify-content: center; }
 .clk24 .c-key .k-waste { background: #2f343b; opacity: .62; } .clk24 .c-key .k-cls { background: #1f6fd1; opacity: .75; }
@@ -2120,6 +2121,11 @@ function renderHomeTime() {
 // Đồng hồ 24 giờ: 0 giờ ở đỉnh, kim giờ một vòng/ngày, kim phút một vòng/giờ, kim giây một vòng/phút.
 // Phần còn lại của ngày (bây giờ -> 24:00) tô xanh nhạt, 22:00–06:00 tô vàng = giờ ngủ. Giờ theo GMT+7.
 const SLEEP_H = 22, WAKE_H = 6;
+// (02/11, chủ) lịch sinh hoạt: ngủ trưa = vàng (như giờ ngủ); ăn uống = tím "sinh hoạt cá nhân, không phải giờ ngủ" (không tính là lãng phí).
+// Ăn tối 19–20h ở nhà; bật ⛺ Camp (học ở thư viện) thì 17:30–18:30. Ăn sáng: chủ cho hạn chót 8:00 -> tạm tính 7:30–8:00.
+// Chép y hệt ở ui/widget.html (đi tắt: 2 bản, sửa lịch thì sửa cả hai).
+const NAP = [13, 15];
+const meals = camp => [[7.5, 8], [12, 13], camp ? [17.5, 18.5] : [19, 20]];
 function clk24Build(el) {
   const R = 100, P = (deg, r) => { const a = (deg - 90) * Math.PI / 180; return [(R + r * Math.cos(a)).toFixed(2), (R + r * Math.sin(a)).toFixed(2)]; };
   const arc = (d0, d1, r) => { const [x0, y0] = P(d0, r), [x1, y1] = P(d1, r); return 'M' + R + ' ' + R + 'L' + x0 + ' ' + y0 + 'A' + r + ' ' + r + ' 0 ' + ((d1 - d0) % 360 > 180 ? 1 : 0) + ' 1 ' + x1 + ' ' + y1 + 'Z'; };
@@ -2127,13 +2133,14 @@ function clk24Build(el) {
   for (let i = 0; i < 96; i++) { const h = i % 4 === 0, [x0, y0] = P(i * 3.75, h ? 82 : 87), [x1, y1] = P(i * 3.75, 92); t += '<line class="c-tick' + (h ? ' h' : '') + '" x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y1 + '"/>'; }
   for (let h = 0; h < 24; h++) { const [x, y] = P(h * 15, 71); t += '<text class="c-num' + (h % 6 === 0 ? ' k' : '') + '" x="' + x + '" y="' + y + '">' + h + '</text>'; }
   el.innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="Đồng hồ 24 giờ"><circle class="c-face" cx="100" cy="100" r="96"/>' +
-    '<path class="c-waste"/><g class="c-cls"></g><g class="c-focus"></g><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/>' + t +
+    '<path class="c-waste"/><g class="c-life"></g><path class="c-sleep" d="' + arc(NAP[0] * 15, NAP[1] * 15, 94) + '"/><g class="c-cls"></g><g class="c-focus"></g><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/>' + t +
     '<line class="c-hh" x1="100" y1="100" x2="100" y2="48"/><line class="c-mm" x1="100" y1="100" x2="100" y2="24"/><line class="c-ss" x1="100" y1="112" x2="100" y2="16"/><circle class="c-hub" cx="100" cy="100" r="4"/></svg>' +
     '<div class="c-side"><div class="c-dig" aria-live="off"></div><p class="c-msg"></p>' +
     '<div class="c-key"><span><i class="k-waste"></i>Đã lãng phí<em>Giờ thức (từ 06:00) đã trôi qua mà không học, không tập trung, không vận động</em></span>' +
     '<span><i class="k-cls"></i>Lịch học · chạy bộ · ngoại khoá<em>Buổi học (cả online), các lượt đi ghi trong app iCTSV, hoạt động ngoại khoá đã đăng ký</em></span>' +
     '<span><i class="k-fz"></i>Tập trung<em>Thời gian bật chế độ tập trung ở Ví (đã trừ lúc tạm dừng)</em></span>' +
-    '<span><i class="k-sleep"></i>Giờ ngủ 22:00–06:00<em>Không tính là lãng phí</em></span>' +
+    '<span><i class="k-sleep"></i>Giờ ngủ 22:00–06:00 · ngủ trưa 13:00–15:00<em>Không tính là lãng phí</em></span>' +
+    '<span><i class="k-life"></i>Sinh hoạt cá nhân<em>Ăn sáng (trước 8:00), ăn trưa 12:00–13:00, ăn tối 19:00–20:00 (Camp: 17:30–18:30) — không phải giờ ngủ, không tính là lãng phí</em></span>' +
     '<span><i class="k-left"></i>Chưa tới<em>Phần còn lại của hôm nay trước giờ ngủ</em></span></div></div>';
   el._arc = arc;
 }
@@ -2185,6 +2192,7 @@ function clk24Tick() {
     const deg = t => Math.max(0, Math.min(d, ((typeof t === 'number' ? t : Date.parse(t)) - day0) / 240000));   // cắt tại bây giờ
     const paths = (spans, cls) => spans.map(sp => { const d0 = deg(sp[0]), d1 = deg(sp[1]); return d1 - d0 > .05 ? '<path class="' + cls + '" d="' + el._arc(d0, d1, 94) + '"/>' : ''; }).join('');
     el.querySelector('.c-waste').setAttribute('d', d > WAKE_H * 15 + .05 ? el._arc(WAKE_H * 15, Math.min(d, SLEEP_H * 15), 94) : '');
+    el.querySelector('.c-life').innerHTML = meals(typeof DAY !== 'undefined' && DAY && DAY.mode === 'Camp').map(m => '<path class="c-life-p" d="' + el._arc(m[0] * 15, m[1] * 15, 94) + '"/>').join('');
     el.querySelector('.c-cls').innerHTML = paths(busy.cls, 'c-cl');
     const fz = CLK_SP.spans.map((sp, i) => [sp[0], CLK_SP.live && i === CLK_SP.spans.length - 1 ? nowMs : sp[1]]);
     el.querySelector('.c-focus').innerHTML = paths(fz.concat(busy.grn), 'c-fz');
@@ -2572,8 +2580,8 @@ function renderSchool() {
     s.last_ok ? 'Đồng bộ lần cuối ' + fmtAt(s.last_ok) + (s.status === 'Đã đồng bộ' ? ' · ' + (s.changes || []).length + ' thay đổi' : s.status === 'Không đổi' ? ' · không có gì mới' : '') : 'Chưa đồng bộ lần nào') +
     '</span><span class="sub">Tự động đúng khung 5 phút, 00:00 → 23:55 (máy tắt thì bỏ khung đó, không chạy bù)</span>' +
     (s.running ? '' : '<button class="ghost" id="sch-now">Đồng bộ ngay</button>') + '</div>';
-  if (!s.creds) h += '<p>Chưa cất tài khoản trường nên không tự đăng nhập lại được. Mở PowerShell, chạy <code>python school_cred.py</code>.</p>';
-  else if (s.locked) h += '<p>Tự đăng nhập đang <b>khoá</b> vì lần trước trường từ chối mật khẩu (tránh khoá tài khoản). Nếu bạn vừa đổi mật khẩu, chạy lại <code>python school_cred.py</code> để nhập mới.</p>';
+  if (!s.creds) h += '<p>Chưa cất tài khoản trường nên không tự đăng nhập lại được. Mở PowerShell, chạy <code>python D:\\Tools\\university-copilot\\school_cred.py</code>.</p>';
+  else if (s.locked) h += '<p>Tự đăng nhập đang <b>khoá</b> vì lần trước trường từ chối mật khẩu (tránh khoá tài khoản). Nếu bạn vừa đổi mật khẩu, chạy lại <code>python D:\\Tools\\university-copilot\\school_cred.py</code> để nhập mới.</p>';
   else if (s.status === 'Cần đăng nhập' || s.status === 'Lỗi') h += '<p>' + (s.status === 'Cần đăng nhập' ? 'Trường cần đăng nhập thủ công: ' : 'Lần đồng bộ gần nhất lỗi: ') + esc(s.error || '') + '</p>';
   if (schAsk) h += '<div class="sask"><b>Đồng bộ với trường ngay?</b><ul><li>Mở Chrome đồng bộ (chạy ngầm), tự đăng nhập Office 365 nếu hết phiên.</li>' +
     '<li>Đọc TKB, vắng, bảng điểm, chương trình đào tạo, điểm rèn luyện.</li><li>Dữ liệu trường là cao nhất: khác thì sửa thẳng trong Notion; mọi thay đổi ghi vào 🏫 Đồng bộ trường.</li></ul>' +
