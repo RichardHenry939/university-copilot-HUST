@@ -90,3 +90,22 @@ def test_walk_override_once_per_day(monkeypatch, tmp_path):
     walk.set_override('2026-11-02', 'đau cổ chân phải từ sáng, đi lại khó', 't1')
     walk.set_override('2026-11-02', 'lần hai không ghi đè', 't2')
     assert walk.overrides()['2026-11-02']['at'] == 't1'
+
+
+def test_drive_tree_builds_folders_and_moves(monkeypatch, tmp_path):
+    """v1.00.51: Drive ngăn nắp như máy — tạo từng cấp thư mục một lần (có bộ nhớ tạm), chuyển file giữ fileId + đổi về tên thật."""
+    import drive_tree as T
+    monkeypatch.setattr(T, 'CACHE', tmp_path / 'f.json'); monkeypatch.setattr(T, 'OLD_FOLDER', '')
+    calls, made = [], {}
+    def call(hook, b):
+        calls.append((b['method'], b['url'].split('?')[0], b.get('body')))
+        if b['method'] == 'GET' and '?q=' in b['url']: return {'files': []}
+        if b['method'] == 'POST': i = f"F{len(made)}"; made[i] = b['body']['name']; return {'id': i}
+        if b['method'] == 'GET': return {'parents': ['OLD'], 'name': 'Môn A › Bài tập › x.pdf'}
+        return {'id': 'X'}
+    fid = T.folder_for(call, 'Môn A/Bài tập')
+    assert list(made.values()) == ['Uni-Documents', 'Môn A', 'Bài tập'] and fid == 'F2'
+    n = len(calls); T.folder_for(call, 'Môn A/Bài tập'); assert len(calls) == n   # lần sau lấy từ bộ nhớ tạm
+    T.place(call, 'FILE1', 'Môn A/Bài tập/x.pdf')
+    m, url, body = calls[-1]
+    assert m == 'PATCH' and body == {'name': 'x.pdf'}

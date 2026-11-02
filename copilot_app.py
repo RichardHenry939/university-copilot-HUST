@@ -333,7 +333,11 @@ def ingest(item_id):
         drive_name = it["relPath"].replace(os.sep, " › ")
         # (01/11 tối, chủ) "Hành chính" chỉ là cách xếp thư mục ở máy; trên Notion TUYỆT ĐỐI không ghi là môn học -> gửi trống mã/tên môn
         admin = it.get("courseCode") == ADMIN_CODE
-        r = n8n("copilot-file-ingest", {
+        folder_id = ""
+        try:   # (v1.00.51) tải vào đúng thư mục trên Drive như trên máy (Uni-Documents/...), tên file thật
+            import drive_tree; folder_id = drive_tree.folder_for(n8n, os.path.dirname(it["relPath"]))
+        except Exception as e: print("drive folder:", e)   # lỗi -> n8n tự dùng thư mục cũ, không chặn việc nhập file
+        r = n8n("copilot-file-ingest", {"folderId": folder_id,
             "relPath": it["relPath"], "fileName": os.path.basename(it["relPath"]), "title": it.get("title"),
             "courseCode": "" if admin else it.get("courseCode"), "courseName": "" if admin else it.get("courseName"), "summary": it.get("summary"),
             "category": "Hành chính" if admin else it.get("category"), "driveName": drive_name,
@@ -570,7 +574,12 @@ def dedup_gate(item_id):
             mc, mn = course_of(it.get("folder") or "")   # (02/11) chuyển sang thư mục khác thì đổi luôn môn (vd chuyển vào Hành chính)
             update_item(o["id"], path=str(p), relPath=it.get("relPath"), folder=it.get("folder"), name=p.name, courseCode=mc, courseName=mn)
             update_item(item_id, notion="moved", movedTo=o["id"])
-            backup_patch(o.get("backupId"), "Moved", f"đã chuyển / đổi tên trên máy: {o.get('relPath')} → {it.get('relPath')} (bản Drive giữ nguyên)", get_item(o["id"]))
+            moved = False
+            if drive_id(o.get("driveLink")):   # (v1.00.51) chuyển luôn trên Drive (qua API, giữ fileId; không qua ổ Drive for desktop)
+                try: import drive_tree; drive_tree.place(n8n, drive_id(o["driveLink"]), it.get("relPath")); moved = True
+                except Exception as e: print("drive move:", e)
+            backup_patch(o.get("backupId"), "Moved", f"đã chuyển / đổi tên trên máy: {o.get('relPath')} → {it.get('relPath')}" +
+                         (" (đã chuyển theo trên Drive)" if moved else " (bản Drive chưa chuyển)"), get_item(o["id"]))
             return "stop"
     # phiên bản gần giống trong cùng thư mục
     folder, stem = os.path.dirname(it.get("relPath") or ""), _stem(p.name)
