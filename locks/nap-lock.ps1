@@ -100,16 +100,91 @@ function Stop-Games {
     }
 }
 
+Add-Type -AssemblyName UIAutomationClient
+Add-Type -AssemblyName UIAutomationTypes
+
+function Get-HostFromText([string]$v) {
+    if (-not $v) { return '' }
+    return ((($v -replace '^[a-zA-Z]+://', '') -split '[/:?#]')[0]).ToLower()
+}
+
+function Test-BlockedUrl([string]$v) {
+    $h = Get-HostFromText $v
+    foreach ($s in $Sites) { if ($h -eq $s -or $h.EndsWith('.' + $s)) { return $true } }
+    return $false
+}
+
+# (v1.00.52) Same as the night lock: tabs already open on a blocked site keep working until reloaded
+# (hosts only affects new DNS lookups). At the start of the nap span and every 5 min after, reload Chrome/Edge
+# tabs on a blocked site, then put back the tab the user had on screen.
+# Limit: needs the task to run in the user's desktop session (UI Automation cannot see another session's windows).
+function Invoke-TabSweep {
+    $root = [System.Windows.Automation.AutomationElement]::RootElement
+    $winCond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ClassNameProperty, 'Chrome_WidgetWin_1')
+    $tabCond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::TabItem)
+    $editCond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::Edit)
+    $btnCond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::Button)
+    $scope = [System.Windows.Automation.TreeScope]::Descendants
+    foreach ($w in $root.FindAll([System.Windows.Automation.TreeScope]::Children, $winCond)) {
+        $tabs = @($w.FindAll($scope, $tabCond))
+        if ($tabs.Count -eq 0) { continue }
+        $original = $null
+        foreach ($t in $tabs) {
+            $sp = $null
+            if ($t.TryGetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern, [ref]$sp) -and $sp.Current.IsSelected) { $original = $t }
+        }
+        # Dry run only reads the tab already on screen, so it changes nothing
+        $toCheck = if ($DryRun) { @($original) } else { $tabs }
+        foreach ($t in $toCheck) {
+            if (-not $t) { continue }
+            $sp = $null
+            if (-not $DryRun) {
+                if (-not $t.TryGetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern, [ref]$sp)) { continue }
+                $sp.Select(); Start-Sleep -Milliseconds 200
+            }
+            $bar = $null
+            foreach ($e in @($w.FindAll($scope, $editCond))) {
+                if ($e.Current.AutomationId -eq 'view_1012' -or $e.Current.Name -match 'Address and search bar|\u0111\u1ECBa ch\u1EC9') { $bar = $e; break }
+            }
+            if (-not $bar) { continue }
+            $vp = $null
+            if (-not $bar.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$vp)) { continue }
+            if (-not (Test-BlockedUrl $vp.Current.Value)) { continue }
+            $h = Get-HostFromText $vp.Current.Value
+            if ($DryRun) { Write-Log "would reload tab on $h"; continue }
+            foreach ($b in @($w.FindAll($scope, $btnCond))) {
+                if ($b.Current.Name -match '^(Reload|T\u1EA3i l\u1EA1i)$') {
+                    $ip = $null
+                    if ($b.TryGetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern, [ref]$ip)) { $ip.Invoke(); Write-Log "reloaded tab on $h" }
+                    break
+                }
+            }
+        }
+        if (-not $DryRun -and $original) {
+            $sp = $null
+            if ($original.TryGetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern, [ref]$sp)) { $sp.Select() }
+        }
+    }
+}
+
 $script:state = $null
+$script:lastSweep = [DateTime]::MinValue
 function Invoke-Pass {
     $on = Test-Nap (Get-Now)
     $hostsCount = @(Get-Content -Path $HostsPath | Where-Object { $_ -like "*$Marker*" }).Count
+    $started = $on -and ($script:state -ne $true)
     if ($on -ne $script:state -or $hostsCount -ne $(if ($on) { $Sites.Count * 2 } else { 0 })) {
         Set-Hosts $on; Set-Policy $on
         if ($on -ne $script:state) { Write-Log "nap lock active=$on" }
         $script:state = $on
     }
-    if ($on) { Stop-Games }
+    if ($on) {
+        Stop-Games
+        if ($started -or ((Get-Date) - $script:lastSweep).TotalMinutes -ge 5) {
+            try { Invoke-TabSweep } catch { Write-Log "tab sweep error: $($_.Exception.Message)" }
+            $script:lastSweep = Get-Date
+        }
+    }
 }
 
 if ($DryRun) { Invoke-Pass; return }

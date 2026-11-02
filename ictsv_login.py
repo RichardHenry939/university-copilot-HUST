@@ -146,7 +146,11 @@ def probe():
         if any(l == PROBE_OK or EXPIRED.search(l) for l in labels) or len(login_form(ns)) >= 2: break
     if PROBE_OK in labels:   # đã đứng đúng trang: đọc luôn số bước thật từng lượt (walk_app.json)
         try:
-            import walk_app; walk_app.save(walk_app.read_page(nodes, adb))
+            import walk_app
+            res = walk_app.read_page(nodes, adb)
+            if walk_app.looks_empty(res):   # (v1.00.52, chủ 02/11) dịch vụ hiện 0 khi phiên hết hạn: KHÔNG ghi đè số cũ, coi là hết phiên
+                adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); return 'expired'
+            walk_app.save(res)
         except Exception as e: print('walk_app:', e)
     adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
     if any(EXPIRED.search(l) for l in labels): return 'expired'
@@ -163,6 +167,24 @@ def recover(why):
     return main(auto=True)
 
 
+SLOT_FILE = Path(__file__).resolve().parent / 'school' / 'walk_slot.json'   # khung đi bộ (đỏ) hôm nay do walk.view chốt
+
+
+def after_slot_due(kept, last_probe, now, grace=180):
+    """(v1.00.52, chủ 02/11) Đọc app NGAY một lần sau khung đi bộ đỏ (hết khung + 3 phút), nếu lần đọc cuối còn trước lúc hết khung."""
+    end = ((kept or {}).get('slot') or {}).get('end')
+    if not end: return False
+    import datetime as _dt
+    e = _dt.datetime.fromisoformat(end).timestamp()
+    return now >= e + grace and last_probe < e
+
+
+def _slot_kept():
+    try:
+        import json; return json.loads(SLOT_FILE.read_text(encoding='utf-8'))
+    except Exception: return {}
+
+
 def loop(every=30, probe_every=3600):
     """Vòng canh trong UC (không cần ai bấm):
     - mỗi 30 s: iCTSV đang mở mà hiện màn đăng nhập -> tự đăng nhập lại;
@@ -170,13 +192,17 @@ def loop(every=30, probe_every=3600):
       không rõ (trống / lỗi lạ) 2 lần liên tiếp mà mạng vẫn thông -> cũng coi là hết phiên.
     Đang khoá (lần trước bị từ chối) thì im lặng chờ bạn mở khoá."""
     last, bad = time.time() - probe_every + 600, 0   # lượt kiểm đầu: 10 phút sau khi UC chạy, không chạy ngay lúc khởi động
+    last_read, pend = 0.0, None   # last_read: lần đọc app thật gần nhất; pend: khung đỏ chưa được đọc sau khi hết
     while True:
         try:
+            k = _slot_kept()   # walk.view ghi đè khung mới khi khung cũ qua -> giữ khung cũ tới khi đã đọc xong
+            if (k.get('slot') or {}).get('end') and (not pend or not after_slot_due(pend, last_read, 1e12)): pend = k
             if not LOCK.exists() and not user_busy() and b'device' in adb('get-state').stdout:
               with UI:
                 if foreground() and len(login_form(nodes())) >= 2: recover('login')
-                elif time.time() - last >= probe_every and 6 <= time.localtime().tm_hour < 22 and online():
-                    last = time.time(); r = probe(); print('ictsv probe:', r)
+                elif ((time.time() - last >= probe_every or after_slot_due(pend, last_read, time.time()))
+                      and 6 <= time.localtime().tm_hour < 22 and online()):
+                    last = last_read = time.time(); r = probe(); print('ictsv probe:', r)
                     bad = bad + 1 if r == 'unknown' else 0
                     if r in ('expired', 'login') or bad >= 2: bad = 0; recover(r if r != 'unknown' else 'dịch vụ trống 2 lần')
         except Exception as e: print('ictsv_login loop:', e)

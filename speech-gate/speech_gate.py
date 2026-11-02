@@ -10,7 +10,8 @@ Mục đích: KHÔNG BAO GIỜ gửi audio cho Gemini. Audio bài giảng đư�
 
 HTTP (127.0.0.1:8340, n8n trong Docker gọi qua host.docker.internal):
   POST /jobs?captureId=&startedAt=&endedAt=&markers=&callback=   body = audio (mp3/wav/webm)
-  GET  /jobs/<jobId>            GET /jobs?captureId=<id>        GET /health
+  POST /jobs/text?captureId=&startedAt=&endedAt=&callback=&source=   body = {"kept": [...]}  (v1.00.52: chữ có sẵn, vd Teams .vtt -> chỉ nén)
+GET  /jobs/<jobId>            GET /jobs?captureId=<id>        GET /health
   POST /slides?captureId=&name= body = ảnh (Copilot tải lên trong giờ học)
 """
 import subprocess, base64, io, json, os, queue, re, threading, time, traceback, urllib.request, uuid
@@ -560,6 +561,40 @@ class H(BaseHTTPRequestHandler):
                     save_job(job)
                 _q.put(jid)
                 log(f"nhận job {jid} cho {cap} ({len(data)/1e6:.1f} MB)")
+                return self._send(200, public(job))
+            if u.path == "/jobs/text":
+                # (v1.00.52) Bản chép lời có sẵn (Teams .vtt do UC tải): bỏ bước thu âm + chép lời, vào thẳng bước nén -> gọi lại n8n
+                # như job thường. Body JSON {"kept": [{"start": giây, "end": giây, "text": "...", "speaker": "..."}]} (giây tính từ startedAt).
+                cap = q.get("captureId", "").strip()
+                if not cap or not q.get("startedAt"):
+                    return self._send(400, {"error": "captureId and startedAt required"})
+                try:
+                    kept = json.loads(self._body().decode("utf-8")).get("kept") or []
+                    kept = [{"start": float(k["start"]), "end": float(k["end"]), "text": str(k["text"]).strip(),
+                             **({"speaker": str(k["speaker"])} if k.get("speaker") else {})} for k in kept if str(k.get("text", "")).strip()]
+                except (ValueError, KeyError, TypeError, AttributeError):
+                    return self._send(400, {"error": "bad body"})
+                if not kept:
+                    return self._send(400, {"error": "empty transcript"})
+                with _lock:
+                    prev = find_by_capture(cap)
+                    if prev and prev["status"] in ("queued", "running"):
+                        return self._send(200, public(prev))
+                    jid = uuid.uuid4().hex[:12]
+                    dur = kept[-1]["end"]
+                    stats = {"source": q.get("source", "text"), "duration_min": round(dur / 60, 1),
+                             "speech_min": round(sum(k["end"] - k["start"] for k in kept) / 60, 1),
+                             "segments": len(kept), "kept_chars": sum(len(k["text"]) for k in kept), "kind": kind_of(cap)}
+                    job = {"jobId": jid, "captureId": cap, "startedAt": q["startedAt"], "endedAt": q.get("endedAt", ""),
+                           "markers": [], "callback": q.get("callback", ""), "status": "queued", "stage": "queued", "progress": 0,
+                           "created": time.time(), "audioFile": "", "resume": True, "stats": stats}
+                    job_path(jid).mkdir(parents=True, exist_ok=True)
+                    lines = [f"[{clock(job['startedAt'], k['start'])}] " + (f"{k['speaker']}: " if k.get("speaker") else "") + k["text"] for k in kept]
+                    (job_path(jid) / "transcript.txt").write_text("\n".join(lines), encoding="utf-8")
+                    (job_path(jid) / "kept.json").write_text(json.dumps(kept, ensure_ascii=False), encoding="utf-8")
+                    save_job(job)
+                _q.put(jid)
+                log(f"nhận job chữ {jid} cho {cap} ({len(kept)} đoạn, nguồn {stats['source']})")
                 return self._send(200, public(job))
             if u.path == "/slides":
                 cap = re.sub(r"[^\w\-]", "", q.get("captureId", ""))

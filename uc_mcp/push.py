@@ -16,6 +16,19 @@ import server as S  # noqa: E402
 CONF = HERE / 'cloud.local.json'
 
 
+def _fitness():
+    """(v1.00.52, chủ 02/11 cho phép) Fitness: số đo cơ thể, bước hôm nay, buổi tập hôm nay + 7 ngày qua. Chỉ đọc."""
+    try:
+        sys.path.insert(0, str(HERE.parent))
+        import fitness, walk
+        v, w = fitness.view(), walk.view()
+        return {"fitness": {"so_do": v.get("profile"), "chi_so": v.get("derived"), "buoi_tap_hom_nay": v.get("plan"),
+                            "khung_tap": v.get("slot"), "buoi_gan_day": fitness.recent(v["today"]),
+                            "di_bo": {"buoc": w.get("steps"), "muc_tieu": w.get("target"), "dat": w.get("met"), "khung": w.get("slot")}}}
+    except Exception as e:
+        return {"fitness_loi": f"{type(e).__name__}: {e}"[:160]}
+
+
 def _ngoai_khoa_inbox():
     """(v1.00.40) Ngoại khoá (iCTSV) và danh sách Inbox: tên, trạng thái, thư mục, môn, link Drive, đường dẫn trên máy. KHÔNG đưa nội dung file lên mây."""
     out = {"ngoai_khoa": [], "inbox": []}
@@ -96,7 +109,7 @@ def snapshot():
                 "today": S.t_today({}),
                 "han_tat_ca": [S._deadline_view(x) for x in S._song(d)],
                 "bao_cao": S.t_briefing({})["bao_cao"],
-                **_ngoai_khoa_inbox(), **_mo_rong()}
+                **_ngoai_khoa_inbox(), **_mo_rong(), **_fitness()}
     finally:
         S._fetch = real
 

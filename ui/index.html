@@ -1326,7 +1326,7 @@ a.wk:hover { border-color: var(--blue); }
         <div class="dd" id="dd-extra" role="tablist" aria-orientation="vertical" aria-label="Ngoại khoá" hidden>
           <button class="tab" role="tab" id="t-extra" aria-selected="false" aria-controls="p-extra"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="2"/></svg><span class="tl">Sự kiện &amp; hoạt động</span></button>
           <button class="dd-i" data-go="extra:mine"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg><span class="tl">Hoạt động của tôi</span></button>
-          <button class="dd-i" data-go="extra:run"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="14" cy="4.5" r="2"/><path d="m6 21 3.5-6 3 2.5V22M8 11l3-3.5 3.5 2.5 3 1M11 7.5 9.5 13"/></svg><span class="tl">10000 bước chạy</span></button>
+          <button class="dd-i" data-go="extra:run"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="14" cy="4.5" r="2"/><path d="m6 21 3.5-6 3 2.5V22M8 11l3-3.5 3.5 2.5 3 1M11 7.5 9.5 13"/></svg><span class="tl">Fitness</span></button>
           <button class="dd-i" data-go="extra:drl"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span class="tl">Điểm rèn luyện</span></button>
         </div>
       </li>
@@ -1613,7 +1613,7 @@ a.wk:hover { border-color: var(--blue); }
           <button role="tab" data-x="mine" aria-selected="false">Hoạt động của tôi</button>
           <button role="tab" data-x="schol" aria-selected="false">Học bổng</button>
           <button role="tab" data-x="adm" aria-selected="false">Hành chính &amp; đặt vé</button>
-          <button role="tab" data-x="run" aria-selected="false">10000 bước chạy</button>
+          <button role="tab" data-x="run" aria-selected="false">Fitness</button>
         </div>
         <div id="ex-body"><p class="skeleton">Đang đọc…</p></div>
         <p class="cal-sync" id="ex-sync"></p>
@@ -2014,11 +2014,57 @@ function boardHTML(w) {
     b.map(x => '<tr' + (x.me ? ' class="me"' : '') + '><td>' + esc(x.r) + '</td><td>' + esc(x.ten) + (x.me ? ' (bạn)' : '') + '</td><td>' + esc(x.khoa) + '</td><td>' +
       (runKm(x.km) || 0).toFixed(2).replace('.', ',') + ' km</td></tr>').join('') + '</tbody></table></details>';
 }
+// ---- (v1.00.52, chủ 02/11) Fitness = đi bộ (ở trên) + bài tập tại chỗ do Gemini gợi ý: thảm / sàn (+ ghế), ≤ 20 phút, tránh DOMS
+let FIT = null, fitMsg = '';
+function fitLoad() { fetch('/api/fitness', { cache: 'no-store' }).then(r => r.json()).then(j => { FIT = j; if (exTab === 'run' && $('#p-extra').classList.contains('on')) renderExtra(); }).catch(() => {}); }
+function fitEx(x) {
+  const yt = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(x.youtube_query || x.name_en || '');
+  return '<li><strong>' + esc(x.name_en || '') + '</strong>' + (x.name_vi ? ' · ' + esc(x.name_vi) : '') +
+    '<br><small>' + (x.sets ? esc(String(x.sets)) + ' hiệp × ' : '') + esc(String(x.reps || '')) + (x.rest_sec ? ' · nghỉ ' + esc(String(x.rest_sec)) + ' giây' : '') +
+    ' · ~' + esc(String(x.minutes)) + ' phút</small>' + (x.cue ? '<br><small>' + esc(x.cue) + '</small>' : '') +
+    ' <a href="' + yt + '" target="_blank" rel="noopener">Tìm trên YouTube</a></li>';
+}
+function fitHTML() {
+  const f = FIT;
+  if (!f) return '<h2 class="xsec">Bài tập tại chỗ</h2><p class="skeleton">Đang đọc…</p>';
+  const p = f.profile || {}, d = f.derived || {}, pl = f.plan, sl = f.slot || {};
+  const form = '<details class="runman-d"' + (f.profile ? '' : ' open') + '><summary>Số đo cơ thể' + (f.profile ? ' · ' + p.weight_kg + ' kg · ' + p.height_cm + ' cm · mỡ ' + p.fat_pct + '% · cơ ' + p.muscle_kg + ' kg' : ' (chưa nhập)') + '</summary>' +
+    '<form class="runman" id="fit-prof">' +
+    [['weight_kg', 'Cân nặng (kg)', ''], ['height_cm', 'Chiều cao (cm)', ''], ['fat_pct', '% mỡ', ''], ['muscle_kg', 'Khối cơ (kg)', '']].map(([k, l, v]) =>
+      '<label>' + l + ' <input type="number" step="0.1" id="fit-' + k + '" value="' + (p[k] != null ? p[k] : v) + '"></label>').join('') +
+    '<label>Thể trạng <input type="text" id="fit-type" value="' + esc(p.type || '') + '"></label>' +
+    '<button class="primary" type="submit">Lưu</button></form>' +
+    (d.bmi ? '<small>BMI ' + String(d.bmi).replace('.', ',') + ' · mỡ ~' + String(d.fat_kg).replace('.', ',') + ' kg · bước chân ~' + String(d.stride_m).replace('.', ',') + ' m (~' + nf(d.steps_per_km) + ' bước/km)</small>' : '') + '</details>';
+  const when = sl.start ? 'Khung gợi ý: ' + hhmm(sl.start) + '–' + hhmm(sl.end) + ' (sau giờ đi bộ, không trùng học / thi)' : 'Hôm nay không còn khung 20 phút trống trong khung đi tập.';
+  let body;
+  if (!f.profile) body = '<p class="note">Nhập số đo để UC lập bài tập.</p>';
+  else if (!pl) body = '<p class="note">Chưa có bài hôm nay.</p><button class="primary" id="fit-gen">Lập bài hôm nay (Gemini)</button>';
+  else body = '<p>' + esc((pl.focus || []).join(' · ')) + ' · tổng ~' + esc(String(pl.total_min)) + '/' + f.maxMin + ' phút' + (pl.done ? ' · <strong>đã tập</strong>' : '') + '</p>' +
+    [['warmup', 'Khởi động'], ['main', 'Bài chính'], ['cooldown', 'Giãn cơ']].map(([k, l]) => (pl[k] || []).length ? '<h3>' + l + '</h3><ol>' + pl[k].map(fitEx).join('') + '</ol>' : '').join('') +
+    (pl.note ? '<p class="note">' + esc(pl.note) + '</p>' : '') +
+    ((pl.dropped || []).length ? '<p class="note">Đã bỏ (cần dụng cụ hoặc quá 20 phút): ' + esc(pl.dropped.join(', ')) + '</p>' : '') +
+    (pl.done ? '' : '<form class="runman" id="fit-done"><label>Cảm nhận sau buổi <input type="text" id="fit-fb" placeholder="vd: nhẹ / vừa / mỏi chân"></label><button class="primary" type="submit">Đã tập xong</button></form>') +
+    '<button class="ghost" id="fit-gen">Lập lại bài hôm nay</button>';
+  return '<h2 class="xsec">Bài tập tại chỗ <small>thảm, sàn, ghế · ≤ ' + f.maxMin + ' phút</small></h2>' + form +
+    '<p class="cal-sync">' + esc(when) + '</p>' + body + (fitMsg ? '<p class="note">' + esc(fitMsg) + '</p>' : '') +
+    '<p class="cal-sync">Gợi ý tập luyện chung do Gemini lập, không phải tư vấn y tế. Đau nhói / chóng mặt thì dừng.</p>';
+}
+async function fitPost(path, body) {
+  fitMsg = path.endsWith('plan') ? 'Đang hỏi Gemini…' : ''; renderExtra();
+  const r = await api(path, body).catch(() => ({ ok: false, loi: 'Không gọi được UC.' }));
+  fitMsg = r.ok ? '' : (r.loi || 'Lỗi.'); if (r.ok) FIT = r; renderExtra();
+}
+function fitBind() {
+  const f = $('#fit-prof'); if (f) f.onsubmit = ev => { ev.preventDefault();
+    fitPost('/api/fitness/profile', { weight_kg: $('#fit-weight_kg').value, height_cm: $('#fit-height_cm').value, fat_pct: $('#fit-fat_pct').value, muscle_kg: $('#fit-muscle_kg').value, type: $('#fit-type').value }); };
+  const g = $('#fit-gen'); if (g) g.onclick = () => fitPost('/api/fitness/plan', { refresh: true });
+  const dn = $('#fit-done'); if (dn) dn.onsubmit = ev => { ev.preventDefault(); fitPost('/api/fitness/done', { date: FIT.today, feedback: $('#fit-fb').value }); };
+}
 function runHTML() {
   const w = WALK;
   if (!w) return '<p class="skeleton">Đang đọc…</p>';
   const days = (w.days || []).slice().sort((a, b) => String(b.DayRun).localeCompare(String(a.DayRun)));
-  const totKm = days.reduce((t, r) => t + (r.km || 0), 0), maxKm = Math.max(1, ...days.map(r => r.km || 0));
+  const totKm = days.reduce((t, r) => t + (r.km || 0), 0), maxKm = Math.max(1, ...days.map(r => Math.max(r.km || 0, r.appKm || 0)));
   const cut = runKm(w.top100Km), k2 = v => v.toFixed(2).replace('.', ',');
   return wxHTML() + '<section class="runhero"><span>Giải chạy sinh viên · iCTSV</span><h2>' + esc(w.competition || 'Giải 10000 bước chân vì sức khoẻ mỗi ngày') + '</h2></section>' +
     '<div class="runstats">' +
@@ -2032,9 +2078,9 @@ function runHTML() {
     (w.military && w.military.active ? '<p class="note">Đang học quân sự: UC không nhắc đi bộ hằng ngày, số bước vẫn được ghi.</p>' : '') +
     boardHTML(w) +
     '<h2 class="xsec">Thành tích theo ngày <small>' + days.length + '</small></h2>' +
-    (days.length ? '<table class="runtab"><thead><tr><th>Ngày</th><th>Quãng đường (km)</th><th>Bước (ước tính)</th><th><span class="sr">Biểu đồ</span></th></tr></thead><tbody>' +
-      days.map(r => '<tr><td>' + hDM(r.DayRun) + '/' + String(r.DayRun).slice(0, 4) + '</td><td>' + k2(r.km || 0) + '</td><td>' + nf(r.steps) +
-        '</td><td class="rbar"><i style="width:' + Math.round((r.km || 0) / maxKm * 100) + '%"></i></td></tr>').join('') + '</tbody></table>'
+    (days.length ? '<table class="runtab"><thead><tr><th>Ngày</th><th>Quãng đường (km)</th><th>Bước (app iCTSV; ~ = ước tính từ km)</th><th><span class="sr">Biểu đồ</span></th></tr></thead><tbody>' +
+      days.map(r => '<tr><td>' + hDM(r.DayRun) + '/' + String(r.DayRun).slice(0, 4) + '</td><td>' + (r.appKm != null ? k2(r.appKm) : k2(r.km || 0)) + '</td><td>' + (r.appSteps != null ? nf(r.appSteps) : '~' + nf(r.steps)) +
+        '</td><td class="rbar"><i style="width:' + Math.round(Math.min(1, (r.appKm != null ? r.appKm : r.km || 0) / maxKm) * 100) + '%"></i></td></tr>').join('') + '</tbody></table>'
       : '<p class="note">CTSV chưa ghi nhận ngày nào.</p>') +
     '<p class="cal-sync">' + (w.at ? 'Đọc từ CTSV lúc ' + hhmm(w.at) + ' ' + hDM(w.at) + ' · tự đọc lại mỗi 2 giờ (6h–22h). ' : 'Chưa đọc lần nào. ') +
     (w.error ? 'Lỗi lần trước: ' + esc(w.error) + '. ' : '') + 'Số bước quy từ km như app trường. <button class="ghost" id="run-refresh">Đọc lại ngay</button></p>';
@@ -2502,7 +2548,8 @@ function renderExtra() {
   renderDrl();
   if (exTab === 'run') {
     if (Date.now() - wxAt > 5 * 6e4) wxLoad();
-    $('#ex-body').innerHTML = runHTML(); const b = $('#run-refresh'); if (b) b.onclick = walkRefresh;
+    if (!FIT) fitLoad();
+    $('#ex-body').innerHTML = runHTML() + fitHTML(); fitBind(); const b = $('#run-refresh'); if (b) b.onclick = walkRefresh;
     const f = $('#run-man'); if (f) f.onsubmit = async ev => { ev.preventDefault();
       const r = await api('/api/walk/manual', { date: WALK.today, steps: Number($('#run-man-n').value) }).catch(() => ({ ok: false, loi: 'Không gọi được UC.' }));
       if (!r.ok) return alert(r.loi || 'Không lưu được.'); WALK = r; renderWalk(); };

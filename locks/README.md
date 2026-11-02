@@ -28,4 +28,4 @@ powershell -ExecutionPolicy Bypass -File nap-lock.ps1 -DryRun -FakeTime 14:00 -H
 ## Giới hạn
 
 - Chỉ chặn trên máy tính. Điện thoại (kể cả máy ảo Android) chưa được chặn — đang là việc tiếp theo.
-- Tab mở sẵn trước giờ khoá trưa có thể xem tiếp tới khi tải lại (khoá đêm có tải lại tab, khoá trưa chưa).
+- Tab mở sẵn trên trang bị chặn: khoá đêm và (từ v1.00.52) khoá trưa đều tự tải lại lúc bắt đầu khoá và mỗi 5 phút. Cần tác vụ chạy trong phiên đăng nhập của người dùng (UI Automation không thấy cửa sổ của phiên khác).

@@ -13,6 +13,7 @@ UC là hệ thống của chính sinh viên. Claude đọc được dữ liệu 
 - Cần tổng quan nhanh: `uc_briefing` (báo cáo một trang).
 - Cần việc hôm nay, hạn, lịch thi chi tiết: `uc_today`.
 - Chỉ hỏi hạn trong vài ngày tới: `uc_deadlines` với tham số `days`.
+- Hỏi về sức khoẻ / tập luyện / đi bộ: `uc_fitness` (số đo cơ thể, bước hôm nay, buổi tập tại chỗ do Gemini lập). Mục tiêu của chủ là tăng cơ (không chỉ giảm cân); chỉ gợi ý chung, không chẩn đoán hay kê đơn.
 - Chỉ hỏi lịch thi giữa kỳ: `uc_exams` (lịch FAMI và trạng thái từng môn; môn chưa có lịch cũng phải được nhắc).
 - Chỉ muốn biết máy có bật không: `uc_status`.
 - Hoạt động ngoại khoá (đã đăng ký, đang mở, hạn minh chứng): `uc_ngoai_khoa`.

@@ -132,6 +132,16 @@ def slot(events, today, minutes, c=None, after=None):
     return {'start': None, 'end': None, 'indoor': True, 'rush': False}
 
 
+def merge_days(ctsv_days, app_days):
+    """(v1.00.52, chủ 02/11) Bảng theo ngày: giữ km/bước GIẢI TÍNH của CTSV (ước tính km × 1385) và thêm số THẬT của app
+    (appSteps / appKm); ngày chỉ có trong app (vd sau khi đợt giải đóng) vẫn có dòng, km giải tính = 0."""
+    rows = {_d(r.get('DayRun')): dict(r) for r in (ctsv_days or [])}
+    for d, a in (app_days or {}).items():
+        r = rows.setdefault(d, {'DayRun': d + ' 00:00:00', 'Distance': 0, 'km': 0, 'steps': 0})
+        r['appSteps'], r['appKm'] = a.get('steps', 0), a.get('km', 0)
+    return [rows[d] for d in sorted(rows)]
+
+
 def view(now=None):
     import walk_ctsv
     now = (now or dt.datetime.now(TZ)).astimezone(TZ); today = now.date().isoformat()
@@ -147,7 +157,16 @@ def view(now=None):
     exam_days = {_d(e.get('start')) for e in ev if e.get('kind') == 'Exam'}
     tgt = target_for(now.date(), steps, exam_days, c)
     mil = military(ev, today)
-    sl = slot(ev, today, max(10, math.ceil(tgt / c['steps_per_min'])), c, after=now)
+    # (02/11, chủ) chốt khung đi bộ của hôm nay một lần (trước đây tính lại mỗi lần đọc với mốc "bây giờ" -> giờ cứ trượt theo phút).
+    # Chỉ tính lại khi chưa có khung hôm nay hoặc khung đã chốt đã qua hẳn.
+    sl_file = HERE / 'school' / 'walk_slot.json'
+    try: kept = json.loads(sl_file.read_text(encoding='utf-8'))
+    except Exception: kept = {}
+    sl = kept.get('slot') if kept.get('date') == today else None
+    if not sl or (sl.get('end') and dt.datetime.fromisoformat(sl['end']) < now):
+        sl = slot(ev, today, max(10, math.ceil(tgt / c['steps_per_min'])), c, after=now)
+        try: sl_file.parent.mkdir(parents=True, exist_ok=True); sl_file.write_text(json.dumps({'date': today, 'slot': sl}), encoding='utf-8')
+        except Exception: pass
     done = steps.get(today, 0)
     ov = overrides().get(today)
     # (v1.00.49, chủ 02/11) khung đi bộ = ĐỎ trên đồng hồ: chỉ khi có nhắc (không học quân sự), đi ngoài trời, chưa bị AI xoá với lý do chính đáng
@@ -158,7 +177,7 @@ def view(now=None):
     return {'ok': bool(w.get('ok')), 'at': w.get('at'), 'error': w.get('error'), 'competition': w.get('competition'),
             'myRank': w.get('myRank'), 'top100Km': w.get('top100Km'), 'stepsPerKm': w.get('stepsPerKm'),
             'board': w.get('board') or [],
-            'days': w.get('days') or [], 'today': today, 'target': tgt, 'cap': round(tgt * c['daily_cap_ratio']),
+            'days': merge_days(w.get('days'), app), 'today': today, 'target': tgt, 'cap': round(tgt * c['daily_cap_ratio']),
             'steps': done, 'met': done >= tgt, 'capped': done >= round(tgt * c['daily_cap_ratio']),
             'examWeek': tgt == c['exam_week_target_steps'] and any(_monday(now.date()) <= dt.date.fromisoformat(x) < _monday(now.date()) + dt.timedelta(days=7) for x in exam_days if x),
             'slot': sl, 'military': mil, 'remind': not mil['active'],

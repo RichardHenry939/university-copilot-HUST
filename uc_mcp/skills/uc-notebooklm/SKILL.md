@@ -17,12 +17,21 @@ Mục tiêu: người dùng chọn một (hoặc vài) tài liệu → Claude bi
 - Nói lại cho người dùng: "File X nằm ở `<duong_dan>` (thư mục `<folder>`)". Đây là chỗ người dùng tự mở file trên máy.
 - `uc_inbox` có `"online": false` thì nói rõ máy tính đang tắt và danh sách là bản lúc `lan_cuoi`; vẫn dùng được `driveLink` vì Drive không phụ thuộc máy.
 
+## Cấu trúc trên Google Drive (từ v1.00.51)
+
+- Drive giữ y hệt cây thư mục trên máy: `University/Uni-Documents/<folder>/<name>` — `folder` và `name` chính là hai trường trong `uc_inbox`, tên file là tên thật (không còn kiểu tên ép phẳng `Môn › Bài tập › x.pdf`).
+  Ví dụ `relPath` = `Nhập môn Lập Trình/Slide Bài giảng/Chap01.pdf` → Drive `University/Uni-Documents/Nhập môn Lập Trình/Slide Bài giảng/Chap01.pdf`.
+- `Hành chính/` là một thư mục như các môn nhưng **không phải môn học**.
+- File UC chuyển chỗ trên máy thì UC chuyển theo trên Drive, **giữ nguyên id file** → `driveLink` cũ vẫn đúng, nguồn đã thêm vào NotebookLM không gãy.
+- Thư mục cũ `University/Course Materials Backup` chỉ còn file UC chưa dọn; không tìm file ở đó.
+- Có connector Google Drive thì có thể tìm theo đường dẫn trên để người dùng chọn file, nhưng id lấy từ `driveLink` của `uc_inbox` là chắc nhất.
+
 ## Bước 2. Chọn đường đưa file vào NotebookLM
 
 1. **Có `driveLink`** (khác rỗng): lấy id file trong link (`/file/d/<id>/`). Đây là đường chính, chạy được cả từ Claude Chat lẫn điện thoại, kể cả khi máy tắt.
-2. **Không có `driveLink`** (file chưa sao lưu lên Drive):
+2. **Không có `driveLink`** (rỗng hoặc thiếu): báo đúng chữ **"chưa sao lưu"** lên Drive — không đoán id, không tìm một file "na ná" trên Drive để thay. Sau đó:
    - Nếu đang chạy trên chính máy của người dùng (Claude Code / Cowork) và MCP NotebookLM cho phép đọc thư mục đó: dùng `source_add` với `source_type: "file"`, `path: <duong_dan>`.
-   - Nếu không (Claude Chat): nói thẳng là file chưa có bản trên Drive nên chưa đưa vào được; gợi ý người dùng mở UC trên máy để sao lưu, hoặc tự tải file lên NotebookLM.
+   - Nếu không (Claude Chat): nói thẳng là file chưa sao lưu nên chưa đưa vào được; gợi ý người dùng mở UC trên máy (UC tải bù bằng `drive_backfill.py`), hoặc tự tải file lên NotebookLM.
 - Không tự tải file từ nguồn khác, không đoán id Drive.
 
 ## Bước 3. Chọn hoặc tạo notebook

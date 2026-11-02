@@ -57,6 +57,13 @@ def read_page(nodes, adb, max_scroll=8):
     return parse(screens)
 
 
+def looks_empty(res, old=None):
+    """(v1.00.52) Lượt đọc trả tổng tháng 0 / không có ngày nào, trong khi lần trước cùng tháng đã có số -> dữ liệu hỏng (phiên hết hạn)."""
+    old = load() if old is None else old
+    if res.get('days') or res.get('total_steps'): return False
+    return bool(old.get('month_total_steps')) and (not res.get('month') or res.get('month') == old.get('month'))
+
+
 def save(res):
     """Gộp vào file cũ: ngày trong tháng vừa đọc thay hẳn; ngày tháng khác giữ nguyên."""
     try: old = json.loads(OUT.read_text(encoding='utf-8'))

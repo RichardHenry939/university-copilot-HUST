@@ -664,6 +664,9 @@ def uni_files():
         exported = {v["rel"].lower() for v in json.loads((HERE / "school" / "lecture_export.json").read_text(encoding="utf-8")).values()}
     except Exception:
         exported = set()
+    try:   # (v1.00.52) .vtt Teams UC chép cạnh ghi chú bài giảng: cũng không nạp ngược
+        import teams_transcripts; exported |= teams_transcripts.skip_rels()
+    except Exception: pass
     for root, dirs, files in os.walk(UNI):
         rp = Path(root)
         rel_root = "" if rp == UNI else str(rp.relative_to(UNI))
@@ -846,10 +849,19 @@ def mail_run(by):
             import ctsv_live; importlib.reload(ctsv_live)
             if ctsv_live.due(): r["ctsv_live"] = ctsv_live.fetch()
         except Exception as e: r["ctsv_live"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
+        try:   # 🎞️ (v1.00.52) bản chép lời Teams (.vtt) của lớp lý thuyết -> chuỗi bài giảng như recorder (30 phút/lần, 07–23h)
+            import teams_transcripts; importlib.reload(teams_transcripts)
+            if teams_transcripts.due(): r["teams_transcripts"] = teams_transcripts.run(_npost)
+            elif teams_transcripts.night(): r["teams_deferred"] = teams_transcripts.dispatch_deferred(_npost)   # buổi không gấp: nén đêm
+        except Exception as e: r["teams_transcripts"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
         try:   # 📚 ghi chú bài giảng (Notion) -> Uni-Documents/<môn>/Ghi chú bài giảng/*.md — chỉ bài mới / vừa sửa
             import lecture_export; importlib.reload(lecture_export)
             r["lecture_export"] = lecture_export.run(_npost)
         except Exception as e: r["lecture_export"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
+        try:   # (v1.00.52) ghi chú vừa xuất -> chép .vtt gốc cạnh file .txt
+            if "teams_transcripts" in r or teams_transcripts.load().get("items"):
+                st_ = teams_transcripts.load(); r["vtt_placed"] = teams_transcripts.place_vtt(_npost, st_); teams_transcripts.save(st_)
+        except Exception as e: r["vtt_placed"] = f"{type(e).__name__}: {e}"[:200]
         try:
             import expired; importlib.reload(expired)   # việc của trường đã hết hạn -> ✅ Academic Tasks (không ghi thành hạn)
             r["expired"] = expired.record(_npost)
