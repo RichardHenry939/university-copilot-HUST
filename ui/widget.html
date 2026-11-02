@@ -67,7 +67,8 @@ body { background: #8fb3c4 url(/widget/bg.jpg) center / cover no-repeat; font-fa
 const Q = new URLSearchParams(location.search), SCREEN = Q.get('screen') || 'laptop';
 const SLEEP_H = 22, WAKE_H = 6, TZ = 7 * 36e5;
 // (02/11, chủ) ngủ trưa = vàng; ăn uống = tím (sinh hoạt cá nhân, không phải giờ ngủ). Giống ui/index.html — sửa cả hai chỗ.
-const NAP = [13, 15], meals = camp => [[7.5, 8], [12, 13], camp ? [17.5, 18.5] : [19, 20]];
+let NAP_SPANS = [['13:00', '15:00']];   // ngủ trưa = phần 13–15h còn lại sau buổi học / thi (nap.py); khoá giờ ngủ khoá đúng phần này
+const hm2h = s => +s.slice(0, 2) + +s.slice(3, 5) / 60, meals =camp => [[7.5, 8], [12, 13], camp ? [17.5, 18.5] : [19, 20]];
 const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const p2 = n => String(n).padStart(2, '0');
 const vn = ms => new Date(ms + TZ), vnDay = ms => vn(ms).toISOString().slice(0, 10), vnHM = ms => { const v = vn(ms); return p2(v.getUTCHours()) + ':' + p2(v.getUTCMinutes()); };
@@ -78,7 +79,7 @@ async function j(u) { const r = await fetch(u, { cache: 'no-store' }); if (!r.ok
 let REV = [], DL = null;   // REV: "Ôn thi định kỳ hằng ngày môn X" (không tắt được) · DL: danh sách hạn đầy đủ của UC (/api/today; lịch chỉ có một phần)
 let CAMP = false;   // ⛺ Camp hôm nay (học ở thư viện) -> ăn tối 17:30–18:30
 async function loadDl() { try { const t = await j('/api/today'); DL = (t.deadlines || []).filter(x => !x.overdue && x.due); CAMP = t.mode === 'Camp'; } catch (e) {} render(); }
-async function loadEv() { try { const t = await j('/api/timetable/all'); EV = (t && t.events) || []; REV = (t && t.review) || []; OFF = false; } catch (e) { OFF = true; } render(); }
+async function loadEv() { try { const t = await j('/api/timetable/all'); EV = (t && t.events) || []; REV = (t && t.review) || []; if (t && t.nap && Array.isArray(t.nap.spans)) NAP_SPANS = t.nap.spans; OFF = false; } catch (e) { OFF = true; } render(); }
 async function loadSp() { try { const w = await j('/api/wallet'); const a = w.active; SP = { spans: w.spans || [], live: !!(a && a.type === 'focus' && !a.paused_at) }; } catch (e) {} }
 async function loadWalk() { try { const w = await j('/api/walk'); RUNS = ((w.app || {})[w.today] || {}).runs || []; } catch (e) {} }
 let VER = null;   // widget.html đổi -> tự tải lại (Lively không tự tải lại trang)
@@ -139,8 +140,8 @@ const arc = (d0, d1, r) => { const [x0, y0] = P(d0, r), [x1, y1] = P(d1, r); ret
   let t = '';
   for (let i = 0; i < 96; i++) { const h = i % 4 === 0, [x0, y0] = P(i * 3.75, h ? 82 : 87), [x1, y1] = P(i * 3.75, 92); t += '<line class="tk' + (h ? ' h' : '') + '" x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y1 + '"/>'; }
   for (let h = 0; h < 24; h++) { const [x, y] = P(h * 15, 71); t += '<text class="num' + (h % 6 === 0 ? ' k' : '') + '" x="' + x + '" y="' + y + '">' + h + '</text>'; }
-  $('#clk').innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="Đồng hồ 24 giờ"><circle class="face" cx="100" cy="100" r="96"/><path class="waste"/><g class="life"></g><path class="slp" d="' + arc(NAP[0] * 15, NAP[1] * 15, 94) + '"/><g class="cls"></g><g class="fzs"></g>' +
-    '<path class="slp" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/>' + t +
+  $('#clk').innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="Đồng hồ 24 giờ"><circle class="face" cx="100" cy="100" r="96"/><path class="waste"/><g class="life"></g><g class="fzs"></g><g class="naps"></g>' +
+    '<path class="slp" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/><g class="cls"></g>' + t +   // lớp = luật tranh chấp (giống ui/index.html)
     '<line class="hh" x1="100" y1="100" x2="100" y2="48"/><line class="mm" x1="100" y1="100" x2="100" y2="24"/><line class="ss" x1="100" y1="112" x2="100" y2="16"/><circle class="hub" cx="100" cy="100" r="4"/></svg>';
 })();
 function tick() {
@@ -153,9 +154,11 @@ function tick() {
   svg.querySelector('.waste').setAttribute('d', d > WAKE_H * 15 + .05 ? arc(WAKE_H * 15, Math.min(d, SLEEP_H * 15), 94) : '');
   const cls = EV.filter(e => e.start && e.end && e.start.includes('T') && vnDay(Date.parse(e.start)) === today && e.kind === 'Class' && !/NGHỈ/.test(e.title || ''))
     .map(e => [Date.parse(e.start), Date.parse(e.end)]);
+  const runs = [];   // chạy bộ: TÍM (chủ đổi 02/11)
   for (const r of RUNS) { const st = Date.parse(today + 'T' + r.at + ':00+07:00'), q = String(r.dur || '').split(':').map(Number);
-    if (!isNaN(st)) cls.push([st, st + ((q[0] || 0) * 3600 + (q[1] || 0) * 60 + (q[2] || 0)) * 1000]); }
-  svg.querySelector('.life').innerHTML = meals(CAMP).map(x => '<path class="lf" d="' + arc(x[0] * 15, x[1] * 15, 94) + '"/>').join('');
+    if (!isNaN(st)) runs.push([st, st + ((q[0] || 0) * 3600 + (q[1] || 0) * 60 + (q[2] || 0)) * 1000]); }
+  svg.querySelector('.life').innerHTML = meals(CAMP).map(x => '<path class="lf" d="' + arc(x[0] * 15, x[1] * 15, 94) + '"/>').join('') + paths(runs, 'lf');
+  svg.querySelector('.naps').innerHTML = NAP_SPANS.map(x => '<path class="slp" d="' + arc(hm2h(x[0]) * 15, hm2h(x[1]) * 15, 94) + '"/>').join('');
   svg.querySelector('.cls').innerHTML = paths(cls, 'cl');
   svg.querySelector('.fzs').innerHTML = paths(SP.spans.map((x, i) => [x[0], SP.live && i === SP.spans.length - 1 ? now : x[1]]), 'fz');
   const dg = $('.dig'); if (dg) dg.textContent = p2(h) + ':' + p2(m) + ':' + p2(s);   // HH:MM:SS ở mọi bố cục (chủ, 02/11)

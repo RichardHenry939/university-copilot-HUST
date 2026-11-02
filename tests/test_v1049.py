@@ -72,3 +72,13 @@ def test_walk_app_parse_runs():
     d = r['days']['2026-11-01']
     assert r['month'] == '2026-11' and r['total_steps'] == 2036 and d['steps'] == 2036 and len(d['runs']) == 3
     assert [x['at'] for x in d['runs']] == ['18:53', '18:54', '19:09']
+
+
+def test_nap_yellow_only_blue_overrides():
+    import nap
+    ev = lambda s, e, k='Class': {'kind': k, 'title': 'X', 'start': f'2026-11-06T{s}:00+07:00', 'end': f'2026-11-06T{e}:00+07:00'}
+    assert nap.spans([ev('12:30', '17:30')], '2026-11-06')[0] == []                      # lab cả chiều: không ngủ trưa
+    assert nap.spans([ev('14:00', '16:00')], '2026-11-06')[0] == [['13:00', '14:00']]
+    assert nap.spans([ev('13:30', '14:15', 'Exam')], '2026-11-06')[0] == [['13:00', '13:30'], ['14:15', '15:00']]
+    full, _ = nap.spans([ev('21:00', '22:30')], '2026-11-06', nap.YELLOW)
+    assert full == [['00:00', '06:00'], ['13:00', '15:00'], ['22:30', '24:00']]

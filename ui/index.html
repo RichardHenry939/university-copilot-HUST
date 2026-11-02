@@ -1870,7 +1870,8 @@ function reviewLi(r) {
 function calSync(force) {
   if (calSyncing) return calSyncing;
   calSyncing = fetch('/api/timetable/all' + (force ? '?force=1' : '')).then(r => r.json()).then(j => {
-    if (j && Array.isArray(j.review)) { const ch = JSON.stringify(j.review) !== JSON.stringify(REVIEW); REVIEW = j.review; if (ch) { renderHomeTime(); if (typeof DAY !== 'undefined' && DAY) renderDay(); } }
+    if (j && j.nap && Array.isArray(j.nap.spans)) NAP_SPANS = j.nap.spans;
+    if (j && Array.isArray(j.review)) { const ch = JSON.stringify(j.review) !== JSON.stringify(REVIEW); REVIEW = j.review; if (ch) { renderHomeTime(); if (dayData()) renderDay(); } }
     if (j && Array.isArray(j.events) && (!CAL || j.fetchedAt !== CAL.fetchedAt || JSON.stringify(j.events) !== JSON.stringify(CAL.events))) {
       CAL = { events: j.events, fetchedAt: j.fetchedAt };
       try { localStorage.setItem('cal-cache', JSON.stringify(CAL)); } catch (e) {}
@@ -2107,7 +2108,8 @@ function renderHomeTime() {
   while (sch.length > 4 && Date.parse(sch[0].end || sch[0].start) < now) sch.shift();
   sch = sch.slice(0, 4);
   // hạn: lấy danh sách đầy đủ của UC (/api/today, biến DAY) khi đã có — lịch chỉ chứa một phần (vd thiếu hạn FAMI)
-  const full = typeof DAY !== 'undefined' && DAY && DAY.deadlines ? DAY.deadlines.filter(x => !x.overdue && x.due && Date.parse(x.due) > now)
+  const DD = dayData();
+  const full = DD && DD.deadlines ? DD.deadlines.filter(x => !x.overdue && x.due && Date.parse(x.due) > now)
     .map(x => ({ kind: 'Deadline', start: x.due, title: x.name + (x.course && !String(x.name).includes(x.course) ? ' · ' + x.course : ''), dlKind: x.kind })) : null;
   const today0 = full ? full.filter(e => evDay(e) === today) : dls.filter(e => Date.parse(e.start) > now);
   const later = (full || CAL.events.filter(e => e.kind === 'Deadline' && Date.parse(e.start) > now)).filter(e => evDay(e) !== today).sort((a, b) => a.start.localeCompare(b.start));
@@ -2124,7 +2126,12 @@ const SLEEP_H = 22, WAKE_H = 6;
 // (02/11, chủ) lịch sinh hoạt: ngủ trưa = vàng (như giờ ngủ); ăn uống = tím "sinh hoạt cá nhân, không phải giờ ngủ" (không tính là lãng phí).
 // Ăn tối 19–20h ở nhà; bật ⛺ Camp (học ở thư viện) thì 17:30–18:30. Ăn sáng: chủ cho hạn chót 8:00 -> tạm tính 7:30–8:00.
 // Chép y hệt ở ui/widget.html (đi tắt: 2 bản, sửa lịch thì sửa cả hai).
-const NAP = [13, 15];
+// Ngủ trưa: KHÔNG cố định 13–15h. Đoạn vàng = phần 13–15h còn lại sau khi buổi học / thi chiếm chỗ (nap.py, /api/timetable/all -> nap.spans);
+// đồng hồ không có chỗ cho 2 lịch chồng nhau, và hệ thống khoá giờ ngủ khoá đúng các đoạn vàng này. Chưa đọc được thì tạm 13–15h.
+let NAP_SPANS = [['13:00', '15:00']];
+// DAY khai báo bằng let ở dưới file: đọc trước dòng khai báo thì cả `typeof DAY` cũng ném lỗi (đồng hồ chạy ngay lúc tải) -> đọc qua hàm này
+function dayData() { try { return DAY; } catch (e) { return null; } }
+const hm2h = s => +s.slice(0, 2) + +s.slice(3, 5) / 60;
 const meals = camp => [[7.5, 8], [12, 13], camp ? [17.5, 18.5] : [19, 20]];
 function clk24Build(el) {
   const R = 100, P = (deg, r) => { const a = (deg - 90) * Math.PI / 180; return [(R + r * Math.cos(a)).toFixed(2), (R + r * Math.sin(a)).toFixed(2)]; };
@@ -2133,14 +2140,16 @@ function clk24Build(el) {
   for (let i = 0; i < 96; i++) { const h = i % 4 === 0, [x0, y0] = P(i * 3.75, h ? 82 : 87), [x1, y1] = P(i * 3.75, 92); t += '<line class="c-tick' + (h ? ' h' : '') + '" x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y1 + '"/>'; }
   for (let h = 0; h < 24; h++) { const [x, y] = P(h * 15, 71); t += '<text class="c-num' + (h % 6 === 0 ? ' k' : '') + '" x="' + x + '" y="' + y + '">' + h + '</text>'; }
   el.innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="Đồng hồ 24 giờ"><circle class="c-face" cx="100" cy="100" r="96"/>' +
-    '<path class="c-waste"/><g class="c-life"></g><path class="c-sleep" d="' + arc(NAP[0] * 15, NAP[1] * 15, 94) + '"/><g class="c-cls"></g><g class="c-focus"></g><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/>' + t +
+    // (02/11, chủ) thứ tự lớp = luật tranh chấp: xám (không đè ai) < tím (ăn uống, chạy bộ) < xanh lá (tập trung: chỉ đè trắng, đè tím khi bất khả kháng)
+    // < vàng (ngủ; ngang tím) < xanh biển (học, ngoại khoá: đè tất cả)
+    '<path class="c-waste"/><g class="c-life"></g><g class="c-focus"></g><g class="c-nap"></g><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/><g class="c-cls"></g>' + t +
     '<line class="c-hh" x1="100" y1="100" x2="100" y2="48"/><line class="c-mm" x1="100" y1="100" x2="100" y2="24"/><line class="c-ss" x1="100" y1="112" x2="100" y2="16"/><circle class="c-hub" cx="100" cy="100" r="4"/></svg>' +
     '<div class="c-side"><div class="c-dig" aria-live="off"></div><p class="c-msg"></p>' +
     '<div class="c-key"><span><i class="k-waste"></i>Đã lãng phí<em>Giờ thức (từ 06:00) đã trôi qua mà không học, không tập trung, không vận động</em></span>' +
-    '<span><i class="k-cls"></i>Lịch học · chạy bộ · ngoại khoá<em>Buổi học (cả online), các lượt đi ghi trong app iCTSV, hoạt động ngoại khoá đã đăng ký</em></span>' +
-    '<span><i class="k-fz"></i>Tập trung<em>Thời gian bật chế độ tập trung ở Ví (đã trừ lúc tạm dừng)</em></span>' +
-    '<span><i class="k-sleep"></i>Giờ ngủ 22:00–06:00 · ngủ trưa 13:00–15:00<em>Không tính là lãng phí</em></span>' +
-    '<span><i class="k-life"></i>Sinh hoạt cá nhân<em>Ăn sáng (trước 8:00), ăn trưa 12:00–13:00, ăn tối 19:00–20:00 (Camp: 17:30–18:30) — không phải giờ ngủ, không tính là lãng phí</em></span>' +
+    '<span><i class="k-cls"></i>Lịch học · ngoại khoá<em>Buổi học (cả online), hoạt động ngoại khoá đã đăng ký. Đè mọi màu khác</em></span>' +
+    '<span><i class="k-fz"></i>Tập trung<em>Thời gian bật chế độ tập trung ở Ví (đã trừ lúc tạm dừng). Không đè giờ ngủ, giờ học</em></span>' +
+    '<span><i class="k-sleep"></i>Giờ ngủ 22:00–06:00 · ngủ trưa<em>Ngủ trưa trong 13:00–15:00, trừ phần có buổi học / thi. Phần vàng là phần bị khoá mạng xã hội và game. Không tính là lãng phí</em></span>' +
+    '<span><i class="k-life"></i>Sinh hoạt cá nhân<em>Ăn sáng (trước 8:00), ăn trưa 12:00–13:00, ăn tối 19:00–20:00 (Camp: 17:30–18:30), chạy bộ (app iCTSV) — không phải giờ ngủ, không tính là lãng phí</em></span>' +
     '<span><i class="k-left"></i>Chưa tới<em>Phần còn lại của hôm nay trước giờ ngủ</em></span></div></div>';
   el._arc = arc;
 }
@@ -2172,7 +2181,7 @@ function clk24Busy(today) {
   const runs = ((typeof WALK !== 'undefined' && WALK && WALK.app) || {})[today];
   for (const r of (runs && runs.runs) || []) {
     const s = Date.parse(today + 'T' + r.at + ':00+07:00'), p = String(r.dur || '').split(':').map(Number);
-    if (!isNaN(s)) cls.push([s, s + ((p[0] || 0) * 3600 + (p[1] || 0) * 60 + (p[2] || 0)) * 1000]);   // chạy bộ: xanh biển
+    if (!isNaN(s)) grn.push([s, s + ((p[0] || 0) * 3600 + (p[1] || 0) * 60 + (p[2] || 0)) * 1000]);   // chạy bộ: TÍM (sinh hoạt cá nhân, chủ đổi 02/11)
   }
   return { cls, grn };
 }
@@ -2192,10 +2201,12 @@ function clk24Tick() {
     const deg = t => Math.max(0, Math.min(d, ((typeof t === 'number' ? t : Date.parse(t)) - day0) / 240000));   // cắt tại bây giờ
     const paths = (spans, cls) => spans.map(sp => { const d0 = deg(sp[0]), d1 = deg(sp[1]); return d1 - d0 > .05 ? '<path class="' + cls + '" d="' + el._arc(d0, d1, 94) + '"/>' : ''; }).join('');
     el.querySelector('.c-waste').setAttribute('d', d > WAKE_H * 15 + .05 ? el._arc(WAKE_H * 15, Math.min(d, SLEEP_H * 15), 94) : '');
-    el.querySelector('.c-life').innerHTML = meals(typeof DAY !== 'undefined' && DAY && DAY.mode === 'Camp').map(m => '<path class="c-life-p" d="' + el._arc(m[0] * 15, m[1] * 15, 94) + '"/>').join('');
+    el.querySelector('.c-life').innerHTML = meals((dayData() || {}).mode === 'Camp').map(m => '<path class="c-life-p" d="' + el._arc(m[0] * 15, m[1] * 15, 94) + '"/>').join('') +
+      paths(busy.grn, 'c-life-p');   // chạy bộ (busy.grn = các lượt đi trong app iCTSV)
+    el.querySelector('.c-nap').innerHTML = NAP_SPANS.map(s => '<path class="c-sleep" d="' + el._arc(hm2h(s[0]) * 15, hm2h(s[1]) * 15, 94) + '"/>').join('');
     el.querySelector('.c-cls').innerHTML = paths(busy.cls, 'c-cl');
     const fz = CLK_SP.spans.map((sp, i) => [sp[0], CLK_SP.live && i === CLK_SP.spans.length - 1 ? nowMs : sp[1]]);
-    el.querySelector('.c-focus').innerHTML = paths(fz.concat(busy.grn), 'c-fz');
+    el.querySelector('.c-focus').innerHTML = paths(fz, 'c-fz');
     el.querySelector('.c-dig').textContent = p2(h) + ':' + p2(m) + ':' + p2(s);
     const msg = el.querySelector('.c-msg');
     msg.className = 'c-msg' + (night ? ' night' : '');

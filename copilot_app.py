@@ -954,6 +954,9 @@ def alert_loop():
                 ex = exam_watch.tick(lambda t, x: alerts.notify(t, x, persistent=True, level="red"))
                 if ex: print("exam alarm:", ex)
             except Exception as e: print("exam alarm:", e)
+            try:   # (v1.00.49) tín hiệu phần vàng (giờ ngủ) cho khoá giờ ngủ: buổi học / thi chiếm chỗ nào thì phần vàng mất chỗ đó (nap.py)
+                import nap; nap.write(_npost)
+            except Exception as e: print("nap:", e)
             alert_loop.n = getattr(alert_loop, "n", 0) + 1
             if alert_loop.n % 5 == 1: phone_refresh()   # mỗi 5 phút: đối chiếu lịch hẹn ntfy + trang 📱 UC
         except Exception as e: print("alerts:", e)
@@ -1132,6 +1135,12 @@ class H(BaseHTTPRequestHandler):
                     import exam_watch
                     if isinstance(tt, dict): tt = dict(tt, review=exam_watch.review())
                 except Exception as e: print("exam review:", e)
+                try:   # ngủ trưa hôm nay = phần 13–15h còn lại sau buổi học / thi (đồng hồ tô vàng đúng phần này)
+                    import nap, datetime as _dt
+                    if isinstance(tt, dict) and isinstance(tt.get("events"), list):
+                        t0 = _dt.datetime.now(nap.TZ).date().isoformat(); free, took = nap.spans(tt["events"], t0)
+                        tt = dict(tt, nap={"date": t0, "spans": free, "why": "; ".join(took)})
+                except Exception as e: print("nap view:", e)
                 return self._send(200, tt)
             if u.path == "/api/study":   # GPA kỳ, CPA, rèn luyện — tính bằng academic.py
                 import academic
