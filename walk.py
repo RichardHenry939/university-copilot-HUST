@@ -38,6 +38,24 @@ def set_manual(day, n):
     return m
 
 
+OVERRIDE = HERE / 'school' / 'walk_override.json'   # (v1.00.49) {'YYYY-MM-DD': {'ly_do', 'at', 'by'}}: ngày được xoá khung đỏ
+
+
+def overrides():
+    """Khung thể dục (ĐỎ trên đồng hồ) KHÔNG sửa được trong UC. Cách duy nhất: AI gọi công cụ MCP uc_xoa_the_duc với lý do
+    chính đáng (vd đau chân), lệnh về máy qua uc_mcp/push.py -> file này. Luật dùng ghi trong skill uc-assistant."""
+    try: return json.loads(OVERRIDE.read_text(encoding='utf-8'))
+    except Exception: return {}
+
+
+def set_override(day, ly_do, at, by='mcp'):
+    o = overrides()
+    if day in o: return o
+    o[day] = {'ly_do': str(ly_do)[:300], 'at': at, 'by': by}
+    OVERRIDE.parent.mkdir(parents=True, exist_ok=True); OVERRIDE.write_text(json.dumps(o, ensure_ascii=False, indent=1), encoding='utf-8')
+    return o
+
+
 def cfg():
     c = dict(DEFAULT)
     try: c.update(json.loads(CFG_FILE.read_text(encoding='utf-8')))
@@ -131,7 +149,10 @@ def view(now=None):
     mil = military(ev, today)
     sl = slot(ev, today, max(10, math.ceil(tgt / c['steps_per_min'])), c, after=now)
     done = steps.get(today, 0)
-    extra = {'contestSteps': contest.get(today, 0), 'manualSteps': man.get(today),
+    ov = overrides().get(today)
+    # (v1.00.49, chủ 02/11) khung đi bộ = ĐỎ trên đồng hồ: chỉ khi có nhắc (không học quân sự), đi ngoài trời, chưa bị AI xoá với lý do chính đáng
+    red = bool(mil and not mil['active'] and sl.get('start') and not sl.get('indoor') and not ov)
+    extra = {'red': red, 'redCleared': ov, 'contestSteps': contest.get(today, 0), 'manualSteps': man.get(today),
              'appSteps': (app.get(today) or {}).get('steps'), 'app': app, 'appAt': wa.get('at')}
     month = today[:7]; prev = (now.date().replace(day=1) - dt.timedelta(days=1)).isoformat()[:7]
     return {'ok': bool(w.get('ok')), 'at': w.get('at'), 'error': w.get('error'), 'competition': w.get('competition'),

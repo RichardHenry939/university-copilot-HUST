@@ -93,6 +93,19 @@ def logout():
     return bool(login_form(nodes()))
 
 
+def user_busy():
+    """(02/11) bạn đang dùng máy ảo = cửa sổ máy ảo (qemu) đang ở trước trên Windows -> UC KHÔNG điều khiển máy ảo
+    (trước đây lượt kiểm iCTSV / đối chiếu eHUST giành màn hình, bạn không dùng được Pixel 6)."""
+    try:
+        import ctypes
+        from ctypes import wintypes
+        pid = wintypes.DWORD(); ctypes.windll.user32.GetWindowThreadProcessId(ctypes.windll.user32.GetForegroundWindow(), ctypes.byref(pid))
+        h = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid.value); buf = ctypes.create_unicode_buffer(512); n = wintypes.DWORD(512)
+        ok = h and ctypes.windll.kernel32.QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(n)); h and ctypes.windll.kernel32.CloseHandle(h)
+        return bool(ok) and 'qemu-system' in buf.value.lower()
+    except Exception: return False
+
+
 def foreground():
     """-> True nếu iCTSV đang ở màn hình trước của máy ảo (không mở app hộ)."""
     return PKG.encode() in adb('shell', 'dumpsys window | grep mCurrentFocus').stdout
@@ -156,10 +169,10 @@ def loop(every=30, probe_every=3600):
     - mỗi giờ (06–22h): tự thử dịch vụ '10.000 bước'. Báo hết phiên -> đăng xuất + đăng nhập lại ngay;
       không rõ (trống / lỗi lạ) 2 lần liên tiếp mà mạng vẫn thông -> cũng coi là hết phiên.
     Đang khoá (lần trước bị từ chối) thì im lặng chờ bạn mở khoá."""
-    last, bad = 0.0, 0
+    last, bad = time.time() - probe_every + 600, 0   # lượt kiểm đầu: 10 phút sau khi UC chạy, không chạy ngay lúc khởi động
     while True:
         try:
-            if not LOCK.exists() and b'device' in adb('get-state').stdout:
+            if not LOCK.exists() and not user_busy() and b'device' in adb('get-state').stdout:
               with UI:
                 if foreground() and len(login_form(nodes())) >= 2: recover('login')
                 elif time.time() - last >= probe_every and 6 <= time.localtime().tm_hour < 22 and online():

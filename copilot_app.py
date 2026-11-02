@@ -957,6 +957,11 @@ def alert_loop():
             try:   # (v1.00.49) tín hiệu phần vàng (giờ ngủ) cho khoá giờ ngủ: buổi học / thi chiếm chỗ nào thì phần vàng mất chỗ đó (nap.py)
                 import nap; nap.write(_npost)
             except Exception as e: print("nap:", e)
+            try:   # (v1.00.49) xanh lá chỉ chạy trên trắng / tím: vào xanh biển / vàng / đỏ thì tự tạm dừng, tím thì nhắc 10 phút/lần
+                import focus_rules
+                fr = focus_rules.tick(_npost, lambda t, x: alerts.notify(t, x, level="nudge", phone_ok=False))
+                if fr: print("focus rules:", fr)
+            except Exception as e: print("focus rules:", e)
             alert_loop.n = getattr(alert_loop, "n", 0) + 1
             if alert_loop.n % 5 == 1: phone_refresh()   # mỗi 5 phút: đối chiếu lịch hẹn ntfy + trang 📱 UC
         except Exception as e: print("alerts:", e)

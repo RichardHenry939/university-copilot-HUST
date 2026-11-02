@@ -31,7 +31,23 @@ const TOOLS = [
   { name: 'uc_canh_bao', description: 'Các cảnh báo đang hiện trên UC: thay đổi lịch, hạn gấp, sự kiện sắp tới, bài MOOC chưa có hạn.', inputSchema: NO_ARGS },
   { name: 'uc_chung_chi', description: 'Chứng chỉ ngoại ngữ đã khai trong UC: loại, điểm, bậc, ngày cấp, hạn, còn hiệu lực, học phần được miễn, chuẩn đầu ra.', inputSchema: NO_ARGS },
   { name: 'uc_mooc', description: 'MOOC SoICT: từng bài có điểm (hạn, điểm đạt/tối đa) và danh sách bài chưa có hạn đúng kỳ (UC không tự xếp lịch được).', inputSchema: NO_ARGS },
+  // (v1.00.49, chủ 02/11) công cụ GHI duy nhất. Xem luật dùng trong skill uc-assistant: chỉ lý do sức khoẻ / bất khả kháng cụ thể.
+  { name: 'uc_xoa_the_duc', description: 'Xoá khung THỂ DỤC (màu đỏ trên đồng hồ UC) của HÔM NAY, chỉ khi có lý do chính đáng cụ thể: chấn thương / đau (vd đau chân), ốm, thời tiết nguy hiểm, việc bất khả kháng. KHÔNG dùng khi người dùng lười, mệt chung chung hay không thích. Tối đa 1 lần mỗi ngày, ghi nhật ký kèm lý do. Lệnh về máy ở lượt đồng bộ kế tiếp (tối đa ~10 phút).',
+    inputSchema: { type: 'object', properties: { ly_do: { type: 'string', description: 'Lý do cụ thể, đúng lời người dùng (tối thiểu 20 ký tự), vd "đau cổ chân phải từ sáng, đi lại khó".' } }, required: ['ly_do'], additionalProperties: false } },
 ];
+const CMD = db.collection('uc').doc('xoa_the_duc');   // {'YYYY-MM-DD': {ly_do, at}}
+const vnDay = () => new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
+
+async function xoaTheDuc(args) {
+  const ly_do = String((args && args.ly_do) || '').trim();
+  if (ly_do.length < 20) return { ok: false, loi: 'Cần lý do cụ thể, ít nhất 20 ký tự (vd triệu chứng, hoàn cảnh). Không chấp nhận lý do lười / mệt chung chung.' };
+  const day = vnDay(), doc = await CMD.get(), cur = doc.exists ? (doc.data() || {}) : {};
+  if (cur[day]) return { ok: false, loi: 'Hôm nay đã xoá khung thể dục một lần rồi (tối đa 1 lần/ngày).', da_xoa: cur[day] };
+  const rec = { ly_do: ly_do.slice(0, 300), at: new Date().toISOString() };
+  await CMD.set({ [day]: rec }, { merge: true });
+  await db.collection('uc_log').add({ cong_cu: 'uc_xoa_the_duc', ngay: day, ...rec });
+  return { ok: true, ngay: day, ly_do: rec.ly_do, ghi_chu: 'Đã ghi. Máy UC sẽ bỏ khung đỏ hôm nay ở lượt đồng bộ kế tiếp (tối đa ~10 phút). Việc xoá được ghi nhật ký.' };
+}
 
 function same(a, b) {
   const A = Buffer.from(String(a || '')), B = Buffer.from(String(b || ''));
@@ -66,6 +82,7 @@ function toolData(name, args, snap) {
 
 async function callTool(name, args) {
   if (!TOOLS.some(t => t.name === name)) return null;
+  if (name === 'uc_xoa_the_duc') return xoaTheDuc(args);
   const doc = await DOC.get();
   const at = doc.exists ? doc.get('at') : null;
   const age = at ? (Date.now() - Date.parse(at)) / 60000 : Infinity;
@@ -87,7 +104,7 @@ async function rpc(msg) {
     if (method === 'initialize') {
       const v = PROTOS.includes(params.protocolVersion) ? params.protocolVersion : PROTOS[1];
       return ok({ protocolVersion: v, capabilities: { tools: {} }, serverInfo: { name: 'uc', version: '1.2.0' },
-        instructions: 'Dữ liệu học tập cá nhân của chủ UC, chỉ đọc. Luôn xem trường online; khi false thì nói rõ máy đang tắt.' });
+        instructions: 'Dữ liệu học tập cá nhân của chủ UC, chỉ đọc — trừ uc_xoa_the_duc (chỉ dùng khi có lý do sức khoẻ / bất khả kháng cụ thể, không khi lười). Luôn xem trường online; khi false thì nói rõ máy đang tắt.' });
     }
     if (method === 'tools/list') return ok({ tools: TOOLS });
     if (method === 'ping') return ok({});
@@ -112,7 +129,8 @@ exports.ucmcp = onRequest({ region: 'asia-southeast1', maxInstances: 2, memory: 
     const data = req.body;
     if (!data || typeof data !== 'object' || !data.at) return res.status(400).json({ loi: 'thiếu dữ liệu' });
     await DOC.set({ at: data.at, data, received: admin.firestore.FieldValue.serverTimestamp() });
-    return res.status(200).json({ ok: true });
+    const c = await CMD.get(), day = vnDay();   // (v1.00.49) trả lệnh xoá khung thể dục hôm nay (nếu có) cho máy
+    return res.status(200).json({ ok: true, xoa_the_duc: c.exists && c.get(day) ? { ngay: day, ...c.get(day) } : null });
   }
 
   const m = path.match(/^\/m\/([A-Za-z0-9_-]+)\/?$/);

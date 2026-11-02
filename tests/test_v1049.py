@@ -82,3 +82,11 @@ def test_nap_yellow_only_blue_overrides():
     assert nap.spans([ev('13:30', '14:15', 'Exam')], '2026-11-06')[0] == [['13:00', '13:30'], ['14:15', '15:00']]
     full, _ = nap.spans([ev('21:00', '22:30')], '2026-11-06', nap.YELLOW)
     assert full == [['00:00', '06:00'], ['13:00', '15:00'], ['22:30', '24:00']]
+
+
+def test_walk_override_once_per_day(monkeypatch, tmp_path):
+    import walk
+    monkeypatch.setattr(walk, 'OVERRIDE', tmp_path / 'ov.json')
+    walk.set_override('2026-11-02', 'đau cổ chân phải từ sáng, đi lại khó', 't1')
+    walk.set_override('2026-11-02', 'lần hai không ghi đè', 't2')
+    assert walk.overrides()['2026-11-02']['at'] == 't1'

@@ -127,6 +127,14 @@ def push():
                                  headers={'Content-Type': 'application/json', 'X-UC-Push': conf['push_secret']})
     with urllib.request.urlopen(req, timeout=40) as r:
         msg = f'đã gửi {len(body)} byte, HTTP {r.status}'
+        try: reply = json.loads(r.read().decode('utf-8') or '{}')
+        except Exception: reply = {}
+    x = reply.get('xoa_the_duc')   # (v1.00.49) AI đã xoá khung thể dục hôm nay qua MCP (lý do chính đáng) -> ghi vào UC
+    if x and x.get('ngay'):
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent.parent)); import walk
+            walk.set_override(x['ngay'], x.get('ly_do', ''), x.get('at', ''), 'mcp'); msg += ' · nhận lệnh xoá thể dục ' + x['ngay']
+        except Exception as e: msg += f' · lỗi ghi lệnh xoá thể dục: {e}'
     _status(True, msg)
     return 0, msg
 

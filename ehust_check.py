@@ -12,7 +12,7 @@ So theo (ngày, giờ bắt đầu, mã học phần) + phòng; không so giản
 import datetime as dt, hashlib, json, re, time, urllib.request
 from pathlib import Path
 
-from ictsv_login import adb, nodes, find, tap, UI
+from ictsv_login import adb, nodes, find, tap, UI, user_busy
 
 PKG = 'uni.hust.ehust'
 OUT = Path(__file__).resolve().parent / 'school' / 'ehust_check.json'
@@ -153,9 +153,10 @@ def run(today=None, send=True):
 
 
 def loop(every=3 * 3600):
-    time.sleep(120)   # để UC khởi động xong
+    time.sleep(900)   # 15 phút sau khi UC chạy (02/11: chạy ngay lúc khởi động làm giành máy ảo của bạn)
     while True:
         try:
+            if user_busy(): time.sleep(300); continue   # bạn đang dùng máy ảo -> thử lại sau 5 phút
             if 6 <= dt.datetime.now().hour < 22:
                 r = run(); print('ehust_check:', r.get('error') or f"{len(r['lech'])} chỗ lệch, {r['giay']}s")
         except Exception as e: print('ehust_check loop:', e)
