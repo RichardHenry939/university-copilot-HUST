@@ -707,7 +707,7 @@ def suggest_section(y):
     return nodes, conns, 460
 
 # --------------------------------------------------------------------------- web app: file ingest (Uni-Documents -> Drive -> Notion Inbox -> A2)
-DRIVE_BACKUP_FOLDER = "1JFJ24-rGAXbOsLdIxg-xs488htvw0wYQ"   # My Drive/University/Course Materials Backup
+DRIVE_BACKUP_FOLDER = __import__("os").environ.get("UC_DRIVE_BACKUP_FOLDER", "<drive-folder-id>")   # (v1.00.53) id thư mục Drive lấy từ biến môi trường, không ghi trong repo
 INBOX_DB = cfg.notion("inbox")
 INGEST_ROW_JS = r"""
 const b = $('Nhập file · Web app').first().json.body || {};
