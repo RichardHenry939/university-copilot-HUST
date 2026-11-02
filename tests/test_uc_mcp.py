@@ -89,6 +89,19 @@ def test_push_snapshot_doc_uc_mot_lan(monkeypatch):
     assert push.snapshot() is None
 
 
+def test_push_phan_biet_uc_tat_voi_uc_loi(monkeypatch, tmp_path):
+    # (02/11) /api/today lỗi 500 không được báo là "UC không chạy" và không được thoát 0
+    import json, push
+    conf = tmp_path / 'cloud.local.json'; conf.write_text(json.dumps({'push_url': 'http://x', 'push_secret': 's'}), encoding='utf-8')
+    monkeypatch.setattr(push, 'CONF', conf); monkeypatch.setattr(push, 'STATUS', tmp_path / 'st.json')
+    monkeypatch.setattr(S, '_fetch', lambda: (None, 'URLError: <urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>'))
+    assert push.push() == (1, 'UC không chạy, không gửi')
+    monkeypatch.setattr(S, '_fetch', lambda: (None, 'HTTPError: HTTP Error 500: Internal Server Error'))
+    code, msg = push.push()
+    assert code == 2 and 'đang chạy nhưng lỗi' in msg and '500' in msg
+    assert json.loads((tmp_path / 'st.json').read_text(encoding='utf-8'))['ok'] is False
+
+
 def test_xac_thuc_token_qua_http(monkeypatch):
     import http.client, threading
     from http.server import ThreadingHTTPServer

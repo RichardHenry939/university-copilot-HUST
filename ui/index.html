@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="/icons/p192.png">
 <meta name="theme-color" content="#2d55c8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,300..800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 <style>
@@ -20,7 +20,7 @@
   --green: #2f7d4f; --green-wash: #e6f3ec; --amber: #a86400; --amber-wash: #fbf1e1;
   --r-s: 8px; --r-m: 12px; --r-l: 18px;
   --rail: 288px; --col: 760px;
-  --font: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font: 'Bricolage Grotesque', 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;   /* (01/11 tối, chủ) một font cho cả hệ thống = font của chữ UNIVERSITY COPILOT; Be Vietnam Pro chỉ còn làm dự phòng */
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -1201,8 +1201,10 @@ a.wk:hover { border-color: var(--blue); }
 .topnav .brand-home { gap: 14px; color: #fff; }
 .tn-logo { height: clamp(46px, 4.9vw, 100px); width: auto; display: block; }
 .tn-name { display: flex; flex-direction: column; line-height: 1.1; text-transform: uppercase; }
-.topnav .brand-home .tn-name b { font-family: var(--display); font-weight: 800; font-size: clamp(17px, 2.1vw, 44px); white-space: nowrap; letter-spacing: .005em; }
-.tn-name span { font-family: var(--display); font-size: clamp(17px, 2.1vw, 44px); font-weight: 500; letter-spacing: .005em; margin-top: .15em; }   /* (01/11, chủ) cùng cỡ với dòng trên; University Copilot chỉ khác ở chữ đậm */
+.topnav .brand-home .tn-name b { font-family: var(--display); font-weight: 800; font-size: clamp(11px, 1.05vw, 22px);   /* (01/11 tối, chủ) cả hai dòng còn 1/2 cỡ cũ (cỡ cũ clamp(17px, 2.1vw, 44px)); sàn 11px để còn đọc được */ white-space: nowrap; letter-spacing: .005em; }
+/* (01/11 tối, chủ) dòng "Đại học Bách khoa Hà Nội" dùng đúng chữ của trường (ảnh cắt từ tiêu đề CTSV, chỉ ở máy); thiếu ảnh thì về chữ thường */
+.tn-hust { display: block; height: 1.84em; width: auto; margin-top: .12em; }   /* tỉ lệ chủ chốt: cả cụm "UNIVERSITY COPILOT" = 1/2 bề ngang dòng trường; JS bên dưới chỉnh chính xác */
+.tn-name span { font-family: var(--display); font-size: clamp(11px, 1.05vw, 22px); font-weight: 500; letter-spacing: .005em; margin-top: .15em; }   /* (01/11, chủ) cùng cỡ với dòng trên; University Copilot chỉ khác ở chữ đậm */
 .tn-hello { margin-left: auto; display: flex; align-items: center; gap: 14px; font-family: var(--display); font-weight: 700; font-size: clamp(17px, 1.6vw, 34px); }
 .tn-hello .brand-mark { width: clamp(40px, 4.1vw, 84px); height: clamp(40px, 4.1vw, 84px); border-radius: clamp(10px, 1vw, 20px); background: #fff; color: var(--deep); font-size: clamp(15px, 1.5vw, 30px); box-shadow: 0 0 0 2px rgba(255, 255, 255, .35); }
 .topnav .bell { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .35); color: #fff; }
@@ -1238,7 +1240,7 @@ a.wk:hover { border-color: var(--blue); }
 @media (max-width: 899px) {
   .tn-bar { padding: 8px 12px; gap: 10px; }
   .tn-logo { height: 38px; }
-  .topnav .brand-home .tn-name b { font-size: 15px; display: block; } .tn-name span { font-size: 15px; margin-top: 1px; }
+  .topnav .brand-home .tn-name b { font-size: 11px; display: block; } .tn-name span { font-size: 11px; margin-top: 1px; }
   .tn-hello span:not(.brand-mark) { display: none; }
   .tn-hello .brand-mark { width: 36px; height: 36px; font-size: 14px; border-radius: 10px; }
   .topnav .bell { margin-left: 0; }
@@ -1264,7 +1266,7 @@ a.wk:hover { border-color: var(--blue); }
     <!-- (01/11, chủ yêu cầu theo ảnh trang chủ CTSV) hàng trên: logo trường + "University Copilot / Đại học Bách khoa Hà Nội" | "Chào bạn" + logo UC; hàng dưới: menu.
          Logo trường đọc từ ui/assets/school-logo.png (chỉ có ở bản local); thiếu file thì ảnh tự ẩn. -->
     <div class="tn-bar">
-      <button class="brand-home" id="go-home" title="Trang chủ"><img class="tn-logo" src="/assets/school-logo.png" alt="" onerror="this.remove()"><span class="tn-name"><b>University Copilot</b><span>Đại học Bách khoa Hà Nội</span></span></button>
+      <button class="brand-home" id="go-home" title="Trang chủ"><img class="tn-logo" src="/assets/school-logo.png" alt="" onerror="this.remove()"><span class="tn-name"><b>University Copilot</b><span class="tn-sub"><img class="tn-hust" src="/assets/hust-name.png" alt="Đại học Bách khoa Hà Nội" onerror="this.replaceWith(document.createTextNode('Đại học Bách khoa Hà Nội'))"></span></span></button>
       <div class="tn-hello"><span class="brand-mark" aria-hidden="true">UC</span><span>Chào bạn</span></div>
       <button class="bell" id="bell" aria-label="Thông báo" aria-expanded="false" aria-controls="notif"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg><span class="bell-n" id="bell-n" hidden></span></button>
       <button class="gburger" id="gburger" aria-expanded="false" aria-controls="gnav" aria-label="Mở menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -2016,6 +2018,15 @@ async function walkNag() {
   }
 }
 walkLoad(); setInterval(walkLoad, 10 * 6e4); setInterval(walkNag, 20000);
+// (01/11 tối, chủ) dòng trường rộng đúng gấp đôi "UNIVERSITY COPILOT" ở mọi khổ màn hình (CSS em lệch ~1–2% do làm tròn cỡ chữ)
+(() => {
+  const b = document.querySelector('.tn-name b'), img = document.querySelector('.tn-hust');
+  if (!b || !img) return;
+  // đo bề ngang của chính phần chữ (Range), không đo thẻ <b>: thẻ giãn theo khung, khung giãn theo ảnh -> vòng lặp phóng to
+  const fit = () => { const r = document.createRange(); r.selectNodeContents(b); const w = r.getBoundingClientRect().width;
+    if (w) { img.style.height = 'auto'; img.style.width = (2 * w).toFixed(1) + 'px'; } };
+  addEventListener('resize', fit); img.addEventListener('load', fit); if (document.fonts) document.fonts.ready.then(fit); fit();
+})();
 // (01/11 tối) tách ra để mục "Lịch và thời gian" ở trang chủ dùng chung với mục Ngày của tab lịch
 function dayEvents(d) {
   const evs = calEvents().filter(e => evDay(e) === d && !isLong(e) && !/NGHỈ/.test(e.title)).sort((a, b) => a.start.localeCompare(b.start));

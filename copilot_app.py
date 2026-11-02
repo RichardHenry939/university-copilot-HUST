@@ -567,7 +567,8 @@ def dedup_gate(item_id):
                        err=f"trùng nội dung với {o.get('relPath')} — không tải lên; bỏ bản chép vào Thùng rác nếu không cần")
             return "stop"
         if not Path(o["path"]).exists():   # chuyển chỗ / đổi tên
-            update_item(o["id"], path=str(p), relPath=it.get("relPath"), folder=it.get("folder"), name=p.name)
+            mc, mn = course_of(it.get("folder") or "")   # (02/11) chuyển sang thư mục khác thì đổi luôn môn (vd chuyển vào Hành chính)
+            update_item(o["id"], path=str(p), relPath=it.get("relPath"), folder=it.get("folder"), name=p.name, courseCode=mc, courseName=mn)
             update_item(item_id, notion="moved", movedTo=o["id"])
             backup_patch(o.get("backupId"), "Moved", f"đã chuyển / đổi tên trên máy: {o.get('relPath')} → {it.get('relPath')} (bản Drive giữ nguyên)", get_item(o["id"]))
             return "stop"

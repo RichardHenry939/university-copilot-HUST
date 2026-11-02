@@ -16,7 +16,7 @@ UC là hệ thống của chính sinh viên. Claude đọc được dữ liệu 
 - Chỉ hỏi lịch thi giữa kỳ: `uc_exams` (lịch FAMI và trạng thái từng môn; môn chưa có lịch cũng phải được nhắc).
 - Chỉ muốn biết máy có bật không: `uc_status`.
 - Hoạt động ngoại khoá (đã đăng ký, đang mở, hạn minh chứng): `uc_ngoai_khoa`.
-- File trong University Inbox (tên, trạng thái xếp, thư mục, môn): `uc_inbox`. Công cụ này chỉ cho danh sách. Chưa đọc được nội dung file, nên không được bịa nội dung bài tập từ tên file.
+- File trong University Inbox (tên, trạng thái xếp, thư mục, môn, `driveLink`, `duong_dan` trên máy): `uc_inbox`. Công cụ này không trả nội dung file; muốn đọc nội dung thì mở `driveLink` bằng connector Google Drive, hoặc đưa file vào NotebookLM theo skill **uc-notebooklm** (UC_NotebookLM). Không bịa nội dung bài tập từ tên file.
 
 Luôn kiểm tra trường `online` trước khi dùng dữ liệu. Khi `online` là false, làm theo skill **uc-briefing**: nói rõ máy đang tắt và thời điểm `lan_cuoi`, dùng `ban_so_bo` làm báo cáo sơ bộ, bổ sung bằng Notion nếu có.
 

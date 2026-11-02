@@ -17,7 +17,7 @@ CONF = HERE / 'cloud.local.json'
 
 
 def _ngoai_khoa_inbox():
-    """(v1.00.40) Ngoại khoá (iCTSV) và danh sách Inbox: chỉ tên, trạng thái, thư mục, môn. KHÔNG đưa nội dung file lên mây."""
+    """(v1.00.40) Ngoại khoá (iCTSV) và danh sách Inbox: tên, trạng thái, thư mục, môn, link Drive, đường dẫn trên máy. KHÔNG đưa nội dung file lên mây."""
     out = {"ngoai_khoa": [], "inbox": []}
     try:
         sys.path.insert(0, str(HERE.parent))
@@ -28,10 +28,12 @@ def _ngoai_khoa_inbox():
         out["ngoai_khoa_loi"] = f"{type(e).__name__}: {e}"[:160]
     try:
         st = json.loads((HERE.parent / 'inbox_state.json').read_text(encoding='utf-8'))
-        keep = ('name', 'status', 'folder', 'relPath', 'source', 'courseCode', 'reason')
+        # (02/11) + driveLink (Claude Chat đọc file qua connector Google Drive) + duong_dan (vị trí chính xác trên máy, cho skill UC_NotebookLM)
+        keep = ('name', 'status', 'folder', 'relPath', 'source', 'courseCode', 'reason', 'driveLink')
         rows = []
         for it in st.get('items', [])[-200:]:
             r = {k: it.get(k) for k in keep}
+            if it.get('path'): r['duong_dan'] = it['path']
             ts = it.get('createdAt')
             if isinstance(ts, (int, float)): r['nhan_luc'] = dt.datetime.fromtimestamp(ts, S.TZ).isoformat(timespec='minutes')
             rows.append(r)
@@ -78,9 +80,14 @@ def _mo_rong():
     return out
 
 
+LAST_ERR = None   # lý do lần snapshot() gần nhất trả None (để push() phân biệt "UC tắt" với "UC lỗi")
+
+
 def snapshot():
     """-> bản tóm tắt (dict) hoặc None khi UC không trả lời. Chỉ đọc /api/today MỘT lần."""
+    global LAST_ERR
     d, err = S._fetch()
+    LAST_ERR = err
     if d is None: return None
     real = S._fetch
     S._fetch = lambda: (d, None)
@@ -94,16 +101,37 @@ def snapshot():
         S._fetch = real
 
 
+STATUS = HERE / 'push_status.json'   # lần gửi gần nhất: giờ, kết quả, lý do (chỉ trên máy)
+
+
+def _status(ok, msg):
+    try: STATUS.write_text(json.dumps({'at': dt.datetime.now(S.TZ).isoformat(timespec='seconds'), 'ok': ok, 'msg': msg},
+                                      ensure_ascii=False), encoding='utf-8')
+    except Exception: pass
+
+
 def push():
+    """-> (mã thoát, thông báo). 0 = đã gửi; 1 = UC không chạy; 2 = UC có chạy nhưng lỗi / quá tải.
+    (02/11) Trước đây mọi lỗi đều báo "UC không chạy" và thoát 0, nên 01/11 khi /api/today lỗi 500 (n8n mất mạng sau
+    khi khởi động lại WSL) connector im lặng gần 1 giờ mà Task Scheduler vẫn báo thành công."""
     conf = json.loads(CONF.read_text(encoding='utf-8'))
     snap = snapshot()
-    if snap is None: return 'UC không chạy, không gửi'
+    if snap is None:
+        err = LAST_ERR or ''
+        down = 'refused' in err.lower() or 'WinError 10061' in err or 'actively refused' in err
+        msg = ('UC không chạy, không gửi' if down else 'UC đang chạy nhưng lỗi, không gửi: ' + err)
+        _status(False, msg)
+        return (1 if down else 2), msg
     body = json.dumps(snap, ensure_ascii=False).encode('utf-8')
     req = urllib.request.Request(conf['push_url'], data=body, method='POST',
                                  headers={'Content-Type': 'application/json', 'X-UC-Push': conf['push_secret']})
     with urllib.request.urlopen(req, timeout=40) as r:
-        return f'đã gửi {len(body)} byte, HTTP {r.status}'
+        msg = f'đã gửi {len(body)} byte, HTTP {r.status}'
+    _status(True, msg)
+    return 0, msg
 
 
 if __name__ == '__main__':
-    print(push())
+    code, msg = push()
+    print(msg)
+    sys.exit(code)   # khác 0 thì Task Scheduler hiện "Last Run Result" lỗi, không còn báo thành công giả

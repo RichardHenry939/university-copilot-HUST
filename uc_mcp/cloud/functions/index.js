@@ -24,7 +24,7 @@ const TOOLS = [
   { name: 'uc_exams', description: 'Thi giữa kỳ: lịch chính thức (FAMI) và trạng thái từng môn (dự kiến / chưa có lịch / không thi).', inputSchema: NO_ARGS },
   { name: 'uc_briefing', description: 'Báo cáo sơ bộ một trang. Khi máy tắt: báo máy đang tắt kèm bản cuối.', inputSchema: NO_ARGS },
   { name: 'uc_ngoai_khoa', description: 'Hoạt động ngoại khoá từ iCTSV: đã đăng ký, đang mở, hạn nộp minh chứng; có tên, thời gian, địa điểm, trạng thái.', inputSchema: NO_ARGS },
-  { name: 'uc_inbox', description: 'Danh sách file trong University Inbox của UC: tên, trạng thái xếp, thư mục, môn. Chỉ danh sách, không có nội dung file.', inputSchema: NO_ARGS },
+  { name: 'uc_inbox', description: 'Danh sách file trong University Inbox của UC: tên, trạng thái xếp, thư mục, môn, driveLink (bản sao trên Google Drive, mở bằng connector Drive hoặc đưa vào NotebookLM) và duong_dan (vị trí chính xác trên máy). Không có nội dung file.', inputSchema: NO_ARGS },
   // (v1.00.42) mở rộng: lịch, cảnh báo, chứng chỉ, MOOC
   { name: 'uc_lich', description: 'Lịch học/thi/hạn/sự kiện từ hôm qua tới 21 ngày tới, ĐÃ áp lịch đè từ thông báo Teams (đổi buổi, đổi phòng, nghỉ). Tham số days (mặc định 7, tối đa 21).',
     inputSchema: { type: 'object', properties: { days: { type: 'integer', default: 7 } } } },
