@@ -1233,6 +1233,9 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/walk":   # (v1.00.45 tiếp) thể dục: km/bước theo ngày trên CTSV (đã gỡ MSSV/tên) + mục tiêu, giờ đi, quân sự
                 import walk
                 return self._send(200, walk.view())
+            if u.path == "/api/fitness":   # (v1.00.52) Fitness: số đo + buổi tập hôm nay (Gemini) + khung 20 phút
+                import importlib, fitness; importlib.reload(fitness)
+                return self._send(200, fitness.view())
             if u.path == "/api/offline":   # (v1.00.42) kết quả đối chiếu DS học offline (không có MSSV)
                 import offline_list
                 return self._send(200, offline_list.summary())
@@ -1458,6 +1461,15 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/offline/refresh":   # (v1.00.42) đọc lại DS học offline ngay
                 import offline_list
                 return self._send(200, offline_list.summary(offline_list.refresh()))
+            if u.path in ("/api/fitness/profile", "/api/fitness/plan", "/api/fitness/done"):   # (v1.00.52) Fitness
+                import importlib, fitness, walk; importlib.reload(fitness)
+                b = json.loads(self._body(8 * 1024) or b"{}")
+                try:
+                    if u.path == "/api/fitness/profile": fitness.set_profile(b)
+                    elif u.path == "/api/fitness/plan": fitness.plan(refresh=bool(b.get("refresh")), walk_steps=walk.view().get("steps", 0))
+                    else: fitness.mark_done(str(b.get("date") or fitness.view()["today"])[:10], b.get("feedback", ""))
+                except Exception as e: return self._send(200, {"ok": False, "loi": f"{type(e).__name__}: {e}"[:300]})
+                return self._send(200, {"ok": True, **fitness.view()})
             if u.path == "/api/walk/manual":   # (01/11 tối) chủ nhập tổng bước cả ngày theo app iCTSV (CTSV web chỉ có quãng đường giải tính)
                 import walk
                 b = json.loads(self._body(4 * 1024) or b"{}")
