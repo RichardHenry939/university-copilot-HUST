@@ -53,3 +53,25 @@ def test_hom_nay_khong_xep_vao_khung_da_qua():
     assert K.slot([], '2026-11-02', 20, C, after=now)['start'] == '2026-11-02T17:00+07:00'
     late = dt.datetime(2026, 11, 2, 20, 0, tzinfo=K.TZ)
     assert K.slot([], '2026-11-02', 20, C, after=late)['indoor'] is True
+
+
+# (v1.00.56, chủ 03/11) chưa đọc được app sau khung thì KHÔNG dời khung (trước đây máy ảo chết -> 0 bước -> khung trượt mãi)
+def _tz(h, m): return dt.datetime(2026, 11, 3, h, m, tzinfo=K.TZ)
+SL = {'start': '2026-11-03T17:00+07:00', 'end': '2026-11-03T17:20+07:00'}
+
+
+def test_chua_co_khung_thi_xep_moi():
+    assert K.need_new_slot(None, _tz(15, 0), None)
+
+
+def test_khung_chua_het_thi_giu():
+    assert not K.need_new_slot(SL, _tz(17, 10), '2026-11-03T17:15:00')
+
+
+def test_het_khung_ma_chua_doc_app_sau_khung_thi_giu():
+    assert not K.need_new_slot(SL, _tz(17, 45), '2026-11-02T21:32:43')
+    assert not K.need_new_slot(SL, _tz(17, 45), None)
+
+
+def test_het_khung_da_doc_app_sau_khung_thi_xep_lai():
+    assert K.need_new_slot(SL, _tz(17, 45), '2026-11-03T17:23:00')

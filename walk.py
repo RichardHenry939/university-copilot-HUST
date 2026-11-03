@@ -132,6 +132,16 @@ def slot(events, today, minutes, c=None, after=None):
     return {'start': None, 'end': None, 'indoor': True, 'rush': False}
 
 
+def need_new_slot(sl, now, app_at):
+    """(v1.00.56, chủ 03/11) Có xếp lại khung đi bộ không. Khung đã qua chỉ được xếp lại khi UC ĐÃ đọc app SAU lúc hết khung
+    (biết chắc chưa đi). Chưa đọc được (máy ảo chết, adb treo) thì giữ khung cũ — trước đây 0 bước giả làm khung trượt mãi."""
+    if not sl: return True
+    if not sl.get('end') or dt.datetime.fromisoformat(sl['end']) >= now: return False
+    if not app_at: return False
+    a = dt.datetime.fromisoformat(app_at)
+    return (a if a.tzinfo else a.replace(tzinfo=TZ)) >= dt.datetime.fromisoformat(sl['end'])
+
+
 def merge_days(ctsv_days, app_days):
     """(v1.00.52, chủ 02/11) Bảng theo ngày: giữ km/bước GIẢI TÍNH của CTSV (ước tính km × 1385) và thêm số THẬT của app
     (appSteps / appKm); ngày chỉ có trong app (vd sau khi đợt giải đóng) vẫn có dòng, km giải tính = 0."""
@@ -166,7 +176,7 @@ def view(now=None):
     # (03/11, chủ) khung đã qua mà xếp khung mới thì GIỮ khung cũ trong 'past': trước đây bị ghi đè -> đoạn đỏ cũ thành xám,
     # bản đồ mặt trận tính địch tiến cả giờ đi bộ. Chỉ xám mới cho địch tiến.
     past = kept.get('past', []) if kept.get('date') == today else []
-    if not sl or (sl.get('end') and dt.datetime.fromisoformat(sl['end']) < now):
+    if need_new_slot(sl, now, wa.get('at')):
         if sl and sl.get('start') and not sl.get('indoor'): past = past + [{'start': sl['start'], 'end': sl['end']}]
         sl = slot(ev, today, max(10, math.ceil(tgt / c['steps_per_min'])), c, after=now)
         try: sl_file.parent.mkdir(parents=True, exist_ok=True); sl_file.write_text(json.dumps({'date': today, 'slot': sl, 'past': past}), encoding='utf-8')

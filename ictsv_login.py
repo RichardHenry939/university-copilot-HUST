@@ -29,6 +29,8 @@ CONFIRM = ('Đồng ý', 'Có', 'OK', 'Xác nhận', 'Đăng xuất')
 
 def adb(*a, **kw):
     # UC chạy bằng pythonw (không có console): gọi adb.exe mà thiếu cờ này thì mỗi lần Windows bật 1 cửa sổ cmd (02/11)
+    # (v1.00.56, 03/11) adb server kẹt thì lệnh treo vô hạn -> cả vòng canh đứng im; đặt hạn 60 s (quá hạn = lỗi, vòng ghi log rồi chạy tiếp)
+    kw.setdefault('timeout', 60)
     return subprocess.run([ADB, *S, *a], capture_output=True, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0), **kw)
 
 
@@ -150,8 +152,9 @@ def probe():
             res = walk_app.read_page(nodes, adb)
             if walk_app.looks_empty(res):   # (v1.00.52, chủ 02/11) dịch vụ hiện 0 khi phiên hết hạn: KHÔNG ghi đè số cũ, coi là hết phiên
                 adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); return 'expired'
-            walk_app.save(res)
-        except Exception as e: print('walk_app:', e)
+            out = walk_app.save(res)
+            plog('ghi walk_app.json: hôm nay %s bước' % ((out['days'].get(time.strftime('%Y-%m-%d')) or {}).get('steps', 0)))
+        except Exception as e: plog('walk_app lỗi: %r' % e)
     adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
     if any(EXPIRED.search(l) for l in labels): return 'expired'
     if any(l == PROBE_OK for l in labels): return 'ok'
@@ -179,10 +182,78 @@ def after_slot_due(kept, last_probe, now, grace=180):
     return now >= e + grace and last_probe < e
 
 
+def red_fast_due(kept, last_probe, now, every=180):
+    """(03/11, chủ: "UC phải cập nhật nhanh") Từ lúc khung đỏ bắt đầu tới khi đã đọc được app SAU lúc hết khung: đọc mỗi 3 phút,
+    để đi đủ là đỏ tắt ngay và khung không bị dời oan. Ngoài khung vẫn đọc mỗi giờ."""
+    sl = (kept or {}).get('slot') or {}
+    if not sl.get('start') or not sl.get('end'): return False
+    import datetime as _dt
+    s, e = _dt.datetime.fromisoformat(sl['start']).timestamp(), _dt.datetime.fromisoformat(sl['end']).timestamp()
+    return now >= s and last_probe < e and now - last_probe >= every
+
+
 def _slot_kept():
     try:
         import json; return json.loads(SLOT_FILE.read_text(encoding='utf-8'))
     except Exception: return {}
+
+
+PROBE_LOG = Path(__file__).resolve().parent / 'school' / 'ictsv_probe.log'
+AUTOSTART_OFF = Path(__file__).resolve().parent / 'school' / 'android_autostart.off'   # có file này -> UC chỉ báo, không tự bật máy ảo
+OPEN_ANDROID = r'D:\Android\open-android.ps1'
+
+
+def plog(msg):
+    """(v1.00.56, 03/11) UC chạy bằng pythonw nên print không tới đâu (03/11 không chứng minh được lượt đọc nào đã chạy).
+    Ghi từng lượt vào school/ictsv_probe.log; quá ~200 KB thì giữ ~100 KB cuối."""
+    try:
+        PROBE_LOG.parent.mkdir(parents=True, exist_ok=True)
+        if PROBE_LOG.exists() and PROBE_LOG.stat().st_size > 200_000:
+            PROBE_LOG.write_text(PROBE_LOG.read_text(encoding='utf-8', errors='replace')[-100_000:], encoding='utf-8')
+        with PROBE_LOG.open('a', encoding='utf-8') as h: h.write(time.strftime('%Y-%m-%d %H:%M:%S ') + msg + '\n')
+    except Exception: pass
+
+
+class EmuWatch:
+    """(v1.00.56, 03/11) Máy ảo sập lúc 17:29 -> cả buổi UC lặng lẽ bỏ qua lượt đọc, không ai biết.
+    step() -> việc cần làm: 'down' (báo mất máy ảo), 'start' (tự bật lại), 'giveup' (thôi tự bật), 'back' (chạy lại).
+    Chỉ trong 06–22h; mất quá 2 phút mới tính (adb chập chờn / đang khởi động); bật lại cách nhau >= 10 phút, tối đa 3 lần/ngày.
+    Giới hạn (đi tắt): không phân biệt máy ảo SẬP với bạn TỰ TẮT -> bạn tắt ban ngày thì UC vẫn bật lại
+    (tối đa 3 lần); không muốn thì tạo school/android_autostart.off."""
+    GRACE, GAP, MAX = 120, 600, 3
+
+    def __init__(self): self.since, self.alerted, self.gave_up, self.starts = None, False, False, []
+
+    def new_day(self): self.starts, self.gave_up = [], False
+
+    def step(self, up, now, hour, off=False):
+        if up:
+            back = self.alerted; self.since, self.alerted, self.gave_up = None, False, False
+            return ['back'] if back else []
+        if not 6 <= hour < 22: return []
+        if self.since is None: self.since = now
+        if now - self.since < self.GRACE: return []
+        out = []
+        if not self.alerted: self.alerted = True; out.append('down')
+        if off: return out
+        if len(self.starts) < self.MAX:
+            if not self.starts or now - self.starts[-1] >= self.GAP: self.starts.append(now); out.append('start')
+        elif not self.gave_up: self.gave_up = True; out.append('giveup')
+        return out
+
+
+def emu_act(a, off):
+    plog('máy ảo: ' + a)
+    if a == 'down':
+        report(False, 'Máy ảo Android không chạy: UC không đọc được số bước iCTSV.'
+               + ('' if off else ' UC đang tự bật lại (không muốn thì tạo school/android_autostart.off).'))
+    elif a == 'start':
+        subprocess.Popen(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', OPEN_ANDROID],
+                         creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    elif a == 'giveup':
+        report(False, 'UC đã bật máy ảo 3 lần hôm nay mà không lên. Thôi tự bật; bạn mở shortcut "Pixel 6 (Android 14)".')
+    elif a == 'back':
+        report(True, 'Máy ảo Android đã chạy lại. UC đọc lại số bước iCTSV sau khoảng 2 phút.')
 
 
 def loop(every=30, probe_every=3600):
@@ -190,22 +261,32 @@ def loop(every=30, probe_every=3600):
     - mỗi 30 s: iCTSV đang mở mà hiện màn đăng nhập -> tự đăng nhập lại;
     - mỗi giờ (06–22h): tự thử dịch vụ '10.000 bước'. Báo hết phiên -> đăng xuất + đăng nhập lại ngay;
       không rõ (trống / lỗi lạ) 2 lần liên tiếp mà mạng vẫn thông -> cũng coi là hết phiên.
+    - (v1.00.56) máy ảo không chạy (06–22h) -> báo + tự bật lại (EmuWatch); mọi lượt ghi vào school/ictsv_probe.log.
     Đang khoá (lần trước bị từ chối) thì im lặng chờ bạn mở khoá."""
     last, bad = time.time() - probe_every + 600, 0   # lượt kiểm đầu: 10 phút sau khi UC chạy, không chạy ngay lúc khởi động
     last_read, pend = 0.0, None   # last_read: lần đọc app thật gần nhất; pend: khung đỏ chưa được đọc sau khi hết
+    emu, day, waited = EmuWatch(), time.strftime('%Y-%m-%d'), False   # waited: đã ghi log "đến lượt nhưng bạn đang dùng máy ảo"
+    plog('vòng canh iCTSV bắt đầu')
     while True:
         try:
+            if time.strftime('%Y-%m-%d') != day: day = time.strftime('%Y-%m-%d'); emu.new_day()
+            up, off = b'device' in adb('get-state').stdout, AUTOSTART_OFF.exists()
+            for a in emu.step(up, time.time(), time.localtime().tm_hour, off):
+                emu_act(a, off)
+                if a == 'back': last = time.time() - probe_every + 120   # máy ảo vừa lên: chờ ~2 phút cho xong khởi động rồi đọc
             k = _slot_kept()   # walk.view ghi đè khung mới khi khung cũ qua -> giữ khung cũ tới khi đã đọc xong
             if (k.get('slot') or {}).get('end') and (not pend or not after_slot_due(pend, last_read, 1e12)): pend = k
-            if not LOCK.exists() and not user_busy() and b'device' in adb('get-state').stdout:
+            due = (time.time() - last >= probe_every or after_slot_due(pend, last_read, time.time())
+                   or red_fast_due(k, last_read, time.time())) and 6 <= time.localtime().tm_hour < 22
+            if due and up and not waited and user_busy(): plog('đến lượt đọc nhưng bạn đang dùng máy ảo -> chờ'); waited = True
+            if not LOCK.exists() and not user_busy() and up:
               with UI:
-                if foreground() and len(login_form(nodes())) >= 2: recover('login')
-                elif ((time.time() - last >= probe_every or after_slot_due(pend, last_read, time.time()))
-                      and 6 <= time.localtime().tm_hour < 22 and online()):
-                    last = last_read = time.time(); r = probe(); print('ictsv probe:', r)
+                if foreground() and len(login_form(nodes())) >= 2: plog('thấy màn đăng nhập -> tự đăng nhập lại'); recover('login')
+                elif due and online():
+                    last = last_read = time.time(); waited = False; r = probe(); plog('đọc app: ' + r)
                     bad = bad + 1 if r == 'unknown' else 0
                     if r in ('expired', 'login') or bad >= 2: bad = 0; recover(r if r != 'unknown' else 'dịch vụ trống 2 lần')
-        except Exception as e: print('ictsv_login loop:', e)
+        except Exception as e: plog('lỗi vòng canh: %r' % e)
         time.sleep(every)
 
 
