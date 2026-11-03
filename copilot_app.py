@@ -1436,7 +1436,9 @@ class H(BaseHTTPRequestHandler):
                         elif act == "pause": wallet.pause(st, now)
                         elif act == "resume": wallet.resume(st, now)
                         elif act == "focus_end": wallet.end_focus(st, now)
-                        elif act == "fun_start": wallet.start_fun(st, now)
+                        elif act == "fun_start":
+                            if __import__("focus_rules").walk_red(now): raise ValueError("Đang là giờ thể dục: không mở phiên giải trí. Tập xong rồi chơi.")
+                            wallet.start_fun(st, now)
                         elif act == "fun_end": wallet.end_fun(st, now)
                         else: return self._send(400, {"ok": False, "loi": "Thao tác không hợp lệ."})
                     except ValueError as e: return self._send(200, {"ok": False, "loi": str(e)})
@@ -1697,6 +1699,7 @@ if __name__ == "__main__":
     threading.Thread(target=mail_loop, daemon=True).start()    # 📡 mọi nguồn đúng khung 5 phút, 24 giờ
     threading.Thread(target=alert_loop, daemon=True).start()
     threading.Thread(target=lambda: __import__("ictsv_login").loop(), daemon=True).start()   # (v1.00.49) iCTSV trong máy ảo bị đăng xuất -> UC tự đăng nhập lại + báo
+    threading.Thread(target=lambda: __import__("phone_lock").loop(), daemon=True).start()   # (v1.00.53) giờ khoá đêm / trưa / tập trung -> tạm khoá app MXH + trình duyệt trong máy ảo
     threading.Thread(target=lambda: __import__("desktop_icons").loop(), daemon=True).start()   # (v1.00.49) tập trung + chỉ màn laptop -> ẩn icon màn hình nền
     threading.Thread(target=lambda: __import__("ehust_check").loop(), daemon=True).start()   # (v1.00.49) mỗi 3 giờ: lịch tuần trên app eHUST vs lịch UC (Teams > eHUST > qldt)
     threading.Thread(target=_audio_priority_loop, daemon=True).start()   # 🎙️ (12/10) LUẬT TỐI CAO: tiếng CABLE Input ưu tiên tuyệt đối

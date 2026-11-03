@@ -3248,13 +3248,13 @@ function renderWallet() {
       await walPost({ action: 'focus_start', total: Number($('#w-total').value), subject: $('#w-subj').value, mssv: v }); };
   } else {
     const isF = a.phase === 'focus', nth = Math.min(a.focus_count, Math.floor(a.index / 2) + 1);
-    f.innerHTML = '<h2>' + (isF ? 'Tập trung · khối ' + nth + '/' + a.focus_count : 'Nghỉ ' + a.phase_min + ' phút') + (a.paused ? ' · tạm dừng' : '') + '</h2>' +
+    f.innerHTML = '<h2>' + (isF ? 'Tập trung · khối ' + nth + '/' + a.focus_count : 'Nghỉ ' + a.phase_min + ' phút') + (a.paused ? (a.forced ? ' · dừng vì giờ thể dục, đã gỡ chặn' : ' · tạm dừng') : '') + '</h2>' +
       (a.subject ? '<p class="wnote">' + esc(a.subject) + '</p>' : '') +
       '<div class="wclock' + (isF ? '' : ' brk') + '" id="w-clock">' + mmss(walLeft()) + '</div>' +
       '<p class="wnote">Đã trọn ' + a.blocks_done + ' khối (+' + a.blocks_done * 5 + ' phút) · tổng ' + a.total + ' phút</p>' +
       '<div class="row"><button class="ghost" id="w-pause">' + (a.paused ? 'Tiếp tục' : 'Tạm dừng') + '</button>' +
       '<label class="wsnd">Âm nền <select id="w-sound"><option value="brown">Brown noise</option><option value="radio">Claude Radio</option><option value="off">Tắt</option></select></label></div>' +
-      '<div id="w-radio"></div><p class="wnote" id="w-recnote"></p><p class="wnote">Không huỷ được phiên. Tạm dừng không gỡ chặn; tiếp tục thì giờ kết thúc lùi theo.</p>';
+      '<div id="w-radio"></div><p class="wnote" id="w-recnote"></p><p class="wnote">Không huỷ được phiên. Bấm tạm dừng không gỡ chặn; riêng giờ thể dục UC dừng bắt buộc và gỡ hết chặn. Tiếp tục thì chặn lại, giờ kết thúc lùi theo.</p>';
     $('#w-sound').value = wSound;
     $('#w-sound').onchange = e => { wSound = e.target.value; try { localStorage.setItem('w-sound', wSound); } catch (x) {} soundSync(true); };
     $('#w-pause').onclick = () => walPost({ action: a.paused ? 'resume' : 'pause' });

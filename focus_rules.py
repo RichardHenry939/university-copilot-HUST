@@ -2,8 +2,10 @@
 """(v1.00.49, chủ 02/11) Luật của xanh lá (chế độ tập trung) trên đồng hồ 24 giờ.
 
 Xanh lá dừng trước mọi màu khác, trừ trắng (mục tiêu chính, không cảnh báo) và tím (vẫn chạy nhưng cảnh báo liên tục):
-- xanh biển (đang có buổi học / thi), vàng (giờ ngủ đêm 22–6h, phần ngủ trưa còn lại), đỏ (khung thể dục UC xếp)
-  -> tự TẠM DỪNG phiên tập trung (không huỷ; tạm dừng không gỡ chặn — luật cũ) + báo lý do.
+- xanh biển (đang có buổi học / thi), vàng (giờ ngủ đêm 22–6h, phần ngủ trưa còn lại)
+  -> tự TẠM DỪNG phiên tập trung (không huỷ; chặn giữ nguyên) + báo lý do.
+- đỏ (khung thể dục UC xếp) -> DỪNG BẮT BUỘC (chủ 03/11): gỡ hết chặn (máy tính + máy ảo), kể cả khi đang pause tay;
+  phiên giải trí (tiêu ví) đang chạy thì kết thúc hẳn, chỉ trừ phút đã dùng.
 - tím (ăn sáng 7:30–8:00, ăn trưa 12–13h, ăn tối 19–20h / Camp 17:30–18:30) -> nhắc mỗi 10 phút, không dừng.
 Gọi mỗi phút trong copilot_app.alert_loop.
 Đi tắt: giờ ăn chép lại lần thứ 3 (ui/index.html, ui/widget.html, đây) — sửa lịch ăn thì sửa cả ba; chưa xét ngoại khoá
@@ -57,14 +59,36 @@ def color_now(post, now):
     return 'white', ''
 
 
+def walk_red(now):
+    """Đang trong khung thể dục (đỏ) UC xếp hôm nay? Chỉ đọc walk.view (không cần Notion)."""
+    try:
+        import walk
+        w = walk.view(now); sl = w.get('slot') or {}
+        return bool(w.get('red') and sl.get('start') and sl['start'][11:16] <= now.strftime('%H:%M') < sl['end'][11:16])
+    except Exception as e: print('focus_rules walk_red:', e); return False
+
+
 def tick(post, notify, now=None):
     import wallet
     now = (now or dt.datetime.now(TZ)).astimezone(TZ)
     with wallet.lock:
         st = wallet.load(); a = st.get('active') or {}
-        if a.get('type') != 'focus' or a.get('paused_at'): return None
+        if a.get('type') not in ('focus', 'fun') or a.get('forced'): return None
+        if a.get('paused_at'): wallet.hold_signal(st, now)   # pause tay: gia hạn chặn mỗi phút (chủ 03/11: "ấn pause không tính")
     color, why = color_now(post, now)
-    if color in ('blue', 'yellow', 'red'):
+    if color == 'red':   # (chủ 03/11) khung thể dục: dừng BẮT BUỘC, gỡ hết chặn; phiên giải trí (tiêu ví) dừng hẳn
+        with wallet.lock:
+            st = wallet.load(); a = st.get('active') or {}
+            if a.get('type') == 'fun':
+                spent = wallet.end_fun(st, now)['spent']; wallet.save(st)
+                notify('UC · đã dừng giải trí', f"Đang là {why}. Phiên giải trí kết thúc, ví chỉ trừ {spent} phút đã dùng. Đi tập thôi.")
+                return ('fun_end', why)
+            if a.get('type') != 'focus' or a.get('forced'): return None
+            wallet.pause(st, now, forced=why); wallet.save(st)
+        notify('UC · đã tạm dừng tập trung', f"Đang là {why}. Phiên tập trung dừng bắt buộc, đã gỡ hết chặn. Tập xong bấm Tiếp tục để chặn lại.")
+        return ('pause', why)
+    if a.get('type') != 'focus' or a.get('paused_at'): return None
+    if color in ('blue', 'yellow'):
         with wallet.lock:
             st = wallet.load(); a = st.get('active') or {}
             if a.get('type') != 'focus' or a.get('paused_at'): return None

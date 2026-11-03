@@ -3,8 +3,8 @@
 
 Quy tắc (chủ chốt 26/10 và 31/10):
 - Chủ chọn tổng thời gian; UC chia khối 25 phút tập trung + 5 phút nghỉ. Mỗi khối 25 phút TRỌN -> +5 phút ví.
-- Đã bắt đầu thì KHÔNG huỷ (chủ chốt 01/11): phiên chỉ kết thúc khi hết giờ. Tạm dừng được, nhưng không gỡ chặn;
-  tiếp tục thì giờ hết hạn của tín hiệu lùi theo. Bắt đầu phải nhập lại MSSV (máy chủ so, xem copilot_app) để tránh bấm nhầm.
+- Đã bắt đầu thì KHÔNG huỷ (chủ chốt 01/11): phiên chỉ kết thúc khi hết giờ. Bấm pause tay không gỡ chặn (giữ suốt lúc
+  dừng); riêng dừng BẮT BUỘC vì khung thể dục thì gỡ hết chặn (chủ 03/11). Tiếp tục thì giờ hết hạn của tín hiệu lùi theo. Bắt đầu phải nhập lại MSSV (máy chủ so, xem copilot_app) để tránh bấm nhầm.
 - Hoàn tất một hạn -> +15 phút, một lần cho mỗi hạn. Bỏ hoàn tất -> thu hồi đúng phần đã cộng.
 - "Giải trí" trừ phút theo thời gian thật (làm tròn lên phút), không vượt số dư; hết số dư thì tự dừng.
 Dữ liệu: school/wallet.json (sổ cái + phiên). Chỉ chạy trên máy này.
@@ -107,9 +107,26 @@ def start_focus(st, total_min, subject, now):
     return st['active']
 
 
-def pause(st, now):
+def _left_s(a, now): return a['total'] * 60 - _elapsed_s(a, now)
+
+
+def hold_signal(st, now):
+    """(03/11, chủ) Bấm pause tay KHÔNG tính là dừng: chặn giữ nguyên suốt lúc dừng. Giờ thời gian còn lại đứng yên nên
+    tín hiệu cũ sẽ hết hạn giữa chừng -> gia hạn = còn lại + 5 phút. Gọi lúc pause và mỗi phút (focus_rules.tick)."""
     a = st['active']
-    if a and a['type'] == 'focus' and not a.get('paused_at'): a['paused_at'] = _iso(now)
+    if a and a['type'] == 'focus' and a.get('paused_at') and not a.get('forced'):
+        _signal(True, _iso(now + dt.timedelta(seconds=_left_s(a, now) + 300)), now)
+
+
+def pause(st, now, forced=None):
+    """forced = lý do khi UC BẮT BUỘC dừng vì khung thể dục (đỏ): gỡ hết chặn ngay (chủ 03/11). Không có = pause tay
+    (hoặc tự dừng vì giờ học / giờ ngủ): chặn giữ nguyên. Đang pause tay mà tới khung thể dục -> chuyển thành bắt buộc."""
+    a = st['active']
+    if not a or a['type'] != 'focus': return
+    if not a.get('paused_at'): a['paused_at'] = _iso(now)
+    if forced:
+        a['forced'] = str(forced)[:120]; _signal(False, None, now)
+    elif not a.get('forced'): hold_signal(st, now)
 
 
 def resume(st, now):
@@ -117,8 +134,9 @@ def resume(st, now):
     if a and a.get('paused_at'):
         a['paused_s'] = a.get('paused_s', 0) + (now - _t(a['paused_at'])).total_seconds()
         a.setdefault('pauses', []).append([a['paused_at'], _iso(now)]); a['paused_at'] = None   # (01/11 tối) để đồng hồ 24h bỏ khoảng tạm dừng
-        if a['type'] == 'focus':   # tạm dừng làm phiên dài ra -> lùi giờ hết hạn của tín hiệu chặn
-            _signal(True, _iso(now + dt.timedelta(seconds=a['total'] * 60 - _elapsed_s(a, now))), now)
+        a.pop('forced', None)
+        if a['type'] == 'focus':   # tạm dừng làm phiên dài ra -> lùi giờ hết hạn của tín hiệu chặn (dừng bắt buộc -> chặn lại)
+            _signal(True, _iso(now + dt.timedelta(seconds=_left_s(a, now))), now)
 
 
 def end_focus(st, now):
