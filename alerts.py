@@ -229,7 +229,7 @@ def toast(title, text, persistent=False):
            f'<visual><binding template="ToastGeneric"><text>{esc(title)}</text><text>{esc(text)}</text></binding></visual>'
            f'<actions><action content="Mở UC" activationType="protocol" arguments="{UC}"/>'
            + ('<action content="Để sau" activationType="system" arguments="dismiss"/>' if persistent else '') +
-           '</actions><audio src="ms-winsoundevent:Notification.Reminder"/></toast>')
+           '</actions><audio src="ms-winsoundevent:Notification.Default"/></toast>')   # (03/11, chủ) Reminder như chuông, quá to trong tai nghe -> âm mặc định nhẹ hơn
     ps = ("[Windows.UI.Notifications.ToastNotificationManager,Windows.UI.Notifications,ContentType=WindowsRuntime]|Out-Null;"
           "[Windows.Data.Xml.Dom.XmlDocument,Windows.Data.Xml.Dom.XmlDocument,ContentType=WindowsRuntime]|Out-Null;"
           "$x=New-Object Windows.Data.Xml.Dom.XmlDocument;$x.LoadXml([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('"

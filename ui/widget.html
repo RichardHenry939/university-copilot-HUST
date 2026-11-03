@@ -42,21 +42,49 @@ body { background: #8fb3c4 url(/widget/bg.jpg) center / cover no-repeat; font-fa
 .panel li span { overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .panel li.past { opacity: .45; } .panel li.now time { color: var(--cls); } .panel li.urgent time { color: var(--red); }
 .panel .empty { color: var(--ink-2); margin: 0 0 1em; }
-.off { position: absolute; left: 50%; top: 2vh; transform: translateX(-50%); padding: .4em 1em; border-radius: 99px; font-size: 14px; display: none; }
+/* (03/11, chủ) "UC đang tắt" nằm ngay dưới đồng hồ, không trôi giữa màn: chỉ-laptop = dòng riêng giữa đồng hồ và khung chữ; bố cục ngang = treo dưới đồng hồ */
+.off { flex: 0 0 auto; align-self: center; white-space: nowrap; padding: .25em .9em; border-radius: 99px; font-size: 12px; font-weight: 600; display: none; }
+.clock .off { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: .6em; }
 .off.on { display: block; }
 /* bố cục */
 .m-lap1 { flex-direction: column; align-items: center; gap: 1.2vmin; font-size: clamp(11px, .78vw, 15px); }
 .m-lap1 .panel { width: 100%; padding: 1em 1.1em; }
+/* (03/11, chủ) chỉ-laptop: khung KHOÁ trong ô được cấp (giữa cột BIDV và cột Windows Media, trên hàng Proton VPN).
+   Đồng hồ nhỏ lại, khung chữ lấp phần còn lại, thừa thì cắt (mờ dần ở đáy) — không bao giờ tràn xuống icon. */
+.m-lap1 { gap: .8vmin; }
+.m-lap1 .clock { flex: 0 0 auto; }
+.m-lap1 .panel { flex: 1 1 0; min-height: 0; overflow: hidden; padding: .7em .8em; border-radius: 1.6vmin;
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 1.4em), transparent); mask-image: linear-gradient(#000 calc(100% - 1.4em), transparent); }
+.m-lap1 .now-t { margin: 0 0 .4em; } .m-lap1 .now-t .dig { font-size: 1.45em; }
+.m-lap1 .sum { margin: 0 0 .5em; gap: .25em; } .m-lap1 .sum span { padding: .12em .5em; }
+.m-lap1 .panel h2 { margin: 0 0 .25em; font-size: .95em; } .m-lap1 .panel h2 + ul { margin-bottom: .5em; }
+.m-lap1 .panel ul { gap: .2em; } .m-lap1 .panel li { grid-template-columns: 4.4em 1fr; gap: .45em; }
+.m-lap1 .panel li span { -webkit-line-clamp: 1; }
 .m-lap2 { left: 5vw; top: 50%; transform: translateY(-40%); font-size: clamp(13px, 1vw, 18px); align-items: center; }
 .m-lap2 .clock { width: min(38vh, 26vw); } .m-lap2 .panel { width: min(30vw, 34em); }
+/* (03/11, chủ) căn giữa màn, lên 1 ô icon (~9vh), khung rộng ra 2 cột cho thấp lại: trái giờ + tóm tắt + bản đồ, phải các danh sách */
+.m-lap2 { left: 50%; transform: translate(-50%, calc(-50% - 9vh)); }
+.m-lap2 .panel { width: min(52vw, 66em); display: grid; grid-template-columns: 1.15fr 1fr; gap: 0 1.8em; align-items: start; }
 /* màn rời: dải ngang, cao <= 17vh, ở vùng chủ khoanh 02/11 (lề phải, dưới hàng icon Dashboard/Notion, trên BIDV: y ~29–46%) */
 .m-ext { right: 1.2vw; top: 29vh; font-size: clamp(11px, .68vw, 14px); align-items: center; }
 /* (02/11, chủ) bề ngang giữ nguyên; chiều dọc tự do: hiện TOÀN BỘ việc hôm nay, chữ to dễ đọc, không cắt */
 .m-ext { align-items: flex-start; font-size: clamp(11px, .7vw, 14px); }   /* 02/11: 17px quá to, đè icon BIDV -> nhỏ lại (bề ngang không đổi) */
 .m-ext .clock { width: 17vh; } .m-ext .panel { width: min(26vw, 34em); padding: 1em 1.2em; }
 .m-ext .now-t .dig { font-size: 1.6em; }
+/* (03/11, chủ: "quá dài 1 lần nữa") màn rời gọn như laptop: bỏ lời bình bản đồ, bản đồ thấp, mỗi việc 1 dòng; trần bề cao, thừa thì mờ dần ở đáy */
+.m-ext .panel { max-height: 62vh; overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 1.4em), transparent); mask-image: linear-gradient(#000 calc(100% - 1.4em), transparent); }
+.m-ext .panel h2 { margin: 0 0 .3em; } .m-ext .panel h2 + ul { margin-bottom: .7em; } .m-ext .panel ul { gap: .25em; }
+.m-ext .panel li span { -webkit-line-clamp: 1; }
 .panel li.rev time, .panel li.rev span { color: var(--review); font-weight: 700; }   /* chủ chọn 02/11: ôn thi = vàng đỏ, cả chữ */
 .panel .exams li span { font-weight: 700; }
+.panel li.walk time, .panel li.walk span { color: #d62828; font-weight: 700; }   /* thể dục = đỏ */
+/* (03/11, chủ) dải tóm tắt hôm nay: tập trung · ví · hạn hôm nay · Fitness */
+.sum { display: flex; flex-wrap: wrap; gap: .4em; margin: -.2em 0 1em; }
+.sum span { padding: .25em .65em; border-radius: 99px; background: rgba(255,255,255,.6); font-weight: 600; white-space: nowrap; }
+.sum .fz0 { background: #cf3434; color: #fff; } .sum .fz1 { background: #f6c945; color: #12233d; }
+.sum .fz30 { background: #1f6fd1; color: #fff; } .sum .fz60 { background: #2f7d4f; color: #fff; } .sum .fz120 { background: #12a39a; color: #fff; }
+.sum .fit b { color: #2f7d4f; } .sum .ok { opacity: .55; }
 @media (prefers-reduced-motion: reduce) { .ss { display: none; } }
 </style>
 </head>
@@ -80,9 +108,12 @@ let REV = [], DL = null;   // REV: "Ôn thi định kỳ hằng ngày môn X" (k
 let CAMP = false;   // ⛺ Camp hôm nay (học ở thư viện) -> ăn tối 17:30–18:30
 async function loadDl() { try { const t = await j('/api/today'); DL = (t.deadlines || []).filter(x => !x.overdue && x.due); CAMP = t.mode === 'Camp'; } catch (e) {} render(); }
 async function loadEv() { try { const t = await j('/api/timetable/all'); EV = (t && t.events) || []; REV = (t && t.review) || []; if (t && t.nap && Array.isArray(t.nap.spans)) NAP_SPANS = t.nap.spans; OFF = false; } catch (e) { OFF = true; } render(); }
-async function loadSp() { try { const w = await j('/api/wallet'); const a = w.active; SP = { spans: w.spans || [], live: !!(a && a.type === 'focus' && !a.paused_at) }; } catch (e) {} }
-let RED = null;   // thể dục = đỏ (khung đi bộ UC xếp, chưa bị AI xoá)
-async function loadWalk() { try { const w = await j('/api/walk'); RUNS = ((w.app || {})[w.today] || {}).runs || []; RED = w.red && w.slot && w.slot.start ? w.slot : null; } catch (e) {} }
+let BAL = null, STEP = null;   // (03/11) số dư ví + bước hôm nay cho dải tóm tắt
+async function loadSp() { try { const w = await j('/api/wallet'); const a = w.active; SP = { spans: w.spans || [], live: !!(a && a.type === 'focus' && !a.paused_at) }; BAL = w.balance; } catch (e) {} }
+let RED = null, REDS = [];   // thể dục = đỏ (khung đi bộ UC xếp, chưa bị AI xoá)
+async function loadWalk() { try { const w = await j('/api/walk'); RUNS = ((w.app || {})[w.today] || {}).runs || []; RED = w.red && w.slot && w.slot.start ? w.slot : null;
+  REDS = (w.redSpans || (RED ? [[RED.start, RED.end]] : [])).map(x => [Date.parse(x[0]), Date.parse(x[1])]);   // (03/11) mọi đoạn đỏ hôm nay, kể cả khung đã bị dời
+  STEP = { steps: w.steps || 0, target: w.target || 10000, met: !!w.met }; } catch (e) {} render(); }
 let VER = null;   // widget.html đổi -> tự tải lại (Lively không tự tải lại trang)
 async function loadMon() { try { const w = await j('/api/widget'); MON = +Q.get('mon') || w.monitors || 1;
   if (VER && w.ver && w.ver !== VER) return location.reload(); VER = w.ver; } catch (e) {} layout(); }   // &mon=1: xem thử bố cục chỉ-laptop
@@ -92,10 +123,12 @@ function layout() {
   const g = $('#grp'), mode = SCREEN === 'ext' ? 'ext' : MON > 1 ? 'lap2' : 'lap1';
   g.className = 'grp m-' + mode; g.dataset.mode = mode; g.removeAttribute('style'); $('#clk').removeAttribute('style');
   if (mode === 'lap1') {   // chỗ bạn khoanh (02/11): khoảng x 28–41%, y 0–42% của màn laptop
-    const x = +Q.get('x') || 28, y = +Q.get('y') || 2, w = +Q.get('w') || 13;
-    Object.assign(g.style, { left: x + 'vw', top: y + 'vh', width: w + 'vw' });
-    $('#clk').style.width = '72%';
+    // (03/11, chủ: dài lố, đè icon) ô được cấp ~x 25–41%, y 1–50% (chủ nới tới trên hàng icon thứ 5) -> khoá cả bề cao (&h= để chỉnh)
+    const x = +Q.get('x') || 25.5, y = +Q.get('y') || 1, w = +Q.get('w') || 15, h = +Q.get('h') || 49;
+    Object.assign(g.style, { left: x + 'vw', top: y + 'vh', width: w + 'vw', height: h + 'vh' });
+    $('#clk').style.width = 'min(62%, 15vh)';
   }
+  if (mode === 'lap1') g.insertBefore($('#off'), $('#pan')); else $('#clk').appendChild($('#off'));   // nhãn "UC đang tắt" dưới đồng hồ
   render();
 }
 
@@ -109,6 +142,9 @@ function render() {
     .sort((a, b) => a.start.localeCompare(b.start));
   while (sch.length > 4 && Date.parse(sch[0].end || sch[0].start) < now) sch.shift();
   sch = sch.slice(0, 4);
+  // (02/11, chủ) khung đi bộ UC xếp hiện ngay trong "Hôm nay" (luôn hiện, ngoài giới hạn 4), có giờ cụ thể
+  if (RED && RED.start && vnDay(Date.parse(RED.start)) === today && Date.parse(RED.end) > now)
+    sch = sch.concat([{ start: RED.start, end: RED.end, title: '🚶 Đi bộ (thể dục)', walk: 1 }]).sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
   // Lịch thi: trên cùng, bỏ TDTT / QP-AN (cùng luật exam_watch.py)
   const exempt = e => /^(PE|MIL)\d/i.test(String(e.notes || '')) || /quốc phòng|gdqp|an ninh|thể dục|thể chất|tdtt/i.test(e.title || '');
   const exams = EV.filter(e => e.kind === 'Exam' && !exempt(e) && Date.parse(e.end || e.start) > now).sort((a, b) => a.start.localeCompare(b.start));
@@ -123,7 +159,7 @@ function render() {
   const dow = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][vn(now).getUTCDay()];
   const top = '<p class="now-t"><b class="dig">' + vnHM(now) + ':' + p2(vn(now).getUTCSeconds()) + '</b> ' + dow + ', ' + vn(now).getUTCDate() + '/' + (vn(now).getUTCMonth() + 1) + '</p>';
   const schHTML = '<h2>Hôm nay</h2>' + (sch.length ? '<ul>' + sch.map(e => { const s = Date.parse(e.start), en = Date.parse(e.end || e.start);
-      return '<li class="' + (en < now ? 'past' : s <= now ? 'now' : '') + '"><time>' + vnHM(s) + '</time><span>' + esc(name(e)) + (e.location ? ' · ' + esc(e.location) : '') + '</span></li>'; }).join('') + '</ul>'
+      return '<li class="' + (en < now ? 'past' : s <= now ? 'now' : '') + (e.walk ? ' walk' : '') + '"><time>' + vnHM(s) + '</time><span>' + esc(name(e)) + (e.location ? ' · ' + esc(e.location) : '') + '</span></li>'; }).join('') + '</ul>'
     : '<p class="empty">Không có buổi học hay sự kiện.</p>');
   const exHTML = exams.length ? '<section class="exams"><h2>Lịch thi</h2><ul>' + exams.map(e => { const s = Date.parse(e.start);
       return '<li class="urgent"><time>' + when(s) + '</time><span>' + esc((e.title || '').replace(/^Thi( GK)?:\s*/, 'Thi ')) + (e.location ? ' · ' + esc(e.location) : '') + '</span></li>'; }).join('') + '</ul></section>' : '';
@@ -131,7 +167,18 @@ function render() {
   const dlHTML = '<h2>Việc cần làm hôm nay</h2>' + (REV.length || dls.length ? '<ul>' + revHTML + dls.map(e => { const s = Date.parse(e.start);
       return '<li class="' + (vnDay(s) === today ? 'urgent' : '') + '"><time>' + when(s) + '</time><span>' + esc(name(e)) + '</span></li>'; }).join('') + '</ul>'
     : '<p class="empty">Hôm nay không có việc nào có hạn.</p>');
-  $('#pan').innerHTML = top + exHTML + (mode === 'lap1' ? '' : '<section>' + schHTML + '</section>') + '<section>' + dlHTML + '</section>';
+  // (03/11, chủ) dải tóm tắt: 0 phút đỏ · >0 vàng · >30 xanh biển · >60 xanh lá · >120 xanh ngọc
+  const fm = Math.floor(SP.spans.reduce((t, x, i) => t + ((SP.live && i === SP.spans.length - 1 ? now : Date.parse(x[1])) - Date.parse(x[0])), 0) / 60000);
+  const fc = fm > 120 ? 'fz120' : fm > 60 ? 'fz60' : fm > 30 ? 'fz30' : fm > 0 ? 'fz1' : 'fz0';
+  const sh = mode === 'lap1';   // (03/11) chỉ-laptop: chữ ngắn cho vừa ô
+  const fTxt = fm ? (sh ? '' : 'Tập trung ') + (fm >= 60 ? Math.floor(fm / 60) + (sh ? 'h' : ' giờ ') + p2(fm % 60) : fm) + (sh ? (fm >= 60 ? '' : 'p') + ' tập trung' : ' phút') : (sh ? '0p tập trung' : 'Chưa tập trung phút nào');
+  const left = REV.length + dToday.length;
+  const nf = n => Number(n).toLocaleString('vi-VN');
+  const sum = '<div class="sum"><span class="' + fc + '">' + fTxt + '</span>' +
+    (BAL != null ? '<span>Ví ' + BAL + (sh ? 'p' : ' phút') + '</span>' : '') +
+    '<span class="' + (left ? '' : 'ok') + '">' + (left ? (sh ? 'Còn ' : 'Hôm nay còn ') + left + ' việc' : (sh ? 'Hết việc' : 'Hôm nay đã hết việc')) + '</span>' +
+    (STEP ? '<span class="fit' + (STEP.met ? ' ok' : '') + '"><b>Fitness</b> ' + (STEP.met ? 'đủ bước' : nf(STEP.steps) + (sh ? '/' : ' / ') + nf(STEP.target) + (sh ? '' : ' bước')) + '</span>' : '') + '</div>';
+  $('#pan').innerHTML = '<div>' + top + sum + '</div><div>' + exHTML + (mode === 'lap1' ? '' : '<section>' + schHTML + '</section>') + '<section>' + dlHTML + '</section></div>';   // 2 khối = 2 cột ở lap2
 }
 
 // ---- đồng hồ 24 giờ (cùng luật màu với ui/index.html) ----
@@ -160,7 +207,7 @@ function tick() {
     if (!isNaN(st)) runs.push([st, st + ((q[0] || 0) * 3600 + (q[1] || 0) * 60 + (q[2] || 0)) * 1000]); }
   svg.querySelector('.life').innerHTML = meals(CAMP).map(x => '<path class="lf" d="' + arc(x[0] * 15, x[1] * 15, 94) + '"/>').join('') + paths(runs, 'lf');
   svg.querySelector('.naps').innerHTML = NAP_SPANS.map(x => '<path class="slp" d="' + arc(hm2h(x[0]) * 15, hm2h(x[1]) * 15, 94) + '"/>').join('');
-  svg.querySelector('.reds').innerHTML = RED ? '<path class="rd" d="' + arc((Date.parse(RED.start) - day0) / 240000, (Date.parse(RED.end) - day0) / 240000, 94) + '"/>' : '';
+  svg.querySelector('.reds').innerHTML = REDS.map(x => '<path class="rd" d="' + arc((x[0] - day0) / 240000, (x[1] - day0) / 240000, 94) + '"/>').join('');
   svg.querySelector('.cls').innerHTML = paths(cls, 'cl');
   svg.querySelector('.fzs').innerHTML = paths(SP.spans.map((x, i) => [x[0], SP.live && i === SP.spans.length - 1 ? now : x[1]]), 'fz');
   const dg = $('.dig'); if (dg) dg.textContent = p2(h) + ':' + p2(m) + ':' + p2(s);   // HH:MM:SS ở mọi bố cục (chủ, 02/11)

@@ -33,14 +33,24 @@ def _quiet(now, busy, in_cls, last):
 
 
 def decide(now, day, focus_min, busy, in_class, last):
-    """-> {'title', 'text'} hoặc None. day = kết quả daymode.today_view (items, planHours, mode)."""
+    """-> [{'title', 'text'}, ...] hoặc None. day = kết quả daymode.today_view (items, planHours, mode).
+    (03/11, chủ) KHÔNG gộp: mỗi việc chưa xong 1 tin riêng (tên việc + còn bao lâu tới giờ ngủ), phút tập trung 1 tin riêng."""
     if _quiet(now, busy, in_class, last) or not day or day.get('mode') == 'Rest': return None
     open_ = [x for x in day.get('items') or [] if x.get('status') != 'Done']
     target = int(round(float(day.get('planHours') or 0) * 60))
     if not open_ or focus_min >= target: return None
-    first = open_[0].get('task') or ''
-    return {'title': f'Còn {len(open_)} việc hôm nay · mới tập trung {focus_min}/{target} phút',
-            'text': (f'Việc đầu: {first[:80]}. ' if first else '') + 'Mở UC, bật phiên tập trung để làm (bật là khoá mạng xã hội).'}
+    import alerts
+    bed = now.astimezone(TZ).replace(hour=22, minute=0, second=0, microsecond=0)   # 22:00 = khoá đêm, hết ngày làm việc
+    left = alerts.left(bed, now) + ' trước giờ ngủ (22:00)'
+    out = []
+    for x in open_:
+        est = float(x.get('est') or 0)
+        hrs = (f'{est:g}'.replace('.', ',') + ' giờ') if est else ''
+        out.append({'title': f"Việc hôm nay: {(x.get('task') or 'chưa đặt tên')[:80]}",
+                    'text': (f'Dự kiến {hrs} · ' if hrs else '') + left})
+    out.append({'title': f'Hôm nay mới tập trung {focus_min}/{target} phút',
+                'text': 'Mở UC, bật phiên tập trung để làm (bật là khoá mạng xã hội).'})
+    return out
 
 
 def _last():
@@ -59,6 +69,6 @@ def run(post, classes, send, now=None):
     import daymode
     r = decide(now, daymode.today_view(post), v['stats']['ngay']['focus_min'], busy, in_cls, last)
     if r:
-        send(r['title'], r['text'])
+        for m in r: send(m['title'], m['text'])   # mỗi tin một toast riêng
         STATE.write_text(json.dumps({'last': now.isoformat(timespec='seconds')}), encoding='utf-8')
     return r

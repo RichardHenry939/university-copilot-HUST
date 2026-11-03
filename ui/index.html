@@ -698,9 +698,9 @@ button.link:hover { text-decoration: underline; }
 .chip { background: var(--sheet); }
 
 /* ngăn kéo GDTC · Hè · Học lại: trượt ra bên phải, không chiếm cột */
-.side-r { display: block; position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 100vw); height: 100vh; z-index: 30;
+.side-r { display: block; position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 100vw); height: 100vh; z-index: 47; /* (03/11) trên header (45/46), nếu không header che mất nút đóng */
   transform: translateX(105%); transition: transform .22s ease; box-shadow: -18px 0 40px rgba(20, 30, 50, .16); visibility: hidden; }
-.app.r-open .side-r { transform: none; visibility: visible; }
+.app.r-open .side-r { transform: none; visibility: visible; z-index: 47; }
 
 /* 900–1279: điều hướng chỉ còn icon, Hôm nay hẹp lại */
 @media (max-width: 1279px) {
@@ -1077,6 +1077,7 @@ button.link:hover { text-decoration: underline; }
 .runman small { flex-basis: 100%; color: var(--ink-3); }
 /* (02/11, chủ) ôn thi định kỳ = vàng đỏ, cả chữ */
 .dc-list li.rev, .dc-list li.rev time, .revtask .tname, .revtask .exmark { color: #d9730d; } .dc-list li.rev { font-weight: 700; } .revtask .exmark { background: #fdebd3; }
+.dc-list li.walkli, .dc-list li.walkli time { color: #d62828; font-weight: 700; }   /* thể dục = đỏ */
 .runman-d { margin: 0 0 8px; } .runman-d summary { cursor: pointer; color: var(--ink-3); font-size: 13px; margin-bottom: 6px; }
 .walkday { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 10px 14px; margin: 0 0 8px; }
 .walkday h3 { margin: 0 0 6px; display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; } .walkday h3 span { font-family: var(--display); color: var(--green); }
@@ -2150,6 +2151,10 @@ function renderHomeTime() {
   let sch = sch0.filter(e => e.kind !== 'Exam');
   while (sch.length > 4 && Date.parse(sch[0].end || sch[0].start) < now) sch.shift();
   sch = sch.slice(0, 4);
+  // (02/11, chủ) khung đi bộ UC xếp hiện ngay trong "Lịch trong ngày" (luôn hiện, ngoài giới hạn 4), có giờ cụ thể
+  const Wk = (() => { try { return WALK; } catch (e) { return null; } })(), ws = Wk && Wk.red && Wk.slot;
+  const walkLi = ws && ws.start && vnDate(Date.parse(ws.start)) === today && Date.parse(ws.end) > now
+    ? '<li class="walkli"><time>' + vnHM(ws.start) + '–' + vnHM(ws.end) + '</time>🚶 Đi bộ (thể dục)<small>Mục tiêu ' + nf(Wk.target) + ' bước · đã đi ' + nf(Wk.steps) + '</small></li>' : '';
   // hạn: lấy danh sách đầy đủ của UC (/api/today, biến DAY) khi đã có — lịch chỉ chứa một phần (vd thiếu hạn FAMI)
   const DD = dayData();
   const full = DD && DD.deadlines ? DD.deadlines.filter(x => !x.overdue && x.due && Date.parse(x.due) > now)
@@ -2158,8 +2163,8 @@ function renderHomeTime() {
   const later = (full || CAL.events.filter(e => e.kind === 'Deadline' && Date.parse(e.start) > now)).filter(e => evDay(e) !== today).sort((a, b) => a.start.localeCompare(b.start));
   const todo = today0.concat(later.slice(0, Math.max(0, 6 - REVIEW.length - today0.length)));
   box.innerHTML = (exams.length ? '<section class="ht-exams"><h3>Lịch thi <span>' + exams.length + '</span></h3><ul class="dc-list dc-exams">' + exams.map(e => dayLi(e, false, now)).join('') + '</ul></section>' : '') +
-    '<section><h3>Lịch trong ngày <span>' + sch.length + '</span></h3>' +
-      (sch.length ? '<ul class="dc-list">' + sch.map(e => dayLi(e, false, now)).join('') + '</ul>' : '<p class="dc-empty">Hôm nay không có buổi học hay sự kiện.</p>') + '</section>' +
+    '<section><h3>Lịch trong ngày <span>' + (sch.length + (walkLi ? 1 : 0)) + '</span></h3>' +
+      (sch.length || walkLi ? '<ul class="dc-list">' + sch.map(e => dayLi(e, false, now)).join('') + walkLi + '</ul>' : '<p class="dc-empty">Hôm nay không có buổi học hay sự kiện.</p>') + '</section>' +
     '<section><h3>Việc cần làm hôm nay <span>' + (REVIEW.length + todo.length) + '</span></h3>' +
       (REVIEW.length || todo.length ? '<ul class="dc-list dl">' + REVIEW.map(reviewLi).join('') + todo.map(e => evDay(e) === today ? dayLi(e, true, now) : dayLi(e, true, now).replace('<time>Hạn ', '<time>Hạn ' + hDM(e.start) + ' ')).join('') + '</ul>' : '<p class="dc-empty">Hôm nay không có việc nào có hạn.</p>') + '</section>';
 }
@@ -2175,6 +2180,8 @@ let NAP_SPANS = [['13:00', '15:00']];
 // DAY khai báo bằng let ở dưới file: đọc trước dòng khai báo thì cả `typeof DAY` cũng ném lỗi (đồng hồ chạy ngay lúc tải) -> đọc qua hàm này
 function dayData() { try { return DAY; } catch (e) { return null; } }
 const hm2h = s => +s.slice(0, 2) + +s.slice(3, 5) / 60;
+// (03/11, chủ) mọi đoạn đỏ hôm nay [ms, ms] (khung đi bộ đã qua + khung hiện tại); /api/walk cũ chưa có redSpans thì lấy khung hiện tại
+const redSpans = W => !W ? [] : (W.redSpans || (W.red && W.slot && W.slot.start ? [[W.slot.start, W.slot.end]] : [])).map(x => [Date.parse(x[0]), Date.parse(x[1])]);
 const meals = camp => [[7.5, 8], [12, 13], camp ? [17.5, 18.5] : [19, 20]];
 function clk24Build(el) {
   const R = 100, P = (deg, r) => { const a = (deg - 90) * Math.PI / 180; return [(R + r * Math.cos(a)).toFixed(2), (R + r * Math.sin(a)).toFixed(2)]; };
@@ -2250,7 +2257,7 @@ function clk24Tick() {
     el.querySelector('.c-nap').innerHTML = NAP_SPANS.map(s => '<path class="c-sleep" d="' + el._arc(hm2h(s[0]) * 15, hm2h(s[1]) * 15, 94) + '"/>').join('');
     // (v1.00.49, chủ 02/11) thể dục = ĐỎ: khung đi bộ UC xếp; không sửa được trong UC (chỉ AI xoá qua MCP với lý do chính đáng)
     const W = (() => { try { return WALK; } catch (e) { return null; } })(), sl = W && W.red && W.slot;   // WALK là let ở dưới file (tránh lỗi đọc trước khai báo)
-    el.querySelector('.c-red').innerHTML = sl && sl.start ? '<path class="c-redp" d="' + el._arc((Date.parse(sl.start) - day0) / 240000, (Date.parse(sl.end) - day0) / 240000, 94) + '"/>' : '';
+    el.querySelector('.c-red').innerHTML = redSpans(W).map(x => '<path class="c-redp" d="' + el._arc((x[0] - day0) / 240000, (x[1] - day0) / 240000, 94) + '"/>').join('');   // (03/11) cả khung đã bị dời
     el.querySelector('.c-cls').innerHTML = paths(busy.cls, 'c-cl');
     const fz = CLK_SP.spans.map((sp, i) => [sp[0], CLK_SP.live && i === CLK_SP.spans.length - 1 ? nowMs : sp[1]]);
     el.querySelector('.c-focus').innerHTML = paths(fz, 'c-fz');
@@ -2792,6 +2799,7 @@ function peToggle(open) {
   if (on) { renderPE(); prgSync(); }
 }
 $('#t-pe').onclick = () => peToggle(); $('#pe-close').onclick = () => peToggle(false);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('.app').classList.contains('r-open')) peToggle(false); });
 try { if (localStorage.getItem('pe-open')) peToggle(true); } catch (e) {}
 function renderPE() {
   const el = PRG && PRG.electives;

@@ -18,9 +18,21 @@ def d(**k):
     return N.decide(**base)
 
 
-def test_con_viec_va_chua_tap_trung_du_thi_nhac():
-    r = d()
-    assert r and '2 việc' in r['title'] and '0/240 phút' in r['title'] and 'Ôn Giải tích' in r['text']
+def test_moi_viec_mot_thong_bao_rieng_va_tap_trung_rieng():
+    # (03/11, chủ) không gộp: 2 việc chưa xong -> 2 tin, mỗi tin 1 việc + "còn X giờ"; phút tập trung là tin thứ 3
+    r = d(focus_min=35)
+    assert r and len(r) == 3
+    a, b, f = r
+    assert 'Ôn Giải tích' in a['title'] and 'Bài Đại số' not in a['title'] + a['text']
+    assert 'Bài Đại số' in b['title'] and 'Ôn Giải tích' not in b['title'] + b['text']
+    assert 'Dự kiến 2 giờ' in a['text'] and 'còn 8 giờ 00 phút' in a['text']   # 14:00 -> 22:00
+    assert '35/240 phút' in f['title'] and 'Ôn Giải tích' not in f['title'] + f['text']
+
+
+def test_viec_khong_uoc_luong_gio_thi_khong_ghi_du_kien():
+    day = dict(DAY, items=[{'task': 'Nộp đơn', 'status': 'Not started', 'est': 0}], planHours=1)
+    r = d(day=day)
+    assert len(r) == 2 and 'Dự kiến' not in r[0]['text'] and 'Nộp đơn' in r[0]['title']
 
 
 def test_tap_trung_du_tong_du_kien_thi_thoi():

@@ -163,15 +163,29 @@ def view(now=None):
     try: kept = json.loads(sl_file.read_text(encoding='utf-8'))
     except Exception: kept = {}
     sl = kept.get('slot') if kept.get('date') == today else None
+    # (03/11, chủ) khung đã qua mà xếp khung mới thì GIỮ khung cũ trong 'past': trước đây bị ghi đè -> đoạn đỏ cũ thành xám,
+    # bản đồ mặt trận tính địch tiến cả giờ đi bộ. Chỉ xám mới cho địch tiến.
+    past = kept.get('past', []) if kept.get('date') == today else []
     if not sl or (sl.get('end') and dt.datetime.fromisoformat(sl['end']) < now):
+        if sl and sl.get('start') and not sl.get('indoor'): past = past + [{'start': sl['start'], 'end': sl['end']}]
         sl = slot(ev, today, max(10, math.ceil(tgt / c['steps_per_min'])), c, after=now)
-        try: sl_file.parent.mkdir(parents=True, exist_ok=True); sl_file.write_text(json.dumps({'date': today, 'slot': sl}), encoding='utf-8')
+        try: sl_file.parent.mkdir(parents=True, exist_ok=True); sl_file.write_text(json.dumps({'date': today, 'slot': sl, 'past': past}), encoding='utf-8')
         except Exception: pass
     done = steps.get(today, 0)
     ov = overrides().get(today)
     # (v1.00.49, chủ 02/11) khung đi bộ = ĐỎ trên đồng hồ: chỉ khi có nhắc (không học quân sự), đi ngoài trời, chưa bị AI xoá với lý do chính đáng
-    red = bool(mil and not mil['active'] and sl.get('start') and not sl.get('indoor') and not ov)
-    extra = {'red': red, 'redCleared': ov, 'contestSteps': contest.get(today, 0), 'manualSteps': man.get(today),
+    red0 = bool(mil and not mil['active'] and sl.get('start') and not sl.get('indoor') and not ov)
+    # (03/11, chủ) đã đủ bước thì ĐỎ TẮT NGAY (trước đây giữ tới hết khung, chặn tập trung dù đã đi xong).
+    # Phần khung đã qua tới lúc đọc thấy đủ (appAt) vẫn là đỏ trên đồng hồ / bản đồ.
+    red = red0 and done < tgt
+    cut = sl.get('end') if red0 else None
+    if red0 and not red and wa.get('at'):
+        a = dt.datetime.fromisoformat(wa['at']); a = a if a.tzinfo else a.replace(tzinfo=TZ)
+        cut = min(dt.datetime.fromisoformat(sl['end']), max(a, dt.datetime.fromisoformat(sl['start']))).isoformat(timespec='minutes')
+    # mọi đoạn đỏ hôm nay (đã qua + khung hiện tại) cho đồng hồ và bản đồ mặt trận
+    red_spans = [[p['start'], p['end']] for p in past if mil and not mil['active'] and not ov] + \
+                ([[sl['start'], cut]] if red0 and cut and cut > sl['start'] else [])
+    extra = {'red': red, 'redSpans': red_spans, 'redCleared': ov, 'contestSteps': contest.get(today, 0), 'manualSteps': man.get(today),
              'appSteps': (app.get(today) or {}).get('steps'), 'app': app, 'appAt': wa.get('at')}
     month = today[:7]; prev = (now.date().replace(day=1) - dt.timedelta(days=1)).isoformat()[:7]
     return {'ok': bool(w.get('ok')), 'at': w.get('at'), 'error': w.get('error'), 'competition': w.get('competition'),

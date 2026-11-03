@@ -968,7 +968,7 @@ def alert_loop():
             try:   # (v1.00.44) thúc đi học: còn việc hôm nay + tập trung chưa đủ -> thông báo (không khoá)
                 import nudge
                 r = nudge.run(_npost, timetable.get(_npost)["events"], lambda t, x: alerts.notify(t, x, level="nudge", phone_ok=False))   # (02/11, chủ) tin gộp chỉ toast trên máy, không lên điện thoại: che mất tin hạn riêng
-                if r: print("nudge:", r["title"])
+                if r: print("nudge:", " | ".join(m["title"] for m in r))   # (03/11) nhiều tin riêng
             except Exception as e: print("nudge:", e)
             try:   # (v1.00.49, chủ 02/11) quét được lịch thi mới -> báo động ngay, mỗi môn 1 tin (trừ TDTT / QP-AN)
                 import exam_watch

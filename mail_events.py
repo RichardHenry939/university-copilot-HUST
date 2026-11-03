@@ -110,6 +110,30 @@ def _sane(x):
     return {**x, 'chang': out}
 
 
+_BUOI = re.compile(r'sáng|trưa|chiều|tối|đêm', re.I)
+
+
+def _buoi_fix(gio, text):
+    """(03/11) Gemini đọc "tối mai ... 8h30" thành 08:30. Tìm chữ sáng/trưa/chiều/tối/đêm quanh giờ đó trong thông báo
+    rồi đổi sang 24h: chiều/tối/đêm -> +12 (đêm 12h -> 00:00); trưa 1–5h -> +12; sáng giữ nguyên.
+    Ưu tiên chữ đứng NGAY SAU giờ ("8h30 tối"), không có thì lấy chữ GẦN NHẤT phía trước trong 80 ký tự ("tối mai ... 8h30").
+    Giới hạn: chỉ xét giờ < 12 và chỉ khi tìm thấy đúng giờ đó trong văn bản; giờ viết bằng chữ ("tám rưỡi") không bắt được."""
+    if not gio or not text: return gio
+    hh, mm = map(int, gio.split(':'))
+    if hh >= 12: return gio
+    tail = rf'(?:{mm:02d}|{mm})' if mm else r'(?:00)?'
+    for t in re.finditer(rf'(?<!\d)0?{hh}\s*(?:h|:|giờ)\s*{tail}(?!\d)', text, re.I):
+        after = _BUOI.match(text[t.end():t.end() + 12].lstrip(' ,'))
+        before = list(_BUOI.finditer(text[max(0, t.start() - 80):t.start()]))
+        w = (after or (before[-1] if before else None))
+        if not w: continue
+        w = w.group(0).lower()
+        if w in ('chiều', 'tối') or (w == 'đêm' and hh >= 6) or (w == 'trưa' and 1 <= hh <= 5): hh += 12
+        elif w == 'đêm' and hh == 12: hh = 0
+        return f'{hh:02d}:{mm:02d}'
+    return gio
+
+
 LATER_ROUND = re.compile(r'vòng\s*([2-9]|\d{2,})\b|bán\s*kết|chung\s*kết', re.I)
 
 
@@ -206,6 +230,7 @@ Trả lời CHỈ một object JSON:
              "dia_diem": "<phòng/địa chỉ hoặc null>", "ghi_chu": "<thông tin quan trọng khác của chặng, ngắn, hoặc null>", "huy": true/false}} ],
  "tom_tat": "<1 câu tiếng Việt: email nói gì>"}}
 Quy tắc: "chang" chỉ gồm các chặng email NÀY nhắc tới, với thông tin MỚI NHẤT theo email này. Dùng đúng tên chặng đã biết nếu là cùng chặng (kể cả khi email đổi ngày/giờ/phòng của nó). Tên chặng KHÔNG chứa ngày, giờ, phòng.
+"gio" luôn theo 24 giờ: chữ "chiều", "tối", "đêm" đi kèm hoặc đứng trước giờ (vd "tối mai ... từ 8h30") nghĩa là sau 12h -> 20:30, không phải 08:30.
 Nếu là một KHOẢNG thời gian ("từ ngày A đến hết ngày B"), "ngay" = ngày CUỐI B (hạn chót) và "ghi_chu" nêu "từ A".
 Nếu email chia nhiều phòng theo danh sách, ghi "dia_diem" là các phòng và nêu cách chia trong "ghi_chu"."""
 
@@ -328,6 +353,7 @@ def process(post=None, backfill=False):
         eid = x.get('su_kien_id') if x.get('su_kien_id') in st['events'] else likely
         for s in x['chang']:   # AI hay lấy nhầm giờ gửi thư làm giờ diễn ra
             if s.get('gio') == recv.strftime('%H:%M'): s['gio'] = None
+            s['gio'] = _buoi_fix(s.get('gio'), m['Subject'] + '\n' + clean(m['Body']))   # "tối ... 8h30" -> 20:30
         new = {stage_key(s['ten']): {k: s.get(k) for k in ('ten', 'ngay', 'gio', 'dia_diem', 'ghi_chu', 'huy', 'loai_chang')} for s in x['chang'] if s.get('ten')}
         now = dt.datetime.now(TZ).isoformat(timespec='minutes')
         src = {'subject': m['Subject'], 'from': m['FromName'], 'at': recv.isoformat(timespec='minutes'), 'loai': x.get('loai'),
