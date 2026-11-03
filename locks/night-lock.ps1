@@ -55,7 +55,9 @@ $FocusPolicyExtra = @('youtube.com/shorts', 'm.youtube.com/shorts')
 # policy still blocks all of facebook.com / instagram.com except these login paths, and the tab sweep reloads
 # any other page there. Limit: Chrome/Edge only, other apps can reach both during focus. Night and nap are
 # unchanged. Add paths here if Muse needs more (an entry without '/' opens that whole host).
-$FocusHostsOpen = @('facebook.com', 'instagram.com')
+# (2026-11-03, later) Muse is not available in Vietnam, so the opening is removed: both hosts stay blocked in
+# focus mode. $FocusPolicyAllow stays only so leftover allow-list entries from the earlier version get cleaned up.
+$FocusHostsOpen = @()
 $FocusPolicyAllow = @(
     'facebook.com/login', 'facebook.com/aymh', 'facebook.com/dialog', 'facebook.com/checkpoint',
     'facebook.com/ajax', 'facebook.com/api/graphql', 'facebook.com/oidc', 'accountscenter.facebook.com',
@@ -428,7 +430,7 @@ function Invoke-Pass {
     $mode = if ((Test-InWindow (Get-Now)) -or (Test-SoftLock)) { 'night' } elseif (Test-Focus) { 'focus' } else { 'off' }
     $on = ($mode -ne 'off')
     $hostList = switch ($mode) { 'night' { @($Sites) } 'focus' { @($FocusSites | Where-Object { $FocusHostsOpen -notcontains $_ }) } default { @() } }
-    $allowList = if ($mode -eq 'focus') { $FocusPolicyAllow } else { @() }
+    $allowList = @()   # Muse opening removed (2026-11-03); empty list also cleans old allow entries
     $policyList = switch ($mode) { 'night' { @($Sites) } 'focus' { @($FocusSites) + @($FocusPolicyExtra) } default { @() } }
     $script:blockSites = $hostList
     if ($mode -ne $script:mode) { $script:mode = $mode; $script:lastHostsCheck = [DateTime]::MinValue; $script:lastSweep = [DateTime]::MinValue }
