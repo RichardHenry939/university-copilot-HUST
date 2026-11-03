@@ -4,7 +4,7 @@ Hai khoá là một phần của University Copilot, nhưng chạy **riêng** b�
 
 | Khoá | Khi nào | Chặn gì | Đọc gì từ UC |
 |---|---|---|---|
-| `night-lock.ps1` | 22:00–06:00 mỗi ngày (cố định); ngoài giờ đó: chế độ tập trung của Ví thời gian | Đêm: mọi mạng xã hội + game (IFEO + tắt tiến trình + tải lại tab đang mở). Tập trung: như đêm nhưng chừa YouTube thường và Messenger, chặn Shorts | `school/focus.json` (tín hiệu tập trung, tự hết hạn theo giờ trong file) |
+| `night-lock.ps1` | 22:00–06:00 mỗi ngày (cố định); ngoài giờ đó: chế độ tập trung của Ví thời gian | Đêm: mọi mạng xã hội + game (IFEO + tắt tiến trình + tải lại tab đang mở). Tập trung: như đêm nhưng chừa YouTube thường và Messenger, chặn Shorts; facebook.com chỉ mở các đường đăng nhập (cho Muse của Meta, chỉ Chrome/Edge) | `school/focus.json` (tín hiệu tập trung, tự hết hạn theo giờ trong file) |
 | `nap-lock.ps1` | Phần ngủ trưa (13:00–15:00) mà đồng hồ 24 giờ của UC tô vàng — buổi học / thi chiếm chỗ nào thì mất chỗ đó (lab 12:30–17:30 = không ngủ trưa, không khoá) | Mọi mạng xã hội **kể cả YouTube**, chỉ chừa Messenger; tắt game | `school/nap.json` (UC ghi mỗi phút, `nap.py`) |
 
 An toàn khi UC tắt: `nap.json` không có / khác ngày / cũ quá 10 phút -> khoá trưa không khoá. Khoá đêm không phụ thuộc UC.

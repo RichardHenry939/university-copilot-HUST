@@ -50,6 +50,12 @@ $FocusFile = Join-Path $PSScriptRoot '..\school\focus.json'   # written by UC's 
 $FocusAllowed = @('messenger.com', 'youtube.com', 'youtu.be', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com')
 $FocusSites = @($Sites | Where-Object { $FocusAllowed -notcontains $_ })
 $FocusPolicyExtra = @('youtube.com/shorts', 'm.youtube.com/shorts')
+# (2026-11-03) Muse (muse.ai, Meta's AI agent, used for work) logs in through facebook.com. In focus mode
+# facebook.com + www.facebook.com leave the hosts block; the browser policy still blocks all of facebook.com
+# except these login paths, and the tab sweep reloads any other facebook.com page. Limit: Chrome/Edge only,
+# other apps can reach facebook.com during focus. Night and nap are unchanged. Add paths here if Muse needs more.
+$FocusHostsOpen = @('facebook.com')
+$FocusPolicyAllow = @('facebook.com/login', 'facebook.com/aymh', 'facebook.com/dialog/oauth', 'facebook.com/checkpoint')
 $FocusMaxHours = 9   # an 'until' further away than this is ignored (bad or hostile file)
 $script:mode = $null
 $script:blockSites = @()
@@ -251,7 +257,20 @@ function Test-BlockedHost([string]$h) {
 function Test-BlockedUrl([string]$v) {
     if (Test-BlockedHost (Get-HostFromText $v)) { return $true }
     if ($script:mode -eq 'focus' -and $v -match '(^|[/.])youtube\.com/shorts') { return $true }
+    if ($script:mode -eq 'focus' -and (Test-FacebookNotLogin $v)) { return $true }
     return $false
+}
+
+# Focus mode: facebook.com is out of hosts for Muse's login, so any facebook.com page that is not a login path counts as blocked.
+function Test-FacebookNotLogin([string]$v) {
+    $h = Get-HostFromText $v
+    if ($h -ne 'facebook.com' -and $h -ne 'www.facebook.com') { return $false }
+    $path = (($v -replace '^[a-zA-Z]+://', '') -replace '^[^/?#]*', '').ToLower()
+    foreach ($a in $FocusPolicyAllow) {
+        $p = $a.Substring($a.IndexOf('/'))
+        if ($path -eq $p -or $path.StartsWith($p + '/') -or $path.StartsWith($p + '?') -or $path.StartsWith($p + '.')) { return $false }
+    }
+    return $true
 }
 
 # Every 5 min in the window: reload Chrome tabs already open on a blocked domain (hosts only affects new DNS lookups).
@@ -340,6 +359,38 @@ function Set-BrowserBlock([string[]]$list) {
     }
 }
 
+# Focus-only allow list (Muse login paths). Never written while the nap lock holds its entries (501+),
+# so the nap block on facebook.com is never opened.
+$AllowKeys = @('HKLM:\SOFTWARE\Policies\Google\Chrome\URLAllowlist', 'HKLM:\SOFTWARE\Policies\Microsoft\Edge\URLAllowlist')
+function Set-BrowserAllow([string[]]$list) {
+    $napOn = $false
+    foreach ($k in $BrowserKeys) {
+        if ((Test-Path $k) -and @((Get-Item $k).Property | Where-Object { ($_ -as [int]) -ge 500 }).Count -gt 0) { $napOn = $true }
+    }
+    if ($napOn) { $list = @() }
+    if ($DryRun) { Write-Log "would set browser allow list: $($list -join ', ')"; return }
+    foreach ($k in $AllowKeys) {
+        try {
+            if ($list.Count -gt 0) {
+                if (-not (Test-Path $k)) { New-Item -Path $k -Force | Out-Null }
+                $i = 1
+                foreach ($s in $list) {
+                    Set-ItemProperty -Path $k -Name ([string]$i) -Value $s -Type String
+                    $i++
+                }
+            }
+            if (Test-Path $k) {
+                foreach ($name in @((Get-Item $k).Property)) {
+                    $val = (Get-ItemProperty -Path $k -Name $name).$name
+                    if (($FocusPolicyAllow -contains $val) -and ($list -notcontains $val)) { Remove-ItemProperty -Path $k -Name $name }
+                }
+            }
+        } catch {
+            Write-Log "browser allow policy failed: $($_.Exception.Message)"
+        }
+    }
+}
+
 # Daytime focus lock: lock.dat holds the end time (ISO). Written by the lock window.
 function Test-SoftLock {
     $f = Join-Path $PSScriptRoot 'lock.dat'
@@ -365,7 +416,8 @@ function Invoke-Pass {
     $now = Get-Date
     $mode = if ((Test-InWindow (Get-Now)) -or (Test-SoftLock)) { 'night' } elseif (Test-Focus) { 'focus' } else { 'off' }
     $on = ($mode -ne 'off')
-    $hostList = switch ($mode) { 'night' { @($Sites) } 'focus' { $FocusSites } default { @() } }
+    $hostList = switch ($mode) { 'night' { @($Sites) } 'focus' { @($FocusSites | Where-Object { $FocusHostsOpen -notcontains $_ }) } default { @() } }
+    $allowList = if ($mode -eq 'focus') { $FocusPolicyAllow } else { @() }
     $policyList = switch ($mode) { 'night' { @($Sites) } 'focus' { @($FocusSites) + @($FocusPolicyExtra) } default { @() } }
     $script:blockSites = $hostList
     if ($mode -ne $script:mode) { $script:mode = $mode; $script:lastHostsCheck = [DateTime]::MinValue; $script:lastSweep = [DateTime]::MinValue }
@@ -374,6 +426,7 @@ function Invoke-Pass {
         $count = @(Get-Content -Path $HostsPath | Where-Object { $_ -like "*$Marker*" }).Count
         if ($count -ne $hostList.Count * 2) { Set-HostsBlock $hostList }
         Set-BrowserBlock $policyList
+        Set-BrowserAllow $allowList
     }
 
     if ($on) {
