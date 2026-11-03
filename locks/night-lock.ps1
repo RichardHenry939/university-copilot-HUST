@@ -50,12 +50,18 @@ $FocusFile = Join-Path $PSScriptRoot '..\school\focus.json'   # written by UC's 
 $FocusAllowed = @('messenger.com', 'youtube.com', 'youtu.be', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com')
 $FocusSites = @($Sites | Where-Object { $FocusAllowed -notcontains $_ })
 $FocusPolicyExtra = @('youtube.com/shorts', 'm.youtube.com/shorts')
-# (2026-11-03) Muse (muse.ai, Meta's AI agent, used for work) logs in through facebook.com. In focus mode
-# facebook.com + www.facebook.com leave the hosts block; the browser policy still blocks all of facebook.com
-# except these login paths, and the tab sweep reloads any other facebook.com page. Limit: Chrome/Edge only,
-# other apps can reach facebook.com during focus. Night and nap are unchanged. Add paths here if Muse needs more.
-$FocusHostsOpen = @('facebook.com')
-$FocusPolicyAllow = @('facebook.com/login', 'facebook.com/aymh', 'facebook.com/dialog/oauth', 'facebook.com/checkpoint')
+# (2026-11-03) Muse (muse.ai, Meta's AI agent, used for work) logs in through facebook.com and instagram.com
+# (Meta account sync bounces between them). In focus mode both leave the hosts block (name + www); the browser
+# policy still blocks all of facebook.com / instagram.com except these login paths, and the tab sweep reloads
+# any other page there. Limit: Chrome/Edge only, other apps can reach both during focus. Night and nap are
+# unchanged. Add paths here if Muse needs more (an entry without '/' opens that whole host).
+$FocusHostsOpen = @('facebook.com', 'instagram.com')
+$FocusPolicyAllow = @(
+    'facebook.com/login', 'facebook.com/aymh', 'facebook.com/dialog', 'facebook.com/checkpoint',
+    'facebook.com/ajax', 'facebook.com/api/graphql', 'facebook.com/oidc', 'accountscenter.facebook.com',
+    'instagram.com/aymh', 'instagram.com/accounts', 'instagram.com/oauth', 'instagram.com/challenge',
+    'instagram.com/ajax', 'instagram.com/api/v1/web/accounts', 'accountscenter.instagram.com'
+)
 $FocusMaxHours = 9   # an 'until' further away than this is ignored (bad or hostile file)
 $script:mode = $null
 $script:blockSites = @()
@@ -257,18 +263,23 @@ function Test-BlockedHost([string]$h) {
 function Test-BlockedUrl([string]$v) {
     if (Test-BlockedHost (Get-HostFromText $v)) { return $true }
     if ($script:mode -eq 'focus' -and $v -match '(^|[/.])youtube\.com/shorts') { return $true }
-    if ($script:mode -eq 'focus' -and (Test-FacebookNotLogin $v)) { return $true }
+    if ($script:mode -eq 'focus' -and (Test-MetaNotLogin $v)) { return $true }
     return $false
 }
 
-# Focus mode: facebook.com is out of hosts for Muse's login, so any facebook.com page that is not a login path counts as blocked.
-function Test-FacebookNotLogin([string]$v) {
+# Focus mode: facebook.com / instagram.com are out of hosts for Muse's login, so any page there that is not a login path counts as blocked.
+function Test-MetaNotLogin([string]$v) {
     $h = Get-HostFromText $v
-    if ($h -ne 'facebook.com' -and $h -ne 'www.facebook.com') { return $false }
+    $inScope = $false
+    foreach ($o in $FocusHostsOpen) { if ($h -eq $o -or $h.EndsWith('.' + $o)) { $inScope = $true } }
+    if (-not $inScope) { return $false }
     $path = (($v -replace '^[a-zA-Z]+://', '') -replace '^[^/?#]*', '').ToLower()
     foreach ($a in $FocusPolicyAllow) {
-        $p = $a.Substring($a.IndexOf('/'))
-        if ($path -eq $p -or $path.StartsWith($p + '/') -or $path.StartsWith($p + '?') -or $path.StartsWith($p + '.')) { return $false }
+        $i = $a.IndexOf('/')
+        $ah = if ($i -ge 0) { $a.Substring(0, $i) } else { $a }
+        $p = if ($i -ge 0) { $a.Substring($i) } else { '' }
+        if (-not ($h -eq $ah -or $h.EndsWith('.' + $ah))) { continue }
+        if ($p -eq '' -or $path -eq $p -or $path.StartsWith($p + '/') -or $path.StartsWith($p + '?') -or $path.StartsWith($p + '.')) { return $false }
     }
     return $true
 }
