@@ -134,22 +134,35 @@ def _sig(tmp_path, monkeypatch):
     return lambda: json.loads(target.read_text(encoding='utf-8'))
 
 
-def test_pause_tay_giu_chan_va_gia_han(tmp_path, monkeypatch):
-    # (chủ 03/11) "ấn pause không tính": chặn giữ suốt lúc dừng, tín hiệu không hết hạn giữa chừng
+def test_uc_dung_go_chan_tiep_tuc_chan_lai(tmp_path, monkeypatch):
+    # (chủ chốt 03/11 ~19:30) UC tự dừng (nút "Tiếp tục") -> gỡ chặn; tiếp tục -> chặn chạy lại, hạn lùi theo
+    sig = _sig(tmp_path, monkeypatch); st = new()
+    W.start_focus(st, 50, '', T0)
+    W.pause(st, T0 + m(10), by='uc')
+    assert sig()['focus'] is False and not W.by_user(st['active'])
+    W.hold_signal(st, T0 + m(11))          # UC dừng: không được bật chặn lại
+    assert sig()['focus'] is False
+    W.resume(st, T0 + m(30))
+    assert sig()['focus'] is True and W._t(sig()['until']) == T0 + m(30) + m(40) and 'paused_by' not in st['active']
+
+
+def test_ban_tu_dung_giu_chan_va_gia_han(tmp_path, monkeypatch):
+    # bạn tự bấm dừng (nút ▶) -> chặn giữ nguyên, tín hiệu không hết hạn giữa chừng
     sig = _sig(tmp_path, monkeypatch); st = new()
     W.start_focus(st, 50, '', T0); W.pause(st, T0 + m(10))
-    assert sig()['focus'] is True and W._t(sig()['until']) == T0 + m(10) + m(40) + m(5)
-    W.hold_signal(st, T0 + m(90))          # dừng 80 phút > 40 phút còn lại -> vẫn gia hạn
+    assert W.by_user(st['active']) and sig()['focus'] is True
+    W.hold_signal(st, T0 + m(90))
     assert sig()['focus'] is True and W._t(sig()['until']) > T0 + m(90)
 
 
-def test_dung_bat_buoc_the_duc_go_chan_tiep_tuc_chan_lai(tmp_path, monkeypatch):
+def test_the_duc_de_len_luc_ban_dang_tu_dung(tmp_path, monkeypatch):
     sig = _sig(tmp_path, monkeypatch); st = new()
     W.start_focus(st, 50, '', T0)
-    W.pause(st, T0 + m(5))                 # pause tay trước, rồi tới khung thể dục -> chuyển thành bắt buộc
-    W.pause(st, T0 + m(8), forced='giờ thể dục')
-    assert sig()['focus'] is False and st['active']['forced']
-    W.hold_signal(st, T0 + m(9))           # đang bắt buộc: không được bật chặn lại
-    assert sig()['focus'] is False
-    W.resume(st, T0 + m(40))
-    assert sig()['focus'] is True and 'forced' not in st['active']
+    W.pause(st, T0 + m(5)); W.pause(st, T0 + m(8), forced='giờ thể dục', by='uc')
+    a = st['active']
+    assert sig()['focus'] is False and a['forced'] and not W.by_user(a) and a['paused_at'] == W._iso(T0 + m(5))
+
+
+def test_phien_cu_khong_ghi_ai_dung_coi_la_uc_dung():
+    a = {'type': 'focus', 'paused_at': W._iso(T0)}
+    assert not W.by_user(a)

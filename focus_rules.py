@@ -3,8 +3,9 @@
 
 Xanh lá dừng trước mọi màu khác, trừ trắng (mục tiêu chính, không cảnh báo) và tím (vẫn chạy nhưng cảnh báo liên tục):
 - xanh biển (đang có buổi học / thi), vàng (giờ ngủ đêm 22–6h, phần ngủ trưa còn lại)
-  -> tự TẠM DỪNG phiên tập trung (không huỷ; chặn giữ nguyên) + báo lý do.
-- đỏ (khung thể dục UC xếp) -> DỪNG BẮT BUỘC (chủ 03/11): gỡ hết chặn (máy tính + máy ảo), kể cả khi đang pause tay;
+  -> UC tự TẠM DỪNG phiên tập trung (không huỷ) + báo lý do, gỡ chặn (chủ chốt 03/11 ~19:30: UC dừng gỡ chặn,
+  bạn tự bấm dừng thì giữ chặn — xem wallet.pause).
+- đỏ (khung thể dục UC xếp) -> UC DỪNG BẮT BUỘC: gỡ chặn (máy tính + máy ảo), kể cả khi bạn đang tự dừng;
   phiên giải trí (tiêu ví) đang chạy thì kết thúc hẳn, chỉ trừ phút đã dùng.
 - tím (ăn sáng 7:30–8:00, ăn trưa 12–13h, ăn tối 19–20h / Camp 17:30–18:30) -> nhắc mỗi 10 phút, không dừng.
 Gọi mỗi phút trong copilot_app.alert_loop.
@@ -73,27 +74,30 @@ def tick(post, notify, now=None):
     now = (now or dt.datetime.now(TZ)).astimezone(TZ)
     with wallet.lock:
         st = wallet.load(); a = st.get('active') or {}
-        if a.get('type') not in ('focus', 'fun') or a.get('forced'): return None
-        if a.get('paused_at'): wallet.hold_signal(st, now)   # pause tay: gia hạn chặn mỗi phút (chủ 03/11: "ấn pause không tính")
+        if a.get('type') not in ('focus', 'fun'): return None
+        if wallet.by_user(a): wallet.hold_signal(st, now)   # bạn tự bấm dừng: gia hạn chặn mỗi phút
+        uc_paused = bool(a.get('paused_at')) and not wallet.by_user(a)
+    if uc_paused:   # UC đã dừng: giữ tín hiệu "không chặn" (gỡ cả tín hiệu cũ còn hạn), chờ bạn bấm Tiếp tục
+        wallet._signal(False, None, now); return None
     color, why = color_now(post, now)
-    if color == 'red':   # (chủ 03/11) khung thể dục: dừng BẮT BUỘC, gỡ hết chặn; phiên giải trí (tiêu ví) dừng hẳn
+    if color == 'red':   # (chủ 03/11) khung thể dục: UC dừng bắt buộc, gỡ chặn (kể cả khi bạn đang tự dừng); giải trí dừng hẳn
         with wallet.lock:
             st = wallet.load(); a = st.get('active') or {}
             if a.get('type') == 'fun':
                 spent = wallet.end_fun(st, now)['spent']; wallet.save(st)
                 notify('UC · đã dừng giải trí', f"Đang là {why}. Phiên giải trí kết thúc, ví chỉ trừ {spent} phút đã dùng. Đi tập thôi.")
                 return ('fun_end', why)
-            if a.get('type') != 'focus' or a.get('forced'): return None
-            wallet.pause(st, now, forced=why); wallet.save(st)
+            if a.get('type') != 'focus' or (a.get('paused_at') and not wallet.by_user(a)): return None
+            wallet.pause(st, now, forced=why, by='uc'); wallet.save(st)
         notify('UC · đã tạm dừng tập trung', f"Đang là {why}. Phiên tập trung dừng bắt buộc, đã gỡ hết chặn. Tập xong bấm Tiếp tục để chặn lại.")
         return ('pause', why)
-    if a.get('type') != 'focus' or a.get('paused_at'): return None
+    if a.get('type') != 'focus' or a.get('paused_at'): return None   # đang dừng tay: im lặng, chặn đã gỡ
     if color in ('blue', 'yellow'):
         with wallet.lock:
             st = wallet.load(); a = st.get('active') or {}
             if a.get('type') != 'focus' or a.get('paused_at'): return None
-            wallet.pause(st, now); wallet.save(st)
-        notify('UC · đã tạm dừng tập trung', f"Đang là {why}. Phiên tập trung tự tạm dừng (không huỷ, chặn vẫn giữ). Hết giờ thì bấm Tiếp tục.")
+            wallet.pause(st, now, by='uc'); wallet.save(st)
+        notify('UC · đã tạm dừng tập trung', f"Đang là {why}. Phiên tập trung tự tạm dừng (không huỷ, đã gỡ chặn). Hết giờ thì bấm Tiếp tục để chặn lại.")
         return ('pause', why)
     if color == 'purple':
         try: s = json.loads(STATE.read_text(encoding='utf-8'))

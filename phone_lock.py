@@ -5,7 +5,7 @@ Khoá máy tính (chặn tên miền + chính sách trình duyệt trên Windows
 UC tự tạm khoá app mạng xã hội trong máy ảo bằng adb, đúng lúc máy tính đang khoá:
   - đêm 22:00–06:00 (lõi cứng, không cần tín hiệu)        -> khoá SOCIAL + YOUTUBE + BROWSERS + STORE
   - ngủ trưa: phần vàng trong school/nap.json (nap_spans)  -> như đêm
-  - tập trung (ví đang chạy, kể cả pause tay; dừng bắt buộc vì thể dục thì KHÔNG) -> như đêm, TRỪ YouTube
+  - tập trung (ví đang chạy, hoặc bạn tự bấm dừng; UC tự dừng thì KHÔNG khoá) -> như đêm, TRỪ YouTube
 Không bao giờ đụng: Messenger, iCTSV (com.bk.ctsv), eHUST (uni.hust.ehust), app hệ thống ngoài danh sách.
 
 Cách khoá: `cmd package suspend` (app vẫn còn, bấm vào chỉ hiện hộp "đã tạm dừng"); máy không cho shell suspend thì
@@ -44,7 +44,7 @@ def _focus_on():
     try:
         import wallet
         a = (wallet.load() or {}).get('active') or {}
-        return a.get('type') == 'focus' and not a.get('forced')   # pause tay giữ khoá; dừng bắt buộc (thể dục) gỡ hết (chủ 03/11)
+        return a.get('type') == 'focus' and (not a.get('paused_at') or wallet.by_user(a))   # UC dừng gỡ khoá; bạn tự dừng giữ khoá
     except Exception: return False
 
 

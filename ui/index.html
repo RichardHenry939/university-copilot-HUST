@@ -2110,11 +2110,7 @@ async function walkNag() {
   nag.hidden = false;
   nag.innerHTML = '<b>Dừng rồi đi tập thể dục.</b> Mục tiêu ' + nf(w.target) + ' bước, khung ' + hhmm(sl.start) + '–' + hhmm(sl.end) + '. <button class="ghost" id="walk-nag-x">Đã biết</button>';
   $('#walk-nag-x').onclick = () => { nag.hidden = true; try { localStorage.setItem('walk-nag-' + w.today, '1'); } catch (e) {} };
-  let paused = false; try { paused = !!localStorage.getItem('walk-pause-' + w.today); } catch (e) {}
-  if (!paused && WAL && WAL.active && WAL.active.type === 'focus' && !WAL.active.paused_at) {
-    try { localStorage.setItem('walk-pause-' + w.today, '1'); } catch (e) {}
-    await walPost({ action: 'pause' });
-  }
+  // (03/11) không tự gọi dừng ở đây nữa: máy chủ (focus_rules) dừng kiểu "UC dừng" + gỡ chặn; gọi từ đây bị tính là bạn tự dừng
 }
 walkLoad(); setInterval(walkLoad, 10 * 6e4); setInterval(walkNag, 20000);
 // (01/11 tối, chủ) dòng trường rộng đúng gấp đôi "UNIVERSITY COPILOT" ở mọi khổ màn hình (CSS em lệch ~1–2% do làm tròn cỡ chữ)
@@ -3248,13 +3244,13 @@ function renderWallet() {
       await walPost({ action: 'focus_start', total: Number($('#w-total').value), subject: $('#w-subj').value, mssv: v }); };
   } else {
     const isF = a.phase === 'focus', nth = Math.min(a.focus_count, Math.floor(a.index / 2) + 1);
-    f.innerHTML = '<h2>' + (isF ? 'Tập trung · khối ' + nth + '/' + a.focus_count : 'Nghỉ ' + a.phase_min + ' phút') + (a.paused ? (a.forced ? ' · dừng vì giờ thể dục, đã gỡ chặn' : ' · tạm dừng') : '') + '</h2>' +
+    f.innerHTML = '<h2>' + (isF ? 'Tập trung · khối ' + nth + '/' + a.focus_count : 'Nghỉ ' + a.phase_min + ' phút') + (a.paused ? (a.paused_by === 'user' ? ' · bạn đang dừng, chặn vẫn giữ' : ' · UC đã dừng' + (a.forced ? ' (' + esc(a.forced) + ')' : '') + ', đã gỡ chặn') : '') + '</h2>' +
       (a.subject ? '<p class="wnote">' + esc(a.subject) + '</p>' : '') +
       '<div class="wclock' + (isF ? '' : ' brk') + '" id="w-clock">' + mmss(walLeft()) + '</div>' +
       '<p class="wnote">Đã trọn ' + a.blocks_done + ' khối (+' + a.blocks_done * 5 + ' phút) · tổng ' + a.total + ' phút</p>' +
-      '<div class="row"><button class="ghost" id="w-pause">' + (a.paused ? 'Tiếp tục' : 'Tạm dừng') + '</button>' +
+      '<div class="row"><button class="ghost" id="w-pause"' + (a.paused && a.paused_by === 'user' ? ' title="Tiếp tục (bạn tự dừng, chặn vẫn giữ)">▶' : '>' + (a.paused ? 'Tiếp tục' : 'Tạm dừng')) + '</button>' +
       '<label class="wsnd">Âm nền <select id="w-sound"><option value="brown">Brown noise</option><option value="radio">Claude Radio</option><option value="off">Tắt</option></select></label></div>' +
-      '<div id="w-radio"></div><p class="wnote" id="w-recnote"></p><p class="wnote">Không huỷ được phiên. Bấm tạm dừng không gỡ chặn; riêng giờ thể dục UC dừng bắt buộc và gỡ hết chặn. Tiếp tục thì chặn lại, giờ kết thúc lùi theo.</p>';
+      '<div id="w-radio"></div><p class="wnote" id="w-recnote"></p><p class="wnote">Không huỷ được phiên. Bạn tự bấm dừng (nút ▶) thì chặn vẫn giữ; UC tự dừng (giờ học, giờ ngủ, thể dục; nút Tiếp tục) thì gỡ chặn. Tiếp tục thì chặn chạy lại, giờ kết thúc lùi theo.</p>';
     $('#w-sound').value = wSound;
     $('#w-sound').onchange = e => { wSound = e.target.value; try { localStorage.setItem('w-sound', wSound); } catch (x) {} soundSync(true); };
     $('#w-pause').onclick = () => walPost({ action: a.paused ? 'resume' : 'pause' });
