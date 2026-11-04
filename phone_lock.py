@@ -134,13 +134,28 @@ def tick(now=None, m='auto'):
     return done
 
 
+LOG = HERE / 'school' / 'phone_lock.log'
+
+
+def log(msg, now=None):
+    """(v1.00.59) UC chạy bằng pythonw nên print mất hết -> ghi nhật ký để kiểm được khoá có chạy thật (vd đêm qua)."""
+    try:
+        LOG.parent.mkdir(parents=True, exist_ok=True)
+        with LOG.open('a', encoding='utf-8') as f: f.write(f"{(now or dt.datetime.now(TZ)).isoformat(timespec='seconds')} {msg}\n")
+    except Exception: pass
+
+
 def loop(every=60):
-    """Vòng canh trong UC: mỗi phút. Máy ảo tắt thì bỏ qua (khi bật lại, lượt kế tiếp tự khoá đúng)."""
+    """Vòng canh trong UC: mỗi phút. Máy ảo tắt thì bỏ qua (khi bật lại, lượt kế tiếp tự khoá đúng).
+    Nhật ký: mỗi lần khoá / mở / lỗi, và mỗi lần chế độ hoặc trạng thái máy ảo đổi (không ghi mỗi phút)."""
+    last = None
     while True:
         try:
             r = tick()
-            if r.get('locked') or r.get('unlocked') or r.get('failed'): print('phone_lock:', r)
-        except Exception as e: print('phone_lock loop:', e)
+            key = (r.get('device', True), r.get('mode'))
+            if r.get('locked') or r.get('unlocked') or r.get('failed') or key != last:
+                log(json.dumps(r, ensure_ascii=False)); last = key
+        except Exception as e: log(f'loi: {e}')
         time.sleep(every)
 
 

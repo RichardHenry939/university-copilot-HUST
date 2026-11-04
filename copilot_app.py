@@ -1697,6 +1697,9 @@ class H(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    import single_instance
+    if not single_instance.acquire():   # (v1.00.59) đã có một bản UC khác đang chạy -> thoát, không chạy vòng lặp nền đôi
+        raise SystemExit(0)
     import sys; sys.modules.setdefault("copilot_app", sys.modules["__main__"])   # (v1.00.24, D-2) các module khác `import copilot_app` phải dùng CHUNG bản này
     # (cùng lock / hàng đợi jobs) — trước đây Python nạp bản thứ hai: file kéo từ 📥 kẹt "queued", khoá inbox_state vô tác dụng
     # file đang dở từ lần chạy trước -> xếp lại

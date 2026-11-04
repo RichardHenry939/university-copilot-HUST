@@ -248,7 +248,7 @@ def emu_act(a, off):
         report(False, 'Máy ảo Android không chạy: UC không đọc được số bước iCTSV.'
                + ('' if off else ' UC đang tự bật lại (không muốn thì tạo school/android_autostart.off).'))
     elif a == 'start':
-        subprocess.Popen(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', OPEN_ANDROID],
+        subprocess.Popen(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', OPEN_ANDROID, '-Hidden'],   # chủ 03/11: máy ảo chạy ẩn
                          creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
     elif a == 'giveup':
         report(False, 'UC đã bật máy ảo 3 lần hôm nay mà không lên. Thôi tự bật; bạn mở shortcut "Pixel 6 (Android 14)".')
