@@ -1780,6 +1780,7 @@ if __name__ == "__main__":
     threading.Thread(target=alert_loop, daemon=True).start()
     threading.Thread(target=lambda: __import__("ictsv_login").loop(), daemon=True).start()   # (v1.00.49) iCTSV trong máy ảo bị đăng xuất -> UC tự đăng nhập lại + báo
     threading.Thread(target=lambda: __import__("phone_lock").loop(), daemon=True).start()   # (v1.00.53) giờ khoá đêm / trưa / tập trung -> tạm khoá app MXH + trình duyệt trong máy ảo
+    threading.Thread(target=lambda: __import__("phone_dns").run(), daemon=True).start()   # (04/11) PhoneDNS: chặn web MXH trên điện thoại qua split DNS của Tailscale
     threading.Thread(target=lambda: __import__("desktop_icons").loop(), daemon=True).start()   # (v1.00.49) tập trung + chỉ màn laptop -> ẩn icon màn hình nền
     threading.Thread(target=lambda: __import__("ehust_check").loop(), daemon=True).start()   # (v1.00.49) mỗi 3 giờ: lịch tuần trên app eHUST vs lịch UC (Teams > eHUST > qldt)
     threading.Thread(target=_audio_priority_loop, daemon=True).start()   # 🎙️ (12/10) LUẬT TỐI CAO: tiếng CABLE Input ưu tiên tuyệt đối

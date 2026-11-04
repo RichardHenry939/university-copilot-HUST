@@ -49,12 +49,12 @@ def test_luat_4_che_do_cua_chu():
     # (chủ 04/11) mặc định: chỉ MXH; tập trung: + trình duyệt, store, game, chừa YouTube; trưa: + YouTube, chừa Messenger;
     # đêm: tất, kể cả Messenger. Luôn chừa LinkedIn, iCTSV, eHUST, ngân hàng.
     g = ('com.game.x',)
-    assert pl.wanted('default', INST, g) == {'com.facebook.katana'}
+    assert pl.wanted('default', INST, g) == {'com.facebook.katana', 'com.google.android.youtube'}   # (04/11) app YouTube gốc khoá, chừa ReVanced
     # (04/11) trình duyệt thường không tạm dừng (chặn tên miền qua laptop); Tor mới khoá cứng
-    assert pl.wanted('focus', INST, g) == {'com.facebook.katana', 'com.android.vending', 'com.game.x'}
+    assert pl.wanted('focus', INST, g) == {'com.facebook.katana', 'com.google.android.youtube', 'com.android.vending', 'com.game.x'}
     assert 'org.torproject.torbrowser' in pl.wanted('focus', INST | {'org.torproject.torbrowser'}, g)
     assert 'org.torproject.torbrowser' not in pl.wanted('default', INST | {'org.torproject.torbrowser'}, g)
-    assert pl.wanted('nap', INST, g) == pl.wanted('focus', INST, g) | {'com.google.android.youtube'}
+    assert pl.wanted('nap', INST | {'app.revanced.android.youtube'}, g) == pl.wanted('focus', INST, g) | {'app.revanced.android.youtube'}
     assert pl.wanted('night', INST, g) == pl.wanted('nap', INST, g) | {'com.facebook.orca'}
     for m in ('default', 'focus', 'nap', 'night'):
         assert not pl.wanted(m, INST, g) & {'com.linkedin.android', 'com.bk.ctsv', 'uni.hust.ehust', 'com.bank.y'}

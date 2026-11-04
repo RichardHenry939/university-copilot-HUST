@@ -21,6 +21,8 @@ public class MainActivity extends Activity {
     private WebView view, laptop;
     private boolean onLaptop;
 
+    private static final String REVANCED = "app.revanced.android.youtube";
+
     private WebView make() {
         WebView w = new WebView(this);
         WebSettings s = w.getSettings();
@@ -28,6 +30,26 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(false);
         s.setDomStorageEnabled(true);
         return w;
+    }
+
+    /** (chủ 04/11) Link ra ngoài UC không mở trong WebView: giao cho Android (link YouTube -> app ReVanced, vì web YouTube
+     *  trên điện thoại bị PhoneDNS chặn). -> true nếu đã giao đi. Trang UC (laptop qua Tailscale, bản chỉ-xem) vẫn ở lại. */
+    private boolean external(android.net.Uri u) {
+        String sc = u.getScheme() == null ? "" : u.getScheme();
+        if (sc.equals("file") || sc.equals("about") || sc.equals("data") || sc.equals("javascript")) return false;
+        String h = u.getHost() == null ? "" : u.getHost();
+        if ((sc.equals("http") || sc.equals("https")) && h.startsWith("100.")) return false;   // UC trên laptop
+        Intent i = new Intent(Intent.ACTION_VIEW, u).addCategory(Intent.CATEGORY_BROWSABLE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (h.equals("youtu.be") || h.equals("youtube.com") || h.endsWith(".youtube.com")) {
+            try { startActivity(new Intent(i).setPackage(REVANCED)); return true; }   // thẳng vào ReVanced
+            catch (android.content.ActivityNotFoundException e) { /* chưa cài -> để Android chọn */ }
+        }
+        try { startActivity(i); } catch (android.content.ActivityNotFoundException e) { android.util.Log.w("UCAPP", "no app " + sc); }
+        return true;
+    }
+
+    private class Links extends WebViewClient {
+        @Override public boolean shouldOverrideUrlLoading(WebView w, WebResourceRequest r) { return r.isForMainFrame() && external(r.getUrl()); }
     }
 
     @Override protected void onCreate(Bundle b) {
@@ -41,6 +63,7 @@ public class MainActivity extends Activity {
 
         view = make();
         view.addJavascriptInterface(new Bridge(), "UC");
+        view.setWebViewClient(new Links());
         view.loadUrl(OFFLINE);
         laptop = make();
         laptop.setWebChromeClient(new android.webkit.WebChromeClient() {   // lỗi JS của trang laptop -> nhật ký
@@ -51,7 +74,7 @@ public class MainActivity extends Activity {
             }
         });
         laptop.setVisibility(View.INVISIBLE);   // INVISIBLE (không GONE) để vẫn tải ở lớp dưới
-        laptop.setWebViewClient(new WebViewClient() {
+        laptop.setWebViewClient(new Links() {
             @Override public void onPageStarted(WebView w, String url, android.graphics.Bitmap f) { android.util.Log.w("UCAPP", "start " + url.replaceAll("k=[^&]+", "k=***")); }
             @Override public void onReceivedHttpError(WebView w, WebResourceRequest r, android.webkit.WebResourceResponse resp) {
                 android.util.Log.w("UCAPP", "http " + resp.getStatusCode() + " " + r.getUrl().getPath() + " main=" + r.isForMainFrame());

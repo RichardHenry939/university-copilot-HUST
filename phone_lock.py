@@ -96,8 +96,9 @@ def wanted(m, installed, games=(), social=()):
     """Các gói cần khoá ở chế độ m, chỉ trong số đang cài."""
     # (chủ 04/11) trình duyệt thường KHÔNG tạm dừng nữa (đi qua laptop để chặn theo tên miền); riêng Tor khoá cứng vì lách được mọi chặn tên miền
     tor = ('org.torproject.torbrowser',)
-    groups = {'default': SOCIAL + social,
-              'focus': SOCIAL + social + tor + STORE + games,
+    yt = ('com.google.android.youtube',)   # (chủ 04/11) app YouTube gốc có Shorts -> khoá; xem bằng ReVanced là đủ
+    groups = {'default': SOCIAL + social + yt,
+              'focus': SOCIAL + social + yt + tor + STORE + games,
               'nap': SOCIAL + social + tor + STORE + games + YOUTUBE,
               'night': SOCIAL + social + tor + STORE + games + YOUTUBE + MESSENGER}.get(m or 'default', ())
     return {p for p in groups if p in installed} - NEVER
