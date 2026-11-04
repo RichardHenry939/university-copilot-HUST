@@ -65,7 +65,7 @@ def plan(total_min):
 
 def _elapsed_s(a, now):
     s = (now - _t(a['start'])).total_seconds() - a.get('paused_s', 0)
-    if a.get('paused_at'): s -= (now - _t(a['paused_at'])).total_seconds()
+    if a.get('paused_at') and _t(a['paused_at']) < now: s -= (now - _t(a['paused_at'])).total_seconds()   # tính lùi về 00:00 (day_cut) mà dừng sau đó -> bỏ qua
     return max(0, s)
 
 
@@ -150,15 +150,16 @@ def resume(st, now):
             _signal(True, _iso(now + dt.timedelta(seconds=_left_s(a, now))), now)
 
 
-def end_focus(st, now):
+def end_focus(st, now, at=None):
+    """at: chốt phiên tại thời điểm này dù chưa hết giờ (chỉ day_cut dùng; người dùng không huỷ được)."""
     a = st['active']
     if not a or a['type'] != 'focus': raise ValueError('Không có phiên tập trung nào.')
-    p = progress(st, now)
-    if not p['done']: raise ValueError('Đã vào phiên tập trung thì không huỷ được. Phiên tự kết thúc khi hết giờ.')
+    p = progress(st, at or now)
+    if not p['done'] and not at: raise ValueError('Đã vào phiên tập trung thì không huỷ được. Phiên tự kết thúc khi hết giờ.')
     blocks, reward = p['blocks_done'], p['blocks_done'] * BLOCK_REWARD
-    st['sessions'].append({'id': a['id'], 'start': a['start'], 'end': _iso(now), 'total': a['total'], 'subject': a['subject'],
-                           'focus_min': p['focus_s'] // 60, 'blocks': blocks, 'pauses': a.get('pauses', [])})
-    if reward: _add(st, 'focus', reward, now, ref=a['id'], note=f'{blocks} khối 25 phút' + (f' · {a["subject"]}' if a['subject'] else ''))
+    st['sessions'].append({'id': a['id'], 'start': a['start'], 'end': _iso(at or now), 'total': a['total'], 'subject': a['subject'],
+                           'focus_min': p['focus_s'] // 60, 'blocks': blocks, 'pauses': a.get('pauses', []), **({'cut': 'hết ngày'} if at else {})})
+    if reward: _add(st, 'focus', reward, now, ref=a['id'], note=f'{blocks} khối 25 phút' + (f' · {a["subject"]}' if a['subject'] else '') + (' · hết ngày' if at else ''))
     st['active'] = None
     _signal(False, None, now)
     return {'blocks': blocks, 'reward': reward}
@@ -230,8 +231,25 @@ def spans_today(st, now):
     return out
 
 
+# Lối tắt: phiên bắt đầu trước mốc này không áp luật hết ngày (chủ cho phiên 03/11 chạy nốt, 04/11). Qua vài ngày có thể bỏ.
+DAY_RULE_FROM = dt.datetime(2026, 11, 4, 11, 0, tzinfo=TZ)
+
+
+def day_cut(st, now):
+    """(04/11, chủ chốt) Hết ngày thì không phiên nào được tiếp tục: phiên bắt đầu hôm trước tự kết thúc, chốt tại 00:00
+    (tập trung: chỉ tính khối 25 phút đã trọn trước 00:00; giải trí: trừ phút tới 00:00). Gọi trong view() -> mọi GET/POST ví
+    đều qua đây, nên dù không tab nào mở lúc 00:00, lần mở sau vẫn chốt đúng 00:00."""
+    a = st['active']
+    if not a or _t(a['start']) < DAY_RULE_FROM: return None
+    mid = _t(a['start']).astimezone(TZ).replace(hour=0, minute=0, second=0, microsecond=0) + dt.timedelta(days=1)
+    if now < mid: return None
+    if a['type'] == 'focus': return end_focus(st, now, at=mid)
+    return end_fun(st, min(now, mid))
+
+
 def view(st, now):
-    """Trạng thái cho giao diện. Phiên đã hết giờ (hoặc giải trí hết số dư) thì tự kết thúc ở đây."""
+    """Trạng thái cho giao diện. Phiên đã hết giờ (hoặc giải trí hết số dư, hoặc đã sang ngày mới) thì tự kết thúc ở đây."""
+    day_cut(st, now)
     a = st['active']
     if a and a['type'] == 'focus' and progress(st, now)['done']: end_focus(st, now)
     elif a and a['type'] == 'fun' and (now - _t(a['start'])).total_seconds() >= a['cap'] * 60: end_fun(st, now)

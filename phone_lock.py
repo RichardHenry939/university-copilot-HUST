@@ -1,43 +1,66 @@
 # -*- coding: utf-8 -*-
-"""(v1.00.53, chủ 02/11 — việc A2 dời từ v1.00.52) Khoá tiến vào máy ảo Android (emulator-5554), sau này điện thoại thật.
+"""(v1.00.53, chủ 02/11; luật điện thoại chủ chốt 04/11) Khoá tiến vào máy ảo Android và điện thoại thật qua adb.
 
 Khoá máy tính (chặn tên miền + chính sách trình duyệt trên Windows) không chạm tới app trong máy ảo / điện thoại.
-UC tự tạm khoá app mạng xã hội trong máy ảo bằng adb, đúng lúc máy tính đang khoá:
-  - đêm 22:00–06:00 (lõi cứng, không cần tín hiệu)        -> khoá SOCIAL + YOUTUBE + BROWSERS + STORE
-  - ngủ trưa: phần vàng trong school/nap.json (nap_spans)  -> như đêm
-  - tập trung (ví đang chạy, hoặc bạn tự bấm dừng; UC tự dừng thì KHÔNG khoá) -> như đêm, TRỪ YouTube
-Không bao giờ đụng: Messenger, iCTSV (com.bk.ctsv), eHUST (uni.hust.ehust), app hệ thống ngoài danh sách.
+UC tạm khoá app bằng adb trên MỌI máy adb đang thấy (máy ảo + điện thoại cắm dây / adb qua Wi-Fi), theo 4 chế độ:
+  - mặc định (mọi lúc ngoài giờ khoá)  -> khoá app mạng xã hội (lướt MXH)
+  - tập trung (ví đang chạy, hoặc bạn tự bấm dừng; UC tự dừng thì như mặc định)
+                                       -> + trình duyệt, Play Store, game
+  - ngủ trưa (nap_spans trong school/nap.json) -> như khoá trưa máy tính: + YouTube; chừa Messenger
+  - đêm 22:00–06:00 (lõi cứng)         -> như khoá đêm máy tính: + YouTube + Messenger
+Luôn chừa: LinkedIn, iCTSV, eHUST và mọi app không nằm trong nhóm nào (điện thoại, tin nhắn, báo thức, ngân hàng...).
+App YouTube chỉ khoá ở trưa / đêm (app của chủ đã sửa bỏ Shorts).
+Danh sách riêng của từng người (game, MXH thêm) ở school/phone_apps.json: {"games": [...], "social": [...]} — không lên public.
 
 Cách khoá: `cmd package suspend` (app vẫn còn, bấm vào chỉ hiện hộp "đã tạm dừng"); máy không cho shell suspend thì
-dùng `pm disable-user`. Chỉ mở lại đúng app CHÍNH UC đã khoá (ghi ở school/phone_lock.json) -> app bạn tự tắt vẫn tắt.
+dùng `pm disable-user`. Chỉ mở lại đúng app CHÍNH UC đã khoá (ghi theo từng máy ở school/phone_lock.json).
 
 Giới hạn (đi tắt, ghi rõ):
-  - Trình duyệt bị khoá cả app trong giờ khoá (kể cả lúc tập trung) vì chưa chặn được theo tên miền trong máy ảo
-    (Play Store image không root -> không sửa được hosts của Android). Làm lại khi có cách chặn DNS riêng cho máy ảo.
-  - YouTube lúc tập trung: chừa cả app nên Shorts trong app vẫn lọt (app không tách Shorts ra được).
-  - Game: chỉ khoá gói có trong GAMES (chưa tự nhận diện game). Thêm tên gói vào đây khi cài game mới.
-  - Ai có adb vẫn tự mở lại được (`cmd package unsuspend`). Đây là rào cho lúc lười, không phải két sắt.
+  - Lướt MXH trên WEB ngoài giờ khoá: adb không chặn được theo tên miền trên máy chưa root (chặn tên miền thì app
+    YouTube chết theo). Cần app lọc DNS trên máy (vd RethinkDNS) chặn facebook.com / youtube.com, loại trừ app YouTube.
+  - Trong giờ khoá thì trình duyệt bị khoá cả app.
+  - Điện thoại chỉ bị khoá khi laptop bật + adb thấy máy (cắm dây, hoặc adb Wi-Fi cùng mạng). App đã khoá thì GIỮ khoá
+    khi mất kết nối (suspend nằm trên máy), nhưng chế độ mới (vd tới 22:00) không áp được cho tới khi nối lại.
+  - Ai có adb / tự gỡ trong cài đặt nhà phát triển vẫn mở lại được. Đây là rào cho lúc lười, không phải két sắt.
 """
-import datetime as dt, json, subprocess, threading, time
+import datetime as dt, json, subprocess, time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 STATE = HERE / 'school' / 'phone_lock.json'
+APPS = HERE / 'school' / 'phone_apps.json'
 NAP = HERE / 'school' / 'nap.json'
 ADB = r'D:\Android\Sdk\platform-tools\adb.exe'
-SERIAL = 'emulator-5554'
 TZ = dt.timezone(dt.timedelta(hours=7))
 
 SOCIAL = ('com.facebook.katana', 'com.facebook.lite', 'com.instagram.android', 'com.instagram.barcelona',   # Threads
           'com.zhiliaoapp.musically', 'com.ss.android.ugc.trill', 'com.twitter.android', 'com.reddit.frontpage',
           'com.snapchat.android', 'com.discord', 'com.pinterest', 'com.tumblr', 'xyz.blueskyweb.app')
-YOUTUBE = ('com.google.android.youtube',)
+YOUTUBE = ('com.google.android.youtube', 'app.revanced.android.youtube')   # ReVanced = YouTube đã sửa của chủ (chừa khi tập trung)
+MESSENGER = ('com.facebook.orca',)
 BROWSERS = ('com.android.chrome', 'org.mozilla.firefox', 'com.microsoft.emmx', 'com.opera.browser', 'com.brave.browser',
-            'com.sec.android.app.sbrowser', 'com.coccoc.trinhduyet',
+            'com.sec.android.app.sbrowser', 'com.coccoc.trinhduyet', 'org.torproject.torbrowser',   # Tor: trình duyệt, không phải MXH (chủ 04/11)
             'com.google.android.googlequicksearchbox')   # app Google mở kết quả tìm kiếm bằng trình xem web riêng
-STORE = ('com.android.vending',)   # chặn cài app mới trong giờ khoá
-GAMES = ()
-NEVER = {'com.facebook.orca', 'com.bk.ctsv', 'uni.hust.ehust'}   # Messenger, iCTSV, eHUST: không bao giờ khoá
+STORE = ('com.android.vending', 'com.sec.android.app.samsungapps')   # chặn cài app mới trong giờ khoá
+NEVER = {'com.linkedin.android', 'com.bk.ctsv', 'uni.hust.ehust', 'com.everytime.v2',   # LinkedIn, iCTSV, eHUST, Everytime (cộng đồng SV)
+         'com.locket.Locket'}   # Locket: app chụp ảnh cho nhóm bạn hẹp, không lướt được (chủ 04/11) — không bao giờ khoá
+
+
+def _apps_cfg():
+    try: return json.loads(APPS.read_text(encoding='utf-8'))
+    except Exception: return {}
+
+
+def apps():
+    """Danh sách riêng (game, MXH thêm) chủ đã duyệt. Không có file -> rỗng."""
+    d = _apps_cfg()
+    return tuple(d.get('games') or ()), tuple(d.get('social') or ())
+
+
+def approved(serial):
+    """Chỉ khoá máy ảo (emulator-*) và điện thoại chủ đã duyệt ("devices" trong phone_apps.json):
+    cắm một máy lạ / máy bạn bè vào laptop thì UC không đụng."""
+    return serial.startswith('emulator-') or serial in (_apps_cfg().get('devices') or ())
 
 
 def _focus_on():
@@ -60,75 +83,119 @@ def _nap_on(now):
 
 
 def mode(now=None, focus=None, nap=None):
-    """-> 'night' | 'nap' | 'focus' | None (không khoá)."""
+    """-> 'night' | 'nap' | 'focus' | 'default'."""
     now = now or dt.datetime.now(TZ)
     hm = now.strftime('%H:%M')
     if hm >= '22:00' or hm < '06:00': return 'night'
     if (_nap_on(now) if nap is None else nap): return 'nap'
     if (_focus_on() if focus is None else focus): return 'focus'
-    return None
+    return 'default'
 
 
-def wanted(m, installed):
+def wanted(m, installed, games=(), social=()):
     """Các gói cần khoá ở chế độ m, chỉ trong số đang cài."""
-    if not m: return set()
-    groups = SOCIAL + BROWSERS + STORE + GAMES + (YOUTUBE if m != 'focus' else ())
+    # (chủ 04/11) trình duyệt thường KHÔNG tạm dừng nữa (đi qua laptop để chặn theo tên miền); riêng Tor khoá cứng vì lách được mọi chặn tên miền
+    tor = ('org.torproject.torbrowser',)
+    groups = {'default': SOCIAL + social,
+              'focus': SOCIAL + social + tor + STORE + games,
+              'nap': SOCIAL + social + tor + STORE + games + YOUTUBE,
+              'night': SOCIAL + social + tor + STORE + games + YOUTUBE + MESSENGER}.get(m or 'default', ())
     return {p for p in groups if p in installed} - NEVER
 
 
-def adb(*a, timeout=20):
+def adb(serial, *a, timeout=20):
     try:
-        r = subprocess.run([ADB, '-s', SERIAL, *a], capture_output=True, timeout=timeout,
+        r = subprocess.run([ADB, *(['-s', serial] if serial else []), *a], capture_output=True, timeout=timeout,
                            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         return r.returncode, r.stdout.decode('utf-8', 'replace') + r.stderr.decode('utf-8', 'replace')
     except Exception as e: return -1, str(e)
 
 
-def installed():
-    rc, out = adb('shell', 'pm', 'list', 'packages')
+def devices():
+    """Các máy adb đang sẵn sàng (bỏ máy 'unauthorized' / 'offline')."""
+    rc, out = adb(None, 'devices', timeout=10)
+    return [l.split('\t')[0] for l in out.splitlines()[1:] if l.endswith('\tdevice')] if rc == 0 else []
+
+
+def installed(serial):
+    rc, out = adb(serial, 'shell', 'pm', 'list', 'packages')
     return {l[8:].strip() for l in out.splitlines() if l.startswith('package:')} if rc == 0 else None
 
 
 def _load():
-    try: return json.loads(STATE.read_text(encoding='utf-8'))
-    except Exception: return {'locked': {}}
+    try: st = json.loads(STATE.read_text(encoding='utf-8'))
+    except Exception: st = {}
+    if 'locked' in st and 'devices' not in st:   # dạng cũ (chỉ máy ảo) -> chuyển sang theo từng máy
+        st = {'devices': {'emulator-5554': {'locked': st['locked']}}}
+    st.setdefault('devices', {})
+    return st
 
 
 def _save(st):
     STATE.parent.mkdir(parents=True, exist_ok=True); STATE.write_text(json.dumps(st, ensure_ascii=False, indent=1), encoding='utf-8')
 
 
-def lock(pkg):
+def lock(serial, pkg):
     """-> 'suspend' | 'disable' | None. force-stop trước để app đang mở bị đóng ngay."""
-    adb('shell', 'am', 'force-stop', pkg)
-    rc, out = adb('shell', 'cmd', 'package', 'suspend', '--user', '0', pkg)
+    adb(serial, 'shell', 'am', 'force-stop', pkg)
+    rc, out = adb(serial, 'shell', 'cmd', 'package', 'suspend', '--user', '0', pkg)
     if rc == 0 and 'new suspended state: true' in out.lower(): return 'suspend'
-    rc, out = adb('shell', 'pm', 'disable-user', '--user', '0', pkg)
+    rc, out = adb(serial, 'shell', 'pm', 'disable-user', '--user', '0', pkg)
     return 'disable' if rc == 0 and 'disabled' in out.lower() else None
 
 
-def unlock(pkg, how):
-    if how == 'suspend': rc, _ = adb('shell', 'cmd', 'package', 'unsuspend', '--user', '0', pkg)
-    else: rc, _ = adb('shell', 'pm', 'enable', '--user', '0', pkg)
+def unlock(serial, pkg, how):
+    if how == 'suspend': rc, _ = adb(serial, 'shell', 'cmd', 'package', 'unsuspend', '--user', '0', pkg)
+    else: rc, _ = adb(serial, 'shell', 'pm', 'enable', '--user', '0', pkg)
+    return rc == 0
+
+
+# (chủ 04/11) PhoneLock: 4 khoá của điện thoại, mỗi khoá NEO vào khoá tương ứng của máy tính (cùng nguồn tín hiệu, không tự đặt giờ):
+#   PhoneDefaultLock luôn bật · PhoneFocusLock theo khoá tập trung (ví) · PhoneNapLock theo NapLock (school/nap.json)
+#   · PhoneNightLock theo NightLock (22:00–06:00). Khoá sau bao trùm khoá trước, nên chặn = khoá cao nhất đang bật.
+LOCK_NAME = {'default': 'PhoneDefaultLock', 'focus': 'PhoneFocusLock', 'nap': 'PhoneNapLock', 'night': 'PhoneNightLock'}
+def set_exit(serial, on):
+    """(04/11, chủ duyệt) Trong giờ khoá điện thoại đi qua laptop (Tailscale exit node) -> ăn chặn tên miền của laptop.
+    Bật / tắt exit node trên app Tailscale của điện thoại (lệnh USE_EXIT_NODE, app nhận từ adb — đã thử 04/11).
+    Tên máy laptop trong tailnet: "exit_node" ở phone_apps.json (riêng từng người); thiếu -> không đổi đường đi.
+    Đi qua laptop chậm hơn (~225 ms so với ~58 ms) nên chỉ bật trong giờ khoá. Lưu ý: app phải TẮT "Run as exit node"."""
+    node = _apps_cfg().get('exit_node') or ''
+    if not node: return False
+    rc, out = adb(serial, 'shell', 'am', 'broadcast', '-a', 'com.tailscale.ipn.USE_EXIT_NODE', '-n', 'com.tailscale.ipn/.IPNReceiver',
+                  '--es', 'exitNode', node if on else "''", '--ez', 'allowLanAccess', 'true')   # '' rỗng bị adb nuốt -> phải gửi cặp nháy
     return rc == 0
 
 
 def tick(now=None, m='auto'):
-    """Một lượt: khoá app còn thiếu, mở app hết giờ khoá. -> dict báo cáo (không gửi thông báo)."""
-    rc, out = adb('get-state', timeout=8)
-    if 'device' not in out: return {'device': False}
-    inst = installed()
-    if inst is None: return {'device': False}
+    """Một lượt trên mọi máy: khoá app còn thiếu, mở app hết giờ khoá. -> dict báo cáo (không gửi thông báo)."""
+    ds = devices()
+    if not ds: return {'device': False}
     m = mode(now) if m == 'auto' else m
-    want, st = wanted(m, inst), _load()
-    done = {'mode': m, 'locked': [], 'unlocked': [], 'failed': []}
-    for p in sorted(want - set(st['locked'])):
-        how = lock(p)
-        if how: st['locked'][p] = how; done['locked'].append(p)
-        else: done['failed'].append(p)
-    for p in sorted(set(st['locked']) - want):
-        if p not in inst or unlock(p, st['locked'][p]): st['locked'].pop(p); done['unlocked'].append(p)
-        else: done['failed'].append(p)
+    games, social = apps()
+    st, done = _load(), {'mode': m, 'locked': [], 'unlocked': [], 'failed': []}
+    # (chủ 04/11 ~12:40) PhoneLock = bộ chặn RIÊNG của điện thoại, KHÔNG đi qua Tailscale nữa: exit node luôn tắt.
+    # set_exit giữ lại để trả điện thoại về đường thường nếu trước đó đang bật.
+    phones = [s for s in ds if approved(s) and not s.startswith('emulator-')]
+    # (chủ 04/11 ~12:50 "áp dụng khi có lock") Focus/Nap/Night: điện thoại đi qua laptop (exit node) -> trình duyệt vẫn dùng được,
+    # chỉ tên miền máy tính đang chặn là không vào được; ngoài giờ khoá thì đi thẳng.
+    ex = st.setdefault('exit', {}); want_exit = m in ('night', 'nap', 'focus')
+    t = (now or dt.datetime.now(TZ)).timestamp()
+    if phones and (ex.get('on') != want_exit or t - ex.get('at', 0) > 600):
+        if set_exit(phones[0], want_exit): ex.update(on=want_exit, at=t); done['exit_node'] = want_exit
+    done['khoa'] = LOCK_NAME.get(m, m)
+    for s in ds:
+        if not approved(s): continue
+        inst = installed(s)
+        if inst is None: continue
+        mine = st['devices'].setdefault(s, {'locked': {}})['locked']
+        want = wanted(m, inst, games, social)
+        for p in sorted(want - set(mine)):
+            how = lock(s, p)
+            if how: mine[p] = how; done['locked'].append(f'{s}:{p}')
+            else: done['failed'].append(f'{s}:{p}')
+        for p in sorted(set(mine) - want):
+            if p not in inst or unlock(s, p, mine[p]): mine.pop(p); done['unlocked'].append(f'{s}:{p}')
+            else: done['failed'].append(f'{s}:{p}')
     st['mode'], st['at'] = m, (now or dt.datetime.now(TZ)).isoformat(timespec='seconds')
     _save(st)
     return done
@@ -146,15 +213,15 @@ def log(msg, now=None):
 
 
 def loop(every=60):
-    """Vòng canh trong UC: mỗi phút. Máy ảo tắt thì bỏ qua (khi bật lại, lượt kế tiếp tự khoá đúng).
-    Nhật ký: mỗi lần khoá / mở / lỗi, và mỗi lần chế độ hoặc trạng thái máy ảo đổi (không ghi mỗi phút)."""
+    """Vòng canh trong UC: mỗi phút. Không thấy máy nào thì bỏ qua (nối lại thì lượt kế tiếp tự khoá đúng).
+    Nhật ký: mỗi lần khoá / mở / lỗi, và mỗi lần chế độ hoặc trạng thái máy đổi (không ghi mỗi phút)."""
     last = None
     while True:
         try:
             r = tick()
-            key = (r.get('device', True), r.get('mode'))
+            key = (r.get('device', True), r.get('mode'), tuple(devices()))
             if r.get('locked') or r.get('unlocked') or r.get('failed') or key != last:
-                log(json.dumps(r, ensure_ascii=False)); last = key
+                log(json.dumps({**r, 'devices': list(key[2])}, ensure_ascii=False)); last = key
         except Exception as e: log(f'loi: {e}')
         time.sleep(every)
 

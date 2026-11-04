@@ -1211,17 +1211,19 @@ class H(BaseHTTPRequestHandler):
                 ct = "image/png" if b_img[:4] == b"\x89PNG" else "image/webp" if b_img[8:12] == b"WEBP" else "image/jpeg"
                 return self._send(200, raw=b_img, ctype=ct)
             if u.path == "/hero-img":   # (v1.00.45) ảnh nền trang chủ: người dùng tự đặt ui/assets/hero.(jpg|jpeg|png|webp)
+                p_doc = HERE / "ui" / "assets" / "hero-portrait.jpg"   # (v1.00.60) ảnh dọc cho điện thoại (/hero-img?v=doc), tự đặt, không lên Git
+                if "v=doc" in (u.query or "") and p_doc.exists(): return self._send(200, raw=p_doc.read_bytes(), ctype="image/jpeg")
                 for ext, ct in (("jpg", "image/jpeg"), ("jpeg", "image/jpeg"), ("png", "image/png"), ("webp", "image/webp")):
                     p_hero = HERE / "ui" / "assets" / f"hero.{ext}"
                     if p_hero.exists(): return self._send(200, raw=p_hero.read_bytes(), ctype=ct)
                 return self._send(404, {"error": "chưa có ảnh nền"})
             if u.path == "/api/owner":   # (v1.00.45 tiếp) tên + liên hệ ở footer trang chủ; thiếu cấu hình -> {} (footer chỉ ghi University Copilot)
                 return self._send(200, _owner())
-            m_as = re.fullmatch(r"/assets/([a-z0-9-]{1,40}\.(svg|png))", u.path)
+            m_as = re.fullmatch(r"/assets/([a-z0-9-]{1,40}\.(svg|png|json))", u.path)   # (v1.00.60) + .json: hust-plan.json (bản đồ trường)
             if m_as:   # (v1.00.45 tiếp) ảnh tĩnh trang chủ (map.svg, school-logo.png nếu bạn tự đặt): chỉ tên chữ thường, chỉ .svg/.png, chỉ trong ui/assets
                 p_as = HERE / "ui" / "assets" / m_as.group(1)
                 if not p_as.is_file(): return self._send(404, {"error": "không có"})
-                return self._send(200, raw=p_as.read_bytes(), ctype="image/svg+xml" if m_as.group(2) == "svg" else "image/png")
+                return self._send(200, raw=p_as.read_bytes(), ctype={"svg": "image/svg+xml", "png": "image/png", "json": "application/json; charset=utf-8"}[m_as.group(2)])
             if u.path == "/api/wallet":   # (v1.00.42 W8) ví thời gian: số dư, phiên đang chạy, thống kê
                 import wallet, datetime as _dt
                 with wallet.lock:
@@ -1696,7 +1698,70 @@ class H(BaseHTTPRequestHandler):
         pass
 
 
+# (v1.00.60, chủ 04/11 cho phép) App UC trên điện thoại mở chính UC web này qua Tailscale (chỉ máy trong tailnet của chủ).
+# Lớp chắn thứ hai: khoá điện thoại school/secret/phone_key.txt. Lần đầu app mở /?k=<khoá> -> UC đặt cookie rồi chuyển về /;
+# sau đó mọi yêu cầu phải có cookie đúng, sai/thiếu -> 404. Các chốt "chỉ trình duyệt trên laptop" cũ (MSSV) vẫn giữ nguyên
+# vì chúng đòi client_address 127.0.0.1. Đi tắt: http thường (đường truyền đã được Tailscale/WireGuard mã hoá).
+PHONE_KEY_FILE = HERE / "school" / "secret" / "phone_key.txt"
+
+
+def _phone_key():
+    try: k = PHONE_KEY_FILE.read_text(encoding="utf-8").strip()
+    except Exception: k = ""
+    if len(k) < 32:
+        import secrets
+        k = secrets.token_urlsafe(32)
+        PHONE_KEY_FILE.parent.mkdir(parents=True, exist_ok=True); PHONE_KEY_FILE.write_text(k, encoding="utf-8")
+    return k
+
+
+class RemoteH(H):
+    def parse_request(self):
+        if not super().parse_request(): return False
+        key = _phone_key()
+        u = urllib.parse.urlsplit(self.path)
+        q = urllib.parse.parse_qs(u.query).get("k", [""])[0]
+        if q and hmac.compare_digest(q, key):
+            self.send_response(302)
+            self.send_header("Set-Cookie", f"uc_k={key}; HttpOnly; Path=/; Max-Age=31536000; SameSite=Strict")
+            self.send_header("Location", u.path or "/"); self.send_header("Content-Length", "0"); self.end_headers()
+            return False
+        import http.cookies
+        try: ck = http.cookies.SimpleCookie(self.headers.get("Cookie") or "")
+        except http.cookies.CookieError: ck = {}
+        if "uc_k" in ck and hmac.compare_digest(ck["uc_k"].value, key): return True
+        self.send_response(404); self.send_header("Content-Length", "0"); self.end_headers()
+        return False
+
+    def _same_origin(self):   # trang mở từ điện thoại có Origin = chính địa chỉ Tailscale này
+        o = self.headers.get("Origin")
+        return o is None or o == f"http://{self.headers.get('Host')}"
+
+
+def _tailscale_loop():
+    """Nghe thêm ở địa chỉ Tailscale (100.x) cùng cổng. Tailscale chưa lên / đổi địa chỉ -> thử lại mỗi phút."""
+    import subprocess
+    exe = r"C:\Program Files\Tailscale\tailscale.exe"
+    while True:
+        try:
+            ip = subprocess.run([exe, "ip", "-4"], capture_output=True, text=True, timeout=15,
+                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout.strip().splitlines()[0]
+            if ip.startswith("100."):
+                print("UC qua Tailscale:", ip)
+                ThreadingHTTPServer((ip, PORT), RemoteH).serve_forever()
+        except Exception as e: print("tailscale listen:", e)
+        time.sleep(60)
+
+
 if __name__ == "__main__":
+    # (04/11) UC chạy bằng pythonw: sập là mất dấu (04/11 ~09:57 tắt hẳn không để lại gì). Ghi lỗi luồng + lỗi cứng vào school/uc_crash.log.
+    import faulthandler, sys as _sys, traceback as _tb
+    _crash = open(HERE / "school" / "uc_crash.log", "a", encoding="utf-8", buffering=1)
+    faulthandler.enable(file=_crash, all_threads=True)
+    def _log_exc(t, v, tb, where="main"):
+        _crash.write(time.strftime("%Y-%m-%d %H:%M:%S") + f" [{where}] " + "".join(_tb.format_exception(t, v, tb)) + "\n")
+    _sys.excepthook = _log_exc
+    threading.excepthook = lambda a: _log_exc(a.exc_type, a.exc_value, a.exc_traceback, a.thread.name if a.thread else "thread")
     import single_instance
     if not single_instance.acquire():   # (v1.00.59) đã có một bản UC khác đang chạy -> thoát, không chạy vòng lặp nền đôi
         raise SystemExit(0)
@@ -1729,4 +1794,5 @@ if __name__ == "__main__":
             time.sleep(600)
     threading.Thread(target=_mode_loop, daemon=True).start()   # 💾 Uni-Documents -> Drive + University Inbox
     threading.Thread(target=lambda: _safe(lambda: __import__("program").refresh(_npost)), daemon=True).start()   # làm nóng tab Học kỳ
+    threading.Thread(target=_tailscale_loop, daemon=True).start()   # (v1.00.60) 📱 app UC điện thoại mở UC web này qua Tailscale
     ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()

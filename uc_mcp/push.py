@@ -56,10 +56,15 @@ def _ngoai_khoa_inbox():
     return out
 
 
+_CACHE = {}   # (04/11) mỗi lượt gửi chỉ gọi mỗi API một lần: lượt 08:26 widget gọi lại /api/timetable/all lần 2 -> hết giờ, việc trống
+
+
 def _local(path, timeout=60):
     import urllib.request
+    if path in _CACHE: return _CACHE[path]
     with urllib.request.urlopen('http://127.0.0.1:8320' + path, timeout=timeout) as r:
-        return json.loads(r.read().decode('utf-8'))
+        _CACHE[path] = json.loads(r.read().decode('utf-8'))
+    return _CACHE[path]
 
 
 def _mo_rong():
@@ -93,12 +98,62 @@ def _mo_rong():
     return out
 
 
+def _widget(today_data=None):
+    """(v1.00.60, chủ 04/11) Bản gọn cho widget 4x2 trên điện thoại (đường /w/<khoá widget> trên connector, chỉ đọc):
+    việc hôm nay (ôn thi + hạn hôm nay, bù hạn gần nhất cho đủ 4), 2 buổi học / thi sắp tới, phút tập trung hôm nay + ví + chế độ khoá.
+    Cùng luật với mục "Việc cần làm hôm nay" ở ui/widget.html."""
+    out = {}
+    now = dt.datetime.now(S.TZ); today = now.date().isoformat()
+    try:
+        tt = _local('/api/timetable/all')
+        viec = [{'ten': r.get('title'), 'han': r.get('exam'), 'loai': 'on_thi'} for r in tt.get('review') or []]
+        dls = sorted([x for x in (today_data or _local('/api/today')).get('deadlines') or [] if not x.get('overdue') and x.get('due')], key=lambda x: x['due'])
+        hom_nay = [x for x in dls if x['due'][:10] == today]
+        bu = [x for x in dls if x['due'][:10] != today][:max(0, 4 - len(viec) - len(hom_nay))]
+        viec += [{'ten': x.get('name') + (f" · {x['course']}" if x.get('course') and x['course'] not in x.get('name', '') else ''),
+                  'han': x['due'], 'loai': 'han_hom_nay' if x in hom_nay else 'han'} for x in hom_nay + bu]
+        out['viec'] = viec[:6]
+        nowi = now.isoformat()
+        sap = sorted([e for e in tt.get('events') or [] if e.get('kind') in ('Class', 'Exam') and 'T' in (e.get('start') or '')
+                      and (e.get('end') or e['start']) > nowi and 'NGHỈ' not in (e.get('title') or '')], key=lambda e: e['start'])
+        out['lich'] = [{'ten': e.get('title'), 'loai': e.get('kind'), 'bat_dau': e.get('start'), 'ket_thuc': e.get('end'),
+                        'dia_diem': e.get('location')} for e in sap[:2]]
+        # (04/11, chủ) đồng hồ 24h của widget điện thoại: cùng lớp màu với ui/widget.html (giờ "HH:MM" trong ngày)
+        hh = lambda s: s[11:16]
+        dh = {'hoc': [[hh(e['start']), hh(e['end'])] for e in tt.get('events') or [] if e.get('kind') == 'Class' and e.get('end')
+                      and (e.get('start') or '')[:10] == today and 'T' in e['start'] and 'NGHỈ' not in (e.get('title') or '')],
+              'ngu_trua': ((tt.get('nap') or {}).get('spans') or []) if (tt.get('nap') or {}).get('date') == today else [],
+              'camp': (today_data or {}).get('mode') == 'Camp'}
+        try:
+            w = _local('/api/walk')
+            dh['the_duc'] = [[hh(a), hh(b)] for a, b in w.get('redSpans') or [] if a[:10] == today]
+            out['buoc'] = {'buoc': w.get('steps') or 0, 'muc_tieu': w.get('target') or 10000, 'du': bool(w.get('met'))}
+        except Exception: pass
+        out['dong_ho'] = dh
+    except Exception as e: out['loi_lich'] = f"{type(e).__name__}: {e}"[:160]
+    try:
+        sys.path.insert(0, str(HERE.parent))
+        import wallet, phone_lock
+        st = wallet.load(); a = st.get('active') or {}
+        sec = sum((dt.datetime.fromisoformat(y) - dt.datetime.fromisoformat(x)).total_seconds() for x, y in wallet.spans_today(st, now))
+        out['tap_trung'] = {'phut_hom_nay': int(sec // 60), 'so_du': wallet.balance(st),
+                            'phien': None if not a else ('giai_tri' if a.get('type') == 'fun' else
+                                                         'dang_chay' if not a.get('paused_at') else
+                                                         'ban_dung' if wallet.by_user(a) else 'uc_dung'),
+                            'che_do_khoa': phone_lock.mode(now),
+                            'khoang': [[dt.datetime.fromisoformat(x).astimezone(S.TZ).strftime('%H:%M'),
+                                        dt.datetime.fromisoformat(y).astimezone(S.TZ).strftime('%H:%M')] for x, y in wallet.spans_today(st, now)]}
+    except Exception as e: out['loi_tap_trung'] = f"{type(e).__name__}: {e}"[:160]
+    return {'widget': out}
+
+
 LAST_ERR = None   # lý do lần snapshot() gần nhất trả None (để push() phân biệt "UC tắt" với "UC lỗi")
 
 
 def snapshot():
     """-> bản tóm tắt (dict) hoặc None khi UC không trả lời. Chỉ đọc /api/today MỘT lần."""
     global LAST_ERR
+    _CACHE.clear()
     d, err = S._fetch()
     LAST_ERR = err
     if d is None: return None
@@ -109,7 +164,7 @@ def snapshot():
                 "today": S.t_today({}),
                 "han_tat_ca": [S._deadline_view(x) for x in S._song(d)],
                 "bao_cao": S.t_briefing({})["bao_cao"],
-                **_ngoai_khoa_inbox(), **_mo_rong(), **_fitness()}
+                **_ngoai_khoa_inbox(), **_mo_rong(), **_fitness(), **_widget(d)}
     finally:
         S._fetch = real
 

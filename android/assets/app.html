@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&display=swap" rel="stylesheet">
+<style>
+/* bộ màu + font giống UC web (ui/index.html :root) */
+:root {
+  --paper: #f5f7fa; --grid: #e6ebf2; --sheet: #ffffff; --ink: #1b2433; --ink-2: #4a5568; --ink-3: #8592a6;
+  --line: #dce3ee; --blue: #2d55c8; --blue-wash: #e8eefb; --red: #cf3434; --red-wash: #fbeaea;
+  --green: #2f7d4f; --green-wash: #e6f3ec; --amber: #a86400; --amber-wash: #fbf1e1;
+  --r-s: 8px; --r-m: 12px; --r-l: 18px;
+  --font: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --paper: #131a26; --grid: #1a2232; --sheet: #1a2333; --ink: #e9edf4; --ink-2: #b4bdcc; --ink-3: #7d889b;
+    --line: #2a3447; --blue: #7d9cff; --blue-wash: #22305a; --red: #ff7a72; --red-wash: #3a2024;
+    --green: #6fcf97; --green-wash: #1b3328; --amber: #f2b04e; --amber-wash: #3a2d17; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.45 var(--font); -webkit-tap-highlight-color: transparent; }
+main { padding: 12px 16px 96px; max-width: 560px; margin: 0 auto; }   /* (v1.00.60) khung chứa của app đã chừa chỗ 2 thanh hệ thống */
+h2 { font-size: 17px; font-weight: 700; margin: 22px 0 8px; }
+h2 small { font-weight: 500; color: var(--ink-3); font-size: 13px; margin-left: 6px; }
+.top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.brand { font-weight: 800; letter-spacing: -.02em; font-size: 20px; }
+.st { font-size: 12px; color: var(--ink-3); display: flex; gap: 8px; align-items: center; }
+.st.off { color: var(--red); }
+button { font: inherit; color: inherit; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-s); padding: 6px 12px; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* tờ lịch xé: thứ trên dải xanh, ngày to, mép dưới răng cưa */
+.tear { display: grid; grid-template-columns: 112px 1fr; gap: 14px; align-items: stretch; }
+.page { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m) var(--r-m) 4px 4px; overflow: hidden; text-align: center;
+  -webkit-mask: radial-gradient(5px at 50% 100%, #0000 98%, #000) 50% 100% / 12px 100% repeat-x; padding-bottom: 6px; }
+.page .dow { background: var(--blue); color: #fff; font-weight: 700; font-size: 13px; padding: 5px 0; }
+.page .d { font-size: 56px; font-weight: 800; line-height: 1; padding: 8px 0 2px; letter-spacing: -.04em; }
+.page .m { font-size: 12px; color: var(--ink-3); }
+.focus { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 14px; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.focus .big { font-size: 28px; font-weight: 800; line-height: 1.1; }
+.focus .big span { font-size: 14px; font-weight: 600; color: var(--ink-2); margin-left: 4px; }
+.focus .meta { font-size: 13px; color: var(--ink-2); }
+.c-red { color: var(--red); } .c-amber { color: var(--amber); } .c-blue { color: var(--blue); } .c-green { color: var(--green); }
+
+ul.rows { list-style: none; margin: 0; padding: 0; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); }
+ul.rows li { display: grid; grid-template-columns: 64px 1fr; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); }
+ul.rows li:first-child { border-top: 0; }
+ul.rows time { font-weight: 700; font-size: 13px; color: var(--ink-2); padding-top: 1px; }
+ul.rows .sub { display: block; font-size: 12px; color: var(--ink-3); }
+li.urgent time, li.urgent { color: var(--red); }
+li.rev time { color: var(--amber); }
+li.past { opacity: .5; }
+li.now { background: var(--blue-wash); }
+li.exam time { color: var(--red); }
+.empty { color: var(--ink-3); font-size: 14px; padding: 12px 14px; background: var(--sheet); border: 1px dashed var(--line); border-radius: var(--r-m); margin: 0; }
+.alert { border-left: 3px solid var(--red); background: var(--red-wash); padding: 8px 12px; border-radius: var(--r-s); font-size: 13px; margin: 6px 0; }
+.alert.change { border-color: var(--blue); background: var(--blue-wash); }
+.alert.amber { border-color: var(--amber); background: var(--amber-wash); }
+.daybar { font-size: 13px; font-weight: 700; color: var(--ink-2); margin: 16px 0 6px; }
+.steps { height: 10px; background: var(--grid); border-radius: 99px; overflow: hidden; margin: 8px 0 4px; }
+.steps i { display: block; height: 100%; background: var(--green); }
+.card { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 14px; }
+
+nav { position: fixed; left: 0; right: 0; bottom: 0; background: var(--sheet); border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 4px; }
+nav button { border: 0; background: none; padding: 6px 0; font-size: 12px; color: var(--ink-3); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+nav button svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+nav button[aria-selected="true"] { color: var(--blue); font-weight: 700; }
+
+.setup { padding-top: 15vh; }
+.setup h1 { font-size: 26px; margin: 0 0 8px; letter-spacing: -.02em; }
+.setup p { color: var(--ink-2); }
+.setup input { width: 100%; font: 14px var(--font); padding: 12px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--sheet); color: var(--ink); margin: 12px 0; }
+.setup button { background: var(--blue); color: #fff; border: 0; padding: 10px 18px; font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) { .page { animation: drop .45s ease-out; } @keyframes drop { from { transform: translateY(-8px); opacity: 0; } } }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav id="nav" hidden></nav>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const VN = 7 * 3600e3;
+const vn = ms => new Date(ms + VN);
+const vnDay = ms => vn(ms).toISOString().slice(0, 10);
+const p2 = n => String(n).padStart(2, '0');
+const hm = iso => { const d = vn(Date.parse(iso)); return p2(d.getUTCHours()) + ':' + p2(d.getUTCMinutes()); };
+const DOW = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+const when = iso => { if (!iso) return ''; const ms = Date.parse(iso), today = vnDay(Date.now());
+  const d = Math.round((Date.parse(vnDay(ms)) - Date.parse(today)) / 864e5);
+  return d === 0 ? hm(iso) : d === 1 ? 'Mai ' + hm(iso) : vn(ms).getUTCDate() + '/' + (vn(ms).getUTCMonth() + 1); };
+const short = t => String(t || '').replace(/ · (LT\+BT|LT|BT|Thực nghiệm|Online|Offline|Teams đổi lịch)\b/g, '').replace(/^📡 /, '');
+const left = m => m < 60 ? m + ' phút' : m < 1440 ? Math.round(m / 60) + ' giờ' : Math.round(m / 1440) + ' ngày';
+
+let D = null, TAB = 'home';
+try { TAB = localStorage.getItem('tab') || 'home'; } catch (e) {}
+const TABS = [
+  ['home', 'Hôm nay', '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/>'],
+  ['lich', 'Lịch', '<path d="M4 6h16M4 12h16M4 18h10"/>'],
+  ['han', 'Hạn', '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>'],
+  ['nk', 'Ngoại khoá', '<path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2l.9-5.5-4-3.9 5.5-.8z"/>'],
+  ['fit', 'Fitness', '<path d="M7 20l3-7 4 3 3-9"/><circle cx="17" cy="5" r="2"/>'],
+];
+
+function setup() {
+  $('#nav').hidden = true;
+  $('#app').innerHTML = '<section class="setup"><h1>Nối UC với điện thoại</h1>' +
+    '<p>Dán đường dẫn trong file <b>WIDGET-URL.txt</b> trên laptop (thư mục uc-cloud). Đường dẫn này chỉ đọc được dữ liệu, không sửa được gì.</p>' +
+    '<input id="u" type="url" inputmode="url" placeholder="https://…/w/…" autocomplete="off" spellcheck="false">' +
+    '<button id="save">Lưu và tải dữ liệu</button><p id="msg"></p></section>';
+  $('#save').onclick = () => { const u = $('#u').value.trim();
+    if (!/^https:\/\/[^\s]+\/w\/[A-Za-z0-9_-]{20,}$/.test(u)) { $('#msg').textContent = 'Đường dẫn chưa đúng dạng https://…/w/<khoá>.'; return; }
+    UC.setUrl(u); $('#msg').textContent = 'Đang tải…'; UC.refresh(); };
+}
+
+window.onData = d => {
+  if (d) { D = d; render(); return; }
+  if (!D) { if (!UC.hasUrl()) return setup(); $('#app').innerHTML = '<p class="empty">Chưa tải được dữ liệu. Kiểm tra mạng rồi kéo xuống / bấm Tải lại.</p>' + reloadBtn(); bindReload(); }
+  else { const s = $('.st'); if (s) { s.classList.add('off'); s.firstChild.textContent = 'Không tải được, đang xem bản lưu'; } }
+};
+const reloadBtn = () => '<button id="rl">Tải lại</button>';
+function bindReload() { const b = $('#rl'); if (b) b.onclick = () => { b.textContent = 'Đang tải…'; UC.refresh(); };
+  const l = $('#lap'); if (l) l.onclick = () => { l.textContent = 'Đang nối…'; UC.tryLaptop(); }; }
+
+function header() {
+  const at = D.lan_cuoi ? hm(D.lan_cuoi) + ' ' + (vnDay(Date.parse(D.lan_cuoi)) === vnDay(Date.now()) ? '' : vn(Date.parse(D.lan_cuoi)).getUTCDate() + '/' + (vn(Date.parse(D.lan_cuoi)).getUTCMonth() + 1)) : '';
+  return '<div class="top"><span class="brand">University Copilot</span><span class="st' + (D.online ? '' : ' off') + '">' +
+    '<span>' + (D.online ? 'Cập nhật ' + at : 'Máy tính đang tắt · bản ' + at) + '</span>' + reloadBtn() + '</span></div>' +
+    (UC.hasLan && UC.hasLan() ? '<p class="st" style="margin:-6px 0 12px">Bản chỉ-xem. UC đầy đủ trên laptop tự mở khi tải xong. <button id="lap">Thử lại</button></p>' : '');
+}
+
+function home() {
+  const now = Date.now(), d = vn(now), w = D.widget || {}, t = w.tap_trung || {};
+  const fm = t.phut_hom_nay || 0, cls = fm === 0 ? 'c-red' : fm <= 30 ? 'c-amber' : fm <= 60 ? 'c-blue' : 'c-green';
+  const phien = { dang_chay: 'Đang tập trung', ban_dung: 'Bạn đang dừng (chặn vẫn giữ)', uc_dung: 'UC đã dừng phiên', giai_tri: 'Đang giải trí' }[t.phien] || 'Chưa có phiên';
+  const khoa = { night: 'khoá đêm', nap: 'khoá trưa', focus: 'khoá tập trung', default: 'mặc định' }[t.che_do_khoa] || '';
+  let h = '<div class="tear"><div class="page"><div class="dow">' + DOW[d.getUTCDay()] + '</div><div class="d">' + d.getUTCDate() + '</div>' +
+    '<div class="m">tháng ' + (d.getUTCMonth() + 1) + ', ' + d.getUTCFullYear() + '</div></div>' +
+    '<div class="focus"><div class="big ' + cls + '">' + fm + '<span>phút tập trung</span></div>' +
+    '<div class="meta">' + esc(phien) + '</div><div class="meta">Ví ' + (t.so_du ?? '–') + ' phút' + (khoa ? ' · điện thoại: ' + khoa : '') + '</div></div></div>';
+  const cb = (D.canh_bao || []).filter(a => a.level === 'red').slice(0, 2);
+  h += cb.map(a => '<div class="alert">' + esc(a.title) + (a.text ? ' — ' + esc(a.text) : '') + '</div>').join('');
+  const viec = w.viec || [];
+  h += '<h2>Việc cần làm hôm nay</h2>' + (viec.length ? '<ul class="rows">' + viec.map(x => {
+      const today = x.han && vnDay(Date.parse(x.han)) === vnDay(now);
+      return '<li class="' + (x.loai === 'on_thi' ? 'rev' : today ? 'urgent' : '') + '"><time>' + (x.loai === 'on_thi' ? 'Ôn thi' : when(x.han)) +
+        '</time><span>' + esc(short(x.ten).replace('Ôn thi định kỳ hằng ngày môn ', '')) + (x.loai === 'on_thi' && x.han ? '<span class="sub">thi ' + when(x.han) + '</span>' : '') + '</span></li>'; }).join('') + '</ul>'
+    : '<p class="empty">Hôm nay không có việc nào có hạn.</p>');
+  const todayEv = (D.lich || []).filter(e => e.bat_dau && e.bat_dau.includes('T') && vnDay(Date.parse(e.bat_dau)) === vnDay(now) && e.loai !== 'Deadline' && !/NGHỈ/.test(e.tieu_de || ''));
+  h += '<h2>Lịch hôm nay</h2>' + (todayEv.length ? rows(todayEv) : '<p class="empty">Hôm nay không có buổi học hay sự kiện.</p>');
+  const exams = (D.thi && D.thi.lich_thi_giua_ki || []).filter(x => x.ngay >= vnDay(now));
+  if (exams.length) h += '<h2>Lịch thi</h2><ul class="rows">' + exams.map(x => '<li class="exam"><time>' + x.ngay.slice(8) + '/' + x.ngay.slice(5, 7) +
+    '</time><span>' + esc(x.ten_hp) + '<span class="sub">' + esc(x.kip) + ' · ' + esc(x.phong) + '</span></span></li>').join('') + '</ul>';
+  return h;
+}
+
+function rows(evs) {
+  const now = Date.now();
+  return '<ul class="rows">' + evs.map(e => { const s = Date.parse(e.bat_dau), en = Date.parse(e.ket_thuc || e.bat_dau);
+    const c = (e.loai === 'Exam' ? 'exam ' : '') + (en < now ? 'past' : s <= now ? 'now' : '');
+    return '<li class="' + c + '"><time>' + hm(e.bat_dau) + '</time><span>' + esc(short(e.tieu_de)) +
+      '<span class="sub">' + esc([e.ket_thuc ? 'đến ' + hm(e.ket_thuc) : '', e.dia_diem].filter(Boolean).join(' · ')) + '</span></span></li>'; }).join('') + '</ul>';
+}
+
+function lich() {
+  const now = Date.now(), byDay = {};
+  (D.lich || []).filter(e => e.bat_dau && Date.parse(e.ket_thuc || e.bat_dau) >= now - 6 * 3600e3 && e.bat_dau.includes('T') && !/NGHỈ/.test(e.tieu_de || ''))
+    .forEach(e => (byDay[vnDay(Date.parse(e.bat_dau))] = byDay[vnDay(Date.parse(e.bat_dau))] || []).push(e));
+  const days = Object.keys(byDay).sort().slice(0, 8);
+  if (!days.length) return '<p class="empty">Không có lịch trong 3 tuần tới.</p>';
+  return days.map(k => { const d = new Date(k + 'T00:00:00Z');
+    return '<div class="daybar">' + (k === vnDay(now) ? 'Hôm nay' : DOW[d.getUTCDay()]) + ', ' + d.getUTCDate() + '/' + (d.getUTCMonth() + 1) + '</div>' + rows(byDay[k]); }).join('');
+}
+
+function han() {
+  const h = D.han || [];
+  if (!h.length) return '<p class="empty">Không còn hạn nào mở trong 3 tuần tới.</p>';
+  return '<ul class="rows">' + h.map(x => { const m = x.han ? Math.round((Date.parse(x.han) - Date.now()) / 60000) : x.con_phut;
+    return '<li class="' + (m < 1440 ? 'urgent' : '') + '"><time>' + when(x.han) + '</time><span>' + esc(x.ten) +
+      '<span class="sub">' + esc([x.mon, x.tu_luyen ? 'lịch ôn tập' : '', 'còn ' + left(Math.max(0, m))].filter(Boolean).join(' · ')) + '</span></span></li>'; }).join('') + '</ul>';
+}
+
+function nk() {
+  const it = (D.ngoai_khoa || []).filter(x => x.start || x.han).sort((a, b) => String(a.start || a.han).localeCompare(String(b.start || b.han)));
+  const up = it.filter(x => Date.parse(x.end || x.start || x.han) >= Date.now() - 864e5);
+  if (!up.length) return '<p class="empty">Không có hoạt động ngoại khoá sắp tới.</p>';
+  return '<ul class="rows">' + up.slice(0, 30).map(x => '<li><time>' + when(x.start || x.han) + '</time><span>' + esc(x.name) +
+    '<span class="sub">' + esc([x.status, x.place].filter(Boolean).join(' · ')) + '</span></span></li>').join('') + '</ul>';
+}
+
+function fit() {
+  const f = D.fitness; if (!f) return '<p class="empty">Chưa có dữ liệu Fitness.</p>';
+  const b = f.di_bo || {}, pct = b.muc_tieu ? Math.min(100, Math.round(100 * (b.buoc || 0) / b.muc_tieu)) : 0, k = b.khung || {};
+  let h = '<div class="card"><b>' + (b.buoc || 0).toLocaleString('vi-VN') + '</b> / ' + (b.muc_tieu || 0).toLocaleString('vi-VN') + ' bước' +
+    '<div class="steps"><i style="width:' + pct + '%"></i></div>' +
+    '<span class="sub" style="color:var(--ink-3);font-size:13px">' + (b.dat ? 'Đã đạt mục tiêu hôm nay.' : k.start ? 'Khung đi bộ ' + hm(k.start) + '–' + hm(k.end) : '') + '</span></div>';
+  const p = f.buoi_tap_hom_nay;
+  if (p && (p.bai || p.items || p.exercises)) {
+    const list = p.bai || p.items || p.exercises;
+    h += '<h2>Bài tập hôm nay</h2><ul class="rows">' + list.map(x => '<li><time>' + esc(x.so_lan || x.reps || x.sets || '') + '</time><span>' + esc(x.ten || x.name || x) + '</span></li>').join('') + '</ul>';
+  } else h += '<h2>Bài tập hôm nay</h2><p class="empty">Chưa có buổi tập hôm nay.</p>';
+  return h;
+}
+
+function render() {
+  const nav = $('#nav'); nav.hidden = false;
+  nav.innerHTML = TABS.map(([k, label, ico]) => '<button data-k="' + k + '" aria-selected="' + (k === TAB) + '"><svg viewBox="0 0 24 24">' + ico + '</svg>' + label + '</button>').join('');
+  nav.querySelectorAll('button').forEach(b => b.onclick = () => { TAB = b.dataset.k; try { localStorage.setItem('tab', TAB); } catch (e) {} render(); scrollTo(0, 0); });
+  const body = { home, lich, han, nk, fit }[TAB] || home;
+  $('#app').innerHTML = header() + (TAB === 'home' ? '' : '<h2 style="margin-top:4px">' + TABS.find(t => t[0] === TAB)[1] + '</h2>') + body();
+  bindReload();
+}
+window.back = () => { if (TAB !== 'home') { TAB = 'home'; render(); return true; } return false; };
+
+// mở app: hiện bản lưu ngay, rồi tải mới
+if (!UC.hasUrl()) setup();
+else {
+  try { const c = UC.cached(); if (c) { D = JSON.parse(c); render(); } } catch (e) {}
+  if (!D) $('#app').innerHTML = '<p class="empty">Đang tải dữ liệu UC…</p>';
+  UC.refresh();
+}
+</script>
+</body>
+</html>

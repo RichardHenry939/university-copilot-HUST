@@ -42,3 +42,8 @@ vendor/
 ui/assets/hust-name.*
 uc_mcp/push_status.json
 ui/assets/wallpaper.*
+
+ui/assets/hero-portrait.*
+android/build/
+*.keystore
+*.apk

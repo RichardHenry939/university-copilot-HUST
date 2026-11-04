@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="vn.uc.app" android:versionCode="1" android:versionName="1.00.60">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application android:label="UC" android:icon="@mipmap/ic_launcher" android:allowBackup="false"
+        android:theme="@android:style/Theme.DeviceDefault.DayNight" android:supportsRtl="true" android:usesCleartextTraffic="true">
+        <activity android:name=".MainActivity" android:exported="true"
+            android:configChanges="orientation|screenSize|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <receiver android:name=".UcWidget" android:exported="true" android:label="UC hôm nay">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="vn.uc.app.REFRESH" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/uc_widget_info" />
+        </receiver>
+    </application>
+</manifest>

@@ -2,19 +2,29 @@
 import datetime as dt, json, sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import phone_lock as pl
 
 TZ = pl.TZ
+EMU, PHONE = 'emulator-5554', 'R5CX123'
 
 
 def at(h, m=0): return dt.datetime(2026, 11, 3, h, m, tzinfo=TZ)
 
 
+@pytest.fixture(autouse=True)
+def isolate(tmp_path, monkeypatch):
+    monkeypatch.setattr(pl, 'STATE', tmp_path / 'pl.json')
+    monkeypatch.setattr(pl, 'APPS', tmp_path / 'apps.json')
+    monkeypatch.setattr(pl, 'LOG', tmp_path / 'pl.log')
+
+
 def test_mode_night_core_always():
     assert pl.mode(at(22, 0), focus=False, nap=False) == 'night'
     assert pl.mode(at(5, 59), focus=False, nap=False) == 'night'
-    assert pl.mode(at(6, 0), focus=False, nap=False) is None
+    assert pl.mode(at(6, 0), focus=False, nap=False) == 'default'
 
 
 def test_mode_nap_and_focus():
@@ -31,47 +41,69 @@ def test_nap_signal_stale_or_other_day(tmp_path, monkeypatch):
     assert pl._nap_on(at(13, 5)) is False
 
 
-def test_wanted_never_touches_protected_and_spares_youtube_in_focus():
-    inst = {'com.facebook.katana', 'com.facebook.orca', 'com.bk.ctsv', 'uni.hust.ehust', 'com.android.chrome',
-            'com.google.android.youtube', 'com.android.vending'}
-    night = pl.wanted('night', inst)
-    assert night == {'com.facebook.katana', 'com.android.chrome', 'com.google.android.youtube', 'com.android.vending'}
-    assert 'com.google.android.youtube' not in pl.wanted('focus', inst)
-    assert pl.wanted(None, inst) == set()
+INST = {'com.facebook.katana', 'com.facebook.orca', 'com.bk.ctsv', 'uni.hust.ehust', 'com.android.chrome',
+        'com.google.android.youtube', 'com.android.vending', 'com.linkedin.android', 'com.game.x', 'com.bank.y'}
 
 
-def test_tick_locks_then_unlocks_only_own(tmp_path, monkeypatch):
-    monkeypatch.setattr(pl, 'STATE', tmp_path / 'pl.json')
+def test_luat_4_che_do_cua_chu():
+    # (chủ 04/11) mặc định: chỉ MXH; tập trung: + trình duyệt, store, game, chừa YouTube; trưa: + YouTube, chừa Messenger;
+    # đêm: tất, kể cả Messenger. Luôn chừa LinkedIn, iCTSV, eHUST, ngân hàng.
+    g = ('com.game.x',)
+    assert pl.wanted('default', INST, g) == {'com.facebook.katana'}
+    # (04/11) trình duyệt thường không tạm dừng (chặn tên miền qua laptop); Tor mới khoá cứng
+    assert pl.wanted('focus', INST, g) == {'com.facebook.katana', 'com.android.vending', 'com.game.x'}
+    assert 'org.torproject.torbrowser' in pl.wanted('focus', INST | {'org.torproject.torbrowser'}, g)
+    assert 'org.torproject.torbrowser' not in pl.wanted('default', INST | {'org.torproject.torbrowser'}, g)
+    assert pl.wanted('nap', INST, g) == pl.wanted('focus', INST, g) | {'com.google.android.youtube'}
+    assert pl.wanted('night', INST, g) == pl.wanted('nap', INST, g) | {'com.facebook.orca'}
+    for m in ('default', 'focus', 'nap', 'night'):
+        assert not pl.wanted(m, INST, g) & {'com.linkedin.android', 'com.bk.ctsv', 'uni.hust.ehust', 'com.bank.y'}
+
+
+def fake_adb(devs, inst, calls, suspend_ok=True):
+    def f(serial, *a, timeout=20):
+        calls.append((serial, *a))
+        if a[0] == 'devices': return 0, 'List of devices attached\n' + ''.join(f'{d}\tdevice\n' for d in devs)
+        if a[1:3] == ('pm', 'list'): return 0, ''.join(f'package:{p}\n' for p in inst)
+        if a[1:4] == ('cmd', 'package', 'suspend'):
+            return (0, f'Package {a[-1]} new suspended state: true') if suspend_ok else (255, 'Security exception')
+        if a[1:3] == ('pm', 'disable-user'): return 0, f'Package {a[-1]} new state: disabled-user'
+        return 0, ''
+    return f
+
+
+def test_tick_locks_then_unlocks_only_own(monkeypatch):
     calls = []
-    inst = 'package:com.facebook.katana\npackage:com.bk.ctsv\npackage:com.android.chrome\n'
-    def fake(*a, timeout=20):
-        calls.append(a)
-        if a[0] == 'get-state': return 0, 'device'
-        if a[1:3] == ('pm', 'list'): return 0, inst
-        if a[1:4] == ('cmd', 'package', 'suspend'): return 0, f"Package {a[-1]} new suspended state: true"
-        return 0, ''
-    monkeypatch.setattr(pl, 'adb', fake)
+    monkeypatch.setattr(pl, 'adb', fake_adb([EMU], ['com.facebook.katana', 'com.bk.ctsv', 'com.android.chrome'], calls))
     r = pl.tick(at(23), m='night')
-    assert r['locked'] == ['com.android.chrome', 'com.facebook.katana']
+    assert r['locked'] == [f'{EMU}:com.facebook.katana']        # Chrome không bị tạm dừng nữa
     assert not any('com.bk.ctsv' in c for c in calls)
-    r = pl.tick(at(7), m=None)
-    assert r['unlocked'] == ['com.android.chrome', 'com.facebook.katana']
-    assert json.loads((tmp_path / 'pl.json').read_text())['locked'] == {}
+    r = pl.tick(at(7), m='default')
+    assert r['unlocked'] == []                                   # MXH vẫn khoá ở mặc định
+    assert json.loads(pl.STATE.read_text())['devices'][EMU]['locked'] == {'com.facebook.katana': 'suspend'}
 
 
-def test_tick_falls_back_to_disable(tmp_path, monkeypatch):
-    monkeypatch.setattr(pl, 'STATE', tmp_path / 'pl.json')
-    def fake(*a, timeout=20):
-        if a[0] == 'get-state': return 0, 'device'
-        if a[1:3] == ('pm', 'list'): return 0, 'package:com.facebook.katana\n'
-        if a[1:4] == ('cmd', 'package', 'suspend'): return 255, 'Security exception'
-        if a[1:3] == ('pm', 'disable-user'): return 0, 'Package com.facebook.katana new state: disabled-user'
-        return 0, ''
-    monkeypatch.setattr(pl, 'adb', fake)
+def test_dien_thoai_chua_duyet_thi_khong_dung(monkeypatch):
+    calls = []
+    monkeypatch.setattr(pl, 'adb', fake_adb([EMU, PHONE], ['com.facebook.katana'], calls))
     pl.tick(at(23), m='night')
-    assert json.loads((tmp_path / 'pl.json').read_text())['locked'] == {'com.facebook.katana': 'disable'}
+    assert not any(c[0] == PHONE for c in calls)
+    pl.APPS.write_text(json.dumps({'devices': [PHONE]}))
+    r = pl.tick(at(23, 1), m='night')
+    assert r['locked'] == [f'{PHONE}:com.facebook.katana']
+
+
+def test_tick_falls_back_to_disable(monkeypatch):
+    monkeypatch.setattr(pl, 'adb', fake_adb([EMU], ['com.facebook.katana'], [], suspend_ok=False))
+    pl.tick(at(23), m='night')
+    assert json.loads(pl.STATE.read_text())['devices'][EMU]['locked'] == {'com.facebook.katana': 'disable'}
+
+
+def test_doc_trang_thai_dang_cu():
+    pl.STATE.write_text(json.dumps({'locked': {'com.android.chrome': 'suspend'}, 'mode': 'focus'}))
+    assert pl._load()['devices'][EMU]['locked'] == {'com.android.chrome': 'suspend'}
 
 
 def test_tick_no_device(monkeypatch):
-    monkeypatch.setattr(pl, 'adb', lambda *a, timeout=20: (1, 'error: device offline'))
+    monkeypatch.setattr(pl, 'adb', lambda serial, *a, timeout=20: (0, 'List of devices attached\n'))
     assert pl.tick(at(23)) == {'device': False}

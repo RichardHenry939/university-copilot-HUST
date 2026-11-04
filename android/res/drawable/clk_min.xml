@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- kim phút: như ui/widget.html (.mm: dài tới r=24, nét 3) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="200dp" android:height="200dp"
+    android:viewportWidth="200" android:viewportHeight="200">
+    <path android:strokeColor="@color/ink" android:strokeWidth="3" android:strokeLineCap="round" android:pathData="M100,100L100,24" />
+</vector>

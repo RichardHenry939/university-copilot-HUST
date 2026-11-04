@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- cùng bộ màu UC web (ui/index.html :root) -->
+<resources>
+    <color name="uc_icon_bg">#2D55C8</color>
+    <color name="paper">#F5F7FA</color>
+    <color name="sheet">#FFFFFF</color>
+    <color name="ink">#1B2433</color>
+    <color name="ink2">#4A5568</color>
+    <color name="ink3">#8592A6</color>
+    <color name="line">#DCE3EE</color>
+    <color name="blue">#2D55C8</color>
+    <color name="red">#CF3434</color>
+    <color name="amber">#A86400</color>
+    <color name="green">#2F7D4F</color>
+</resources>

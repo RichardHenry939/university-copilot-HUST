@@ -166,3 +166,46 @@ def test_the_duc_de_len_luc_ban_dang_tu_dung(tmp_path, monkeypatch):
 def test_phien_cu_khong_ghi_ai_dung_coi_la_uc_dung():
     a = {'type': 'focus', 'paused_at': W._iso(T0)}
     assert not W.by_user(a)
+
+
+# (04/11) Hết ngày thì không phiên nào được tiếp tục: phiên bắt đầu hôm trước tự chốt tại 00:00.
+T1 = dt.datetime(2026, 11, 5, 23, 20, tzinfo=W.TZ)   # sau DAY_RULE_FROM
+MID = dt.datetime(2026, 11, 6, 0, 0, tzinfo=W.TZ)
+
+
+def test_het_ngay_chot_tai_0h_chi_tinh_khoi_tron():
+    st = new()
+    W.start_focus(st, 115, '', T1)                     # 23:20: khối 1 trọn 23:45, nghỉ tới 23:50, khối 2 dở lúc 00:00
+    v = W.view(st, MID + m(9 * 60))                    # sáng hôm sau mới mở UC
+    assert v['active'] is None and W.balance(st) == 5
+    s = st['sessions'][0]
+    assert s['end'] == W._iso(MID) and s['blocks'] == 1 and s['focus_min'] == 35 and s['cut'] == 'hết ngày'
+
+
+def test_phien_dung_qua_dem_khong_tiep_tuc_duoc_hom_sau():
+    st = new()
+    W.start_focus(st, 50, '', T1); W.pause(st, T1 + m(10))   # dừng 23:30, sáng mai bấm tiếp tục
+    W.view(st, MID + m(600))                                 # POST /api/wallet gọi view() trước resume
+    W.resume(st, MID + m(600))
+    assert st['active'] is None and st['sessions'][0]['focus_min'] == 10 and W.balance(st) == 0
+
+
+def test_trong_ngay_khong_cat():
+    st = new()
+    W.start_focus(st, 50, '', T1)
+    W.view(st, MID - m(1))
+    assert st['active'] is not None
+
+
+def test_phien_truoc_moc_luat_duoc_chay_not():
+    st = new()
+    W.start_focus(st, 50, '', dt.datetime(2026, 11, 3, 16, 48, tzinfo=W.TZ)); W.pause(st, dt.datetime(2026, 11, 3, 17, 0, tzinfo=W.TZ))
+    W.view(st, dt.datetime(2026, 11, 4, 10, 13, tzinfo=W.TZ))
+    assert st['active'] is not None
+
+
+def test_giai_tri_qua_dem_tru_toi_0h():
+    st = new(); W._add(st, 'focus', 120, T1 - m(60))
+    W.start_fun(st, T1 + m(30))                              # 23:50
+    W.view(st, MID + m(60))
+    assert st['active'] is None and W.balance(st) == 110

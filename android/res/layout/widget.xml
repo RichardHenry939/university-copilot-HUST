@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- widget 4x2 (04/11, chủ: "giống widget desktop"): trái = đồng hồ 24 giờ cùng luật màu ui/widget.html; phải = giờ + dải tóm tắt, việc hôm nay, buổi tới -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="horizontal" android:background="@drawable/widget_bg" android:padding="10dp">
+
+    <!-- (04/11, chủ: "phải có giây, đủ kim") ảnh = mặt 24h + kim giờ; AnalogClock đè lên chạy kim phút + giây theo thời gian thực -->
+    <FrameLayout android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_marginEnd="10dp">
+        <ImageView android:id="@+id/clock" android:layout_width="wrap_content" android:layout_height="match_parent"
+            android:adjustViewBounds="true" android:scaleType="fitCenter" android:contentDescription="Đồng hồ 24 giờ" />
+        <AnalogClock android:layout_width="match_parent" android:layout_height="match_parent"
+            android:dial="@drawable/clk_blank" android:hand_hour="@drawable/clk_blank"
+            android:hand_minute="@drawable/clk_min" android:hand_second="@drawable/clk_sec" android:timeZone="Asia/Ho_Chi_Minh" />
+    </FrameLayout>
+
+    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <TextClock android:id="@+id/time" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:format24Hour="HH:mm:ss" android:format12Hour="HH:mm:ss" android:fontFamily="@font/bricolage_heavy" android:timeZone="Asia/Ho_Chi_Minh"
+                android:textColor="@color/ink" android:textSize="20sp" android:textStyle="bold" android:layout_marginEnd="6dp" />
+            <TextView android:id="@+id/dow" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                android:maxLines="1" android:ellipsize="end" android:textColor="@color/ink2" android:textSize="12sp" android:fontFamily="@font/bricolage_medium" android:text="" />
+            <TextView android:id="@+id/upd" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:paddingStart="6dp" android:textSize="11sp" android:textColor="@color/ink3" android:text="↻" />
+        </LinearLayout>
+        <TextView android:id="@+id/sum" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:maxLines="1" android:ellipsize="end" android:textColor="@color/ink2" android:textSize="11sp" android:fontFamily="@font/bricolage_heavy"
+            android:paddingBottom="2dp" />
+        <TextView android:id="@+id/l1" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+            android:gravity="center_vertical" android:maxLines="1" android:ellipsize="end" android:textColor="@color/ink" android:textSize="12sp" android:fontFamily="@font/bricolage_medium" />
+        <TextView android:id="@+id/l2" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+            android:gravity="center_vertical" android:maxLines="1" android:ellipsize="end" android:textColor="@color/ink" android:textSize="12sp" android:fontFamily="@font/bricolage_medium" />
+        <TextView android:id="@+id/l3" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+            android:gravity="center_vertical" android:maxLines="1" android:ellipsize="end" android:textColor="@color/ink" android:textSize="12sp" android:fontFamily="@font/bricolage_medium" />
+        <TextView android:id="@+id/next" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+            android:gravity="center_vertical" android:maxLines="1" android:ellipsize="end" android:textColor="@color/blue" android:textSize="11sp" android:fontFamily="@font/bricolage_medium" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- mặt / kim giờ trong suốt: mặt 24h + kim giờ vẽ trong ảnh (UcWidget.clock), AnalogClock chỉ lo kim phút + giây -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="200dp" android:height="200dp"
+    android:viewportWidth="200" android:viewportHeight="200">
+    <path android:fillColor="#00000000" android:pathData="M0,0h1v1h-1z" />
+</vector>

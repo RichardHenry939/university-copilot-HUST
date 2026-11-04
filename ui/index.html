@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>University Copilot</title>
+<script>
+// (v1.00.60) app UC trên điện thoại mở trang này qua http://100.x (Tailscale) = trang "không an toàn" với trình duyệt:
+// crypto.randomUUID không có -> script chính dừng, Trang chủ trống (04/11). Thay bằng getRandomValues (có ở mọi trang).
+if (window.crypto && !crypto.randomUUID) crypto.randomUUID = () => ([1e7] + -1e3 + -4e3 + -8e3 + -1e11)
+  .replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+</script>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/p32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/p192.png">
@@ -1287,10 +1293,66 @@ a.wk:hover { border-color: var(--blue); }
 @media (max-width: 420px) { .tn-hello { display: none; } .tn-bar { gap: 8px; } }   /* 390px: logo trường + tên + chuông + ☰ vừa một hàng */
 .notif { top: calc(clamp(46px, 4.9vw, 100px) + clamp(44px, 3.3vw, 66px) + clamp(22px, 3.3vw, 70px)); }
 @media (max-width: 899px) { .notif { top: 64px; } }
+/* (v1.00.60, chủ 04/11) bản đồ trường trong Thời khoá biểu + Lịch và thời gian: hôm nay học gì, ở toà nào */
+.campus { margin: 16px 0; }
+.campus h3 { font-size: 16px; margin: 0 0 8px; }
+.campus .cm-map { border-radius: var(--r-l); overflow: hidden; border: 1px solid var(--line); background: var(--grid); }
+.cm-svg { display: block; width: 100%; height: auto; }
+/* tên lớp có tiền tố cm- (04/11: lớp ngắn .b/.l/.g đụng CSS sẵn có của UC -> khối nhà không hiện) */
+.cm-map { background: #edf0f2; }   /* nền khuôn viên sáng như tranh Hội Sinh viên */
+.cm-svg .cm-g { fill: #cfe8c4; } .cm-svg .cm-w { fill: #b9daf2; }
+.cm-svg .cm-s { fill: #9fd18a; stroke: #fff; stroke-width: 1.5; }
+.cm-svg .cm-rc { fill: none; stroke: #c3c9d1; stroke-linecap: round; stroke-linejoin: round; }
+.cm-svg .cm-r { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; }
+.cm-svg .cm-bs { stroke-width: 1.5; stroke-linejoin: round; }   /* mặt bên khối nhà (nổi 3D), màu theo khu bên dưới */
+.cm-svg .cm-b { stroke: #fff; stroke-width: 1; stroke-linejoin: round; }
+/* (04/11, chủ) chỉ toà Bách khoa được sơn khối: khu C xanh dương · D xanh ngọc · KTX A/B hổ phách · Thư viện cam · khác chàm */
+.cm-svg .cm-b.zc { fill: #5b8def; } .cm-svg .cm-bs.zc { fill: #2f5bb8; stroke: #2f5bb8; }
+.cm-svg .cm-b.zd { fill: #36a39a; } .cm-svg .cm-bs.zd { fill: #1f6f68; stroke: #1f6f68; }
+.cm-svg .cm-b.zb { fill: #e5a24a; } .cm-svg .cm-bs.zb { fill: #a8681c; stroke: #a8681c; }
+.cm-svg .cm-b.zt { fill: #e07a5f; } .cm-svg .cm-bs.zt { fill: #a54a33; stroke: #a54a33; }
+.cm-svg .cm-b.zo { fill: #8c96d6; } .cm-svg .cm-bs.zo { fill: #555fa3; stroke: #555fa3; }
+.cm-svg .cm-b.hit { fill: #f05a28; } .cm-svg .cm-bs.hit { fill: #a8341a; }
+.cm-svg .cm-o { fill: #dde1e6; stroke: #c9ced5; stroke-width: .6; }   /* ngoài trường: bản đồ thường, phẳng */
+.cm-svg .cm-s.cm-x { fill: #d7e6cf; stroke: none; }
+.cm-svg .cm-bien { fill: none; stroke: #5b8def; stroke-width: 1.4; stroke-dasharray: 5 4; opacity: .55; }
+.cm-svg .cm-l { font: 800 8px var(--font, sans-serif); fill: #fff; text-anchor: middle; pointer-events: none; }
+.cm-svg .pin line { stroke: var(--blue); stroke-width: 2; } .cm-svg .pin circle { fill: var(--blue); stroke: var(--sheet); stroke-width: 2; }
+.cm-svg .pin rect { fill: var(--blue); } .cm-svg .pin text { font: 700 12px var(--font, sans-serif); fill: #fff; text-anchor: middle; }
+.cm-svg .pin.exam line { stroke: var(--red); } .cm-svg .pin.exam circle, .cm-svg .pin.exam rect { fill: var(--red); } .cm-svg .pin.past { opacity: .55; }
+.campus .cm-note { font-size: 12.5px; color: var(--ink-3); margin: 6px 2px 0; }
+.campus .cm-pin { background: var(--blue); color: #fff; border: 2px solid #fff; border-radius: 99px; font: 700 12px/1 var(--font, sans-serif);
+  padding: 5px 8px; white-space: nowrap; box-shadow: 0 2px 8px rgba(14, 22, 40, .3); transform: translate(-50%, -50%); width: max-content; }
+.campus .cm-pin.exam { background: var(--red); } .campus .cm-pin.past { opacity: .55; }
+@media (max-width: 640px) { .campus .cm-map { height: auto; } }   /* (04/11, chủ) không khoá cao: khoá 280px cắt mất sân vận động; ảnh tự giữ tỷ lệ */
+/* (v1.00.60, chủ 04/11) UC trên ĐIỆN THOẠI (≤ 640px, app UC Mobile mở trang này qua Tailscale):
+   thanh điều hướng xuống chân app (vừa ngón cái), menu con bật LÊN; chuông sang hẳn góc phải, tách khỏi logo UC; bỏ nút ☰. */
+@media (max-width: 640px) {
+  .gburger, .tn-hello { display: none !important; }
+  .tn-bar { gap: 8px; }
+  .topnav .bell { margin-left: auto; }
+  .gnav { display: flex !important; position: fixed; z-index: 70; left: 0; right: 0; bottom: 0; top: auto; margin: 0; padding: 4px 2px calc(4px + env(safe-area-inset-bottom));
+    flex-direction: row; flex-wrap: nowrap; justify-content: space-around; gap: 0; background: var(--sheet); border-top: 1px solid var(--line); box-shadow: 0 -2px 12px rgba(14, 22, 40, .06); }
+  .gnav > li { flex: 1 1 0; min-width: 0; position: static; }
+  .gnav .gbtn, .topnav .gnav .gsolo { width: 100%; min-height: 54px; padding: 4px 2px; flex-direction: column; justify-content: center; gap: 2px; border-radius: 10px;
+    color: var(--ink-3); font-size: 10.5px; font-weight: 600; text-transform: none; letter-spacing: 0; line-height: 1.15; text-align: center; background: none; }
+  .gnav .gbtn > span:not(.gcount), .topnav .gnav .gsolo .tl { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; max-width: 100%; overflow: hidden; white-space: normal; }
+  #p-home .h-hero { min-height: 72vh !important; }   /* ảnh dọc: hero cao gần cả màn, vẫn hé phần dưới để biết còn cuộn được */
+  #p-home .h-hero-img { object-position: 50% 70%; }   /* giữ tảng đá "ĐẠI HỌC BÁCH KHOA HÀ NỘI" trong khung */
+  .gnav .gbtn > .ti, .topnav .gnav .gsolo .ti { display: inline !important; width: 22px; height: 22px; }
+  .gnav .gbtn .caret { display: none; }
+  .gnav .grp.on > .gbtn, .topnav .gnav .gsolo[aria-selected="true"] { color: var(--blue); background: var(--blue-wash); }
+  .gnav .grp.on > .gbtn::after, .topnav .gnav .gsolo[aria-selected="true"]::after { display: none; }
+  .gnav .gcount { position: absolute; top: 2px; margin-left: 18px; }
+  .gnav .dd { position: fixed; left: 8px; right: 8px; top: auto; bottom: calc(66px + env(safe-area-inset-bottom)); max-height: 60vh; overflow: auto;
+    border-radius: 14px; box-shadow: 0 -8px 28px rgba(14, 22, 40, .18); }
+  .main, .panel { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .notif { top: 64px; }
+}
 </style>
 </head>
 <body>
-<div class="app on-cal">
+<div class="app on-home">
   <!-- (v1.00.45 tiếp) menu ngang trên cùng thay thanh dọc: 6 tab lớn, mỗi tab lớn có hộp tab con. Id và aria-controls của mọi button.tab giữ nguyên để JS chuyển tab cũ vẫn chạy. -->
   <nav class="topnav" id="topnav" aria-label="Điều hướng">
     <!-- (01/11, chủ yêu cầu theo ảnh trang chủ CTSV) hàng trên: logo trường + "University Copilot / Đại học Bách khoa Hà Nội" | "Chào bạn" + logo UC; hàng dưới: menu.
@@ -1303,7 +1365,7 @@ a.wk:hover { border-color: var(--blue); }
     </div>
     <button class="tab" role="tab" id="t-home" aria-selected="false" aria-controls="p-home" hidden>Trang chủ</button>
     <ul class="gnav" id="gnav">
-      <li class="gsolo-li"><button class="tab gsolo" role="tab" id="t-cal" aria-selected="true" aria-controls="p-cal" title="Thời khoá biểu toàn kỳ"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h3"/></svg><span class="tl">Thời khoá biểu</span></button></li>   <!-- (01/11, chủ yêu cầu) mục riêng, đứng đầu, không có tab con -->
+      <li class="gsolo-li"><button class="tab gsolo" role="tab" id="t-cal" aria-selected="false" aria-controls="p-cal" title="Thời khoá biểu toàn kỳ"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h3"/></svg><span class="tl">Thời khoá biểu</span></button></li>   <!-- (01/11, chủ yêu cầu) mục riêng, đứng đầu, không có tab con -->
       <li class="grp" data-g="wallet">
         <button class="gbtn" aria-expanded="false" aria-controls="dd-wallet" aria-haspopup="true"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3"/><path d="M4 7.5V18a1.5 1.5 0 0 0 1.5 1.5H20V8H6.5A2.5 2.5 0 0 1 4 7.5z"/><circle cx="16" cy="13.8" r="1.3"/></svg><span>Ví thời gian</span><span class="gcount" hidden></span><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
         <div class="dd" id="dd-wallet" role="tablist" aria-orientation="vertical" aria-label="Ví thời gian" hidden>
@@ -1397,7 +1459,8 @@ a.wk:hover { border-color: var(--blue); }
     <!-- (v1.00.45 tiếp) trang chủ theo bố cục trang chủ ctsv.hust.edu.vn (chỉ lấy bố cục, giữ màu tím UC): hero → Chào mừng → Sự kiện → Công việc → Dịch vụ sinh viên → Học bổng | Tiến độ → footer -->
     <section class="panel" id="p-home" role="tabpanel" aria-labelledby="t-home">
       <header class="h-hero" id="home-hero">
-        <img class="h-hero-img" id="hero-img" alt="" src="/hero-img" onerror="this.hidden=true" onload="this.hidden=false">
+        <!-- (v1.00.60) màn hẹp (điện thoại) dùng ảnh dọc: tảng đá trước C1, Wikimedia Commons CC0 (File:Hanoi University of Science and Technology - DSC04501.JPG) -->
+        <picture><source media="(max-width: 640px)" srcset="/hero-img?v=doc"><img class="h-hero-img" id="hero-img" alt="" src="/hero-img" onerror="this.hidden=true" onload="this.hidden=false"></picture>
         <label class="h-hero-btn"><input type="file" id="hero-file" accept="image/jpeg,image/png,image/webp" hidden>Đổi ảnh nền</label>
         <p class="h-hero-msg" id="hero-msg" role="status" aria-live="polite"></p>
       </header>
@@ -1421,6 +1484,7 @@ a.wk:hover { border-color: var(--blue); }
             <div class="clk24" data-clk24></div>
           </div>
           <div class="ht-lists" id="ht-lists"><p class="skeleton">Đang đọc…</p></div>
+          <div class="campus" data-campus></div>   <!-- (v1.00.60) bản đồ trường: hôm nay học gì ở đâu -->
         </section>
 
         <section class="h-sec" id="home-events" aria-labelledby="he-t">
@@ -1546,11 +1610,12 @@ a.wk:hover { border-color: var(--blue); }
     </section>
 
 
-    <section class="panel on" id="p-cal" role="tabpanel" aria-labelledby="t-cal">
+    <section class="panel" id="p-cal" role="tabpanel" aria-labelledby="t-cal">
       <div class="wrap wide cal">
         <h1>Thời khoá biểu toàn kỳ</h1>
         <p class="lead">Thời khoá biểu và deadline trong Notion: tuần ở trên, cả tháng ở dưới. Muốn đổi lịch, nhắn cho Copilot.</p>
         <div id="cal-exams"></div>
+        <div class="campus" data-campus></div>   <!-- (v1.00.60) bản đồ trường -->
         <div class="calstats" id="cal-stats" aria-live="polite"></div>
         <div class="cal-nav">
           <span class="wk" id="cal-wk">Đang đọc…</span>
@@ -1778,7 +1843,7 @@ function show(name) {
   if (typeof markGroups === 'function') markGroups(name);   // (v1.00.45 tiếp) tô tab lớn chứa tab con đang mở
   if (name === 'ib') refreshInbox();
   if (name === 'rec') { recTick(); loadLectures(); }
-  if (name === 'cal') { loadCal(); loadDay(); }   // (v1.00.40) phần Hôm nay nằm trong tab này
+  if (name === 'cal') { loadCal(); loadDay(); setTimeout(campusMaps, 50); }   // (v1.00.40) phần Hôm nay nằm trong tab này; (v1.00.60) + bản đồ trường
   if (name === 'day') { show('cal'); return; }    // (v1.00.40) lối vào cũ của tab Hôm nay
   if (name === 'extra') loadExtra();
   if (name === 'home') loadHome();
@@ -1837,7 +1902,9 @@ $('#mssv-del').onclick = async () => {
   const r = await api('/api/mssv', { action: 'delete' }); $('#mssv-msg').textContent = r.ok ? 'Đã xoá.' : 'Không xoá được.'; loadAbout();
 };
 $('#offline-re').onclick = async () => { $('#offline-body').innerHTML = '<p class="skeleton">Đang đọc…</p>'; try { renderOffline(await api('/api/offline/refresh', {})); } catch { renderOffline(null); } };
-setTimeout(() => { if ($('#p-cal').classList.contains('on')) { loadCal(); loadDay(); } }, 0);   // (v1.00.40) mở app là thấy Thời khoá biểu toàn kỳ
+// (v1.00.60, chủ 04/11) mở app là thấy TRANG CHỦ (trước: Thời khoá biểu toàn kỳ), cả desktop lẫn điện thoại.
+// Chờ DOMContentLoaded vì loadHome nằm ở khối script phía dưới.
+document.addEventListener('DOMContentLoaded', () => show('home'));
 
 /* ---------- Lịch (Claude 2026-10-03) ---------- */
 const TZ_OFF = 7 * 3600e3, WEEK1 = Date.parse('2026-08-31T00:00:00+07:00');
@@ -3209,7 +3276,14 @@ async function loadWallet() {
 }
 // (01/11) nhiều tab / cửa sổ UC cùng mở: tab này bắt đầu hay dừng thì báo các tab kia đọc lại ngay,
 // nếu không tab kia vẫn tưởng phiên đang chạy và brown noise phát tiếp (lỗi chủ gặp sáng 01/11).
-let walBC = null; try { walBC = new BroadcastChannel('uc-wallet'); walBC.onmessage = () => loadWallet(); } catch (e) {}
+// (04/11) đổi âm nền ở một tab thì mọi tab khác cũng đổi theo (trước đây chọn "Tắt" chỉ tắt tab đang bấm, tab khác phát tiếp)
+function soundSet(v, tell) {
+  wSound = v; try { localStorage.setItem('w-sound', v); } catch (x) {}
+  const s = $('#w-sound'); if (s && s.value !== v) s.value = v;
+  soundSync(true); if (tell && walBC) walBC.postMessage({ sound: v });
+}
+let walBC = null; try { walBC = new BroadcastChannel('uc-wallet'); walBC.onmessage = ev => (ev.data && ev.data.sound) ? soundSet(ev.data.sound, false) : loadWallet(); } catch (e) {}
+window.addEventListener('storage', ev => { if (ev.key === 'w-sound' && ev.newValue && ev.newValue !== wSound) soundSet(ev.newValue, false); });
 async function walPost(body) {
   if (walBusy) return false; walBusy = true; let ok = false;
   try { const r = await api('/api/wallet', body); if (!r.ok) alert(r.loi || 'Không làm được.'); else { ok = true; WAL = r; walAt = Date.now(); renderWallet(); if (walBC) walBC.postMessage('changed'); } }
@@ -3245,7 +3319,7 @@ function renderWallet() {
       '<div class="wform"><label>Nhập lại MSSV để xác nhận<input id="w-mssv" type="password" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="8–9 chữ số"></label></div>' +
       '<button class="primary wgo" id="w-start" disabled>Bắt đầu tập trung</button>';
     $('#w-sound').value = wSound;
-    $('#w-sound').onchange = e => { wSound = e.target.value; try { localStorage.setItem('w-sound', wSound); } catch (x) {} };
+    $('#w-sound').onchange = e => soundSet(e.target.value, true);
     const mi = $('#w-mssv');   // số chỉ đi một chiều lên máy chủ để so; xoá khỏi ô ngay sau khi gửi
     mi.oninput = () => { $('#w-start').disabled = !/^2\d{7,8}$/.test(mi.value.trim()); };
     $('#w-start').onclick = async () => { const v = mi.value.trim(); mi.value = ''; $('#w-start').disabled = true;
@@ -3260,7 +3334,7 @@ function renderWallet() {
       '<label class="wsnd">Âm nền <select id="w-sound"><option value="brown">Brown noise</option><option value="radio">Claude Radio</option><option value="off">Tắt</option></select></label></div>' +
       '<div id="w-radio"></div><p class="wnote" id="w-recnote"></p><p class="wnote">Không huỷ được phiên. Bạn tự bấm dừng (nút ▶) thì chặn vẫn giữ; UC tự dừng (giờ học, giờ ngủ, thể dục; nút Tiếp tục) thì gỡ chặn. Tiếp tục thì chặn chạy lại, giờ kết thúc lùi theo.</p>';
     $('#w-sound').value = wSound;
-    $('#w-sound').onchange = e => { wSound = e.target.value; try { localStorage.setItem('w-sound', wSound); } catch (x) {} soundSync(true); };
+    $('#w-sound').onchange = e => soundSet(e.target.value, true);
     $('#w-pause').onclick = () => walPost({ action: a.paused ? 'resume' : 'pause' });
   }
   renderWalletStats(S);
@@ -4190,6 +4264,80 @@ function loadHome() {
   fetch('/api/scholarships').then(r => r.json()).then(j => { HOME.sc = j; hSchol(); }).catch(() => { HOME.sc = { ok: false }; hSchol(); });
   fetch('/api/program').then(r => r.json()).then(j => { if (j && Array.isArray(j.semesters)) HOME.pg = j; hProg(); }).catch(() => hProg());
   if (!HOME.owner) fetch('/api/owner').then(r => r.json()).then(j => { HOME.owner = j || {}; hOwner(); }).catch(() => {});
+  campusMaps();
+}
+/* ---------- (v1.00.60, chủ 04/11) bản đồ trường TỰ VẼ: cắm các buổi học / thi hôm nay theo toà (D3-401 -> D3, SVD -> sân vận động) ----------
+   Hình dạng toà nhà / đường / sân lấy từ OpenStreetMap (ui/assets/hust-plan.json, dựng bằng build_campus_map.py, ODbL), vẽ SVG ngay trong trang:
+   không cần nền ảnh, không cần khoá API, chạy cả khi mất mạng. Hôm nay không có buổi ở trường -> cắm ngày học gần nhất.
+   Mã toà trùng giữa các trường lân cận (2 toà "C1") -> chọn toà gần tâm khuôn viên Bách khoa nhất. */
+const CM = { plan: null, ev: null, at: 0 };
+function cmKey(loc) {
+  const s = String(loc || '').toUpperCase().replace(/\s+/g, '');
+  if (!s || /ONLINE|TEAMS/.test(s)) return null;
+  if (/^S[VƯ][ĐD]/.test(s.normalize('NFD').replace(/[̀-ͯ]/g, ''))) return 'SVD';
+  return s.split('-')[0];
+}
+function cmFind(key) {
+  if (!key || !CM.plan) return null;
+  if (key === 'SVD') { const s = CM.plan.san.find(x => /Sân vận động/i.test(x.n)); if (s) return { p: s.p, c: s.p.reduce((a, q) => [a[0] + q[0] / s.p.length, a[1] + q[1] / s.p.length], [0, 0]) }; }
+  const hub = CM.plan.hub, m = CM.plan.toa.filter(t => t.k.toUpperCase() === key);
+  return m.sort((a, b) => (b.h || 0) - (a.h || 0) || Math.hypot(a.c[0] - hub[0], a.c[1] - hub[1]) - Math.hypot(b.c[0] - hub[0], b.c[1] - hub[1]))[0] || null;   // ưu tiên toà trong khuôn viên
+}
+function cmSvg(hits) {
+  const P = CM.plan, path = p => 'M' + p.map(q => q[0] + ' ' + q[1]).join('L');
+  const area = p => Math.abs(p.reduce((s, q, i) => { const r = p[(i + 1) % p.length]; return s + q[0] * r[1] - r[0] * q[1]; }, 0) / 2);
+  const RW = { primary: 9, secondary: 8, tertiary: 7, residential: 5, unclassified: 5, living_street: 4, service: 3, pedestrian: 3, footway: 1.6 };
+  const hitSet = new Set(hits.map(h => h.t));
+  // (chủ 04/11) khung = ranh giới khuôn viên Bách khoa (OSM, khớp tranh Hội Sinh viên) + một dải phố xung quanh, phóng sát
+  const bp = (P.bien || []).flat();
+  let vb = '0 0 ' + P.w + ' ' + P.h;
+  if (bp.length > 2) { const xs = bp.map(c => c[0]), ys = bp.map(c => c[1]), x0 = Math.min(...xs) - 18, y0 = Math.min(...ys) - 18;
+    vb = x0 + ' ' + y0 + ' ' + (Math.max(...xs) + 18 - x0) + ' ' + (Math.max(...ys) + 18 - y0); }
+  // chỉ toà của trường được sơn khối màu (theo khu, như tranh Hội Sinh viên); bệnh viện, nhà dân, trường khác = bản đồ thường
+  const zone = t => /^C/.test(t.k) ? 'zc' : /^D/.test(t.k) ? 'zd' : /^[AB]\d/.test(t.k) ? 'zb' : /^TC$|Tạ Quang Bửu/.test(t.k + ' ' + t.n) ? 'zt' : 'zo';
+  const own = P.toa.filter(t => t.h), other = P.toa.filter(t => !t.h);
+  let s = '<svg class="cm-svg" viewBox="' + vb + '" role="img" aria-label="Bản đồ khuôn viên Đại học Bách khoa Hà Nội">';
+  s += P.xanh.map(g => '<path class="cm-g" d="' + path(g.p) + 'Z"/>').join('') + P.nuoc.map(g => '<path class="cm-w" d="' + path(g.p) + 'Z"/>').join('');
+  s += P.san.map(g => '<path class="cm-s' + (g.h ? '' : ' cm-x') + '" d="' + path(g.p) + 'Z"/>').join('');
+  s += P.duong.map(r => '<path class="cm-rc" stroke-width="' + ((RW[r.l] || 3) + 2) + '" d="' + path(r.p) + '"/><path class="cm-r" stroke-width="' + (RW[r.l] || 3) + '" d="' + path(r.p) + '"/>').join('');
+  s += other.map(t => '<path class="cm-o" d="' + path(t.p) + 'Z"/>').join('');
+  s += (P.bien || []).map(r => '<path class="cm-bien" d="' + path(r) + '"/>').join('');
+  s += own.map(t => '<path class="cm-bs ' + zone(t) + '" transform="translate(0 4)" d="' + path(t.p) + 'Z"/>').join('');   // mặt bên: khối nhà nổi như tranh
+  s += own.map(t => '<path class="cm-b ' + zone(t) + (hitSet.has(t) ? ' hit' : '') + '" d="' + path(t.p) + 'Z"/>').join('');
+  // nhãn: mã toà ngắn của trường (C1, D3, B1, TC…) trên toà đủ lớn; toà có buổi học luôn có nhãn (vẽ ở lớp ghim)
+  s += own.filter(t => /^[A-ZĐ]{1,2}\d{0,2}[a-z]?(bis)?$/.test(t.k) && area(t.p) > 120 && !hitSet.has(t))
+    .map(t => '<text class="cm-l" x="' + t.c[0] + '" y="' + (t.c[1] + 3) + '">' + esc(t.k) + '</text>').join('');
+  const tq = P.toa.find(t => /Tạ Quang Bửu/.test(t.n)); if (tq) s += '<text class="cm-l" x="' + tq.c[0] + '" y="' + (tq.c[1] + 3) + '">Thư viện</text>';
+  hits.forEach((h, i) => {   // ghim: giờ + phòng, so le để không đè nhau
+    const [x, y] = h.t.c, lab = h.txt, wpx = lab.length * 7.2 + 16, dy = -26 - (i % 2) * 22;
+    s += '<g class="pin' + (h.exam ? ' exam' : '') + (h.past ? ' past' : '') + '"><line x1="' + x + '" y1="' + y + '" x2="' + x + '" y2="' + (y + dy + 10) + '"/>' +
+      '<circle cx="' + x + '" cy="' + y + '" r="5"/><rect x="' + (x - wpx / 2) + '" y="' + (y + dy - 10) + '" width="' + wpx + '" height="22" rx="11"/>' +
+      '<text x="' + x + '" y="' + (y + dy + 5) + '">' + esc(lab) + '</text></g>';
+  });
+  return s + '</svg>';
+}
+async function campusMaps() {
+  const boxes = [...document.querySelectorAll('[data-campus]')].filter(b => b.offsetParent !== null);
+  if (!boxes.length) return;
+  try {
+    if (!CM.plan) { CM.plan = await (await fetch('/assets/hust-plan.json')).json();
+      const d3 = CM.plan.toa.find(t => t.k === 'D3'); CM.plan.hub = d3 ? d3.c : [CM.plan.w / 2, CM.plan.h / 2]; }
+    if (!CM.ev || Date.now() - CM.at > 10 * 60e3) { CM.ev = ((await (await fetch('/api/timetable/all')).json()).events || []); CM.at = Date.now(); }
+  } catch (e) { return; }
+  const day = ms => new Date(ms + 7 * 3600e3).toISOString().slice(0, 10), today = day(Date.now());
+  const real = CM.ev.filter(e => (e.kind === 'Class' || e.kind === 'Exam') && e.start && e.start.includes('T') && !/NGHỈ/.test(e.title || '') && cmFind(cmKey(e.location)));
+  let pick = real.filter(e => day(Date.parse(e.start)) === today), label = 'Hôm nay';
+  if (!pick.length) { const nx = real.filter(e => day(Date.parse(e.start)) > today).sort((a, b) => a.start.localeCompare(b.start))[0];
+    if (nx) { pick = real.filter(e => day(Date.parse(e.start)) === day(Date.parse(nx.start))); const d = new Date(Date.parse(nx.start) + 7 * 3600e3); label = 'Buổi tới ' + d.getUTCDate() + '/' + (d.getUTCMonth() + 1); } }
+  pick.sort((a, b) => a.start.localeCompare(b.start));
+  const hm = iso => new Date(Date.parse(iso) + 7 * 3600e3).toISOString().slice(11, 16);
+  const nm = t => String(t || '').replace(/ · (LT\+BT|LT|BT|Thực nghiệm|Online|Offline|Teams đổi lịch)\b/g, '');
+  const hits = pick.map(e => ({ t: cmFind(cmKey(e.location)), txt: hm(e.start) + ' ' + e.location, exam: e.kind === 'Exam', past: Date.parse(e.end || e.start) < Date.now() }));
+  for (const box of boxes) {
+    box.innerHTML = '<h3>' + label + ' học ở đâu</h3><div class="cm-map">' + cmSvg(hits) + '</div><p class="cm-note">' +
+      (pick.length ? pick.map(e => hm(e.start) + ' ' + esc(nm(e.title)) + ' · ' + esc(e.location)).join(' &nbsp;·&nbsp; ') : 'Không có buổi học ở trường sắp tới.') +
+      ' <span>· Dữ liệu bản đồ © OpenStreetMap</span></p>';
+  }
 }
 function renderHome() {
   const DOWN = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];

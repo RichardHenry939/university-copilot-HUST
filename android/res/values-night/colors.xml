@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="paper">#131A26</color>
+    <color name="sheet">#1A2333</color>
+    <color name="ink">#E9EDF4</color>
+    <color name="ink2">#B4BDCC</color>
+    <color name="ink3">#7D889B</color>
+    <color name="line">#2A3447</color>
+    <color name="blue">#7D9CFF</color>
+    <color name="red">#FF7A72</color>
+    <color name="amber">#F2B04E</color>
+    <color name="green">#6FCF97</color>
+</resources>
