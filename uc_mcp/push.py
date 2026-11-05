@@ -164,6 +164,7 @@ def snapshot():
                 "today": S.t_today({}),
                 "han_tat_ca": [S._deadline_view(x) for x in S._song(d)],
                 "bao_cao": S.t_briefing({})["bao_cao"],
+                "ngu_trua": S._nap(),   # (05/11) giờ ngủ trưa + giờ đã dậy cho agent (uc_status)
                 **_ngoai_khoa_inbox(), **_mo_rong(), **_fitness(), **_widget(d)}
     finally:
         S._fetch = real

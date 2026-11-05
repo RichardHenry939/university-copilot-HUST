@@ -48,6 +48,18 @@ public class MainActivity extends Activity {
         return true;
     }
 
+    /** (chủ 05/11) alert / confirm của trang: hộp tự vẽ đề "UC" — hộp mặc định của WebView lấy địa chỉ laptop làm tiêu đề. */
+    private class Dialogs extends android.webkit.WebChromeClient {
+        private boolean box(String msg, android.webkit.JsResult r, boolean ask) {
+            android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(MainActivity.this).setTitle("UC").setMessage(msg)
+                    .setPositiveButton("OK", (d, w) -> r.confirm()).setOnCancelListener(d -> r.cancel());
+            if (ask) b.setNegativeButton("Huỷ", (d, w) -> r.cancel());
+            b.show(); return true;
+        }
+        @Override public boolean onJsAlert(WebView w, String url, String msg, android.webkit.JsResult r) { return box(msg, r, false); }
+        @Override public boolean onJsConfirm(WebView w, String url, String msg, android.webkit.JsResult r) { return box(msg, r, true); }
+    }
+
     private class Links extends WebViewClient {
         @Override public boolean shouldOverrideUrlLoading(WebView w, WebResourceRequest r) { return r.isForMainFrame() && external(r.getUrl()); }
     }
@@ -73,7 +85,8 @@ public class MainActivity extends Activity {
         view.setWebViewClient(new Links());
         view.loadUrl(OFFLINE);
         laptop = make();
-        laptop.setWebChromeClient(new android.webkit.WebChromeClient() {   // lỗi JS của trang laptop -> nhật ký
+        view.setWebChromeClient(new Dialogs());
+        laptop.setWebChromeClient(new Dialogs() {   // lỗi JS của trang laptop -> nhật ký
             @Override public boolean onConsoleMessage(android.webkit.ConsoleMessage m) {
                 if (m.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR)
                     android.util.Log.w("UCAPP", "js " + m.message() + " @" + m.lineNumber());

@@ -1940,7 +1940,7 @@ function reviewLi(r) {
 function calSync(force) {
   if (calSyncing) return calSyncing;
   calSyncing = fetch('/api/timetable/all' + (force ? '?force=1' : '')).then(r => r.json()).then(j => {
-    if (j && j.nap && Array.isArray(j.nap.spans)) NAP_SPANS = j.nap.spans;
+    if (j && j.nap && Array.isArray(j.nap.spans)) { NAP_SPANS = j.nap.spans; NAP_WOKE = j.nap.woke || null; }
     if (j && Array.isArray(j.review)) { const ch = JSON.stringify(j.review) !== JSON.stringify(REVIEW); REVIEW = j.review; if (ch) { renderHomeTime(); if (dayData()) renderDay(); } }
     if (j && Array.isArray(j.events) && (!CAL || j.fetchedAt !== CAL.fetchedAt || JSON.stringify(j.events) !== JSON.stringify(CAL.events))) {
       CAL = { events: j.events, fetchedAt: j.fetchedAt };
@@ -2245,6 +2245,19 @@ const SLEEP_H = 22, WAKE_H = 6;
 // Ngủ trưa: KHÔNG cố định 13–15h. Đoạn vàng = phần 13–15h còn lại sau khi buổi học / thi chiếm chỗ (nap.py, /api/timetable/all -> nap.spans);
 // đồng hồ không có chỗ cho 2 lịch chồng nhau, và hệ thống khoá giờ ngủ khoá đúng các đoạn vàng này. Chưa đọc được thì tạm 13–15h.
 let NAP_SPANS = [['13:00', '15:00']];
+let NAP_WOKE = null;   // (05/11) giờ bạn xác nhận đã dậy hôm nay ('HH:MM'); NAP_SPANS từ máy chủ đã cắt tại đó
+// (chủ 05/11) nút "Tôi đã dậy": chỉ hiện từ 14:30, đang trong phần vàng ngủ trưa, chưa xác nhận. Bấm -> hỏi Xác nhận -> kết thúc ngủ trưa
+document.addEventListener('click', async ev => {
+  const b = ev.target.closest('[data-napwake]'); if (!b) return;
+  if (!confirm('Xác nhận bạn đã dậy? Giờ ngủ trưa hôm nay kết thúc ngay (mở khoá trưa trên máy tính, điện thoại và báo cho các agent). Không hoàn tác được.')) return;
+  b.disabled = true;
+  try {
+    const r = await (await fetch('/api/nap-wake', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmed: true }) })).json();
+    if (r.ok) { NAP_WOKE = r.at; NAP_SPANS = NAP_SPANS.map(s => [s[0], s[1] > r.at ? r.at : s[1]]).filter(s => s[0] < s[1]); calSync(true); }
+    else alert(r.loi || 'Không ghi được.');
+  } catch (e) { alert('UC không trả lời.'); }
+  b.disabled = false;
+});
 // DAY khai báo bằng let ở dưới file: đọc trước dòng khai báo thì cả `typeof DAY` cũng ném lỗi (đồng hồ chạy ngay lúc tải) -> đọc qua hàm này
 function dayData() { try { return DAY; } catch (e) { return null; } }
 const hm2h = s => +s.slice(0, 2) + +s.slice(3, 5) / 60;
@@ -2262,7 +2275,7 @@ function clk24Build(el) {
     // < vàng (ngủ; ngang tím) < xanh biển (học, ngoại khoá: đè tất cả)
     '<path class="c-waste"/><g class="c-life"></g><g class="c-focus"></g><g class="c-nap"></g><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/><g class="c-red"></g><g class="c-cls"></g><g class="c-lime"></g>' + t +
     '<line class="c-hh" x1="100" y1="100" x2="100" y2="48"/><line class="c-mm" x1="100" y1="100" x2="100" y2="24"/><line class="c-ss" x1="100" y1="112" x2="100" y2="16"/><circle class="c-hub" cx="100" cy="100" r="4"/></svg>' +
-    '<div class="c-side"><div class="c-dig" aria-live="off"></div><p class="c-msg"></p>' +
+    '<div class="c-side"><div class="c-dig" aria-live="off"></div><p class="c-msg"></p><p class="c-wake" hidden><button class="ghost" data-napwake>☀️ Tôi đã dậy</button> <small>Ngủ đủ 1 chu kỳ rồi thì bấm để kết thúc ngủ trưa</small></p>' +
     '<div class="c-key"><span><i class="k-waste"></i>Đã lãng phí<em>Giờ thức (từ 06:00) đã trôi qua mà không học, không tập trung, không vận động</em></span>' +
     '<span><i class="k-cls"></i>Lịch học · ngoại khoá<em>Buổi học (cả online), hoạt động ngoại khoá đã đăng ký. Đè mọi màu khác, trừ nõn chuối</em></span>' +
     '<span><i class="k-red"></i>Thể dục<em>Khung đi bộ UC xếp. Không tự sửa được; chỉ AI xoá được khi có lý do chính đáng (vd đau chân, ốm)</em></span>' +
@@ -2334,6 +2347,8 @@ function clk24Tick() {
     el.querySelector('.c-lime').innerHTML = paths(fz.flatMap(f => busy.cls.map(c => [Math.max(+f[0] || Date.parse(f[0]), c[0]), Math.min(+f[1] || Date.parse(f[1]), c[1])]))
       .filter(x => x[1] > x[0]), 'c-lm');
     el.querySelector('.c-dig').textContent = p2(h) + ':' + p2(m) + ':' + p2(s);
+    const hmNow = p2(h) + ':' + p2(m);
+    el.querySelector('.c-wake').hidden = !(!NAP_WOKE && hmNow >= '14:30' && NAP_SPANS.some(x => x[0] <= hmNow && hmNow < x[1]));
     const msg = el.querySelector('.c-msg');
     msg.className = 'c-msg' + (night ? ' night' : '');
     msg.innerHTML = night ? '<b>Đã tới giờ ngủ.</b> Hôm nay đã hết; để việc còn lại cho sáng mai.'
@@ -4282,6 +4297,20 @@ function cmKey(loc) {
   if (/^S[VƯ][ĐD]/.test(s.normalize('NFD').replace(/[̀-ͯ]/g, ''))) return 'SVD';
   return s.split('-')[0];
 }
+// (chủ 05/11) phòng của một buổi trên bản đồ -> { key: mã toà, room: nhãn ngắn } hoặc null.
+// Buổi kết hợp ("Phòng 103, tầng 1, toà nhà B1 và MS Teams"): theo đối chiếu DS học trực tiếp (e.attend) — trực tiếp thì đọc toà / phòng
+// trong câu chữ, online thì không ghim; chưa rõ thì giữ như cũ (không ghim).
+function cmRoom(e) {
+  const loc = String(e.location || ''), k = cmKey(loc);
+  if (e.attend === 'online') return null;
+  if (k) return { key: k, room: loc };
+  if (e.attend !== 'truc_tiep') return null;
+  const s = loc.toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/Đ/g, 'D');
+  const b = s.match(/(?:TOA\s*NHA|NHA|TOA)\s*([A-Z]{1,2}\d{1,2}[A-Z]?)/) || s.match(/\b([A-D]\d{1,2}[A-Z]?)-?\d{3}\b/) || s.match(/\b([A-D]\d{1,2})\b/);
+  if (!b) return null;
+  const r = s.match(/PHONG\s*(\d{2,4})/) || s.match(/\b[A-Z]{1,2}\d{1,2}[A-Z]?-(\d{2,4})\b/);
+  return { key: b[1], room: b[1] + (r ? '-' + r[1] : '') };
+}
 function cmFind(key) {
   if (!key || !CM.plan) return null;
   if (key === 'SVD') { const s = CM.plan.san.find(x => /Sân vận động/i.test(x.n)); if (s) return { p: s.p, c: s.p.reduce((a, q) => [a[0] + q[0] / s.p.length, a[1] + q[1] / s.p.length], [0, 0]) }; }
@@ -4330,17 +4359,17 @@ async function campusMaps() {
     if (!CM.ev || Date.now() - CM.at > 10 * 60e3) { CM.ev = ((await (await fetch('/api/timetable/all')).json()).events || []); CM.at = Date.now(); }
   } catch (e) { return; }
   const day = ms => new Date(ms + 7 * 3600e3).toISOString().slice(0, 10), today = day(Date.now());
-  const real = CM.ev.filter(e => (e.kind === 'Class' || e.kind === 'Exam') && e.start && e.start.includes('T') && !/NGHỈ/.test(e.title || '') && cmFind(cmKey(e.location)));
+  const real = CM.ev.filter(e => (e.kind === 'Class' || e.kind === 'Exam') && e.start && e.start.includes('T') && !/NGHỈ/.test(e.title || '') && cmRoom(e) && cmFind(cmRoom(e).key));
   let pick = real.filter(e => day(Date.parse(e.start)) === today), label = 'Hôm nay';
   if (!pick.length) { const nx = real.filter(e => day(Date.parse(e.start)) > today).sort((a, b) => a.start.localeCompare(b.start))[0];
     if (nx) { pick = real.filter(e => day(Date.parse(e.start)) === day(Date.parse(nx.start))); const d = new Date(Date.parse(nx.start) + 7 * 3600e3); label = 'Buổi tới ' + d.getUTCDate() + '/' + (d.getUTCMonth() + 1); } }
   pick.sort((a, b) => a.start.localeCompare(b.start));
   const hm = iso => new Date(Date.parse(iso) + 7 * 3600e3).toISOString().slice(11, 16);
   const nm = t => String(t || '').replace(/ · (LT\+BT|LT|BT|Thực nghiệm|Online|Offline|Teams đổi lịch)\b/g, '');
-  const hits = pick.map(e => ({ t: cmFind(cmKey(e.location)), txt: hm(e.start) + ' ' + e.location, exam: e.kind === 'Exam', past: Date.parse(e.end || e.start) < Date.now() }));
+  const hits = pick.map(e => ({ t: cmFind(cmRoom(e).key), txt: hm(e.start) + ' ' + cmRoom(e).room, exam: e.kind === 'Exam', past: Date.parse(e.end || e.start) < Date.now() }));
   for (const box of boxes) {
     box.innerHTML = '<h3>' + label + ' học ở đâu</h3><div class="cm-map">' + cmSvg(hits) + '</div><p class="cm-note">' +
-      (pick.length ? pick.map(e => hm(e.start) + ' ' + esc(nm(e.title)) + ' · ' + esc(e.location)).join(' &nbsp;·&nbsp; ') : 'Không có buổi học ở trường sắp tới.') +
+      (pick.length ? pick.map(e => hm(e.start) + ' ' + esc(nm(e.title)) + ' · ' + esc(cmRoom(e).room) + (e.attend === 'truc_tiep' && /TEAMS|ONLINE/i.test(e.location || '') ? ' (trực tiếp)' : '')).join(' &nbsp;·&nbsp; ') : 'Không có buổi học ở trường sắp tới.') +
       ' <span>· Dữ liệu bản đồ © OpenStreetMap</span></p>';
   }
 }

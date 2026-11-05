@@ -11,6 +11,7 @@ Xác thực tuỳ chọn: đặt biến môi trường UC_MCP_TOKEN, khi đó m�
 """
 import argparse, datetime as dt, json, os, socket, sys, urllib.error, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 UC = os.environ.get("UC_BASE", "http://127.0.0.1:8320")
 PROTO = "2025-03-26"
@@ -54,9 +55,22 @@ def _qua(d):   # hạn đã quá mà chưa đánh dấu hoàn tất (UC không n
     return [x for x in (d.get("deadlines") or []) if (x.get("minsLeft") or 0) < 0]
 
 
+def _nap():
+    """(chủ 05/11) Giờ ngủ trưa hôm nay cho agent: đọc thẳng school/nap.json (cùng máy). 'da_day' = giờ bạn xác nhận đã dậy
+    (từ 14:30); khi đó phần ngủ trưa đã cắt tại giờ dậy -> agent được làm việc tiếp, không cần chờ hết 15:00."""
+    try:
+        n = json.loads((Path(__file__).resolve().parent.parent / "school" / "nap.json").read_text(encoding="utf-8"))
+    except Exception as e:
+        return {"doc_duoc": False, "chi_tiet": f"{type(e).__name__}"}
+    now = dt.datetime.now(TZ); hm = now.strftime("%H:%M")
+    return {"doc_duoc": True, "ngay": n.get("date"), "ghi_luc": n.get("at"), "gio_ngu_trua": n.get("nap_spans"), "bi_chiem": n.get("why"),
+            "da_day": n.get("woke"), "dang_gio_ngu_trua": n.get("date") == now.date().isoformat() and any(a <= hm < b for a, b in n.get("nap_spans") or [])}
+
+
 def t_status(args):
     d, err = _fetch()
-    return {"online": d is not None, "kiem_tra_luc": dt.datetime.now(TZ).isoformat(timespec="minutes"), "chi_tiet": None if d else err}
+    return {"online": d is not None, "kiem_tra_luc": dt.datetime.now(TZ).isoformat(timespec="minutes"), "chi_tiet": None if d else err,
+            "ngu_trua": _nap()}
 
 
 def t_today(args):

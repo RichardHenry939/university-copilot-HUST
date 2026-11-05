@@ -1176,7 +1176,9 @@ class H(BaseHTTPRequestHandler):
                     import nap, datetime as _dt
                     if isinstance(tt, dict) and isinstance(tt.get("events"), list):
                         t0 = _dt.datetime.now(nap.TZ).date().isoformat(); free, took = nap.spans(tt["events"], t0)
-                        tt = dict(tt, nap={"date": t0, "spans": free, "why": "; ".join(took)})
+                        hm0 = _dt.datetime.now(nap.TZ).strftime("%H:%M")
+                        tt = dict(tt, nap={"date": t0, "spans": free, "why": "; ".join(took), "woke": nap.woke(t0),
+                                           "can_wake": not nap.woke(t0) and nap.can_wake(free, hm0)})   # (05/11) nút "Tôi đã dậy"
                 except Exception as e: print("nap view:", e)
                 return self._send(200, tt)
             if u.path == "/api/study":   # GPA kỳ, CPA, rèn luyện — tính bằng academic.py
@@ -1435,6 +1437,12 @@ class H(BaseHTTPRequestHandler):
                     try: import extracurricular; extracurricular.build()
                     except Exception: pass
                 return self._send(200, r)
+            if u.path == "/api/nap-wake":   # (chủ 05/11) "Tôi đã dậy": kết thúc giờ ngủ trưa sớm, chỉ từ 14:30, chỉ khi đã Xác nhận
+                import nap
+                b = json.loads(self._body(1024) or b"{}")
+                if b.get("confirmed") is not True: return self._send(200, {"ok": False, "loi": "Cần bấm Xác nhận trước."})
+                r = nap.wake(_npost)   # ghi luôn school/nap.json -> khoá trưa / PhoneLock thấy ngay ở lượt đọc kế tiếp
+                return self._send(200, {k: v for k, v in r.items() if k != "signal"})
             if u.path == "/api/wallet":   # (v1.00.42 W8) bắt đầu / tạm dừng / kết thúc phiên tập trung hoặc giải trí
                 import wallet, datetime as _dt
                 b = json.loads(self._body(4 * 1024) or b"{}"); act = b.get("action")
