@@ -1025,6 +1025,7 @@ button.link:hover { text-decoration: underline; }
 .clk24 .c-redp { fill: #d62828; opacity: .75; } .clk24 .c-key .k-red { background: #d62828; opacity: .75; }
 .clk24 .c-life-p { fill: #8e44ad; opacity: .6; } .clk24 .c-key .k-life { background: #8e44ad; opacity: .6; }
 .clk24 .c-fz { fill: var(--green); opacity: .85; }
+.clk24 .c-lm, .clk24 .c-key .k-lime { fill: #9acd32; background: #9acd32; }   /* (05/11) xanh nõn chuối: tập trung trong giờ học */
 .clk24 .c-key { flex-wrap: wrap; justify-content: center; }
 .clk24 .c-key .k-waste { background: #2f343b; opacity: .62; } .clk24 .c-key .k-cls { background: #1f6fd1; opacity: .75; }
 .clk24 .c-key .k-fz { background: var(--green); } .clk24 .c-key .k-sleep { background: #f6c945; } .clk24 .c-key .k-left { background: var(--sheet); border: 1px solid var(--line); }
@@ -2259,13 +2260,14 @@ function clk24Build(el) {
   el.innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="Đồng hồ 24 giờ"><circle class="c-face" cx="100" cy="100" r="96"/>' +
     // (02/11, chủ) thứ tự lớp = luật tranh chấp: xám (không đè ai) < tím (ăn uống, chạy bộ) < xanh lá (tập trung: chỉ đè trắng, đè tím khi bất khả kháng)
     // < vàng (ngủ; ngang tím) < xanh biển (học, ngoại khoá: đè tất cả)
-    '<path class="c-waste"/><g class="c-life"></g><g class="c-focus"></g><g class="c-nap"></g><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/><g class="c-red"></g><g class="c-cls"></g>' + t +
+    '<path class="c-waste"/><g class="c-life"></g><g class="c-focus"></g><g class="c-nap"></g><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/><g class="c-red"></g><g class="c-cls"></g><g class="c-lime"></g>' + t +
     '<line class="c-hh" x1="100" y1="100" x2="100" y2="48"/><line class="c-mm" x1="100" y1="100" x2="100" y2="24"/><line class="c-ss" x1="100" y1="112" x2="100" y2="16"/><circle class="c-hub" cx="100" cy="100" r="4"/></svg>' +
     '<div class="c-side"><div class="c-dig" aria-live="off"></div><p class="c-msg"></p>' +
     '<div class="c-key"><span><i class="k-waste"></i>Đã lãng phí<em>Giờ thức (từ 06:00) đã trôi qua mà không học, không tập trung, không vận động</em></span>' +
-    '<span><i class="k-cls"></i>Lịch học · ngoại khoá<em>Buổi học (cả online), hoạt động ngoại khoá đã đăng ký. Đè mọi màu khác</em></span>' +
+    '<span><i class="k-cls"></i>Lịch học · ngoại khoá<em>Buổi học (cả online), hoạt động ngoại khoá đã đăng ký. Đè mọi màu khác, trừ nõn chuối</em></span>' +
     '<span><i class="k-red"></i>Thể dục<em>Khung đi bộ UC xếp. Không tự sửa được; chỉ AI xoá được khi có lý do chính đáng (vd đau chân, ốm)</em></span>' +
     '<span><i class="k-fz"></i>Tập trung<em>Thời gian bật chế độ tập trung ở Ví (đã trừ lúc tạm dừng). Không đè giờ ngủ, giờ học</em></span>' +
+    '<span><i class="k-lime"></i>Tập trung trong giờ học<em>Bật tập trung khi đang có buổi học / ngoại khoá: vừa trong lịch, vừa khoá máy như tập trung</em></span>' +
     '<span><i class="k-sleep"></i>Giờ ngủ 22:00–06:00 · ngủ trưa<em>Ngủ trưa trong 13:00–15:00, trừ phần có buổi học / thi. Phần vàng là phần bị khoá mạng xã hội và game. Không tính là lãng phí</em></span>' +
     '<span><i class="k-life"></i>Sinh hoạt cá nhân<em>Ăn sáng (trước 8:00), ăn trưa 12:00–13:00, ăn tối 19:00–20:00 (Camp: 17:30–18:30), chạy bộ (app iCTSV) — không phải giờ ngủ, không tính là lãng phí</em></span>' +
     '<span><i class="k-left"></i>Chưa tới<em>Phần còn lại của hôm nay trước giờ ngủ</em></span></div></div>';
@@ -2328,6 +2330,9 @@ function clk24Tick() {
     el.querySelector('.c-cls').innerHTML = paths(busy.cls, 'c-cl');
     const fz = CLK_SP.spans.map((sp, i) => [sp[0], CLK_SP.live && i === CLK_SP.spans.length - 1 ? nowMs : sp[1]]);
     el.querySelector('.c-focus').innerHTML = paths(fz, 'c-fz');
+    // (chủ 05/11) xanh nõn chuối = tập trung trong giờ học / ngoại khoá (giao của hai lớp), đè lên xanh biển
+    el.querySelector('.c-lime').innerHTML = paths(fz.flatMap(f => busy.cls.map(c => [Math.max(+f[0] || Date.parse(f[0]), c[0]), Math.min(+f[1] || Date.parse(f[1]), c[1])]))
+      .filter(x => x[1] > x[0]), 'c-lm');
     el.querySelector('.c-dig').textContent = p2(h) + ':' + p2(m) + ':' + p2(s);
     const msg = el.querySelector('.c-msg');
     msg.className = 'c-msg' + (night ? ' night' : '');

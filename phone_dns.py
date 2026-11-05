@@ -27,8 +27,25 @@ BLOCK_ALL = ('fb.watch', 'instagram.com', 'threads.net', 'threads.com',         
              'pinterest.com', 'pin.it', 'tumblr.com', 'vk.com', 'gapo.vn',
              'weibo.com', 'xiaohongshu.com', 'bilibili.com', 'b23.tv',            # Trung Quốc
              'twitch.tv', 'kick.com')                                               # livestream
-ZONES = ('facebook.com', 'fb.com', 'youtube.com', 'youtu.be') + BLOCK_ALL   # đúng các tên miền phải đặt trong split DNS của Tailscale
+# (chủ 05/11) Khoá trưa / đêm không chờ adb nữa (đêm 04/11 điện thoại mất adb từ 21:21 -> ReVanced không bị khoá):
+# chặn luôn đường của app qua DNS. Trưa + đêm: app YouTube / ReVanced. Đêm: thêm Messenger (cả facebook.com).
+NAP_ALL = ('googlevideo.com', 'youtubei.googleapis.com', 'youtube.com', 'youtu.be')
+NIGHT_ALL = NAP_ALL + ('facebook.com', 'fb.com', 'messenger.com')
+ZONES = ('facebook.com', 'fb.com', 'youtube.com', 'youtu.be', 'googlevideo.com', 'youtubei.googleapis.com',
+         'messenger.com') + BLOCK_ALL   # đúng các tên miền phải đặt trong split DNS của Tailscale
 UPSTREAM = ('1.1.1.1', '8.8.8.8')
+_mode = ['default', 0.0]
+
+
+def lock_mode():
+    """Chế độ PhoneLock hiện tại (đọc lại mỗi 30 s). Lỗi -> 'default'."""
+    if time.time() - _mode[1] > 30:
+        try:
+            import phone_lock
+            _mode[0] = phone_lock.mode()
+        except Exception: _mode[0] = 'default'
+        _mode[1] = time.time()
+    return _mode[0]
 
 
 def qname(pkt):
@@ -41,8 +58,10 @@ def qname(pkt):
     return '.'.join(parts).lower()
 
 
-def blocked(name):
-    return name in BLOCK or any(name == z or name.endswith('.' + z) for z in BLOCK_ALL)
+def blocked(name, mode=None):
+    m = mode or lock_mode()
+    whole = BLOCK_ALL + (NIGHT_ALL if m == 'night' else NAP_ALL if m == 'nap' else ())
+    return name in BLOCK or any(name == z or name.endswith('.' + z) for z in whole)
 
 
 def nxdomain(pkt):

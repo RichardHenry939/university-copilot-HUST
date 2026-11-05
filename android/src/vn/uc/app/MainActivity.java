@@ -60,6 +60,13 @@ public class MainActivity extends Activity {
         if (u != null && u.matches("https://[^\\s/]+/w/[A-Za-z0-9_-]{20,}")) Store.setUrl(this, u);
         String lan = getIntent().getStringExtra("uc_lan");
         if (lan != null && lan.matches("http://100\\.[0-9.]+:8320/\\?k=[A-Za-z0-9_-]{30,}")) Store.setLan(this, lan);
+        // (05/11) kênh thông báo (laptop đẩy qua dây / adb): --es uc_ntfy <tên kênh ntfy trong school/ntfy.json>
+        String nt = getIntent().getStringExtra("uc_ntfy");
+        if (nt != null && nt.matches("[A-Za-z0-9_-]{8,64}")) NotifyService.setTopic(this, nt);
+        if (android.os.Build.VERSION.SDK_INT >= 33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 7);
+        else askBattery();
+        NotifyService.start(this);
 
         view = make();
         view.addJavascriptInterface(new Bridge(), "UC");
@@ -112,6 +119,16 @@ public class MainActivity extends Activity {
         });
         setContentView(box);
         tryLaptop();
+    }
+
+    @Override public void onRequestPermissionsResult(int code, String[] perms, int[] res) { if (code == 7) askBattery(); }
+
+    /** Xin tắt tối ưu pin cho app (một lần, bạn tự bấm Cho phép): để máy ngủ vẫn nhận thông báo đúng giờ. */
+    private void askBattery() {
+        android.os.PowerManager pm = getSystemService(android.os.PowerManager.class);
+        if (NotifyService.topic(this).isEmpty() || pm.isIgnoringBatteryOptimizations(getPackageName())) return;
+        try { startActivity(new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android.net.Uri.parse("package:" + getPackageName()))); }
+        catch (Exception e) { android.util.Log.w("UCAPP", "battery " + e); }
     }
 
     private void tryLaptop() {

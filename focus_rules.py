@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """(v1.00.49, chủ 02/11) Luật của xanh lá (chế độ tập trung) trên đồng hồ 24 giờ.
 
-Xanh lá dừng trước mọi màu khác, trừ trắng (mục tiêu chính, không cảnh báo) và tím (vẫn chạy nhưng cảnh báo liên tục):
-- xanh biển (đang có buổi học / thi), vàng (giờ ngủ đêm 22–6h, phần ngủ trưa còn lại)
+Xanh lá dừng trước mọi màu khác, trừ trắng (mục tiêu chính, không cảnh báo), xanh biển và tím (vẫn chạy nhưng cảnh báo liên tục):
+- xanh biển (đang có buổi học / thi) -> (chủ 05/11) KHÔNG dừng: tập trung chạy tiếp, chặn giữ nguyên; trên đồng hồ
+  thành XANH NÕN CHUỐI (vừa trong lịch vừa khoá như tập trung), tính cho mặt trận như xanh lá.
+- vàng (giờ ngủ đêm 22–6h, phần ngủ trưa còn lại)
   -> UC tự TẠM DỪNG phiên tập trung (không huỷ) + báo lý do, gỡ chặn (chủ chốt 03/11 ~19:30: UC dừng gỡ chặn,
   bạn tự bấm dừng thì giữ chặn — xem wallet.pause).
 - đỏ (khung thể dục UC xếp) -> UC DỪNG BẮT BUỘC: gỡ chặn (máy tính + máy ảo), kể cả khi bạn đang tự dừng;
@@ -92,7 +94,7 @@ def tick(post, notify, now=None):
         notify('UC · đã tạm dừng tập trung', f"Đang là {why}. Phiên tập trung dừng bắt buộc, đã gỡ hết chặn. Tập xong bấm Tiếp tục để chặn lại.")
         return ('pause', why)
     if a.get('type') != 'focus' or a.get('paused_at'): return None   # đang dừng tay: im lặng, chặn đã gỡ
-    if color in ('blue', 'yellow'):
+    if color == 'yellow':   # (chủ 05/11) xanh biển không dừng nữa (-> xanh nõn chuối)
         with wallet.lock:
             st = wallet.load(); a = st.get('active') or {}
             if a.get('type') != 'focus' or a.get('paused_at'): return None

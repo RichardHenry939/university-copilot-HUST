@@ -7,7 +7,7 @@ Leo thang theo thời gian, mỗi chặng chưa huỷ của sự kiện đang th
   trong ngày -> ĐỎ GHIM: không tắt được bằng "Đã biết" — chỉ "Sẽ đi" hoặc "Bỏ" (toast mỗi giờ tới khi chọn)
 Thư đính chính (Trước → Nay) -> ĐỎ "thay đổi": toast ngay, banner tới khi "Đã biết". Thư cũ nạp lần đầu (backfill) không toast.
 Toast chỉ 06:00–23:00. Nội dung toast = chính sự việc (tên · chặng — ngày giờ, phòng — còn bao lâu), không phải "bạn có thông báo"."""
-import json, base64, subprocess, datetime as dt
+import json, base64, subprocess, urllib.parse, datetime as dt
 from pathlib import Path
 import mail_events as me
 
@@ -15,7 +15,9 @@ HERE = Path(__file__).resolve().parent
 STATE = HERE / 'school' / 'alerts.json'
 TZ = me.TZ
 UC = 'http://127.0.0.1:8320/'
-APP_ID = r'{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
+# (chủ 05/11) thông báo đứng tên "University Copilot" thay vì "Windows PowerShell": AUMID tự đăng ký ở
+# HKCU\Software\Classes\AppUserModelId\UniversityCopilot (DisplayName + IconUri = ui/assets/uc-icon.png), xem ensure_app_id()
+APP_ID = 'UniversityCopilot'
 
 
 def _load():   # (v1.00.24, D-1) ghi nguyên tử + .bak; đọc hỏng -> .bak + ghi lỗi rõ (uc_state)
@@ -223,11 +225,24 @@ def ack(eid, choice, stage=None, change_at=None, post=None):
     return {'ok': True}
 
 
-def toast(title, text, persistent=False):
+def ensure_app_id():
+    """Đăng ký tên + icon cho APP_ID (chỉ khoá HKCU của người dùng, không cần quyền quản trị). Lỗi -> bỏ qua."""
+    try:
+        import winreg
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, 'Software\\Classes\\AppUserModelId\\' + APP_ID) as k:
+            winreg.SetValueEx(k, 'DisplayName', 0, winreg.REG_SZ, 'University Copilot')
+            winreg.SetValueEx(k, 'IconUri', 0, winreg.REG_SZ, str(HERE / 'ui' / 'assets' / 'uc-icon.png'))
+    except Exception as e: print('app id:', e)
+
+
+def toast(title, text, persistent=False, click=None, click_label='Mở UC'):
+    """click: link mở khi bấm thông báo (mặc định trang UC). Hạn nộp: /go/work?id=... -> mở thẳng chỗ làm bài."""
     esc = lambda s: str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
-    xml = (f'<toast{" scenario=\"reminder\"" if persistent else ""} activationType="protocol" launch="{UC}">'
+    go = esc(click or UC)
+    xml = (f'<toast{" scenario=\"reminder\"" if persistent else ""} activationType="protocol" launch="{go}">'
            f'<visual><binding template="ToastGeneric"><text>{esc(title)}</text><text>{esc(text)}</text></binding></visual>'
-           f'<actions><action content="Mở UC" activationType="protocol" arguments="{UC}"/>'
+           f'<actions><action content="{esc(click_label)}" activationType="protocol" arguments="{go}"/>'
+           + (f'<action content="Mở UC" activationType="protocol" arguments="{UC}"/>' if click else '')
            + ('<action content="Để sau" activationType="system" arguments="dismiss"/>' if persistent else '') +
            '</actions><audio src="ms-winsoundevent:Notification.Default"/></toast>')   # (03/11, chủ) Reminder như chuông, quá to trong tai nghe -> âm mặc định nhẹ hơn
     ps = ("[Windows.UI.Notifications.ToastNotificationManager,Windows.UI.Notifications,ContentType=WindowsRuntime]|Out-Null;"
@@ -258,7 +273,10 @@ def phone(title, text, priority=4, actions=None, click=None):
 def notify(title, text, persistent=False, level='red', alert=None, phone_ok=True):
     """Máy tính (toast) + điện thoại (ntfy, chỉ mức đỏ / thay đổi / trong ngày).
     phone_ok=False: ntfy đã giữ hộ lần nhắc này (phone_sched, hẹn trước) -> chỉ toast, không đẩy trùng."""
-    toast(title, text, persistent)
+    desk = None   # (chủ 05/11) bấm thông báo hạn nộp trên máy -> mở thẳng chỗ làm bài (cửa sổ Chrome làm bài, như nút "Làm bài")
+    if alert and alert.get('kind') == 'deadline' and (alert.get('dl') or {}).get('id'):
+        desk = UC + 'go/work?id=' + urllib.parse.quote(str(alert['dl']['id']))
+    toast(title, text, persistent, desk, 'Làm bài' if desk else 'Mở UC')
     if level != 'yellow' and phone_ok:
         try:
             import phone_link; acts = phone_link.actions_for(alert)

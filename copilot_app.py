@@ -1039,6 +1039,17 @@ class H(BaseHTTPRequestHandler):
                 page = re.sub(r"\{\{notion:(\w+)\}\}", lambda m: cfg.notion(m.group(1)).replace("-", ""),
                               (HERE / "ui" / "index.html").read_text(encoding="utf-8"))
                 return self._send(200, raw=page.encode("utf-8"), ctype="text/html; charset=utf-8")
+            if u.path == "/go/work":   # (chủ 05/11) bấm thông báo hạn nộp trên máy -> mở chỗ làm bài như nút "Làm bài"; chỉ từ chính laptop
+                if self.client_address[0] != "127.0.0.1": return self._send(403, {"ok": False})
+                import work_open, html
+                did = (q.get("id") or [""])[0]
+                dl = next((x for x in _dls(400) if x.get("id") == did), None)
+                try: r = work_open.open_dl(dl) if dl else {"ok": False, "error": "không thấy hạn này (đã hoàn tất?)"}
+                except Exception as e: r = {"ok": False, "error": f"{type(e).__name__}: {e}"[:300]}
+                msg = "Đang mở chỗ làm bài…" if r.get("ok") else "Không mở được: " + html.escape(str(r.get("error") or "?"))
+                page = ('<!doctype html><meta charset="utf-8"><title>University Copilot</title><body style="font:16px sans-serif;padding:24px">'
+                        f'<p>{msg}</p><p><a href="/">Về UC</a></p>' + ('<script>setTimeout(()=>close(),1500)</script>' if r.get("ok") else '') + '</body>')
+                return self._send(200, raw=page.encode("utf-8"), ctype="text/html; charset=utf-8")
             if u.path == "/widget":   # (v1.00.49) hình nền động (vd Lively Wallpaper): đồng hồ 24 giờ + lịch hôm nay + việc cần làm
                 return self._send(200, raw=(HERE / "ui" / "widget.html").read_bytes(), ctype="text/html; charset=utf-8")
             if u.path == "/widget/bg.jpg":   # ảnh nền do bạn tự đặt ở ui/assets/wallpaper.jpg (không lên Git); thiếu -> trang dùng màu nền

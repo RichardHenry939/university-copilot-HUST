@@ -40,10 +40,18 @@ def test_the_duc_ket_thuc_giai_tri_chi_tru_phut_da_dung(env):
     assert st['active'] is None and W.balance(st) == 23
 
 
-def test_gio_hoc_la_uc_dung_go_chan(env):
-    color, notify, _ = env
+def test_gio_hoc_tap_trung_chay_tiep(env):   # (chủ 05/11) xanh biển + tập trung = xanh nõn chuối, không dừng
+    color, notify, sent = env
     st = W.empty(); W.start_focus(st, 50, '', T0); W.save(st)
     color['v'] = ('blue', 'giờ học')
+    assert F.tick(None, notify, T0 + m(3)) is None and not sent
+    assert not W.load()['active'].get('paused_at')
+
+
+def test_gio_ngu_la_uc_dung_go_chan(env):
+    color, notify, _ = env
+    st = W.empty(); W.start_focus(st, 50, '', T0); W.save(st)
+    color['v'] = ('yellow', 'giờ ngủ trưa (13:00–15:00)')
     assert F.tick(None, notify, T0 + m(3))[0] == 'pause'
     a = W.load()['active']
     assert a['paused_at'] and not W.by_user(a)
