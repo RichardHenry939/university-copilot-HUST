@@ -1179,6 +1179,7 @@ class H(BaseHTTPRequestHandler):
                         hm0 = _dt.datetime.now(nap.TZ).strftime("%H:%M")
                         tt = dict(tt, nap={"date": t0, "spans": free, "why": "; ".join(took), "woke": nap.woke(t0),
                                            "can_wake": not nap.woke(t0) and nap.can_wake(free, hm0)})   # (05/11) nút "Tôi đã dậy"
+                        import late; tt = dict(tt, prep=late.prep_spans(tt["events"], t0))   # (05/11) chống muộn: tím đi học
                 except Exception as e: print("nap view:", e)
                 return self._send(200, tt)
             if u.path == "/api/study":   # GPA kỳ, CPA, rèn luyện — tính bằng academic.py
@@ -1237,6 +1238,13 @@ class H(BaseHTTPRequestHandler):
                 p_as = HERE / "ui" / "assets" / m_as.group(1)
                 if not p_as.is_file(): return self._send(404, {"error": "không có"})
                 return self._send(200, raw=p_as.read_bytes(), ctype={"svg": "image/svg+xml", "png": "image/png", "json": "application/json; charset=utf-8"}[m_as.group(2)])
+            if u.path == "/api/late-plan":   # (chủ 05/11) chống muộn: điện thoại hỏi mỗi phút (chỉ trả toạ độ TOÀ của trường, không có gì của bạn)
+                import late, nap
+                return self._send(200, late.plan(nap.events(_npost)))
+            if u.path == "/api/class-lock":   # (05/11) PhoneClassLock đang bật tới lúc nào
+                import phone_lock
+                cu = phone_lock.class_until()
+                return self._send(200, {"until": cu.isoformat(timespec="minutes") if cu else None})
             if u.path == "/api/wallet":   # (v1.00.42 W8) ví thời gian: số dư, phiên đang chạy, thống kê
                 import wallet, datetime as _dt
                 with wallet.lock:
@@ -1437,6 +1445,26 @@ class H(BaseHTTPRequestHandler):
                     try: import extracurricular; extracurricular.build()
                     except Exception: pass
                 return self._send(200, r)
+            if u.path == "/api/late-check":   # (chủ 05/11) chống muộn: điện thoại báo "khác chỗ / tới toà" (không có toạ độ)
+                import late
+                return self._send(200, late.check(json.loads(self._body(4 * 1024) or b"{}")))
+            if u.path == "/api/walk-phone":   # (chủ 05/11) app điện thoại gửi các lượt đi bộ iCTSV (bấm bắt đầu -> kết thúc) + nhịp còn sống
+                import walk_phone
+                return self._send(200, walk_phone.receive(json.loads(self._body(64 * 1024) or b"{}")))
+            if u.path == "/api/class-lock":   # (chủ 05/11) PhoneClassLock: mở sớm CHỈ bằng MSSV nhập 2 lần (so trong bộ nhớ, không ghi, không trả số)
+                import phone_lock, mssv_store, hmac as _hmac
+                b = json.loads(self._body(1024) or b"{}")
+                if b.get("action") != "unlock": return self._send(200, {"ok": False, "loi": "?"})
+                saved = mssv_store.load()
+                m1, m2 = str(b.get("mssv1") or "").strip(), str(b.get("mssv2") or "").strip()
+                if not saved: return self._send(200, {"ok": False, "loi": "Chưa lưu MSSV ở tab Giới thiệu."})
+                if not (m1 and _hmac.compare_digest(m1.encode(), m2.encode()) and _hmac.compare_digest(m1.encode(), saved.encode())):
+                    return self._send(200, {"ok": False, "loi": "MSSV không khớp (phải nhập đúng cả 2 lần). Khoá vẫn bật."})
+                try: phone_lock.CLASS.unlink()
+                except FileNotFoundError: pass
+                phone_lock.log("PhoneClassLock: mở sớm bằng MSSV")
+                threading.Thread(target=phone_lock.tick, daemon=True).start()   # mở ngay, không chờ lượt sau
+                return self._send(200, {"ok": True})
             if u.path == "/api/nap-wake":   # (chủ 05/11) "Tôi đã dậy": kết thúc giờ ngủ trưa sớm, chỉ từ 14:30, chỉ khi đã Xác nhận
                 import nap
                 b = json.loads(self._body(1024) or b"{}")

@@ -82,7 +82,7 @@ def class_alerts(classes, now, st=None):
         if cid in acked: continue
         end = dt.datetime.fromisoformat(c['end']).astimezone(TZ).strftime('%H:%M') if c.get('end') else ''
         name = ' · '.join(c['title'].split(' · ')[:2]); code = c['title'].split(' · ')[0]
-        out.append({'id': cid, 'kind': 'class', 'level': 'blue', 'eid': cid, 'when': w.isoformat(), 'stage_level': 'class', 'mins': mins,
+        out.append({'id': cid, 'kind': 'class', 'level': 'blue', 'eid': cid, 'when': w.isoformat(), 'stage_level': 'class', 'mins': mins, 'cls': c,
                     'title': f"Sắp vào học: {name}", 'text': f"{w:%H:%M}{'–' + end if end else ''} · {c.get('location') or 'chưa có phòng'} — còn {int(mins + 0.5)} phút",
                     'note': notes.get((code, w.date().isoformat()), ''), 'buttons': ['Đã biết']})
     return out
@@ -343,6 +343,11 @@ def tick(now=None, send=notify, classes=None, dls=None):
         if lvl == 'class':   # tiết học: đúng 2 lần, trước 30 và 15 phút
             import deadlines as D
             slot = D.mark_at(CLASS_SLOTS, a['mins'], 3)   # đúng mốc 30 / 15 phút, lỡ thì bỏ
+            if slot is not None and s['sent'].get(f'{key}|{slot}'): slot = None   # mốc 15 đã gửi -> xét tiếp các mốc 14..1
+            if slot is None:   # (chủ 05/11) CHỐNG MUỘN: buổi TRỰC TIẾP nhắc thêm mốc 14..1 phút, tới khi điện thoại báo đã đi / đã tới toà
+                import late
+                if not late.online(a.get('cls') or {}) and not late.spared(a['eid']):
+                    slot = D.mark_at(late.MARKS, a['mins'], 0.9)
             k2 = f'{key}|{slot}'
             if slot is None or s['sent'].get(k2): continue
             send(f"Còn {slot} phút: " + a['title'].split(': ', 1)[1], a['text'].rsplit(' — ', 1)[0] + (f"\n{a['note']}" if a.get('note') else ''), level='red', phone_ok=k2 not in sched)

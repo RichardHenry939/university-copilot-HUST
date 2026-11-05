@@ -132,14 +132,21 @@ def slot(events, today, minutes, c=None, after=None):
     return {'start': None, 'end': None, 'indoor': True, 'rush': False}
 
 
+STALE_MOVE_MIN = 90
+
+
 def need_new_slot(sl, now, app_at):
     """(v1.00.56, chủ 03/11) Có xếp lại khung đi bộ không. Khung đã qua chỉ được xếp lại khi UC ĐÃ đọc app SAU lúc hết khung
     (biết chắc chưa đi). Chưa đọc được (máy ảo chết, adb treo) thì giữ khung cũ — trước đây 0 bước giả làm khung trượt mãi."""
     if not sl: return True
     if not sl.get('end') or dt.datetime.fromisoformat(sl['end']) >= now: return False
-    if not app_at: return False
-    a = dt.datetime.fromisoformat(app_at)
-    return (a if a.tzinfo else a.replace(tzinfo=TZ)) >= dt.datetime.fromisoformat(sl['end'])
+    end = dt.datetime.fromisoformat(sl['end'])
+    if app_at:
+        a = dt.datetime.fromisoformat(app_at)
+        if (a if a.tzinfo else a.replace(tzinfo=TZ)) >= end: return True
+    # (chủ 05/11) đọc app hỏng lâu (khoá tự đăng nhập, máy ảo treo) -> khung bị giữ cả ngày, không sang 17–19h.
+    # Hết khung 90 phút mà vẫn chưa đọc được thì vẫn xếp khung kế (coi như chưa đi); đọc được số đủ thì đỏ tự tắt như thường.
+    return now >= end + dt.timedelta(minutes=STALE_MOVE_MIN)
 
 
 def merge_days(ctsv_days, app_days):
@@ -163,7 +170,14 @@ def view(now=None):
     # (v1.00.49) số THẬT từ app iCTSV (đủ mọi lượt, kể cả lượt chậm giải không tính) — walk_app.py
     import walk_app
     wa = walk_app.load(); app = wa.get('days') or {}
-    steps = {d: max(contest.get(d, 0), man.get(d, 0), (app.get(d) or {}).get('steps', 0)) for d in set(contest) | set(man) | set(app)}
+    # (chủ 05/11) số từ điện thoại thật: chỉ các lượt bạn bấm bắt đầu trong iCTSV (walk_phone.py)
+    import walk_phone
+    wp = walk_phone.load(); ph = walk_phone.days(wp)
+    steps = {d: max(contest.get(d, 0), man.get(d, 0), (app.get(d) or {}).get('steps', 0), (ph.get(d) or {}).get('steps', 0))
+             for d in set(contest) | set(man) | set(app) | set(ph)}
+    # lần "đã biết chắc" gần nhất = mới nhất giữa lần đọc app máy ảo và nhịp điện thoại báo về (điện thoại thấy được mọi lượt bấm)
+    if wp.get('at') and (not wa.get('at') or str(wp['at']) > str(wa['at'])) and not wp.get('active'):
+        wa = dict(wa, at=wp['at'])
     exam_days = {_d(e.get('start')) for e in ev if e.get('kind') == 'Exam'}
     tgt = target_for(now.date(), steps, exam_days, c)
     mil = military(ev, today)
@@ -196,7 +210,9 @@ def view(now=None):
     red_spans = [[p['start'], p['end']] for p in past if mil and not mil['active'] and not ov] + \
                 ([[sl['start'], cut]] if red0 and cut and cut > sl['start'] else [])
     extra = {'red': red, 'redSpans': red_spans, 'redCleared': ov, 'contestSteps': contest.get(today, 0), 'manualSteps': man.get(today),
-             'appSteps': (app.get(today) or {}).get('steps'), 'app': app, 'appAt': wa.get('at')}
+             'appSteps': (app.get(today) or {}).get('steps'), 'app': app, 'appAt': wa.get('at'),
+             'phoneSteps': (ph.get(today) or {}).get('steps'), 'phoneRuns': (ph.get(today) or {}).get('runs', []),
+             'phoneActive': wp.get('active'), 'phoneAt': wp.get('at')}
     month = today[:7]; prev = (now.date().replace(day=1) - dt.timedelta(days=1)).isoformat()[:7]
     return {'ok': bool(w.get('ok')), 'at': w.get('at'), 'error': w.get('error'), 'competition': w.get('competition'),
             'myRank': w.get('myRank'), 'top100Km': w.get('top100Km'), 'stepsPerKm': w.get('stepsPerKm'),

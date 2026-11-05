@@ -145,21 +145,21 @@ def resume(st, now):
     if a and a.get('paused_at'):
         a['paused_s'] = a.get('paused_s', 0) + (now - _t(a['paused_at'])).total_seconds()
         a.setdefault('pauses', []).append([a['paused_at'], _iso(now)]); a['paused_at'] = None   # (01/11 tối) để đồng hồ 24h bỏ khoảng tạm dừng
-        a.pop('forced', None); a.pop('paused_by', None)
+        a.pop('forced', None); a.pop('paused_by', None); a.pop('auto', None)   # auto = màu làm UC tự dừng (focus_rules)
         if a['type'] == 'focus':   # tạm dừng làm phiên dài ra -> lùi giờ hết hạn của tín hiệu chặn (dừng bắt buộc -> chặn lại)
             _signal(True, _iso(now + dt.timedelta(seconds=_left_s(a, now))), now)
 
 
-def end_focus(st, now, at=None):
-    """at: chốt phiên tại thời điểm này dù chưa hết giờ (chỉ day_cut dùng; người dùng không huỷ được)."""
+def end_focus(st, now, at=None, cut='hết ngày'):
+    """at: chốt phiên tại thời điểm này dù chưa hết giờ (day_cut, focus_rules giờ ngủ; người dùng không huỷ được). cut = lý do ghi kèm."""
     a = st['active']
     if not a or a['type'] != 'focus': raise ValueError('Không có phiên tập trung nào.')
     p = progress(st, at or now)
     if not p['done'] and not at: raise ValueError('Đã vào phiên tập trung thì không huỷ được. Phiên tự kết thúc khi hết giờ.')
     blocks, reward = p['blocks_done'], p['blocks_done'] * BLOCK_REWARD
     st['sessions'].append({'id': a['id'], 'start': a['start'], 'end': _iso(at or now), 'total': a['total'], 'subject': a['subject'],
-                           'focus_min': p['focus_s'] // 60, 'blocks': blocks, 'pauses': a.get('pauses', []), **({'cut': 'hết ngày'} if at else {})})
-    if reward: _add(st, 'focus', reward, now, ref=a['id'], note=f'{blocks} khối 25 phút' + (f' · {a["subject"]}' if a['subject'] else '') + (' · hết ngày' if at else ''))
+                           'focus_min': p['focus_s'] // 60, 'blocks': blocks, 'pauses': a.get('pauses', []), **({'cut': cut} if at else {})})
+    if reward: _add(st, 'focus', reward, now, ref=a['id'], note=f'{blocks} khối 25 phút' + (f' · {a["subject"]}' if a['subject'] else '') + (f' · {cut}' if at else ''))
     st['active'] = None
     _signal(False, None, now)
     return {'blocks': blocks, 'reward': reward}

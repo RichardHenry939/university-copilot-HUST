@@ -75,9 +75,14 @@ public class MainActivity extends Activity {
         // (05/11) kênh thông báo (laptop đẩy qua dây / adb): --es uc_ntfy <tên kênh ntfy trong school/ntfy.json>
         String nt = getIntent().getStringExtra("uc_ntfy");
         if (nt != null && nt.matches("[A-Za-z0-9_-]{8,64}")) NotifyService.setTopic(this, nt);
+        java.util.List<String> ask = new java.util.ArrayList<>();
         if (android.os.Build.VERSION.SDK_INT >= 33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
-            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 7);
+            ask.add(android.Manifest.permission.POST_NOTIFICATIONS);
+        if (checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+            ask.add(android.Manifest.permission.ACTIVITY_RECOGNITION);   // (05/11) cảm biến bước chân
+        if (!ask.isEmpty()) requestPermissions(ask.toArray(new String[0]), 7);
         else askBattery();
+        askUsage();
         NotifyService.start(this);
 
         view = make();
@@ -142,6 +147,16 @@ public class MainActivity extends Activity {
         if (NotifyService.topic(this).isEmpty() || pm.isIgnoringBatteryOptimizations(getPackageName())) return;
         try { startActivity(new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android.net.Uri.parse("package:" + getPackageName()))); }
         catch (Exception e) { android.util.Log.w("UCAPP", "battery " + e); }
+    }
+
+    /** (05/11) "Truy cập dữ liệu sử dụng": để biết lúc iCTSV bật / tắt dịch vụ đi bộ. Chưa có -> mở đúng trang cài đặt (bạn tự bật). */
+    private void askUsage() {
+        android.app.AppOpsManager ao = getSystemService(android.app.AppOpsManager.class);
+        int m = ao.unsafeCheckOpNoThrow(android.app.AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), getPackageName());
+        if (m == android.app.AppOpsManager.MODE_ALLOWED) return;
+        if (getSharedPreferences("uc", MODE_PRIVATE).getBoolean("usage_asked", false)) return;   // chỉ tự mở 1 lần
+        getSharedPreferences("uc", MODE_PRIVATE).edit().putBoolean("usage_asked", true).apply();
+        try { startActivity(new Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS)); } catch (Exception e) { android.util.Log.w("UCAPP", "usage " + e); }
     }
 
     private void tryLaptop() {

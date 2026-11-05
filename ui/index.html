@@ -1023,7 +1023,7 @@ button.link:hover { text-decoration: underline; }
 .clk24 .c-waste { fill: #2f343b; opacity: .62; }
 .clk24 .c-cl { fill: #1f6fd1; opacity: .75; }
 .clk24 .c-redp { fill: #d62828; opacity: .75; } .clk24 .c-key .k-red { background: #d62828; opacity: .75; }
-.clk24 .c-life-p { fill: #8e44ad; opacity: .6; } .clk24 .c-key .k-life { background: #8e44ad; opacity: .6; }
+.clk24 .c-life-p { fill: #8e44ad; opacity: .85; } .clk24 .c-key .k-life { background: #8e44ad; opacity: .6; }
 .clk24 .c-fz { fill: var(--green); opacity: .85; }
 .clk24 .c-lm, .clk24 .c-key .k-lime { fill: #9acd32; background: #9acd32; }   /* (05/11) xanh nõn chuối: tập trung trong giờ học */
 .clk24 .c-key { flex-wrap: wrap; justify-content: center; }
@@ -1941,6 +1941,7 @@ function calSync(force) {
   if (calSyncing) return calSyncing;
   calSyncing = fetch('/api/timetable/all' + (force ? '?force=1' : '')).then(r => r.json()).then(j => {
     if (j && j.nap && Array.isArray(j.nap.spans)) { NAP_SPANS = j.nap.spans; NAP_WOKE = j.nap.woke || null; }
+    if (j && Array.isArray(j.prep)) PREP_SPANS = j.prep;   // (05/11) chống muộn: 15 phút trước buổi trực tiếp = tím
     if (j && Array.isArray(j.review)) { const ch = JSON.stringify(j.review) !== JSON.stringify(REVIEW); REVIEW = j.review; if (ch) { renderHomeTime(); if (dayData()) renderDay(); } }
     if (j && Array.isArray(j.events) && (!CAL || j.fetchedAt !== CAL.fetchedAt || JSON.stringify(j.events) !== JSON.stringify(CAL.events))) {
       CAL = { events: j.events, fetchedAt: j.fetchedAt };
@@ -2245,7 +2246,20 @@ const SLEEP_H = 22, WAKE_H = 6;
 // Ngủ trưa: KHÔNG cố định 13–15h. Đoạn vàng = phần 13–15h còn lại sau khi buổi học / thi chiếm chỗ (nap.py, /api/timetable/all -> nap.spans);
 // đồng hồ không có chỗ cho 2 lịch chồng nhau, và hệ thống khoá giờ ngủ khoá đúng các đoạn vàng này. Chưa đọc được thì tạm 13–15h.
 let NAP_SPANS = [['13:00', '15:00']];
+let CLASS_UNTIL = null;   // (05/11) PhoneClassLock: khoá điện thoại giờ học tới lúc này; mở sớm = MSSV nhập 2 lần
+document.addEventListener('click', async ev => {
+  const b = ev.target.closest('[data-classunlock]'); if (!b) return;
+  const box = b.closest('.c-class'), v = [...box.querySelectorAll('input')].map(i => i.value.trim());
+  b.disabled = true;
+  try {
+    const r = await (await fetch('/api/class-lock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unlock', mssv1: v[0], mssv2: v[1] }) })).json();
+    box.querySelectorAll('input').forEach(i => i.value = '');
+    if (r.ok) { CLASS_UNTIL = null; alert('Đã mở khoá giờ học. Điện thoại mở lại trong vài giây.'); } else alert(r.loi || 'Không mở được.');
+  } catch (e) { alert('UC không trả lời.'); }
+  b.disabled = false;
+});
 let NAP_WOKE = null;   // (05/11) giờ bạn xác nhận đã dậy hôm nay ('HH:MM'); NAP_SPANS từ máy chủ đã cắt tại đó
+let PREP_SPANS = [];   // (05/11) [[ISO, ISO], ...] giờ đi học (tím) trước các buổi trực tiếp hôm nay
 // (chủ 05/11) nút "Tôi đã dậy": chỉ hiện từ 14:30, đang trong phần vàng ngủ trưa, chưa xác nhận. Bấm -> hỏi Xác nhận -> kết thúc ngủ trưa
 document.addEventListener('click', async ev => {
   const b = ev.target.closest('[data-napwake]'); if (!b) return;
@@ -2273,16 +2287,19 @@ function clk24Build(el) {
   el.innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="Đồng hồ 24 giờ"><circle class="c-face" cx="100" cy="100" r="96"/>' +
     // (02/11, chủ) thứ tự lớp = luật tranh chấp: xám (không đè ai) < tím (ăn uống, chạy bộ) < xanh lá (tập trung: chỉ đè trắng, đè tím khi bất khả kháng)
     // < vàng (ngủ; ngang tím) < xanh biển (học, ngoại khoá: đè tất cả)
-    '<path class="c-waste"/><g class="c-life"></g><g class="c-focus"></g><g class="c-nap"></g><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/><g class="c-red"></g><g class="c-cls"></g><g class="c-lime"></g>' + t +
+    '<path class="c-waste"/><g class="c-focus"></g><g class="c-life"></g><g class="c-nap"></g><path class="c-sleep" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/><g class="c-red"></g><g class="c-cls"></g><g class="c-lime"></g>' + t +
     '<line class="c-hh" x1="100" y1="100" x2="100" y2="48"/><line class="c-mm" x1="100" y1="100" x2="100" y2="24"/><line class="c-ss" x1="100" y1="112" x2="100" y2="16"/><circle class="c-hub" cx="100" cy="100" r="4"/></svg>' +
     '<div class="c-side"><div class="c-dig" aria-live="off"></div><p class="c-msg"></p><p class="c-wake" hidden><button class="ghost" data-napwake>☀️ Tôi đã dậy</button> <small>Ngủ đủ 1 chu kỳ rồi thì bấm để kết thúc ngủ trưa</small></p>' +
+    '<div class="c-class" hidden><b>🔒 Khoá giờ học</b> <span class="c-class-t"></span><br><small>Mở sớm: nhập MSSV 2 lần</small><br>' +
+    '<input type="password" inputmode="numeric" autocomplete="off" placeholder="MSSV"> <input type="password" inputmode="numeric" autocomplete="off" placeholder="Nhập lại MSSV"> ' +
+    '<button class="ghost" data-classunlock>Mở khoá</button></div>' +
     '<div class="c-key"><span><i class="k-waste"></i>Đã lãng phí<em>Giờ thức (từ 06:00) đã trôi qua mà không học, không tập trung, không vận động</em></span>' +
     '<span><i class="k-cls"></i>Lịch học · ngoại khoá<em>Buổi học (cả online), hoạt động ngoại khoá đã đăng ký. Đè mọi màu khác, trừ nõn chuối</em></span>' +
-    '<span><i class="k-red"></i>Thể dục<em>Khung đi bộ UC xếp. Không tự sửa được; chỉ AI xoá được khi có lý do chính đáng (vd đau chân, ốm)</em></span>' +
-    '<span><i class="k-fz"></i>Tập trung<em>Thời gian bật chế độ tập trung ở Ví (đã trừ lúc tạm dừng). Không đè giờ ngủ, giờ học</em></span>' +
+    '<span><i class="k-red"></i>Thể dục<em>Khung đi bộ UC xếp và các lượt đi bộ bạn bấm trong iCTSV. Không tự sửa được; chỉ AI xoá được khi có lý do chính đáng (vd đau chân, ốm)</em></span>' +
+    '<span><i class="k-fz"></i>Tập trung<em>Thời gian bật chế độ tập trung ở Ví (đã trừ lúc tạm dừng). Không đè giờ ngủ, giờ học, giờ ăn / đi bộ (tím)</em></span>' +
     '<span><i class="k-lime"></i>Tập trung trong giờ học<em>Bật tập trung khi đang có buổi học / ngoại khoá: vừa trong lịch, vừa khoá máy như tập trung</em></span>' +
     '<span><i class="k-sleep"></i>Giờ ngủ 22:00–06:00 · ngủ trưa<em>Ngủ trưa trong 13:00–15:00, trừ phần có buổi học / thi. Phần vàng là phần bị khoá mạng xã hội và game. Không tính là lãng phí</em></span>' +
-    '<span><i class="k-life"></i>Sinh hoạt cá nhân<em>Ăn sáng (trước 8:00), ăn trưa 12:00–13:00, ăn tối 19:00–20:00 (Camp: 17:30–18:30), chạy bộ (app iCTSV) — không phải giờ ngủ, không tính là lãng phí</em></span>' +
+    '<span><i class="k-life"></i>Sinh hoạt cá nhân<em>Ăn sáng (trước 8:00), ăn trưa 12:00–13:00, ăn tối 19:00–20:00 (Camp: 17:30–18:30), đi học (15 phút trước buổi trực tiếp; buổi trước 8:00 thì từ 06:00) — không phải giờ ngủ, không tính là lãng phí</em></span>' +
     '<span><i class="k-left"></i>Chưa tới<em>Phần còn lại của hôm nay trước giờ ngủ</em></span></div></div>';
   el._arc = arc;
 }
@@ -2291,6 +2308,7 @@ function clk24Build(el) {
 let CLK_SP = { spans: [], live: false, at: 0 };
 function clk24Spans() {
   if (Date.now() - CLK_SP.at < 30000) return; CLK_SP.at = Date.now();
+  fetch('/api/class-lock', { cache: 'no-store' }).then(r => r.json()).then(j => { CLASS_UNTIL = j.until || null; }).catch(() => {});
   fetch('/api/wallet', { cache: 'no-store' }).then(r => r.json()).then(j => {
     const a = j.active; CLK_SP.spans = j.spans || []; CLK_SP.live = !!(a && a.type === 'focus' && !a.paused_at);
   }).catch(() => {});
@@ -2312,6 +2330,8 @@ function clk24Busy(today) {
     } catch (err) {}
   }
   const runs = ((typeof WALK !== 'undefined' && WALK && WALK.app) || {})[today];
+  // (05/11) lượt đi ghi từ điện thoại thật (bấm bắt đầu -> kết thúc trong iCTSV): thể dục = đỏ
+  for (const r of ((typeof WALK !== 'undefined' && WALK && WALK.phoneRuns) || [])) { const a = Date.parse(r.start), b = Date.parse(r.end); if (a && b > a) grn.push([a, b]); }
   for (const r of (runs && runs.runs) || []) {
     const s = Date.parse(today + 'T' + r.at + ':00+07:00'), p = String(r.dur || '').split(':').map(Number);
     if (!isNaN(s)) grn.push([s, s + ((p[0] || 0) * 3600 + (p[1] || 0) * 60 + (p[2] || 0)) * 1000]);   // chạy bộ: TÍM (sinh hoạt cá nhân, chủ đổi 02/11)
@@ -2335,11 +2355,12 @@ function clk24Tick() {
     const paths = (spans, cls) => spans.map(sp => { const d0 = deg(sp[0]), d1 = deg(sp[1]); return d1 - d0 > .05 ? '<path class="' + cls + '" d="' + el._arc(d0, d1, 94) + '"/>' : ''; }).join('');
     el.querySelector('.c-waste').setAttribute('d', d > WAKE_H * 15 + .05 ? el._arc(WAKE_H * 15, Math.min(d, SLEEP_H * 15), 94) : '');
     el.querySelector('.c-life').innerHTML = meals((dayData() || {}).mode === 'Camp').map(m => '<path class="c-life-p" d="' + el._arc(m[0] * 15, m[1] * 15, 94) + '"/>').join('') +
-      paths(busy.grn, 'c-life-p');   // chạy bộ (busy.grn = các lượt đi trong app iCTSV)
+      paths(PREP_SPANS.map(x => [Date.parse(x[0]), Date.parse(x[1])]), 'c-life-p');   // giờ đi học (chống muộn)
     el.querySelector('.c-nap').innerHTML = NAP_SPANS.map(s => '<path class="c-sleep" d="' + el._arc(hm2h(s[0]) * 15, hm2h(s[1]) * 15, 94) + '"/>').join('');
     // (v1.00.49, chủ 02/11) thể dục = ĐỎ: khung đi bộ UC xếp; không sửa được trong UC (chỉ AI xoá qua MCP với lý do chính đáng)
     const W = (() => { try { return WALK; } catch (e) { return null; } })(), sl = W && W.red && W.slot;   // WALK là let ở dưới file (tránh lỗi đọc trước khai báo)
-    el.querySelector('.c-red').innerHTML = redSpans(W).map(x => '<path class="c-redp" d="' + el._arc((x[0] - day0) / 240000, (x[1] - day0) / 240000, 94) + '"/>').join('');   // (03/11) cả khung đã bị dời
+    el.querySelector('.c-red').innerHTML = redSpans(W).map(x => '<path class="c-redp" d="' + el._arc((x[0] - day0) / 240000, (x[1] - day0) / 240000, 94) + '"/>').join('') +
+      paths(busy.grn, 'c-redp');   // (chủ 05/11) lượt đi bộ iCTSV (máy ảo + điện thoại) = thể dục = ĐỎ, không phải tím   // (03/11) cả khung đã bị dời
     el.querySelector('.c-cls').innerHTML = paths(busy.cls, 'c-cl');
     const fz = CLK_SP.spans.map((sp, i) => [sp[0], CLK_SP.live && i === CLK_SP.spans.length - 1 ? nowMs : sp[1]]);
     el.querySelector('.c-focus').innerHTML = paths(fz, 'c-fz');
@@ -2348,6 +2369,7 @@ function clk24Tick() {
       .filter(x => x[1] > x[0]), 'c-lm');
     el.querySelector('.c-dig').textContent = p2(h) + ':' + p2(m) + ':' + p2(s);
     const hmNow = p2(h) + ':' + p2(m);
+    const cc = el.querySelector('.c-class'); cc.hidden = !CLASS_UNTIL; if (CLASS_UNTIL) cc.querySelector('.c-class-t').textContent = 'tới ' + CLASS_UNTIL.slice(11, 16);
     el.querySelector('.c-wake').hidden = !(!NAP_WOKE && hmNow >= '14:30' && NAP_SPANS.some(x => x[0] <= hmNow && hmNow < x[1]));
     const msg = el.querySelector('.c-msg');
     msg.className = 'c-msg' + (night ? ' night' : '');

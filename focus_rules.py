@@ -4,12 +4,11 @@
 Xanh lá dừng trước mọi màu khác, trừ trắng (mục tiêu chính, không cảnh báo), xanh biển và tím (vẫn chạy nhưng cảnh báo liên tục):
 - xanh biển (đang có buổi học / thi) -> (chủ 05/11) KHÔNG dừng: tập trung chạy tiếp, chặn giữ nguyên; trên đồng hồ
   thành XANH NÕN CHUỐI (vừa trong lịch vừa khoá như tập trung), tính cho mặt trận như xanh lá.
-- vàng (giờ ngủ đêm 22–6h, phần ngủ trưa còn lại)
-  -> UC tự TẠM DỪNG phiên tập trung (không huỷ) + báo lý do, gỡ chặn (chủ chốt 03/11 ~19:30: UC dừng gỡ chặn,
-  bạn tự bấm dừng thì giữ chặn — xem wallet.pause).
-- đỏ (khung thể dục UC xếp) -> UC DỪNG BẮT BUỘC: gỡ chặn (máy tính + máy ảo), kể cả khi bạn đang tự dừng;
-  phiên giải trí (tiêu ví) đang chạy thì kết thúc hẳn, chỉ trừ phút đã dùng.
-- tím (ăn sáng 7:30–8:00, ăn trưa 12–13h, ăn tối 19–20h / Camp 17:30–18:30) -> nhắc mỗi 10 phút, không dừng.
+- vàng (giờ ngủ đêm 22–6h, phần ngủ trưa còn lại) -> (chủ 05/11) UC KẾT THÚC phiên (chốt phần đã tập trung).
+- đỏ (khung thể dục UC xếp, đang đi bộ iCTSV) -> UC DỪNG BẮT BUỘC: gỡ chặn (máy tính + máy ảo), kể cả khi bạn đang tự dừng;
+  hết khung thì (chủ 05/11) TỰ TIẾP TỤC. Phiên giải trí (tiêu ví) đang chạy thì kết thúc hẳn, chỉ trừ phút đã dùng.
+- tím (ăn sáng 7:30–8:00, ăn trưa 12–13h, ăn tối 19–20h / Camp 17:30–18:30) -> (chủ 05/11) UC tự
+  tạm dừng, hết giờ tím thì tự tiếp tục (trước đây: chỉ nhắc mỗi 10 phút).
 Gọi mỗi phút trong copilot_app.alert_loop.
 Đi tắt: giờ ăn chép lại lần thứ 3 (ui/index.html, ui/widget.html, đây) — sửa lịch ăn thì sửa cả ba; chưa xét ngoại khoá
 (chỉ có ở phía giao diện) như xanh biển.
@@ -49,12 +48,22 @@ def color_now(post, now):
     free, _ = nap.spans(ev, today)
     for a, b in free:
         if a <= hm < b: return 'yellow', f'giờ ngủ trưa ({a}–{b})'
+    try:   # (chủ 05/11) đang trong lượt đi bộ iCTSV (điện thoại báo về) = thể dục = ĐỎ
+        import walk_phone
+        act = walk_phone.load().get('active')
+        if act and act.get('start'): return 'red', f"đang đi bộ (iCTSV, từ {act['start'][11:16]})"
+    except Exception as e: print('focus_rules walk_phone:', e)
     try:
         w = walk.view(now)
         sl = w.get('slot') or {}
         if w.get('red') and sl.get('start') and sl['start'][11:16] <= hm < sl['end'][11:16]:
             return 'red', f"giờ thể dục ({sl['start'][11:16]}–{sl['end'][11:16]})"
     except Exception as e: print('focus_rules walk:', e)
+    try:   # (chủ 05/11) chống muộn: 15 phút trước buổi trực tiếp (buổi đầu trước 8h: từ 06:00) = tím, đi học
+        import late
+        for a, b in late.prep_spans(ev, today):
+            if a[11:16] <= hm < b[11:16]: return 'purple', f'giờ đi học ({a[11:16]}–{b[11:16]})'
+    except Exception as e: print('focus_rules late:', e)
     meals = dict(MEALS)
     if camp_today(post, today): meals['ăn tối'] = DINNER_CAMP
     for k, (a, b) in meals.items():
@@ -72,41 +81,42 @@ def walk_red(now):
 
 
 def tick(post, notify, now=None):
+    """(chủ 05/11) Luật mới:
+    - TÍM (giờ ăn, đang đi bộ iCTSV) và ĐỎ (khung thể dục): UC tự tạm dừng (gỡ chặn) và hết màu đó thì TỰ TIẾP TỤC.
+    - VÀNG (giờ ngủ đêm / ngủ trưa còn lại): UC KẾT THÚC luôn phiên (chốt phút / khối đã có, không để phiên cũ treo).
+    - Xanh biển: chạy tiếp (xanh nõn chuối). Bạn tự bấm dừng thì UC không tự tiếp tục (trừ đỏ / vàng vẫn áp như trên)."""
     import wallet
     now = (now or dt.datetime.now(TZ)).astimezone(TZ)
     with wallet.lock:
         st = wallet.load(); a = st.get('active') or {}
         if a.get('type') not in ('focus', 'fun'): return None
         if wallet.by_user(a): wallet.hold_signal(st, now)   # bạn tự bấm dừng: gia hạn chặn mỗi phút
-        uc_paused = bool(a.get('paused_at')) and not wallet.by_user(a)
-    if uc_paused:   # UC đã dừng: giữ tín hiệu "không chặn" (gỡ cả tín hiệu cũ còn hạn), chờ bạn bấm Tiếp tục
-        wallet._signal(False, None, now); return None
     color, why = color_now(post, now)
-    if color == 'red':   # (chủ 03/11) khung thể dục: UC dừng bắt buộc, gỡ chặn (kể cả khi bạn đang tự dừng); giải trí dừng hẳn
+    if color == 'yellow':   # giờ ngủ: chốt phiên tập trung (giải trí không đụng tới — giờ ngủ đã có khoá riêng)
         with wallet.lock:
             st = wallet.load(); a = st.get('active') or {}
-            if a.get('type') == 'fun':
+            if a.get('type') != 'focus': return None
+            r = wallet.end_focus(st, now, at=now, cut='giờ ngủ'); wallet.save(st)
+        notify('UC · đã kết thúc tập trung', f"Đang là {why}. Phiên tập trung kết thúc ({r['blocks']} khối, +{r['reward']} phút ví). Đi ngủ thôi.")
+        return ('end', why)
+    if color in ('red', 'purple'):
+        with wallet.lock:
+            st = wallet.load(); a = st.get('active') or {}
+            if color == 'red' and a.get('type') == 'fun':   # (chủ 03/11) khung thể dục: giải trí dừng hẳn
                 spent = wallet.end_fun(st, now)['spent']; wallet.save(st)
                 notify('UC · đã dừng giải trí', f"Đang là {why}. Phiên giải trí kết thúc, ví chỉ trừ {spent} phút đã dùng. Đi tập thôi.")
                 return ('fun_end', why)
-            if a.get('type') != 'focus' or (a.get('paused_at') and not wallet.by_user(a)): return None
-            wallet.pause(st, now, forced=why, by='uc'); wallet.save(st)
-        notify('UC · đã tạm dừng tập trung', f"Đang là {why}. Phiên tập trung dừng bắt buộc, đã gỡ hết chặn. Tập xong bấm Tiếp tục để chặn lại.")
+            if a.get('type') != 'focus' or a.get('auto') == color: return None   # không có phiên / đã tự dừng vì đúng màu này
+            if a.get('paused_at') and wallet.by_user(a) and color == 'purple': return None   # bạn đang tự dừng: giờ ăn không đụng tới
+            wallet.pause(st, now, forced=why, by='uc'); st['active']['auto'] = color; wallet.save(st)
+        notify('UC · đã tạm dừng tập trung', f"Đang là {why}. Phiên tập trung tạm dừng, đã gỡ chặn. Hết giờ này UC tự tiếp tục.")
         return ('pause', why)
-    if a.get('type') != 'focus' or a.get('paused_at'): return None   # đang dừng tay: im lặng, chặn đã gỡ
-    if color == 'yellow':   # (chủ 05/11) xanh biển không dừng nữa (-> xanh nõn chuối)
-        with wallet.lock:
-            st = wallet.load(); a = st.get('active') or {}
-            if a.get('type') != 'focus' or a.get('paused_at'): return None
-            wallet.pause(st, now, by='uc'); wallet.save(st)
-        notify('UC · đã tạm dừng tập trung', f"Đang là {why}. Phiên tập trung tự tạm dừng (không huỷ, đã gỡ chặn). Hết giờ thì bấm Tiếp tục để chặn lại.")
-        return ('pause', why)
-    if color == 'purple':
-        try: s = json.loads(STATE.read_text(encoding='utf-8'))
-        except Exception: s = {}
-        last = s.get('purple_at')
-        if last and (now - dt.datetime.fromisoformat(last)).total_seconds() < 600: return None
-        STATE.parent.mkdir(parents=True, exist_ok=True); STATE.write_text(json.dumps({'purple_at': now.isoformat(timespec='seconds')}), encoding='utf-8')
-        notify('UC · đang là ' + why, 'Bạn vẫn đang bật tập trung. Đây là giờ sinh hoạt cá nhân: nên nghỉ để ăn / vận động.')
-        return ('warn', why)
-    return None
+    with wallet.lock:   # hết tím / đỏ: tự tiếp tục phiên UC đã tự dừng
+        st = wallet.load(); a = st.get('active') or {}
+        if a.get('type') == 'focus' and a.get('paused_at') and a.get('auto') in ('red', 'purple') and not wallet.by_user(a):
+            was = a['auto']; wallet.resume(st, now); wallet.save(st)
+        else:
+            if a.get('type') == 'focus' and a.get('paused_at') and not wallet.by_user(a): wallet._signal(False, None, now)   # UC dừng kiểu cũ: giữ gỡ chặn
+            return None
+    notify('UC · tập trung tiếp tục', ('Hết giờ ăn / đi bộ' if was == 'purple' else 'Hết khung thể dục') + '. Phiên tập trung tự chạy lại, đã chặn lại.')
+    return ('resume', was)

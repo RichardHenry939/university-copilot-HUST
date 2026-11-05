@@ -48,13 +48,33 @@ def test_gio_hoc_tap_trung_chay_tiep(env):   # (chủ 05/11) xanh biển + tập
     assert not W.load()['active'].get('paused_at')
 
 
-def test_gio_ngu_la_uc_dung_go_chan(env):
+def test_gio_ngu_ket_thuc_phien(env):   # (chủ 05/11) vàng: kết thúc luôn phiên
     color, notify, _ = env
     st = W.empty(); W.start_focus(st, 50, '', T0); W.save(st)
     color['v'] = ('yellow', 'giờ ngủ trưa (13:00–15:00)')
+    assert F.tick(None, notify, T0 + m(30))[0] == 'end'
+    st = W.load()
+    assert st['active'] is None and st['sessions'][-1]['cut'] == 'giờ ngủ' and W.balance(st) == 5   # 1 khối 25 phút
+
+
+def test_gio_an_tu_dung_roi_tu_tiep(env):   # (chủ 05/11) tím: tự dừng, hết tím tự tiếp tục
+    color, notify, sent = env
+    st = W.empty(); W.start_focus(st, 50, '', T0); W.save(st)
+    color['v'] = ('purple', 'giờ ăn tối (19:00–20:00)')
     assert F.tick(None, notify, T0 + m(3))[0] == 'pause'
-    a = W.load()['active']
-    assert a['paused_at'] and not W.by_user(a)
+    assert F.tick(None, notify, T0 + m(4)) is None   # không dừng / báo lại
+    a = W.load()['active']; assert a['paused_at'] and a['auto'] == 'purple'
+    color['v'] = ('white', '')
+    assert F.tick(None, notify, T0 + m(10)) == ('resume', 'purple')
+    a = W.load()['active']; assert not a['paused_at'] and 'auto' not in a and len(sent) == 2
+
+
+def test_the_duc_het_khung_tu_tiep(env):
+    color, notify, _ = env
+    st = W.empty(); W.start_focus(st, 50, '', T0); W.save(st)
+    color['v'] = ('red', 'giờ thể dục'); F.tick(None, notify, T0 + m(2))
+    color['v'] = ('white', '')
+    assert F.tick(None, notify, T0 + m(25)) == ('resume', 'red')
 
 
 def test_gio_an_khi_ban_tu_dung_van_giu_nguyen(env):

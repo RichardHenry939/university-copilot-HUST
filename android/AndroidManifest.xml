@@ -9,6 +9,14 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- (05/11) đếm bước theo lượt iCTSV: cảm biến bước chân + biết lúc iCTSV bật / tắt dịch vụ đi bộ -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!-- (05/11) chặng đường lượt đi: định vị chỉ trong lượt iCTSV -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" xmlns:tools="http://schemas.android.com/tools" tools:ignore="ProtectedPermissions" />
     <application android:label="University Copilot" android:icon="@mipmap/ic_launcher" android:allowBackup="false"
         android:theme="@android:style/Theme.DeviceDefault.DayNight" android:supportsRtl="true" android:usesCleartextTraffic="true">
         <activity android:name=".MainActivity" android:exported="true"
@@ -25,7 +33,7 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/uc_widget_info" />
         </receiver>
-        <service android:name=".NotifyService" android:exported="false" android:foregroundServiceType="specialUse">
+        <service android:name=".NotifyService" android:exported="false" android:foregroundServiceType="specialUse|location">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Giữ kết nối nhận thông báo nhắc học (thay app ntfy)" />
         </service>
         <receiver android:name=".NotifyService$Act" android:exported="false" />

@@ -21,6 +21,18 @@ def isolate(tmp_path, monkeypatch):
     monkeypatch.setattr(pl, 'LOG', tmp_path / 'pl.log')
 
 
+
+@pytest.fixture(autouse=True)
+def _khong_co_khoa_tam(tmp_path, monkeypatch):   # (05/11) cờ khoá đêm tạm / khoá giờ học thật trên máy không được lọt vào test
+    monkeypatch.setattr(pl, 'FORCE', tmp_path / 'force.json'); monkeypatch.setattr(pl, 'CLASS', tmp_path / 'class.json')
+
+
+def test_khoa_gio_hoc_cao_nhat_ban_ngay(tmp_path):
+    pl.CLASS.write_text('{"until": "2026-11-05T17:30:00+07:00"}', encoding='utf-8')
+    t = lambda h, m: dt.datetime(2026, 11, 5, h, m, tzinfo=pl.TZ)
+    assert pl.mode(t(16, 0), focus=True, nap=True) == 'class'
+    assert pl.mode(t(17, 30), focus=False, nap=False) == 'default'
+
 def test_mode_night_core_always():
     assert pl.mode(at(22, 0), focus=False, nap=False) == 'night'
     assert pl.mode(at(5, 59), focus=False, nap=False) == 'night'

@@ -82,11 +82,44 @@ def _nap_on(now):
     except Exception: return False
 
 
+FORCE = HERE / 'school' / 'phone_force_night.json'
+
+
+CLASS = HERE / 'school' / 'phone_class_lock.json'
+# (chủ 05/11) PhoneClassLock: giờ học cấm điện thoại (IT2000, giảng viên rất nghiêm) -> khoá MỌI app có biểu tượng, chỉ chừa:
+CLASS_ALLOW = {'vn.uc.app', 'com.tailscale.ipn', 'com.samsung.android.dialer', 'com.google.android.dialer',
+               'com.sec.android.app.launcher', 'com.sec.android.app.clockpackage'}   # UC (để mở khoá), Tailscale (đường adb), gọi điện, màn hình chính, báo thức
+# mở trước khi hết giờ: camera / app trường / trình duyệt (để điểm danh ngay)
+CLASS_FIRST = ('com.sec.android.app.camera', 'com.bk.ctsv', 'uni.hust.ehust', 'com.android.chrome', 'com.zing.zalo')
+
+
+def class_until(now=None):
+    """Khoá giờ học đang bật tới lúc nào (datetime) hoặc None. Mở sớm chỉ bằng MSSV nhập 2 lần (copilot_app /api/class-lock)."""
+    try:
+        u = dt.datetime.fromisoformat(json.loads(CLASS.read_text(encoding='utf-8'))['until'])
+        return u if (now or dt.datetime.now(TZ)) < u else None
+    except Exception: return None
+
+
+def launchable(serial):
+    rc, out = adb(serial, 'shell', 'cmd', 'package', 'query-activities', '--brief', '-a', 'android.intent.action.MAIN',
+                  '-c', 'android.intent.category.LAUNCHER', timeout=40)
+    return {l.strip().split('/')[0] for l in out.splitlines() if '/' in l} if rc == 0 else set()
+
+
+def _forced_night(now):
+    """school/phone_force_night.json {"until": ISO} -> khoá đêm cho điện thoại tới giờ đó (tự hết hạn)."""
+    try: return now < dt.datetime.fromisoformat(json.loads(FORCE.read_text(encoding='utf-8'))['until'])
+    except Exception: return False
+
+
 def mode(now=None, focus=None, nap=None):
     """-> 'night' | 'nap' | 'focus' | 'default'."""
     now = now or dt.datetime.now(TZ)
     hm = now.strftime('%H:%M')
     if hm >= '22:00' or hm < '06:00': return 'night'
+    if class_until(now): return 'class'   # (05/11) khoá giờ học: cao nhất ban ngày
+    if _forced_night(now): return 'night'   # (chủ 05/11) khoá đêm tạm cho điện thoại (giờ học cấm dùng điện thoại)
     if (_nap_on(now) if nap is None else nap): return 'nap'
     if (_focus_on() if focus is None else focus): return 'focus'
     return 'default'
@@ -154,7 +187,7 @@ def unlock(serial, pkg, how):
 # (chủ 04/11) PhoneLock: 4 khoá của điện thoại, mỗi khoá NEO vào khoá tương ứng của máy tính (cùng nguồn tín hiệu, không tự đặt giờ):
 #   PhoneDefaultLock luôn bật · PhoneFocusLock theo khoá tập trung (ví) · PhoneNapLock theo NapLock (school/nap.json)
 #   · PhoneNightLock theo NightLock (22:00–06:00). Khoá sau bao trùm khoá trước, nên chặn = khoá cao nhất đang bật.
-LOCK_NAME = {'default': 'PhoneDefaultLock', 'focus': 'PhoneFocusLock', 'nap': 'PhoneNapLock', 'night': 'PhoneNightLock'}
+LOCK_NAME = {'class': 'PhoneClassLock', 'default': 'PhoneDefaultLock', 'focus': 'PhoneFocusLock', 'nap': 'PhoneNapLock', 'night': 'PhoneNightLock'}
 def set_exit(serial, on):
     """(04/11, chủ duyệt) Trong giờ khoá điện thoại đi qua laptop (Tailscale exit node) -> ăn chặn tên miền của laptop.
     Bật / tắt exit node trên app Tailscale của điện thoại (lệnh USE_EXIT_NODE, app nhận từ adb — đã thử 04/11).
@@ -190,6 +223,24 @@ def tick(now=None, m='auto'):
         if inst is None: continue
         mine = st['devices'].setdefault(s, {'locked': {}})['locked']
         want = wanted(m, inst, games, social)
+        if m == 'class':   # (05/11) khoá theo lô: 1 lệnh adb cho cả trăm app (từng app một mất vài phút)
+            want = (want | launchable(s)) - CLASS_ALLOW - NEVER
+            new = sorted(want - set(mine))
+            if new:
+                for p in new: adb(s, 'shell', 'am', 'force-stop', p, timeout=10) if p in ('com.android.chrome',) else None
+                rc, out = adb(s, 'shell', 'cmd', 'package', 'suspend', '--user', '0', *new, timeout=120)
+                # dòng kết quả: "Package <tên> new suspended state: true"
+                ok = {l.split()[1] for l in out.splitlines() if l.lower().startswith('package ') and 'new suspended state: true' in l.lower()}
+                for p in new:
+                    if p in ok: mine[p] = 'suspend'; done['locked'].append(f'{s}:{p}')
+                    else: done['failed'].append(f'{s}:{p}')
+            continue
+        lot = sorted([p for p in set(mine) - want if mine[p] == 'suspend' and p in inst], key=lambda p: (p not in CLASS_FIRST, p))
+        if len(lot) > 5:   # (05/11) mở theo lô (hết khoá giờ học): ưu tiên camera / app trường trước, rồi phần còn lại 1 lệnh
+            first = [p for p in lot if p in CLASS_FIRST]
+            for part in (first, [p for p in lot if p not in CLASS_FIRST]):
+                if part and adb(s, 'shell', 'cmd', 'package', 'unsuspend', '--user', '0', *part, timeout=120)[0] == 0:
+                    for p in part: mine.pop(p); done['unlocked'].append(f'{s}:{p}')
         for p in sorted(want - set(mine)):
             how = lock(s, p)
             if how: mine[p] = how; done['locked'].append(f'{s}:{p}')
@@ -224,7 +275,9 @@ def loop(every=60):
             if r.get('locked') or r.get('unlocked') or r.get('failed') or key != last:
                 log(json.dumps({**r, 'devices': list(key[2])}, ensure_ascii=False)); last = key
         except Exception as e: log(f'loi: {e}')
-        time.sleep(every)
+        u = class_until()
+        left = (u - dt.datetime.now(TZ)).total_seconds() if u else every
+        time.sleep(max(1, min(every, left + 1)))   # (05/11) hết khoá giờ học thì mở NGAY, không chờ tới phút sau
 
 
 if __name__ == '__main__':

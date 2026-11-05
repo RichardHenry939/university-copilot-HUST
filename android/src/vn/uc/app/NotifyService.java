@@ -38,7 +38,7 @@ public class NotifyService extends Service {
     static void setTopic(Context c, String t) { p(c).edit().putString("ntfy", t).apply(); }
 
     static void start(Context c) {
-        if (topic(c).isEmpty()) return;
+        if (topic(c).isEmpty() && Store.lan(c).isEmpty()) return;   // (05/11) chạy cả khi chỉ có đường về laptop (đếm bước iCTSV)
         try { c.startForegroundService(new Intent(c, NotifyService.class)); } catch (Exception e) { android.util.Log.w("UCNTF", "start " + e); }
     }
 
@@ -55,9 +55,17 @@ public class NotifyService extends Service {
         Notification n = new Notification.Builder(this, CH_SVC).setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("University Copilot đang nghe thông báo").setOngoing(true)
                 .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), PendingIntent.FLAG_IMMUTABLE)).build();
-        if (Build.VERSION.SDK_INT >= 34) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        // (05/11) thêm loại "định vị" khi đã có quyền: ghi chặng đường lượt đi iCTSV lúc màn hình tắt
+        boolean loc = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                && checkSelfPermission(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        if (Build.VERSION.SDK_INT >= 34) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE | (loc ? ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION : 0));
         else startForeground(1, n);
-        if (!run) { run = true; new Thread(this::loop, "uc-ntfy").start(); }
+        if (!run) {
+            run = true; new Thread(this::loop, "uc-ntfy").start();
+            // (05/11) đếm bước theo lượt iCTSV (WalkWatch): luồng riêng, 20 s một lần
+            WalkWatch w = new WalkWatch(this); w.start();
+            new Thread(() -> { while (run) { w.poll(); try { Thread.sleep(20000); } catch (InterruptedException e) { return; } } }, "uc-walk").start();
+        }
         return START_STICKY;
     }
 
@@ -68,7 +76,7 @@ public class NotifyService extends Service {
         long wait = 5000;
         while (run) {
             String t = topic(this);
-            if (t.isEmpty()) { stopSelf(); return; }
+            if (t.isEmpty()) { try { Thread.sleep(60000); } catch (InterruptedException e) { return; } continue; }   // chưa có kênh: chỉ đếm bước
             String since = p(this).getString("ntfy_last", "");
             HttpURLConnection h = null;
             try {

@@ -266,6 +266,7 @@ def loop(every=30, probe_every=3600):
     last, bad = time.time() - probe_every + 600, 0   # lượt kiểm đầu: 10 phút sau khi UC chạy, không chạy ngay lúc khởi động
     last_read, pend = 0.0, None   # last_read: lần đọc app thật gần nhất; pend: khung đỏ chưa được đọc sau khi hết
     emu, day, waited = EmuWatch(), time.strftime('%Y-%m-%d'), False   # waited: đã ghi log "đến lượt nhưng bạn đang dùng máy ảo"
+    lock_nag = lock_seen = 0.0   # lần nhắc / lần nhìn thử "khoá tự đăng nhập đang bật" gần nhất
     plog('vòng canh iCTSV bắt đầu')
     while True:
         try:
@@ -279,6 +280,19 @@ def loop(every=30, probe_every=3600):
             due = (time.time() - last >= probe_every or after_slot_due(pend, last_read, time.time())
                    or red_fast_due(k, last_read, time.time())) and 6 <= time.localtime().tm_hour < 22
             if due and up and not waited and user_busy(): plog('đến lượt đọc nhưng bạn đang dùng máy ảo -> chờ'); waited = True
+            # (chủ 05/11) khoá tự đăng nhập bật là UC thôi đọc số bước -> trước đây chỉ báo 1 lần rồi im 30 giờ. Nhắc lại mỗi 3 giờ (06–22h).
+            if LOCK.exists() and 6 <= time.localtime().tm_hour < 22 and time.time() - lock_nag >= 3 * 3600:
+                lock_nag = time.time(); plog('khoá tự đăng nhập đang bật -> không đọc số bước')
+                report(False, 'UC KHÔNG đọc được số bước iCTSV: tự đăng nhập đang khoá từ ' + LOCK.read_text(encoding='utf-8').strip()
+                       + '. Đăng nhập tay trong máy ảo hoặc kiểm mật khẩu (python ictsv_cred.py --verify).')
+            # (chủ 05/11) bạn đã đăng nhập tay trong máy ảo -> gỡ khoá tự đăng nhập (chỉ mở app nhìn, không gõ gì)
+            if LOCK.exists() and up and 6 <= time.localtime().tm_hour < 22 and time.time() - lock_seen >= 600 and not user_busy():
+                lock_seen = time.time()
+                with UI:
+                    adb('shell', 'monkey', '-p', PKG, '-c', 'android.intent.category.LAUNCHER', '1'); time.sleep(8)
+                    if logged_in(nodes()):
+                        LOCK.unlink(missing_ok=True); plog('thấy iCTSV đã đăng nhập -> gỡ khoá tự đăng nhập, đọc lại ngay')
+                        last = time.time() - probe_every   # đọc ngay ở lượt sau
             if not LOCK.exists() and not user_busy() and up:
               with UI:
                 if foreground() and len(login_form(nodes())) >= 2: plog('thấy màn đăng nhập -> tự đăng nhập lại'); recover('login')

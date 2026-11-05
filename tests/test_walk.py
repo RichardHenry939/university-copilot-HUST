@@ -73,5 +73,10 @@ def test_het_khung_ma_chua_doc_app_sau_khung_thi_giu():
     assert not K.need_new_slot(SL, _tz(17, 45), None)
 
 
+def test_doc_app_hong_qua_90_phut_van_doi_khung():   # (chủ 05/11) khung 6h kẹt cả ngày vì không đọc được app
+    assert K.need_new_slot(SL, _tz(18, 50), '2026-11-02T21:32:43')
+    assert K.need_new_slot(SL, _tz(18, 50), None)
+
+
 def test_het_khung_da_doc_app_sau_khung_thi_xep_lai():
     assert K.need_new_slot(SL, _tz(17, 45), '2026-11-03T17:23:00')
