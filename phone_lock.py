@@ -156,6 +156,25 @@ def installed(serial):
     return {l[8:].strip() for l in out.splitlines() if l.startswith('package:')} if rc == 0 else None
 
 
+_recon = [0.0]
+
+
+def reconnect(now=None, every=600):
+    """(chủ 06/11) Điện thoại thật rớt adb (mất mạng, hoặc chủ TỰ tắt gỡ lỗi khi dùng app ngân hàng — app NH ngừng phục vụ nếu thấy
+    gỡ lỗi bật) -> UC tự thử nối lại mỗi 10 phút. CHỈ gọi 'adb connect' tới địa chỉ Tailscale của điện thoại (phone_apps.json 'adb_addr');
+    KHÔNG BAO GIỜ đụng công tắc gỡ lỗi. Gỡ lỗi đang tắt -> connect fail vô hại; chủ bật lại -> trong 10 phút tự nối. Thiếu 'adb_addr' -> bỏ qua."""
+    addr = _apps_cfg().get('adb_addr') or ''
+    if not addr or addr in devices(): return None   # chưa cấu hình, hoặc đang nối sẵn
+    t = (now or dt.datetime.now(TZ)).timestamp()
+    if t - _recon[0] < every: return None            # mới thử dưới 10 phút
+    _recon[0] = t
+    adb(None, 'disconnect', addr, timeout=10)         # dọn mục offline cũ
+    rc, out = adb(None, 'connect', addr, timeout=15)
+    ok = 'connected' in out.lower()
+    log(f'adb reconnect {addr}: ' + ('ok' if ok else 'chưa được (gỡ lỗi tắt / mất mạng)'))
+    return ok
+
+
 def _load():
     try: st = json.loads(STATE.read_text(encoding='utf-8'))
     except Exception: st = {}
@@ -212,7 +231,7 @@ def tick(now=None, m='auto'):
     phones = [s for s in ds if approved(s) and not s.startswith('emulator-')]
     # (chủ 04/11 ~12:50 "áp dụng khi có lock") Focus/Nap/Night: điện thoại đi qua laptop (exit node) -> trình duyệt vẫn dùng được,
     # chỉ tên miền máy tính đang chặn là không vào được; ngoài giờ khoá thì đi thẳng.
-    ex = st.setdefault('exit', {}); want_exit = m in ('night', 'nap', 'focus')
+    ex = st.setdefault('exit', {}); want_exit = False   # (chủ 06/11) exit node làm mất split DNS: bật lên thì web YouTube / Facebook MỞ (đo thật 06/11). Luôn tắt, chặn web chỉ dựa vào PhoneDNS
     t = (now or dt.datetime.now(TZ)).timestamp()
     if phones and (ex.get('on') != want_exit or t - ex.get('at', 0) > 600):
         if set_exit(phones[0], want_exit): ex.update(on=want_exit, at=t); done['exit_node'] = want_exit
@@ -270,6 +289,7 @@ def loop(every=60):
     last = None
     while True:
         try:
+            reconnect()   # (chủ 06/11) điện thoại rớt adb -> thử nối lại mỗi 10 phút (không đụng gỡ lỗi)
             r = tick()
             key = (r.get('device', True), r.get('mode'), tuple(devices()))
             if r.get('locked') or r.get('unlocked') or r.get('failed') or key != last:
