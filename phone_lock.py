@@ -170,9 +170,45 @@ def reconnect(now=None, every=600):
     _recon[0] = t
     adb(None, 'disconnect', addr, timeout=10)         # dọn mục offline cũ
     rc, out = adb(None, 'connect', addr, timeout=15)
-    ok = 'connected' in out.lower()
-    log(f'adb reconnect {addr}: ' + ('ok' if ok else 'chưa được (gỡ lỗi tắt / mất mạng)'))
+    ok = 'connected' in out.lower() and addr in devices()
+    if not ok: ok = _restore_5555(addr)
+    log(f'adb reconnect {addr}: ' + ('ok' if ok else 'chưa được (gỡ lỗi không dây tắt / khác Wi-Fi / mất mạng)'))
     return ok
+
+
+def _restore_5555(addr):
+    """(chủ 06/11) Gỡ lỗi không dây đổi cổng ngẫu nhiên mỗi lần bật lại / đổi Wi-Fi / khởi động lại máy (và bật gỡ lỗi USB làm adb
+    khởi động lại) -> cổng 5555 mất. Laptop cùng Wi-Fi thì dò cổng mới qua mDNS, nối vào, đặt lại cổng 5555, rồi nối lại địa chỉ Tailscale.
+    Khác Wi-Fi thì mDNS không thấy -> chịu, chờ chủ bật lại. Chỉ dùng máy đã ghép đôi sẵn; không ghép đôi mới, không đụng công tắc nào."""
+    rc, out = adb(None, 'mdns', 'services', timeout=15)
+    eps = [l.split()[-1] for l in out.splitlines() if '_adb-tls-connect' in l]
+    for ep in eps:
+        adb(None, 'connect', ep, timeout=15)
+        if ep not in devices(): continue
+        adb(ep, 'tcpip', '5555', timeout=15)
+        time.sleep(4)
+        adb(None, 'connect', addr, timeout=15)
+        if addr in devices():
+            log(f'adb: dò cổng gỡ lỗi không dây qua mDNS, đặt lại 5555 -> ok'); return True
+    return False
+
+
+_usb_nag = [0.0]
+
+
+def usb_guard(serial, now=None, every=1800):
+    """(chủ 06/11, thử thật) Ngân hàng CHỈ chặn khi Gỡ lỗi USB bật (Dev options + Gỡ lỗi không dây thì không). Cấu hình chuẩn:
+    Gỡ lỗi USB TẮT. Thấy nó bật -> báo chủ (tối đa 30 phút/lần). UC KHÔNG tự tắt / bật công tắc này."""
+    rc, out = adb(serial, 'shell', 'settings', 'get', 'global', 'adb_enabled', timeout=10)
+    if rc != 0 or out.strip() != '1': return False
+    t = (now or dt.datetime.now(TZ)).timestamp()
+    if t - _usb_nag[0] >= every:
+        _usb_nag[0] = t; log('canh bao: Go loi USB dang BAT -> ngan hang se chan')
+        try:
+            import alerts
+            alerts.notify('UC · Gỡ lỗi USB đang bật', 'App ngân hàng sẽ ngừng phục vụ. Tắt "Gỡ lỗi USB", giữ "Gỡ lỗi không dây" để UC vẫn điều khiển được.', level='red')
+        except Exception as e: log(f'usb_guard notify loi: {e}')
+    return True
 
 
 def _load():
@@ -238,6 +274,7 @@ def tick(now=None, m='auto'):
     done['khoa'] = LOCK_NAME.get(m, m)
     for s in ds:
         if not approved(s): continue
+        if not s.startswith('emulator-'): usb_guard(s)   # (06/11) gỡ lỗi USB bật = ngân hàng chặn -> báo chủ
         inst = installed(s)
         if inst is None: continue
         mine = st['devices'].setdefault(s, {'locked': {}})['locked']

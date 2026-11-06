@@ -121,3 +121,31 @@ def test_doc_trang_thai_dang_cu():
 def test_tick_no_device(monkeypatch):
     monkeypatch.setattr(pl, 'adb', lambda serial, *a, timeout=20: (0, 'List of devices attached\n'))
     assert pl.tick(at(23)) == {'device': False}
+
+def test_usb_guard_chi_bao_khi_go_loi_usb_bat(monkeypatch):   # (chủ 06/11) ngân hàng chỉ chặn gỡ lỗi USB
+    sent, logs = [], []
+    monkeypatch.setattr(pl, 'log', lambda m, now=None: logs.append(m))
+    import alerts
+    monkeypatch.setattr(alerts, 'notify', lambda *a, **k: sent.append(a[0]))
+    pl._usb_nag[0] = 0.0
+    monkeypatch.setattr(pl, 'adb', lambda *a, **k: (0, '0\n'))
+    assert pl.usb_guard('x') is False and not sent
+    monkeypatch.setattr(pl, 'adb', lambda *a, **k: (0, '1\n'))
+    assert pl.usb_guard('x') is True and len(sent) == 1
+    assert pl.usb_guard('x') is True and len(sent) == 1   # trong 30 phút không báo lại
+
+
+def test_restore_5555_do_cong_qua_mdns(monkeypatch):
+    calls, state = [], {'devs': []}
+    out = 'List of discovered mdns services\nadb-XYZ\t_adb-tls-connect._tcp\t192.168.1.9:40123\n'
+    def fake(serial, *a, **k):
+        calls.append((serial, a))
+        if a[:2] == ('mdns', 'services'): return 0, out
+        if a[0] == 'connect': state['devs'].append(a[1]); return 0, 'connected'
+        return 0, ''
+    monkeypatch.setattr(pl, 'adb', fake)
+    monkeypatch.setattr(pl, 'devices', lambda: list(state['devs']))
+    monkeypatch.setattr(pl, 'log', lambda m, now=None: None)
+    monkeypatch.setattr(pl.time, 'sleep', lambda s: None)
+    assert pl._restore_5555('100.1.2.3:5555') is True
+    assert ('192.168.1.9:40123', ('tcpip', '5555')) in calls
