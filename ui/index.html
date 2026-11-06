@@ -869,7 +869,8 @@ button.link:hover { text-decoration: underline; }
 .wgo { align-self: flex-start; padding: 10px 18px; font-size: 14.5px; }
 .wclock { font-family: var(--display); font-weight: 800; font-size: 64px; line-height: 1; letter-spacing: -.03em; color: var(--blue); font-variant-numeric: tabular-nums; }
 .wclock.brk { color: var(--green); }
-.wradio { width: 100%; max-width: 420px; aspect-ratio: 16 / 9; border: 0; border-radius: var(--r-m); margin-top: 4px; }
+#w-yt { position: fixed; right: 0; bottom: 0; width: 200px; height: 200px; opacity: 0; pointer-events: none; z-index: -1; overflow: hidden; }   /* (v1.00.65) trình phát ẩn: giữ 200px vì YouTube có thể không phát ở khung nhỏ hơn */
+#w-yt iframe { width: 100%; height: 100%; border: 0; }
 .wlog { margin: 0 0 22px; font-size: 13.5px; }
 .wlog summary { cursor: pointer; font-weight: 600; color: var(--ink-2); }
 .wlog ul { list-style: none; margin: 8px 0 0; padding: 0; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-m); }
@@ -1940,7 +1941,7 @@ function reviewLi(r) {
 function calSync(force) {
   if (calSyncing) return calSyncing;
   calSyncing = fetch('/api/timetable/all' + (force ? '?force=1' : '')).then(r => r.json()).then(j => {
-    if (j && j.nap && Array.isArray(j.nap.spans)) { NAP_SPANS = j.nap.spans; NAP_WOKE = j.nap.woke || null; }
+    if (j && j.nap && Array.isArray(j.nap.spans)) { NAP_SPANS = j.nap.spans; NAP_WOKE = j.nap.woke || null; NAP_WAKE_MIN = j.nap.wake_min || NAP_WAKE_MIN; }
     if (j && Array.isArray(j.prep)) PREP_SPANS = j.prep;   // (05/11) chống muộn: 15 phút trước buổi trực tiếp = tím
     if (j && Array.isArray(j.review)) { const ch = JSON.stringify(j.review) !== JSON.stringify(REVIEW); REVIEW = j.review; if (ch) { renderHomeTime(); if (dayData()) renderDay(); } }
     if (j && Array.isArray(j.events) && (!CAL || j.fetchedAt !== CAL.fetchedAt || JSON.stringify(j.events) !== JSON.stringify(CAL.events))) {
@@ -2243,7 +2244,7 @@ const SLEEP_H = 22, WAKE_H = 6;
 // (02/11, chủ) lịch sinh hoạt: ngủ trưa = vàng (như giờ ngủ); ăn uống = tím "sinh hoạt cá nhân, không phải giờ ngủ" (không tính là lãng phí).
 // Ăn tối 19–20h ở nhà; bật ⛺ Camp (học ở thư viện) thì 17:30–18:30. Ăn sáng: chủ cho hạn chót 8:00 -> tạm tính 7:30–8:00.
 // Chép y hệt ở ui/widget.html (đi tắt: 2 bản, sửa lịch thì sửa cả hai).
-// Ngủ trưa: KHÔNG cố định 13–15h. Đoạn vàng = phần 13–15h còn lại sau khi buổi học / thi chiếm chỗ (nap.py, /api/timetable/all -> nap.spans);
+// Ngủ trưa: KHÔNG cố định 13–15h. Buổi học / thi chen vào thì cả khung 2 giờ dời sang chỗ trống gần nhất; không còn chỗ thì mất phần bị chiếm (nap.py, /api/timetable/all -> nap.spans);
 // đồng hồ không có chỗ cho 2 lịch chồng nhau, và hệ thống khoá giờ ngủ khoá đúng các đoạn vàng này. Chưa đọc được thì tạm 13–15h.
 let NAP_SPANS = [['13:00', '15:00']];
 let CLASS_UNTIL = null;   // (05/11) PhoneClassLock: khoá điện thoại giờ học tới lúc này; mở sớm = MSSV nhập 2 lần
@@ -2260,7 +2261,8 @@ document.addEventListener('click', async ev => {
 });
 let NAP_WOKE = null;   // (05/11) giờ bạn xác nhận đã dậy hôm nay ('HH:MM'); NAP_SPANS từ máy chủ đã cắt tại đó
 let PREP_SPANS = [];   // (05/11) [[ISO, ISO], ...] giờ đi học (tím) trước các buổi trực tiếp hôm nay
-// (chủ 05/11) nút "Tôi đã dậy": chỉ hiện từ 14:30, đang trong phần vàng ngủ trưa, chưa xác nhận. Bấm -> hỏi Xác nhận -> kết thúc ngủ trưa
+let NAP_WAKE_MIN = '14:30';   // (v1.00.65) mốc sớm nhất của nút "Tôi đã dậy" = giờ bắt đầu khung ngủ trưa + 90 phút (máy chủ tính)
+// (chủ 05/11) nút "Tôi đã dậy": chỉ hiện từ NAP_WAKE_MIN, đang trong phần vàng ngủ trưa, chưa xác nhận. Bấm -> hỏi Xác nhận -> kết thúc ngủ trưa
 document.addEventListener('click', async ev => {
   const b = ev.target.closest('[data-napwake]'); if (!b) return;
   if (!confirm('Xác nhận bạn đã dậy? Giờ ngủ trưa hôm nay kết thúc ngay (mở khoá trưa trên máy tính, điện thoại và báo cho các agent). Không hoàn tác được.')) return;
@@ -2298,7 +2300,7 @@ function clk24Build(el) {
     '<span><i class="k-red"></i>Thể dục<em>Khung đi bộ UC xếp và các lượt đi bộ bạn bấm trong iCTSV. Không tự sửa được; chỉ AI xoá được khi có lý do chính đáng (vd đau chân, ốm)</em></span>' +
     '<span><i class="k-fz"></i>Tập trung<em>Thời gian bật chế độ tập trung ở Ví (đã trừ lúc tạm dừng). Không đè giờ ngủ, giờ học, giờ ăn / đi bộ (tím)</em></span>' +
     '<span><i class="k-lime"></i>Tập trung trong giờ học<em>Bật tập trung khi đang có buổi học / ngoại khoá: vừa trong lịch, vừa khoá máy như tập trung</em></span>' +
-    '<span><i class="k-sleep"></i>Giờ ngủ 22:00–06:00 · ngủ trưa<em>Ngủ trưa trong 13:00–15:00, trừ phần có buổi học / thi. Phần vàng là phần bị khoá mạng xã hội và game. Không tính là lãng phí</em></span>' +
+    '<span><i class="k-sleep"></i>Giờ ngủ 22:00–06:00 · ngủ trưa<em>Ngủ trưa 2 giờ, mặc định 13:00–15:00; có buổi học / thi chen vào thì dời sang chỗ trống gần nhất. Phần vàng là phần bị khoá mạng xã hội và game. Không tính là lãng phí</em></span>' +
     '<span><i class="k-life"></i>Sinh hoạt cá nhân<em>Ăn sáng (trước 8:00), ăn trưa 12:00–13:00, ăn tối 19:00–20:00 (Camp: 17:30–18:30), đi học (15 phút trước buổi trực tiếp; buổi trước 8:00 thì từ 06:00) — không phải giờ ngủ, không tính là lãng phí</em></span>' +
     '<span><i class="k-left"></i>Chưa tới<em>Phần còn lại của hôm nay trước giờ ngủ</em></span></div></div>';
   el._arc = arc;
@@ -2370,7 +2372,7 @@ function clk24Tick() {
     el.querySelector('.c-dig').textContent = p2(h) + ':' + p2(m) + ':' + p2(s);
     const hmNow = p2(h) + ':' + p2(m);
     const cc = el.querySelector('.c-class'); cc.hidden = !CLASS_UNTIL; if (CLASS_UNTIL) cc.querySelector('.c-class-t').textContent = 'tới ' + CLASS_UNTIL.slice(11, 16);
-    el.querySelector('.c-wake').hidden = !(!NAP_WOKE && hmNow >= '14:30' && NAP_SPANS.some(x => x[0] <= hmNow && hmNow < x[1]));
+    el.querySelector('.c-wake').hidden = !(!NAP_WOKE && hmNow >= NAP_WAKE_MIN && NAP_SPANS.some(x => x[0] <= hmNow && hmNow < x[1]));
     const msg = el.querySelector('.c-msg');
     msg.className = 'c-msg' + (night ? ' night' : '');
     msg.innerHTML = night ? '<b>Đã tới giờ ngủ.</b> Hôm nay đã hết; để việc còn lại cho sáng mai.'
@@ -3311,24 +3313,26 @@ function loadDay() { renderDay(); fetch('/api/today').then(r => r.json()).then(d
 
 /* ---------- (v1.00.42 W8) Ví thời gian: số dư, phiên tập trung 25 + 5, giải trí, âm nền ---------- */
 let WAL = null, walAt = 0, walBusy = false;
-const RADIO_ID = 'tRsQsTMvPNg';   // Claude Radio (chủ đưa 31/10)
-let wSound = 'brown'; try { wSound = localStorage.getItem('w-sound') || 'brown'; } catch (e) {}
+let MUSIC = [];   // (v1.00.65) danh sách nhạc tập trung (/api/focus-music, focus_music.json)
+fetch('/api/focus-music').then(r => r.json()).then(j => { MUSIC = j.items || []; const f = $('#w-focus'); if (f) f.dataset.key = ''; renderWallet(); }).catch(() => {});
+const soundOpts = () => '<option value="brown">Brown noise</option>' + MUSIC.map(m => '<option value="yt:' + esc(m.id) + '">' + esc(m.title) + '</option>').join('') + '<option value="off">Tắt</option>';
+let wSound = 'off';   // (chủ 05/11) âm nền lấy từ UC (WAL.sound), dùng chung mọi tab / máy; chưa đọc được = tắt (không tự phát)
 async function loadWallet() {
-  try { WAL = await fetch('/api/wallet', { cache: 'no-store' }).then(r => r.json()); walAt = Date.now(); renderWallet(); } catch (e) {}
+  try { WAL = await fetch('/api/wallet', { cache: 'no-store' }).then(r => r.json()); walAt = Date.now(); if (WAL.sound && WAL.sound !== wSound) soundSet(WAL.sound, false, true); renderWallet(); } catch (e) {}
 }
 // (01/11) nhiều tab / cửa sổ UC cùng mở: tab này bắt đầu hay dừng thì báo các tab kia đọc lại ngay,
 // nếu không tab kia vẫn tưởng phiên đang chạy và brown noise phát tiếp (lỗi chủ gặp sáng 01/11).
 // (04/11) đổi âm nền ở một tab thì mọi tab khác cũng đổi theo (trước đây chọn "Tắt" chỉ tắt tab đang bấm, tab khác phát tiếp)
-function soundSet(v, tell) {
-  wSound = v; try { localStorage.setItem('w-sound', v); } catch (x) {}
+function soundSet(v, tell, fromServer) {
+  wSound = v;
+  if (!fromServer) api('/api/wallet', { action: 'sound', value: v }).catch(() => {});   // lưu trên UC
   const s = $('#w-sound'); if (s && s.value !== v) s.value = v;
   soundSync(true); if (tell && walBC) walBC.postMessage({ sound: v });
 }
-let walBC = null; try { walBC = new BroadcastChannel('uc-wallet'); walBC.onmessage = ev => (ev.data && ev.data.sound) ? soundSet(ev.data.sound, false) : loadWallet(); } catch (e) {}
-window.addEventListener('storage', ev => { if (ev.key === 'w-sound' && ev.newValue && ev.newValue !== wSound) soundSet(ev.newValue, false); });
+let walBC = null; try { walBC = new BroadcastChannel('uc-wallet'); walBC.onmessage = ev => (ev.data && ev.data.sound) ? soundSet(ev.data.sound, false, true) : loadWallet(); } catch (e) {}
 async function walPost(body) {
   if (walBusy) return false; walBusy = true; let ok = false;
-  try { const r = await api('/api/wallet', body); if (!r.ok) alert(r.loi || 'Không làm được.'); else { ok = true; WAL = r; walAt = Date.now(); renderWallet(); if (walBC) walBC.postMessage('changed'); } }
+  try { const r = await api('/api/wallet', body); if (!r.ok) alert(r.loi || 'Không làm được.'); else { ok = true; WAL = r; walAt = Date.now(); if (r.sound && r.sound !== wSound) soundSet(r.sound, false, true); renderWallet(); if (walBC) walBC.postMessage('changed'); } }
   catch (e) { alert('Không gọi được UC.'); }
   walBusy = false; return ok;
 }
@@ -3347,17 +3351,17 @@ function renderWallet() {
   fun.textContent = a && a.type === 'fun' ? 'Dừng giải trí' : 'Bắt đầu giải trí';
   fun.disabled = !!(a && a.type === 'focus') || (!a && WAL.balance <= 0);
   const f = $('#w-focus');
-  // chỉ vẽ lại thẻ khi trạng thái phiên đổi (vẽ lại sẽ tạo lại khung Claude Radio -> video phát lại từ đầu)
+  // chỉ vẽ lại thẻ khi trạng thái phiên đổi
   const key = a && a.type === 'focus' ? [a.id, a.phase, a.index, a.paused, a.blocks_done].join('|') : 'idle';
   if (f.dataset.key === key && f.firstChild) { soundSync(false); return renderWalletStats(S); }
   f.dataset.key = key;
   if (!a || a.type !== 'focus') {
     const sel = (n, v) => '<option value="' + v + '"' + (v === 50 ? ' selected' : '') + '>' + n + '</option>';
     const subj = [...new Set([...(DAY && DAY.deadlines || []).filter(x => !x.overdue).map(x => x.name), ...((PRG && PRG.courses) || []).map(c => c.code + ' ' + (c.name || ''))])].slice(0, 40);
-    f.innerHTML = '<h2>Phiên tập trung</h2><p class="wnote">Chọn tổng thời gian; UC chia khối 25 phút tập trung + 5 phút nghỉ. <b>Đã bắt đầu thì không huỷ được</b>: phiên tự kết thúc khi hết giờ, trong lúc đó mạng xã hội, Shorts và game bị chặn.</p>' +
+    f.innerHTML = '<h2>Phiên tập trung</h2><p class="wnote">Chọn tổng thời gian; UC chia khối 25 phút tập trung + 5 phút nghỉ. <b>Đã bắt đầu thì không huỷ được</b>: phiên tự kết thúc khi hết giờ, trong lúc đó mạng xã hội, trang YouTube và game bị chặn (nhạc YouTube chỉ phát ẩn ngay trong UC).</p>' +
       '<div class="wform"><label>Tổng thời gian<select id="w-total">' + sel('25 phút · 1 khối', 25) + sel('50 phút · 2 khối', 50) + sel('1 giờ 30 · 3 khối', 85) + sel('2 giờ · 4 khối', 115) + sel('3 giờ · 6 khối', 175) + '</select></label>' +
       '<label>Gắn với môn / hạn<input id="w-subj" list="w-subj-l" placeholder="không bắt buộc"><datalist id="w-subj-l">' + subj.map(s => '<option value="' + esc(s) + '">').join('') + '</datalist></label>' +
-      '<label>Âm nền<select id="w-sound"><option value="brown">Brown noise</option><option value="radio">Claude Radio</option><option value="off">Tắt</option></select></label></div>' +
+      '<label>Âm nền<select id="w-sound">' + soundOpts() + '</select></label></div>' +
       '<div class="wform"><label>Nhập lại MSSV để xác nhận<input id="w-mssv" type="password" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="8–9 chữ số"></label></div>' +
       '<button class="primary wgo" id="w-start" disabled>Bắt đầu tập trung</button>';
     $('#w-sound').value = wSound;
@@ -3373,8 +3377,8 @@ function renderWallet() {
       '<div class="wclock' + (isF ? '' : ' brk') + '" id="w-clock">' + mmss(walLeft()) + '</div>' +
       '<p class="wnote">Đã trọn ' + a.blocks_done + ' khối (+' + a.blocks_done * 5 + ' phút) · tổng ' + a.total + ' phút</p>' +
       '<div class="row"><button class="ghost" id="w-pause"' + (a.paused && a.paused_by === 'user' ? ' title="Tiếp tục (bạn tự dừng, chặn vẫn giữ)">▶' : '>' + (a.paused ? 'Tiếp tục' : 'Tạm dừng')) + '</button>' +
-      '<label class="wsnd">Âm nền <select id="w-sound"><option value="brown">Brown noise</option><option value="radio">Claude Radio</option><option value="off">Tắt</option></select></label></div>' +
-      '<div id="w-radio"></div><p class="wnote" id="w-recnote"></p><p class="wnote">Không huỷ được phiên. Bạn tự bấm dừng (nút ▶) thì chặn vẫn giữ; UC tự dừng (giờ học, giờ ngủ, thể dục; nút Tiếp tục) thì gỡ chặn. Tiếp tục thì chặn chạy lại, giờ kết thúc lùi theo.</p>';
+      '<label class="wsnd">Âm nền <select id="w-sound">' + soundOpts() + '</select></label></div>' +
+      '<p class="wnote" id="w-recnote"></p><p class="wnote">Không huỷ được phiên. Bạn tự bấm dừng (nút ▶) thì chặn vẫn giữ; UC tự dừng (giờ học, giờ ngủ, thể dục; nút Tiếp tục) thì gỡ chặn. Tiếp tục thì chặn chạy lại, giờ kết thúc lùi theo.</p>';
     $('#w-sound').value = wSound;
     $('#w-sound').onchange = e => soundSet(e.target.value, true);
     $('#w-pause').onclick = () => walPost({ action: a.paused ? 'resume' : 'pause' });
@@ -3389,7 +3393,7 @@ function renderWalletStats(S) {
   $('#w-log').innerHTML = (WAL.recent || []).map(x => '<li><b class="' + (x.min < 0 ? 'neg' : 'pos') + '">' + (x.min > 0 ? '+' : '−') + Math.abs(x.min) + '</b> ' + esc(kindVi[x.kind] || x.kind) +
     (x.note ? ' · ' + esc(x.note) : '') + '<small>' + esc(x.at.slice(11, 16) + ' ' + x.at.slice(8, 10) + '/' + x.at.slice(5, 7)) + '</small></li>').join('') || '<li class="note">Chưa có gì.</li>';
 }
-/* âm nền: brown noise tự sinh bằng Web Audio (không tải file); Claude Radio nhúng YouTube. Không phát khi recorder đang ghi. */
+/* âm nền: brown noise tự sinh bằng Web Audio (không tải file); nhạc YouTube phát ẩn (youtube-nocookie). Không phát khi recorder đang ghi. */
 let AC = null, BN = null;
 function brownOn() {
   if (BN) return;
@@ -3409,13 +3413,23 @@ function soundSync(force) {
   const live = a && a.type === 'focus' && !a.paused;
   const note = $('#w-recnote'); if (note) note.textContent = live && rec && wSound !== 'off' ? 'Recorder đang ghi bài: tắt âm nền để không lẫn vào bản ghi.' : '';
   (live && !rec && wSound === 'brown' && a.phase === 'focus') ? brownOn() : brownOff();
-  const box = $('#w-radio');
-  if (box) {
-    const want = live && !rec && wSound === 'radio';
-    if (want && !box.firstChild) box.innerHTML = '<iframe class="wradio" src="https://www.youtube-nocookie.com/embed/' + RADIO_ID + '?autoplay=1" title="Claude Radio" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
-    if (!want && box.firstChild) box.innerHTML = '';
-  }
+  ytSync(live && !rec && a.phase === 'focus' && String(wSound).startsWith('yt:') ? wSound.slice(3) : null, force);
 }
+// (v1.00.65, chủ 05/11) trình phát ẩn: không có khung, không có link ra youtube.com; chỉ phát trong pha tập trung.
+// Mỗi pha nạp lại trình phát -> đi tiếp từ số phút đã tập trung hôm nay để không nghe lại đoạn đầu. Live thì bỏ qua (không có "hours").
+// Đi tắt: mở nhiều tab UC thì mỗi tab một trình phát (như Claude Radio trước đây). Cần đổi khi chủ thấy phiền: dùng navigator.locks giữ 1 tab.
+let ytNow = null;
+function ytSync(id, force) {
+  if (id === ytNow && !force) return;
+  ytNow = id;
+  let el = document.getElementById('w-yt');
+  if (!id) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'w-yt'; el.setAttribute('aria-hidden', 'true'); document.body.appendChild(el); }
+  const m = MUSIC.find(x => x.id === id), pos = m && m.hours ? ((WAL && WAL.stats && WAL.stats.ngay && WAL.stats.ngay.focus_min) || 0) * 60 % Math.floor(m.hours * 3600) : 0;
+  el.innerHTML = '<iframe tabindex="-1" src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&controls=0&disablekb=1&fs=0&rel=0&iv_load_policy=3&loop=1&playlist=' + encodeURIComponent(id) + (pos ? '&start=' + pos : '') + '" title="Âm nền" allow="autoplay; encrypted-media"></iframe>';
+}
+// Trình duyệt chặn tự phát khi trang chưa có thao tác nào (phiên do UC tự bật): lần bấm đầu tiên thì nạp lại trình phát.
+document.addEventListener('pointerdown', () => { if (ytNow) { const id = ytNow; ytNow = null; ytSync(id, true); } }, { once: true });
 setInterval(() => {   // nhịp 1 giây: cập nhật đồng hồ; hết pha thì hỏi lại máy chủ (máy chủ tự chốt khối / tự dừng giải trí)
   const a = WAL && WAL.active; if (!a) return;
   const left = walLeft(), c = a.type === 'focus' ? $('#w-clock') : $('#w-bal');

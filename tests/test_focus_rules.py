@@ -77,6 +77,80 @@ def test_the_duc_het_khung_tu_tiep(env):
     assert F.tick(None, notify, T0 + m(25)) == ('resume', 'red')
 
 
+@pytest.fixture
+def exam(env, monkeypatch):
+    import exam_focus
+    monkeypatch.setattr(exam_focus, 'subject', lambda today: 'Ôn thi: Giải tích I (08/11)' if today in ('2026-11-06', '2026-11-07') else None)
+    return env
+
+
+D1 = dt.datetime(2026, 11, 6, 9, 0, tzinfo=W.TZ)
+
+
+def test_ngay_truoc_thi_tu_bat_khong_mssv(exam):
+    color, notify, sent = exam
+    r = F.tick(None, notify, D1)
+    assert r == ('auto_start', 'Ôn thi: Giải tích I (08/11)') and len(sent) == 1
+    a = W.load()['active']
+    assert a['type'] == 'focus' and a['total'] == 175 and a['subject'].startswith('Ôn thi')
+    assert F.tick(None, notify, D1 + m(1)) is None and len(sent) == 1   # không bật chồng
+
+
+def test_ca_ngay_tu_6h_den_truoc_22h(exam):
+    _, notify, _ = exam
+    assert F.tick(None, notify, D1.replace(hour=5, minute=59)) is None
+    assert F.tick(None, notify, D1.replace(hour=22, minute=0)) is None
+    assert F.tick(None, notify, D1.replace(hour=6, minute=0))[0] == 'auto_start'
+
+
+def test_ngay_thuong_khong_tu_bat(exam):
+    _, notify, _ = exam
+    assert F.tick(None, notify, dt.datetime(2026, 11, 5, 9, 0, tzinfo=W.TZ)) is None
+    assert W.load().get('active') is None
+
+
+def test_gio_hoc_van_bat_mau_khac_cho(exam):
+    color, notify, _ = exam
+    for c in ('purple', 'red', 'yellow'):
+        color['v'] = (c, 'x')
+        assert F.tick(None, notify, D1) is None
+    color['v'] = ('blue', 'giờ học')
+    assert F.tick(None, notify, D1)[0] == 'auto_start'
+
+
+def test_phien_giai_tri_khong_dung_toi(exam):
+    _, notify, _ = exam
+    st = W.empty(); W._add(st, 'focus', 30, D1); W.start_fun(st, D1); W.save(st)
+    assert F.tick(None, notify, D1 + m(1)) is None and W.load()['active']['type'] == 'fun'
+
+
+def test_phien_het_gio_tu_bat_lai(exam):
+    _, notify, _ = exam
+    F.tick(None, notify, D1)
+    assert F.tick(None, notify, D1 + m(176))[0] == 'auto_start'
+    st = W.load()
+    assert len(st['sessions']) == 1 and st['active']['start'] == W._iso(D1 + m(176))
+
+
+def test_vang_ket_thuc_roi_het_vang_tu_bat_lai(exam):
+    color, notify, _ = exam
+    F.tick(None, notify, D1)
+    color['v'] = ('yellow', 'giờ ngủ trưa (10:00–12:00)')
+    assert F.tick(None, notify, D1 + m(60))[0] == 'end'
+    assert F.tick(None, notify, D1 + m(61)) is None   # còn vàng: chờ
+    color['v'] = ('white', '')
+    assert F.tick(None, notify, D1 + m(180))[0] == 'auto_start'
+
+
+def test_tim_tu_dung_roi_tu_tiep_voi_phien_tu_bat(exam):
+    color, notify, _ = exam
+    F.tick(None, notify, D1)
+    color['v'] = ('purple', 'giờ ăn trưa (12:00–13:00)')
+    assert F.tick(None, notify, D1 + m(10))[0] == 'pause'
+    color['v'] = ('white', '')
+    assert F.tick(None, notify, D1 + m(70)) == ('resume', 'purple')
+
+
 def test_gio_an_khi_ban_tu_dung_van_giu_nguyen(env):
     color, notify, sent = env
     st = W.empty(); W.start_focus(st, 50, '', T0); W.pause(st, T0 + m(5)); W.save(st)

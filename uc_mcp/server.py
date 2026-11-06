@@ -57,7 +57,8 @@ def _qua(d):   # hạn đã quá mà chưa đánh dấu hoàn tất (UC không n
 
 def _nap():
     """(chủ 05/11) Giờ ngủ trưa hôm nay cho agent: đọc thẳng school/nap.json (cùng máy). 'da_day' = giờ bạn xác nhận đã dậy
-    (từ 14:30); khi đó phần ngủ trưa đã cắt tại giờ dậy -> agent được làm việc tiếp, không cần chờ hết 15:00."""
+    (từ giờ bắt đầu khung + 90 phút); khi đó phần ngủ trưa đã cắt tại giờ dậy -> agent được làm việc tiếp, không cần chờ hết khung.
+    (v1.00.65) Khung có thể đã dời khỏi 13–15h: tin 'gio_ngu_trua', 'bi_chiem' có thể bắt đầu bằng "Dời ngủ trưa sang ..."."""
     try:
         n = json.loads((Path(__file__).resolve().parent.parent / "school" / "nap.json").read_text(encoding="utf-8"))
     except Exception as e:

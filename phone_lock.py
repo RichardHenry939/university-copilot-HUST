@@ -5,11 +5,11 @@ Khoá máy tính (chặn tên miền + chính sách trình duyệt trên Windows
 UC tạm khoá app bằng adb trên MỌI máy adb đang thấy (máy ảo + điện thoại cắm dây / adb qua Wi-Fi), theo 4 chế độ:
   - mặc định (mọi lúc ngoài giờ khoá)  -> khoá app mạng xã hội (lướt MXH)
   - tập trung (ví đang chạy, hoặc bạn tự bấm dừng; UC tự dừng thì như mặc định)
-                                       -> + trình duyệt, Play Store, game
+                                       -> + YouTube (cả ReVanced), trình duyệt, Play Store, game
   - ngủ trưa (nap_spans trong school/nap.json) -> như khoá trưa máy tính: + YouTube; chừa Messenger
   - đêm 22:00–06:00 (lõi cứng)         -> như khoá đêm máy tính: + YouTube + Messenger
 Luôn chừa: LinkedIn, iCTSV, eHUST và mọi app không nằm trong nhóm nào (điện thoại, tin nhắn, báo thức, ngân hàng...).
-App YouTube chỉ khoá ở trưa / đêm (app của chủ đã sửa bỏ Shorts).
+App YouTube đã sửa (ReVanced, bỏ Shorts) chỉ chừa ở mặc định.
 Danh sách riêng của từng người (game, MXH thêm) ở school/phone_apps.json: {"games": [...], "social": [...]} — không lên public.
 
 Cách khoá: `cmd package suspend` (app vẫn còn, bấm vào chỉ hiện hộp "đã tạm dừng"); máy không cho shell suspend thì
@@ -36,7 +36,7 @@ TZ = dt.timezone(dt.timedelta(hours=7))
 SOCIAL = ('com.facebook.katana', 'com.facebook.lite', 'com.instagram.android', 'com.instagram.barcelona',   # Threads
           'com.zhiliaoapp.musically', 'com.ss.android.ugc.trill', 'com.twitter.android', 'com.reddit.frontpage',
           'com.snapchat.android', 'com.discord', 'com.pinterest', 'com.tumblr', 'xyz.blueskyweb.app')
-YOUTUBE = ('com.google.android.youtube', 'app.revanced.android.youtube')   # ReVanced = YouTube đã sửa của chủ (chừa khi tập trung)
+YOUTUBE = ('com.google.android.youtube', 'app.revanced.android.youtube')   # ReVanced = YouTube đã sửa của chủ (chỉ chừa ở mặc định)
 MESSENGER = ('com.facebook.orca',)
 BROWSERS = ('com.android.chrome', 'org.mozilla.firefox', 'com.microsoft.emmx', 'com.opera.browser', 'com.brave.browser',
             'com.sec.android.app.sbrowser', 'com.coccoc.trinhduyet', 'org.torproject.torbrowser',   # Tor: trình duyệt, không phải MXH (chủ 04/11)
@@ -131,7 +131,7 @@ def wanted(m, installed, games=(), social=()):
     tor = ('org.torproject.torbrowser',)
     yt = ('com.google.android.youtube',)   # (chủ 04/11) app YouTube gốc có Shorts -> khoá; xem bằng ReVanced là đủ
     groups = {'default': SOCIAL + social + yt,
-              'focus': SOCIAL + social + yt + tor + STORE + games,
+              'focus': SOCIAL + social + tor + STORE + games + YOUTUBE,   # (chủ 05/11) tập trung: ReVanced cũng khoá (xem Shorts chế trong giờ tập trung)
               'nap': SOCIAL + social + tor + STORE + games + YOUTUBE,
               'night': SOCIAL + social + tor + STORE + games + YOUTUBE + MESSENGER}.get(m or 'default', ())
     return {p for p in groups if p in installed} - NEVER

@@ -77,9 +77,9 @@ def test_walk_app_parse_runs():
 def test_nap_yellow_only_blue_overrides():
     import nap
     ev = lambda s, e, k='Class': {'kind': k, 'title': 'X', 'start': f'2026-11-06T{s}:00+07:00', 'end': f'2026-11-06T{e}:00+07:00'}
-    assert nap.spans([ev('12:30', '17:30')], '2026-11-06')[0] == []                      # lab cả chiều: không ngủ trưa
-    assert nap.spans([ev('14:00', '16:00')], '2026-11-06')[0] == [['13:00', '14:00']]
-    assert nap.spans([ev('13:30', '14:15', 'Exam')], '2026-11-06')[0] == [['13:00', '13:30'], ['14:15', '15:00']]
+    assert nap.spans([ev('12:30', '17:30')], '2026-11-06')[0] == [['10:00', '12:00']]   # (v1.00.65) lab cả chiều: dời ngủ trưa
+    assert nap.spans([ev('14:00', '16:00')], '2026-11-06')[0] == [['10:00', '12:00']]
+    assert nap.spans([ev('13:30', '14:15', 'Exam')], '2026-11-06')[0] == [['14:15', '16:15']]
     full, _ = nap.spans([ev('21:00', '22:30')], '2026-11-06', nap.YELLOW)
     assert full == [['00:00', '06:00'], ['13:00', '15:00'], ['22:30', '24:00']]
 

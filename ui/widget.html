@@ -28,7 +28,7 @@ body { background: #8fb3c4 url(/widget/bg.jpg) center / cover no-repeat; font-fa
 .clock svg { width: 100%; height: 100%; display: block; }
 .face { fill: rgba(255,255,255,.72); stroke: var(--ink); stroke-width: 2.5; }
 .now-t { margin: 0 0 .7em; color: var(--ink-2); font-weight: 600; } .now-t .dig { font-size: 2em; font-weight: 800; color: var(--ink); letter-spacing: .01em; margin-right: .2em; }
-.waste { fill: var(--waste); opacity: .62; } .lf { fill: #8e44ad; opacity: .6; } .rd { fill: #d62828; opacity: .75; } .cl { fill: var(--cls); opacity: .75; } .fz { fill: var(--focus); opacity: .85; } .slp { fill: var(--sleep); opacity: .55; }
+.waste { fill: var(--waste); opacity: .62; } .lf { fill: #8e44ad; opacity: .6; } .rd { fill: #d62828; opacity: .75; } .cl { fill: var(--cls); opacity: .75; } .fz { fill: var(--focus); opacity: .85; } .lm { fill: #9acd32; opacity: .9; } .slp { fill: var(--sleep); opacity: .55; }
 .tk { stroke: var(--ink-2); stroke-width: 1; } .tk.h { stroke: var(--ink); stroke-width: 2.2; }
 .num { font-size: 11px; font-weight: 700; fill: var(--ink); text-anchor: middle; dominant-baseline: central; } .num.k { font-size: 14px; }
 .hh { stroke: var(--ink); stroke-width: 5; stroke-linecap: round; } .mm { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
@@ -95,7 +95,7 @@ body { background: #8fb3c4 url(/widget/bg.jpg) center / cover no-repeat; font-fa
 const Q = new URLSearchParams(location.search), SCREEN = Q.get('screen') || 'laptop';
 const SLEEP_H = 22, WAKE_H = 6, TZ = 7 * 36e5;
 // (02/11, chủ) ngủ trưa = vàng; ăn uống = tím (sinh hoạt cá nhân, không phải giờ ngủ). Giống ui/index.html — sửa cả hai chỗ.
-let NAP_SPANS = [['13:00', '15:00']];   // ngủ trưa = phần 13–15h còn lại sau buổi học / thi (nap.py); khoá giờ ngủ khoá đúng phần này
+let NAP_SPANS = [['13:00', '15:00']];   // ngủ trưa = khung 2 giờ, có buổi học / thi chen vào thì dời (nap.py); khoá giờ ngủ khoá đúng phần này
 const hm2h = s => +s.slice(0, 2) + +s.slice(3, 5) / 60, meals =camp => [[7.5, 8], [12, 13], camp ? [17.5, 18.5] : [19, 20]];
 const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const p2 = n => String(n).padStart(2, '0');
@@ -189,7 +189,7 @@ const arc = (d0, d1, r) => { const [x0, y0] = P(d0, r), [x1, y1] = P(d1, r); ret
   for (let i = 0; i < 96; i++) { const h = i % 4 === 0, [x0, y0] = P(i * 3.75, h ? 82 : 87), [x1, y1] = P(i * 3.75, 92); t += '<line class="tk' + (h ? ' h' : '') + '" x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y1 + '"/>'; }
   for (let h = 0; h < 24; h++) { const [x, y] = P(h * 15, 71); t += '<text class="num' + (h % 6 === 0 ? ' k' : '') + '" x="' + x + '" y="' + y + '">' + h + '</text>'; }
   $('#clk').innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="Đồng hồ 24 giờ"><circle class="face" cx="100" cy="100" r="96"/><path class="waste"/><g class="life"></g><g class="fzs"></g><g class="naps"></g>' +
-    '<path class="slp" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/><g class="reds"></g><g class="cls"></g>' + t +   // lớp = luật tranh chấp (giống ui/index.html)
+    '<path class="slp" d="' + arc(SLEEP_H * 15, 360 + WAKE_H * 15, 94) + '"/><g class="reds"></g><g class="cls"></g><g class="lim"></g>' + t +   // lớp = luật tranh chấp (giống ui/index.html)
     '<line class="hh" x1="100" y1="100" x2="100" y2="48"/><line class="mm" x1="100" y1="100" x2="100" y2="24"/><line class="ss" x1="100" y1="112" x2="100" y2="16"/><circle class="hub" cx="100" cy="100" r="4"/></svg>';
 })();
 function tick() {
@@ -209,7 +209,10 @@ function tick() {
   svg.querySelector('.naps').innerHTML = NAP_SPANS.map(x => '<path class="slp" d="' + arc(hm2h(x[0]) * 15, hm2h(x[1]) * 15, 94) + '"/>').join('');
   svg.querySelector('.reds').innerHTML = REDS.map(x => '<path class="rd" d="' + arc((x[0] - day0) / 240000, (x[1] - day0) / 240000, 94) + '"/>').join('');
   svg.querySelector('.cls').innerHTML = paths(cls, 'cl');
-  svg.querySelector('.fzs').innerHTML = paths(SP.spans.map((x, i) => [x[0], SP.live && i === SP.spans.length - 1 ? now : x[1]]), 'fz');
+  const fz = SP.spans.map((x, i) => [Date.parse(x[0]), SP.live && i === SP.spans.length - 1 ? now : Date.parse(x[1])]);
+  svg.querySelector('.fzs').innerHTML = paths(fz, 'fz');
+  // (v1.00.65) xanh nõn chuối: tập trung trong giờ học, vẽ trên lớp xanh biển (giống ui/index.html)
+  svg.querySelector('.lim').innerHTML = paths(fz.flatMap(f => cls.map(c => [Math.max(f[0], c[0]), Math.min(f[1], c[1])])).filter(x => x[0] < x[1]), 'lm');
   const dg = $('.dig'); if (dg) dg.textContent = p2(h) + ':' + p2(m) + ':' + p2(s);   // HH:MM:SS ở mọi bố cục (chủ, 02/11)
 }
 // ảnh nền: tải lỗi (vd đúng lúc UC khởi động lại) thì CSS không tự thử lại -> tự thử mỗi 15 giây tới khi được (02/11)

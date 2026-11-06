@@ -12,7 +12,7 @@ Dữ liệu: school/wallet.json (sổ cái + phiên). Chỉ chạy trên máy n�
 Tín hiệu tập trung cho phía chặn trang: CHỈ ghi khi chủ đã đặt school/secret/focus_signal.json {"path": "..."}.
 UC không biết và không đụng phía chặn; không có cấu hình thì không ghi gì.
 """
-import datetime as dt, json, math, threading, uuid
+import datetime as dt, json, math, re, threading, uuid
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -247,6 +247,13 @@ def day_cut(st, now):
     return end_fun(st, min(now, mid))
 
 
+def sound_value(v):
+    """(v1.00.65) 'brown' | 'off' | 'yt:<ID 11 ký tự>'. Giá trị cũ 'radio' = Claude Radio. Sai dạng -> None."""
+    if v == 'radio': return 'yt:tRsQsTMvPNg'
+    if v in ('brown', 'off'): return v
+    return v if re.fullmatch(r'yt:[\w-]{11}', str(v)) else None
+
+
 def view(st, now):
     """Trạng thái cho giao diện. Phiên đã hết giờ (hoặc giải trí hết số dư, hoặc đã sang ngày mới) thì tự kết thúc ở đây."""
     day_cut(st, now)
@@ -258,4 +265,5 @@ def view(st, now):
     if a and a['type'] == 'focus': act = {**a, **progress(st, now)}
     elif a: act = {**a, 'left_s': max(0, int(a['cap'] * 60 - (now - _t(a['start'])).total_seconds()))}
     return {'balance': balance(st), 'active': act, 'stats': stats(st, now), 'spans': spans_today(st, now), 'recent': st['ledger'][-12:][::-1],
+            'sound': sound_value(st.get('sound', 'off')),   # (chủ 05/11) âm nền dùng chung mọi tab / máy; chưa chọn = tắt
             'rules': {'focus': FOCUS, 'break': BREAK, 'block_reward': BLOCK_REWARD, 'deadline_reward': DEADLINE_REWARD}}

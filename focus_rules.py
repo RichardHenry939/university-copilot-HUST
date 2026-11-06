@@ -80,17 +80,42 @@ def walk_red(now):
     except Exception as e: print('focus_rules walk_red:', e); return False
 
 
+EXAM_FOCUS_MIN = 175   # 6 khối 25 phút + 5 lượt nghỉ 5 phút
+EXAM_FOCUS_HOURS = ('06:00', '22:00')
+
+
+def auto_exam(post, notify, now):
+    """(v1.00.65, chủ 05/11) D-2, D-1 trước thi (exam_focus): không có phiên nào thì UC tự bật tập trung, không cần MSSV, cả ngày.
+    Chỉ bật ở trắng / xanh biển; tím, đỏ, vàng thì chờ. Phiên hết giờ / bị vàng kết thúc thì lượt sau tự bật lại."""
+    import exam_focus, wallet
+    if not EXAM_FOCUS_HOURS[0] <= now.strftime('%H:%M') < EXAM_FOCUS_HOURS[1]: return None
+    subj = exam_focus.subject(now.date().isoformat())
+    if not subj: return None
+    if color_now(post, now)[0] not in ('white', 'blue'): return None
+    with wallet.lock:
+        st = wallet.load()
+        if st.get('active'): return None
+        wallet.start_focus(st, EXAM_FOCUS_MIN, subj, now); wallet.save(st)
+    notify('UC · tự bật tập trung trước thi', f'{subj}. Phiên {EXAM_FOCUS_MIN} phút đã chạy, đã chặn. Giờ ăn / thể dục tự dừng rồi tự tiếp.')
+    return ('auto_start', subj)
+
+
 def tick(post, notify, now=None):
     """(chủ 05/11) Luật mới:
     - TÍM (giờ ăn, đang đi bộ iCTSV) và ĐỎ (khung thể dục): UC tự tạm dừng (gỡ chặn) và hết màu đó thì TỰ TIẾP TỤC.
     - VÀNG (giờ ngủ đêm / ngủ trưa còn lại): UC KẾT THÚC luôn phiên (chốt phút / khối đã có, không để phiên cũ treo).
-    - Xanh biển: chạy tiếp (xanh nõn chuối). Bạn tự bấm dừng thì UC không tự tiếp tục (trừ đỏ / vàng vẫn áp như trên)."""
+    - Xanh biển: chạy tiếp (xanh nõn chuối). Bạn tự bấm dừng thì UC không tự tiếp tục (trừ đỏ / vàng vẫn áp như trên).
+    - Không có phiên nào + ngày trước thi: tự bật (auto_exam)."""
     import wallet
     now = (now or dt.datetime.now(TZ)).astimezone(TZ)
     with wallet.lock:
-        st = wallet.load(); a = st.get('active') or {}
-        if a.get('type') not in ('focus', 'fun'): return None
-        if wallet.by_user(a): wallet.hold_signal(st, now)   # bạn tự bấm dừng: gia hạn chặn mỗi phút
+        st = wallet.load(); had = st.get('active')
+        wallet.view(st, now)   # phiên hết giờ thì chốt ngay, không chờ có tab mở (nếu không ngày trước thi sẽ kẹt, không tự bật lại được)
+        if had and not st.get('active'): wallet.save(st)
+        a = st.get('active') or {}
+        if a.get('type') not in ('focus', 'fun'): a = None
+        elif wallet.by_user(a): wallet.hold_signal(st, now)   # bạn tự bấm dừng: gia hạn chặn mỗi phút
+    if a is None: return auto_exam(post, notify, now)
     color, why = color_now(post, now)
     if color == 'yellow':   # giờ ngủ: chốt phiên tập trung (giải trí không đụng tới — giờ ngủ đã có khoá riêng)
         with wallet.lock:

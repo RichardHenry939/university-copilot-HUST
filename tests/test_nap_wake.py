@@ -38,7 +38,7 @@ def test_ngoai_gio_ngu_trua_khong_nhan(env):
 def test_buoi_hoc_chiem_nap(env, monkeypatch):
     ev = [{'kind': 'Class', 'title': 'Lớp', 'start': D + 'T14:00:00+07:00', 'end': D + 'T16:00:00+07:00'}]
     monkeypatch.setattr(N, 'events', lambda post: ev)
-    assert not N.wake(None, at(14, 45))['ok']   # 14:00–15:00 là giờ học, không còn giờ ngủ để dậy
+    assert not N.wake(None, at(14, 45))['ok']   # 14:00–16:00 là giờ học (khung đã dời sang 10:00–12:00), không còn giờ ngủ để dậy
 
 
 def test_tin_hieu_ngay_cu_khong_tinh(env):

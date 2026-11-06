@@ -7,6 +7,7 @@
 
 param(
     [switch]$DryRun,
+    [string]$Sweep,   # internal: run one tab sweep for this mode, then exit (see Invoke-SweepChild)
     [string]$FakeTime,
     [string]$HostsPath = (Join-Path $env:WINDIR 'System32\drivers\etc\hosts')
 )
@@ -42,14 +43,16 @@ $Sites = @(
 $ExpectedLines = $Sites.Count * 2
 
 # (2026-11-01) Focus mode, driven by University Copilot's time wallet (one-way: UC writes, this reads).
-# Looser than the night window: YouTube (normal videos) and Messenger stay open, Shorts are blocked by URL,
+# Looser than the night window: Messenger stays open, the YouTube site is blocked by browser policy (not hosts: UC's hidden player needs it),
 # games are blocked as at night. Night window and soft lock always win; focus never removes a night block.
 # Expiry is the 'until' time inside the file itself, checked every pass, so it ends on time even if UC
 # crashes or the machine sleeps (no reliance on a cleanup step at the end of some process).
 $FocusFile = Join-Path $PSScriptRoot '..\school\focus.json'   # written by UC's time wallet
 $FocusAllowed = @('messenger.com', 'youtube.com', 'youtu.be', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com')
 $FocusSites = @($Sites | Where-Object { $FocusAllowed -notcontains $_ })
-$FocusPolicyExtra = @('youtube.com/shorts', 'm.youtube.com/shorts')
+# (2026-11-06) Focus mode: YouTube plays only through UC's hidden embedded player (youtube-nocookie.com, on the allow list).
+$FocusPolicyExtra = @('youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtube.com/shorts', 'm.youtube.com/shorts')
+$FocusEmbedAllow = @('youtube-nocookie.com')
 # (2026-11-03) Muse (muse.ai, Meta's AI agent, used for work) logs in through facebook.com and instagram.com
 # (Meta account sync bounces between them). In focus mode both leave the hosts block (name + www); the browser
 # policy still blocks all of facebook.com / instagram.com except these login paths, and the tab sweep reloads
@@ -62,7 +65,7 @@ $FocusPolicyAllow = @(
     'facebook.com/login', 'facebook.com/aymh', 'facebook.com/dialog', 'facebook.com/checkpoint',
     'facebook.com/ajax', 'facebook.com/api/graphql', 'facebook.com/oidc', 'accountscenter.facebook.com',
     'instagram.com/aymh', 'instagram.com/accounts', 'instagram.com/oauth', 'instagram.com/challenge',
-    'instagram.com/ajax', 'instagram.com/api/v1/web/accounts', 'accountscenter.instagram.com'
+    'instagram.com/ajax', 'instagram.com/api/v1/web/accounts', 'accountscenter.instagram.com', 'youtube-nocookie.com'
 )
 $FocusMaxHours = 9   # an 'until' further away than this is ignored (bad or hostile file)
 $script:mode = $null
@@ -260,11 +263,10 @@ function Test-BlockedHost([string]$h) {
     return $false
 }
 
-# Focus mode: YouTube itself is open, but a Shorts page is not (YouTube switches pages without a reload,
-# so the browser policy alone misses it; reloading the tab makes the policy apply).
+# Focus mode: the YouTube site is blocked by policy only. A tab already open there keeps playing until reloaded, so reload it.
 function Test-BlockedUrl([string]$v) {
     if (Test-BlockedHost (Get-HostFromText $v)) { return $true }
-    if ($script:mode -eq 'focus' -and $v -match '(^|[/.])youtube\.com/shorts') { return $true }
+    if ($script:mode -eq 'focus' -and (Get-HostFromText $v) -match '(^|\.)youtube\.com$') { return $true }
     if ($script:mode -eq 'focus' -and (Test-MetaNotLogin $v)) { return $true }
     return $false
 }
@@ -425,12 +427,27 @@ function Test-Focus {
     } catch { return $false }
 }
 
+# (2026-11-05) The tab sweep talks to Chrome through UI Automation, which has no timeout. It once hung right after 22:00
+# and froze the whole loop, so 06:00 never unblocked. It now runs in a child process, killed after 60 s.
+function Invoke-SweepChild([string]$mode) {
+    if ($DryRun) { if ($mode -eq 'focus') { Invoke-TabSweep -ActiveOnly } else { Invoke-TabSweep }; return }
+    if ($script:sweepProc -and -not $script:sweepProc.HasExited) {
+        if (((Get-Date) - $script:sweepProc.StartTime).TotalSeconds -gt 60) {
+            Write-Log "tab sweep stuck over 60 s, killed"
+            try { $script:sweepProc.Kill() } catch {}
+        }
+        return
+    }
+    $script:sweepProc = Start-Process powershell.exe -WindowStyle Hidden -PassThru -ArgumentList @(
+        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$script:Self`"", '-Sweep', $mode)
+}
+
 function Invoke-Pass {
     $now = Get-Date
     $mode = if ((Test-InWindow (Get-Now)) -or (Test-SoftLock)) { 'night' } elseif (Test-Focus) { 'focus' } else { 'off' }
     $on = ($mode -ne 'off')
     $hostList = switch ($mode) { 'night' { @($Sites) } 'focus' { @($FocusSites | Where-Object { $FocusHostsOpen -notcontains $_ }) } default { @() } }
-    $allowList = @()   # Muse opening removed (2026-11-03); empty list also cleans old allow entries
+    $allowList = if ($mode -eq 'focus') { $FocusEmbedAllow } else { @() }   # Muse opening removed (2026-11-03); empty list also cleans old allow entries
     $policyList = switch ($mode) { 'night' { @($Sites) } 'focus' { @($FocusSites) + @($FocusPolicyExtra) } default { @() } }
     $script:blockSites = $hostList
     if ($mode -ne $script:mode) { $script:mode = $mode; $script:lastHostsCheck = [DateTime]::MinValue; $script:lastSweep = [DateTime]::MinValue }
@@ -456,8 +473,10 @@ function Invoke-Pass {
         Stop-Blocked
         Close-GameWindows
         $every = if ($mode -eq 'focus') { 0.5 } else { 5 }   # focus: only the tab on screen, every 30 s
-        if (((Get-Date) - $script:lastSweep).TotalMinutes -ge $every) {
-            try { if ($mode -eq 'focus') { Invoke-TabSweep -ActiveOnly } else { Invoke-TabSweep } } catch { Write-Log "tab sweep error: $($_.Exception.Message)" }
+        # (2026-11-05) After 22:30 social sites have long been dead: stop sweeping / reloading tabs for the rest of the night
+        $lateNight = ($mode -eq 'night') -and (((Get-Now) -ge [TimeSpan]'22:30') -or ((Get-Now) -lt [TimeSpan]'06:00'))
+        if (-not $lateNight -and ((Get-Date) - $script:lastSweep).TotalMinutes -ge $every) {
+            Invoke-SweepChild $mode
             $script:lastSweep = Get-Date
         }
     }
@@ -470,6 +489,13 @@ function Invoke-Pass {
     }
 }
 
+$script:Self = $PSCommandPath
+if ($Sweep) {
+    $script:mode = $Sweep
+    $script:blockSites = switch ($Sweep) { 'night' { @($Sites) } 'focus' { @($FocusSites | Where-Object { $FocusHostsOpen -notcontains $_ }) } default { @() } }
+    try { if ($Sweep -eq 'focus') { Invoke-TabSweep -ActiveOnly } else { Invoke-TabSweep } } catch { Write-Log "tab sweep error: $($_.Exception.Message)" }
+    return
+}
 if ($DryRun) {
     Invoke-Pass
     return

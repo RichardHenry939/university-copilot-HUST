@@ -208,6 +208,7 @@ Mỗi lần cập nhật mã nguồn được tính là một bản vá (các l�
 | **v1.00.62** | 05/11/2026 | **Tập trung trong giờ học**: bật tập trung khi đang có buổi học / ngoại khoá không còn tự dừng; đồng hồ 24 giờ tô phần đó màu xanh nõn chuối (vừa trong lịch, vừa khoá máy như tập trung). **Thông báo đứng tên University Copilot** trên máy tính (thay "Windows PowerShell"; bấm thông báo hạn nộp mở thẳng chỗ làm bài qua `/go/work`) và trên điện thoại: app Android (đổi tên thành University Copilot) tự nhận tin từ kênh ntfy cũ và hiện thông báo của mình, bấm mở đúng link (YouTube -> ReVanced), nút bấm giữ nguyên — không cần app ntfy nữa. PhoneDNS: giờ ngủ trưa / đêm chặn luôn đường của app YouTube / ReVanced (đêm thêm Messenger) mà không cần adb. |
 | **v1.00.63** | 05/11/2026 | **"Tôi đã dậy"**: ngủ trưa đủ 1 chu kỳ thì bấm nút trên đồng hồ 24 giờ (chỉ từ 14:30, phải Xác nhận, mỗi ngày 1 lần) -> giờ ngủ trưa kết thúc tại giờ bấm (`nap.py` cắt phần vàng, `school/nap.json` có thêm `woke`), nên khoá trưa máy tính / điện thoại và luật giờ trưa của agent cùng dừng; khoá đêm không đổi. `uc_status` (MCP) trả thêm `ngu_trua` (giờ ngủ trưa, `da_day`). **Bản đồ khuôn viên**: buổi kết hợp ("toà nhà B1 và MS Teams") đã được xác nhận học trực tiếp thì ghim đúng toà / phòng (B1-103). App Android: hộp hỏi / báo của trang đề "UC" thay vì địa chỉ laptop. |
 | **v1.00.64** | 05/11/2026 | **Chống muộn** (`late.py`, chỉ buổi trực tiếp): 15 phút trước giờ vào lớp là giờ đi học (tím; buổi trước 8:00 thì từ 06:00), nhắc thêm mốc 14 → 1 phút cho tới khi được tha: app điện thoại tự so vị trí ngay trên máy (2 lần cách nhau 1 phút khác chỗ, hoặc đã tới đúng toà của buổi học theo bản đồ khuôn viên) và chỉ gửi về 2 cờ — toạ độ không rời điện thoại. **Đếm bước theo lượt iCTSV** (`walk_phone.py`, `WalkWatch.java`): app bắt lúc iCTSV bật / tắt dịch vụ đi bộ, lấy hiệu số cảm biến bước chân và chặng đường trong lượt, gửi về laptop; lượt đi bộ là thể dục (đỏ). **Luật tập trung**: tím (giờ ăn, giờ đi học) và đỏ (thể dục, đang đi bộ) tự tạm dừng rồi tự tiếp tục; vàng (giờ ngủ) kết thúc phiên; tím vẽ trên xanh lá. **PhoneClassLock**: khoá gần hết app điện thoại trong giờ học, mở sớm bằng MSSV nhập 2 lần, hết giờ mở theo lô. iCTSV: nhắc lại khi tự đăng nhập bị khoá, tự gỡ khoá khi thấy đã đăng nhập; khung đi bộ vẫn dời khi không đọc được app 90 phút. |
+| **v1.00.65** | 06/11/2026 | **Tự bật tập trung trước thi** (`exam_focus.py`): hai ngày cuối trước kỳ thi môn MI, PH, IT, EE, ET, từ 06:00 đến 22:00 UC tự mở phiên 175 phút, không cần MSSV; tím / đỏ tự dừng rồi tự tiếp, vàng kết thúc rồi lần sau tự bật lại, phiên giải trí không bị đụng. **Ngủ trưa linh hoạt** (`nap.py`): buổi học / thi chen vào 13:00–15:00 thì dời cả khung 2 giờ sang chỗ trống gần nhất trong 08:00–18:00 (không chồng lớp, không chồng giờ ăn, lý do ghi ở `nap.json`); nút "Tôi đã dậy" tính từ giờ bắt đầu khung + 90 phút; khoá trưa nhận khung mới. **Tập trung chặt YouTube**: chọn nhạc từ danh sách (`focus_music.json`), phát trong trình phát ẩn chỉ ở pha tập trung; trang YouTube bị chặn bằng chính sách trình duyệt, ứng dụng YouTube trên điện thoại cũng khoá. **Khoá giờ ngủ** (`locks/`): quét tab chạy tiến trình con, quá 60 giây thì dừng; thôi quét sau 22:30; thêm script mẫu dọn 06:01 / 06:06. Đồng hồ hình nền có xanh nõn chuối. README có hướng dẫn tự build app Android. |
 
 
 ### Ghi chú cài đặt: lịch thi từ PDF, MOOC, Zalo (từ v1.00.40)
@@ -224,6 +225,44 @@ khi bản đích thật đã được kiểm SHA. UC chỉ nhận file đã tả
 đọc/tải tin nhắn Zalo. Cần bật tải file và chọn đúng thư mục trong Zalo.
 
 Về đánh số: giao diện ngày 26/10 (commit `bc6f670`) được chủ dự án đánh số lại thành **v1.00.39**. Các commit mang tên v1.00.40 (`5bc859c`, `2ff9301`) đã phát hành lên GitHub ngày 31/10 cùng v1.00.41. Tính năng chỉ ghi vào nhật ký khi đã phát hành.
+
+## App Android (tự build)
+
+UC có app Android (WebView + widget đồng hồ + dịch vụ nền), nhưng repo **chỉ chứa mã nguồn, không chứa file APK**. Bạn tự build từ 4 mảnh trong `android/`:
+
+1. `src/vn/uc/app/*.java`: mã app.
+2. `AndroidManifest.xml`: khai báo app, dịch vụ, quyền.
+3. `assets/app.html` và `res/`: giao diện, biểu tượng, widget.
+4. `build.ps1`: dựng APK không cần Gradle (aapt2, javac, d8, zipalign, apksigner).
+
+**Cần cài**: Android SDK platform 35 và build-tools 35.0.0, JDK 17. Các đường dẫn `D:\Android\...` trong `build.ps1` chỉ là tham số mẫu, sửa theo máy bạn.
+
+```powershell
+cd android
+powershell -ExecutionPolicy Bypass -File build.ps1            # ra build/uc.apk
+powershell -ExecutionPolicy Bypass -File build.ps1 -Install   # build rồi cài qua adb lên điện thoại đang cắm
+```
+
+Khoá ký là khoá debug, tự tạo lần đầu, chỉ để cài tay, không dùng để lên store.
+
+**Nối app với UC trên laptop** (qua Tailscale, chỉ máy trong tailnet của bạn thấy):
+
+1. Cài Tailscale trên laptop và điện thoại, cùng một tài khoản. UC tự mở thêm cổng trên địa chỉ Tailscale của laptop.
+2. Lần chạy đầu UC tự sinh khoá điện thoại ở `school/secret/phone_key.txt` (không chia sẻ, không đưa lên đâu). Yêu cầu không có khoá nhận 404.
+3. Cắm dây, gửi địa chỉ cho app một lần (app lưu lại, gọi là `uc_lan`):
+
+```powershell
+adb shell am start -n vn.uc.app/.MainActivity --es uc_lan "http://<địa chỉ Tailscale của laptop>:8320/?k=<khoá trong phone_key.txt>"
+```
+
+**Quyền app sẽ xin**, và mỗi quyền để làm gì:
+
+| Quyền | Để làm gì |
+|---|---|
+| Thông báo | Hiện nhắc hạn, lịch học, lịch thi của UC |
+| Hoạt động thể chất | Đọc cảm biến bước chân trong lượt đi bộ iCTSV |
+| Truy cập dữ liệu sử dụng | Biết lúc iCTSV bật / tắt dịch vụ đi bộ |
+| Định vị | Đo chặng đường trong lượt đi bộ; chống muộn so vị trí ngay trên máy, chỉ gửi về cờ đã rời chỗ / đã tới toà, toạ độ không rời điện thoại |
 
 ## Chạy thử
 

@@ -58,10 +58,12 @@ INST = {'com.facebook.katana', 'com.facebook.orca', 'com.bk.ctsv', 'uni.hust.ehu
 
 
 def test_luat_4_che_do_cua_chu():
-    # (chủ 04/11) mặc định: chỉ MXH; tập trung: + trình duyệt, store, game, chừa YouTube; trưa: + YouTube, chừa Messenger;
+    # (chủ 04/11, 05/11) mặc định: chỉ MXH; tập trung: + YouTube, store, game; trưa: như tập trung, chừa Messenger;
     # đêm: tất, kể cả Messenger. Luôn chừa LinkedIn, iCTSV, eHUST, ngân hàng.
     g = ('com.game.x',)
     assert pl.wanted('default', INST, g) == {'com.facebook.katana', 'com.google.android.youtube'}   # (04/11) app YouTube gốc khoá, chừa ReVanced
+    rv = 'app.revanced.android.youtube'   # (chủ 05/11) ReVanced: chừa ở mặc định, khoá từ tập trung trở lên
+    assert rv not in pl.wanted('default', INST | {rv}, g) and rv in pl.wanted('focus', INST | {rv}, g)
     # (04/11) trình duyệt thường không tạm dừng (chặn tên miền qua laptop); Tor mới khoá cứng
     assert pl.wanted('focus', INST, g) == {'com.facebook.katana', 'com.google.android.youtube', 'com.android.vending', 'com.game.x'}
     assert 'org.torproject.torbrowser' in pl.wanted('focus', INST | {'org.torproject.torbrowser'}, g)

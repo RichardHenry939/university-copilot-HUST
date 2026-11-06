@@ -1177,8 +1177,9 @@ class H(BaseHTTPRequestHandler):
                     if isinstance(tt, dict) and isinstance(tt.get("events"), list):
                         t0 = _dt.datetime.now(nap.TZ).date().isoformat(); free, took = nap.spans(tt["events"], t0)
                         hm0 = _dt.datetime.now(nap.TZ).strftime("%H:%M")
-                        tt = dict(tt, nap={"date": t0, "spans": free, "why": "; ".join(took), "woke": nap.woke(t0),
-                                           "can_wake": not nap.woke(t0) and nap.can_wake(free, hm0)})   # (05/11) nút "Tôi đã dậy"
+                        wm0 = nap.wake_min(tt["events"], t0)
+                        tt = dict(tt, nap={"date": t0, "spans": free, "why": "; ".join(took), "woke": nap.woke(t0), "wake_min": wm0,
+                                           "can_wake": not nap.woke(t0) and nap.can_wake(free, hm0, wm0)})   # (05/11) nút "Tôi đã dậy"
                         import late; tt = dict(tt, prep=late.prep_spans(tt["events"], t0))   # (05/11) chống muộn: tím đi học
                 except Exception as e: print("nap view:", e)
                 return self._send(200, tt)
@@ -1245,6 +1246,9 @@ class H(BaseHTTPRequestHandler):
                 import phone_lock
                 cu = phone_lock.class_until()
                 return self._send(200, {"until": cu.isoformat(timespec="minutes") if cu else None})
+            if u.path == "/api/focus-music":   # (v1.00.65, chủ 05/11) danh sách nhạc tập trung: phát ẩn trong UC, không có link ra youtube.com
+                try: return self._send(200, {"items": json.loads((HERE / "focus_music.json").read_text(encoding="utf-8"))})
+                except Exception: return self._send(200, {"items": []})
             if u.path == "/api/wallet":   # (v1.00.42 W8) ví thời gian: số dư, phiên đang chạy, thống kê
                 import wallet, datetime as _dt
                 with wallet.lock:
@@ -1465,7 +1469,7 @@ class H(BaseHTTPRequestHandler):
                 phone_lock.log("PhoneClassLock: mở sớm bằng MSSV")
                 threading.Thread(target=phone_lock.tick, daemon=True).start()   # mở ngay, không chờ lượt sau
                 return self._send(200, {"ok": True})
-            if u.path == "/api/nap-wake":   # (chủ 05/11) "Tôi đã dậy": kết thúc giờ ngủ trưa sớm, chỉ từ 14:30, chỉ khi đã Xác nhận
+            if u.path == "/api/nap-wake":   # (chủ 05/11) "Tôi đã dậy": kết thúc giờ ngủ trưa sớm, chỉ từ giờ bắt đầu khung + 90 phút, chỉ khi đã Xác nhận
                 import nap
                 b = json.loads(self._body(1024) or b"{}")
                 if b.get("confirmed") is not True: return self._send(200, {"ok": False, "loi": "Cần bấm Xác nhận trước."})
@@ -1492,6 +1496,10 @@ class H(BaseHTTPRequestHandler):
                             if __import__("focus_rules").walk_red(now): raise ValueError("Đang là giờ thể dục: không mở phiên giải trí. Tập xong rồi chơi.")
                             wallet.start_fun(st, now)
                         elif act == "fun_end": wallet.end_fun(st, now)
+                        elif act == "sound":   # (chủ 05/11) âm nền lưu trên UC, mọi tab / máy dùng chung; (v1.00.65) thêm 'yt:<ID>': nhạc YouTube phát ẩn trong UC
+                            val = wallet.sound_value(b.get("value"))
+                            if not val: raise ValueError("Âm nền không hợp lệ.")
+                            st["sound"] = val
                         else: return self._send(400, {"ok": False, "loi": "Thao tác không hợp lệ."})
                     except ValueError as e: return self._send(200, {"ok": False, "loi": str(e)})
                     wallet.save(st)
