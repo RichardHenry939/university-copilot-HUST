@@ -148,4 +148,4 @@ def test_restore_5555_do_cong_qua_mdns(monkeypatch):
     monkeypatch.setattr(pl, 'log', lambda m, now=None: None)
     monkeypatch.setattr(pl.time, 'sleep', lambda s: None)
     assert pl._restore_5555('100.1.2.3:5555') is True
-    assert ('192.168.1.9:40123', ('tcpip', '5555')) in calls
+    assert not any(a[:1] == ('tcpip',) for _, a in calls)   # (06/11) không còn đặt lại 5555

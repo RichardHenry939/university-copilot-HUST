@@ -70,8 +70,16 @@ def build(nt, today=None):
 
     # giờ làm tuần này + 2 tuần gần nhất (sức làm)
     per = done_hours(daily, tasks, start, end)
-    week_hours = sum(per.values())
     prev = done_hours(daily, tasks, start - dt.timedelta(days=14), start - dt.timedelta(days=1))
+    try:   # (06/11, chủ) đồng bộ với ví thời gian: mỗi ngày lấy số lớn hơn giữa giờ việc Done (Notion) và giờ tập trung (ví).
+        # Đi tắt: lấy max chứ không cộng, vì việc Done thường làm ngay trong phiên tập trung (cộng sẽ đếm 2 lần); làm việc ngoài phiên + tập trung việc khác thì bị đếm thiếu.
+        import wallet
+        fm = wallet.focus_by_day()
+        for dd in (per, prev):
+            for d in dd: dd[d] = max(dd[d], fm.get(d.isoformat(), 0) / 60)
+    except Exception as e:
+        print("weekly wallet:", e)
+    week_hours = sum(per.values())
     hist = (sum(prev.values()) + week_hours) / 3 if (sum(prev.values()) + week_hours) > 0 else 0.0
     try:   # 🌗 Chế độ ngày: ⛺ Camp / 💤 Rest
         import daymode

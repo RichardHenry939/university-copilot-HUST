@@ -417,6 +417,7 @@ SYNC_EVERY = 60
 SYNC_PER_ROUND = 3
 PROJECT_MARKERS = (".git", ".gitignore", "library.properties", "package.json", "CMakeLists.txt", ".vscode", "platformio.ini")
 SKIP_FILE = re.compile(r"^(~\$|\.~lock|\.)|\.(tmp|part|crdownload|download|lnk)$|^(desktop\.ini|thumbs\.db)$", re.I)
+ROOT_KEEP = re.compile(r"^(_.*\.md|CLAUDE\.md|AGENTS\.md)$", re.I)   # chỉ áp ở gốc Uni-Documents: file "_*.md" là file kênh của agent, không phải tài liệu môn
 
 def backup_log(it, ok, drive_link, err="", status=None):
     try:
@@ -674,6 +675,8 @@ def uni_files():
             dirs[:] = []; continue
         dirs[:] = [d for d in dirs if not d.startswith(".") and not (rel_root == "" and d.startswith("00 · Inbox"))]
         for f in files:
+            if rel_root == "" and ROOT_KEEP.search(f):   # (05/11) file kênh phối hợp ôn thi ở gốc (_ke-hoach-chung.md, CLAUDE.md): không gom
+                continue
             if not SKIP_FILE.search(f) and (os.path.join(rel_root, f) if rel_root else f).lower() not in exported:
                 yield os.path.join(rel_root, f) if rel_root else f
 
@@ -955,6 +958,21 @@ def _audio_priority_loop():
         time.sleep(5)
 
 
+def focus_loop():
+    """(chủ 07/11) Luật tập trung theo màu đồng hồ (tím / đỏ / vàng tự dừng, hết màu tự tiếp, đổi pha nghỉ, tự bật trước thi) chạy RIÊNG,
+    30 giây/lần, Notion tối đa 10 s. Trước đây nằm cuối alert_loop: gập máy mở lại -> n8n bị đóng băng -> mỗi lần hỏi Notion chờ 120 s
+    -> 12:00 giờ ăn mà khoá tập trung vẫn bật. Đi tắt: hỏi Camp lỗi thì coi như ngày thường (giờ ăn tối 19–20h)."""
+    time.sleep(30)
+    quick = lambda path, body: n8n(path, body, timeout=10)
+    while True:
+        try:
+            import alerts, focus_rules
+            fr = focus_rules.tick(quick, lambda t, x: alerts.notify(t, x, level="nudge", phone_ok=False))
+            if fr: print("focus rules:", fr)
+        except Exception as e: print("focus rules:", e)
+        time.sleep(30)
+
+
 def alert_loop():
     """Mỗi phút: tiết học trước 30/15 phút · hạn nộp mốc 72/48/36/24 giờ · sự kiện leo thang vàng/đỏ/ghim + toast + điện thoại."""
     time.sleep(60)
@@ -978,11 +996,7 @@ def alert_loop():
             try:   # (v1.00.49) tín hiệu phần vàng (giờ ngủ) cho khoá giờ ngủ: buổi học / thi chiếm chỗ nào thì phần vàng mất chỗ đó (nap.py)
                 import nap; nap.write(_npost)
             except Exception as e: print("nap:", e)
-            try:   # (v1.00.49) xanh lá chỉ chạy trên trắng / tím: vào xanh biển / vàng / đỏ thì tự tạm dừng, tím thì nhắc 10 phút/lần
-                import focus_rules
-                fr = focus_rules.tick(_npost, lambda t, x: alerts.notify(t, x, level="nudge", phone_ok=False))
-                if fr: print("focus rules:", fr)
-            except Exception as e: print("focus rules:", e)
+            # (07/11) luật tập trung (focus_rules) đã tách ra focus_loop riêng: vòng này hỏi n8n/Notion, n8n đứng là kẹt hàng phút
             alert_loop.n = getattr(alert_loop, "n", 0) + 1
             if alert_loop.n % 5 == 1: phone_refresh()   # mỗi 5 phút: đối chiếu lịch hẹn ntfy + trang 📱 UC
         except Exception as e: print("alerts:", e)
@@ -1494,6 +1508,13 @@ class H(BaseHTTPRequestHandler):
                         elif act == "focus_end": wallet.end_focus(st, now)
                         elif act == "fun_start":
                             if __import__("focus_rules").walk_red(now): raise ValueError("Đang là giờ thể dục: không mở phiên giải trí. Tập xong rồi chơi.")
+                            # (06/11, chủ) ngày trước thi: phiên tập trung UC TỰ bật (exam_focus) được dừng để giải trí (tối đa 20 phút);
+                            # hết giờ giải trí thì focus_rules.auto_exam tự bật tập trung lại. Phiên bạn tự bật vẫn không huỷ được.
+                            ok_g, more_g = wallet.fun_gate(st, now)   # (07/11) kiểm luật tích luỹ TRƯỚC khi dừng phiên ôn thi
+                            if not ok_g: raise ValueError(f"Lần giải trí trước dùng nhiều: tích luỹ thêm {more_g} phút (tập trung đủ khối) mới mở lần mới.")
+                            a0 = st.get("active")
+                            if a0 and a0.get("type") == "focus" and a0.get("subject") and a0.get("subject") == __import__("exam_focus").subject(now.date().isoformat()):
+                                wallet.end_focus(st, now, at=now, cut='giải trí')
                             wallet.start_fun(st, now)
                         elif act == "fun_end": wallet.end_fun(st, now)
                         elif act == "sound":   # (chủ 05/11) âm nền lưu trên UC, mọi tab / máy dùng chung; (v1.00.65) thêm 'yt:<ID>': nhạc YouTube phát ẩn trong UC
@@ -1833,6 +1854,7 @@ if __name__ == "__main__":
     threading.Thread(target=lambda: __import__("zalo_files").loop(), daemon=True).start()   # (v1.00.36) file tải từ Zalo -> Inbox -> Uni-Documents + Notion
     threading.Thread(target=mail_loop, daemon=True).start()    # 📡 mọi nguồn đúng khung 5 phút, 24 giờ
     threading.Thread(target=alert_loop, daemon=True).start()
+    threading.Thread(target=focus_loop, daemon=True).start()   # (07/11) luật tập trung chạy riêng, không chờ n8n
     threading.Thread(target=lambda: __import__("ictsv_login").loop(), daemon=True).start()   # (v1.00.49) iCTSV trong máy ảo bị đăng xuất -> UC tự đăng nhập lại + báo
     threading.Thread(target=lambda: __import__("phone_lock").loop(), daemon=True).start()   # (v1.00.53) giờ khoá đêm / trưa / tập trung -> tạm khoá app MXH + trình duyệt trong máy ảo
     threading.Thread(target=lambda: __import__("phone_dns").run(), daemon=True).start()   # (04/11) PhoneDNS: chặn web MXH trên điện thoại qua split DNS của Tailscale

@@ -67,7 +67,10 @@ def _focus_on():
     try:
         import wallet
         a = (wallet.load() or {}).get('active') or {}
-        return a.get('type') == 'focus' and (not a.get('paused_at') or wallet.by_user(a))   # UC dừng gỡ khoá; bạn tự dừng giữ khoá
+        if a.get('type') != 'focus': return False
+        if a.get('paused_at'): return wallet.by_user(a)   # UC dừng gỡ khoá; bạn tự dừng giữ khoá
+        import datetime as _d   # (chủ 07/11) quãng nghỉ 5 phút giữa các khối: khoá rơi, hết nghỉ khoá lại
+        return (wallet.progress(wallet.load(), _d.datetime.now(wallet.TZ)) or {}).get('phase') != 'break'
     except Exception: return False
 
 
@@ -119,6 +122,8 @@ def mode(now=None, focus=None, nap=None):
     hm = now.strftime('%H:%M')
     if hm >= '22:00' or hm < '06:00': return 'night'
     if class_until(now): return 'class'   # (05/11) khoá giờ học: cao nhất ban ngày
+    import sleep_tonight
+    if sleep_tonight.lock_until(now): return 'night'   # (chủ 06/11) ngủ bù: khoá như đêm từ sớm
     if _forced_night(now): return 'night'   # (chủ 05/11) khoá đêm tạm cho điện thoại (giờ học cấm dùng điện thoại)
     if (_nap_on(now) if nap is None else nap): return 'nap'
     if (_focus_on() if focus is None else focus): return 'focus'
@@ -164,7 +169,7 @@ def reconnect(now=None, every=600):
     gỡ lỗi bật) -> UC tự thử nối lại mỗi 10 phút. CHỈ gọi 'adb connect' tới địa chỉ Tailscale của điện thoại (phone_apps.json 'adb_addr');
     KHÔNG BAO GIỜ đụng công tắc gỡ lỗi. Gỡ lỗi đang tắt -> connect fail vô hại; chủ bật lại -> trong 10 phút tự nối. Thiếu 'adb_addr' -> bỏ qua."""
     addr = _apps_cfg().get('adb_addr') or ''
-    if not addr or addr in devices(): return None   # chưa cấu hình, hoặc đang nối sẵn
+    if not addr or any(not s.startswith('emulator-') for s in devices()): return None   # chưa cấu hình, hoặc điện thoại đang nối sẵn (5555 hay TLS)
     t = (now or dt.datetime.now(TZ)).timestamp()
     if t - _recon[0] < every: return None            # mới thử dưới 10 phút
     _recon[0] = t
@@ -182,14 +187,13 @@ def _restore_5555(addr):
     Khác Wi-Fi thì mDNS không thấy -> chịu, chờ chủ bật lại. Chỉ dùng máy đã ghép đôi sẵn; không ghép đôi mới, không đụng công tắc nào."""
     rc, out = adb(None, 'mdns', 'services', timeout=15)
     eps = [l.split()[-1] for l in out.splitlines() if '_adb-tls-connect' in l]
+    # (06/11 tối) KHÔNG 'adb tcpip 5555' nữa: lệnh đó khởi động lại adbd trên điện thoại, rớt luôn đường không dây (đo thật 16:58)
+    # và khi gỡ lỗi USB tắt thì 5555 không lên. Laptop đã GHÉP MÃ với Gỡ lỗi không dây (16:52) -> nối thẳng cổng TLS là đủ.
+    if any('_adb-tls-connect' in s for s in devices()): return True   # adb đã tự nối qua mDNS; nối thêm theo IP sẽ thành 2 bản cùng một máy
     for ep in eps:
         adb(None, 'connect', ep, timeout=15)
-        if ep not in devices(): continue
-        adb(ep, 'tcpip', '5555', timeout=15)
-        time.sleep(4)
-        adb(None, 'connect', addr, timeout=15)
-        if addr in devices():
-            log(f'adb: dò cổng gỡ lỗi không dây qua mDNS, đặt lại 5555 -> ok'); return True
+        if ep in devices() or any('_adb-tls-connect' in s for s in devices()):
+            log(f'adb: nối gỡ lỗi không dây qua mDNS ({ep}) -> ok'); return True
     return False
 
 

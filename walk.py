@@ -133,6 +133,25 @@ def slot(events, today, minutes, c=None, after=None):
 
 
 STALE_MOVE_MIN = 90
+MAX_MORNING_MOVES = 3   # (chủ 07/11) khung sáng lùi tối đa 3 lần, lần thứ 4 sang khung 17h
+
+
+def next_after(past, now, today):
+    """Mốc sớm nhất cho khung kế: đã lùi khung sáng quá MAX_MORNING_MOVES lần thì không xếp trước 17:00."""
+    if sum(1 for p in past if p['start'][11:13] < '12') > MAX_MORNING_MOVES:
+        return max(now, dt.datetime.fromisoformat(today + 'T17:00:00+07:00'))
+    return now
+
+
+def _walked_min(day):
+    """(chủ 07/11) Tổng phút đi bộ hôm nay theo các lượt iCTSV điện thoại đo được -> (phút, lúc lượt cuối kết thúc)."""
+    tot, last = 0, None
+    for r in (day or {}).get('runs', []):
+        try:
+            a, b = dt.datetime.fromisoformat(r['start']), dt.datetime.fromisoformat(r.get('end') or r['start'])
+            tot += max(0, (b - a).total_seconds()); last = max(last, b) if last else b
+        except Exception: pass
+    return int(tot // 60), last
 
 
 def need_new_slot(sl, now, app_at):
@@ -155,8 +174,28 @@ def merge_days(ctsv_days, app_days):
     rows = {_d(r.get('DayRun')): dict(r) for r in (ctsv_days or [])}
     for d, a in (app_days or {}).items():
         r = rows.setdefault(d, {'DayRun': d + ' 00:00:00', 'Distance': 0, 'km': 0, 'steps': 0})
-        r['appSteps'], r['appKm'] = a.get('steps', 0), a.get('km', 0)
+        km = a.get('km', 0)
+        r['appSteps'], r['appKm'] = a.get('steps', 0), km if isinstance(km, (int, float)) else None   # lượt điện thoại không GPS: km = None
     return [rows[d] for d in sorted(rows)]
+
+
+def _merge_phone(app, ph):
+    """Gộp lượt từ điện thoại thật (walk_phone.days) vào dạng ngày của app iCTSV {'steps','km','time','runs':[{at,km,steps,dur,pace}]}.
+    Ngày nào điện thoại nhiều bước hơn thì lấy bản điện thoại. Đi tắt: km chỉ có khi điện thoại ghi được GPS; không có thì để trống."""
+    out = dict(app or {})
+    for d, x in (ph or {}).items():
+        if x.get('steps', 0) <= (out.get(d) or {}).get('steps', 0): continue
+        runs, km_all, sec_all = [], 0.0, 0
+        for r in x.get('runs', []):
+            a, b = dt.datetime.fromisoformat(r['start']), dt.datetime.fromisoformat(r.get('end') or r['start'])
+            s = max(0, int((b - a).total_seconds())); km = r.get('km'); sec_all += s
+            if km: km_all += km
+            pace = f"{int(s / km // 60)}:{int(s / km % 60):02d}" if km and km >= .05 else ''
+            runs.append({'at': a.astimezone(TZ).strftime('%H:%M'), 'km': km, 'steps': r.get('steps', 0),
+                         'dur': f"{s // 3600:02d}:{s % 3600 // 60:02d}:{s % 60:02d}", 'pace': pace, 'src': 'phone'})
+        out[d] = {'steps': x['steps'], 'km': round(km_all, 2) if km_all else None, 'time': f"{sec_all // 60}:{sec_all % 60:02d}",
+                  'runs': runs, 'src': 'phone'}
+    return out
 
 
 def view(now=None):
@@ -173,6 +212,7 @@ def view(now=None):
     # (chủ 05/11) số từ điện thoại thật: chỉ các lượt bạn bấm bắt đầu trong iCTSV (walk_phone.py)
     import walk_phone
     wp = walk_phone.load(); ph = walk_phone.days(wp)
+    app = _merge_phone(app, ph)   # (06/11, chủ) tab Fitness "Từng lượt đi" + bảng ngày: hiện cả lượt từ điện thoại (máy ảo đứng từ 04/11)
     steps = {d: max(contest.get(d, 0), man.get(d, 0), (app.get(d) or {}).get('steps', 0), (ph.get(d) or {}).get('steps', 0))
              for d in set(contest) | set(man) | set(app) | set(ph)}
     # lần "đã biết chắc" gần nhất = mới nhất giữa lần đọc app máy ảo và nhịp điện thoại báo về (điện thoại thấy được mọi lượt bấm)
@@ -192,7 +232,9 @@ def view(now=None):
     past = kept.get('past', []) if kept.get('date') == today else []
     if need_new_slot(sl, now, wa.get('at')):
         if sl and sl.get('start') and not sl.get('indoor'): past = past + [{'start': sl['start'], 'end': sl['end']}]
-        sl = slot(ev, today, max(10, math.ceil(tgt / c['steps_per_min'])), c, after=now)
+        # (chủ 07/11) khung sáng lùi tối đa MAX_MORNING_MOVES lần; lần lùi kế tiếp nhảy hẳn sang khung chiều (17h)
+        after = next_after(past, now, today)
+        sl = slot(ev, today, max(10, math.ceil(tgt / c['steps_per_min'])), c, after=after)
         try: sl_file.parent.mkdir(parents=True, exist_ok=True); sl_file.write_text(json.dumps({'date': today, 'slot': sl, 'past': past}), encoding='utf-8')
         except Exception: pass
     done = steps.get(today, 0)
@@ -201,10 +243,14 @@ def view(now=None):
     red0 = bool(mil and not mil['active'] and sl.get('start') and not sl.get('indoor') and not ov)
     # (03/11, chủ) đã đủ bước thì ĐỎ TẮT NGAY (trước đây giữ tới hết khung, chặn tập trung dù đã đi xong).
     # Phần khung đã qua tới lúc đọc thấy đủ (appAt) vẫn là đỏ trên đồng hồ / bản đồ.
-    red = red0 and done < tgt
+    # (chủ 07/11) đi đủ SỐ PHÚT của khung (vd tuần này 20 phút; tính theo lượt iCTSV điện thoại đo được hôm nay) thì khung cũng tự tắt
+    need_min = int((dt.datetime.fromisoformat(sl['end']) - dt.datetime.fromisoformat(sl['start'])).total_seconds() // 60) if sl.get('start') else 0
+    walked_min, walked_at = _walked_min(ph.get(today))
+    by_min = bool(need_min) and walked_min >= need_min
+    red = red0 and done < tgt and not by_min
     cut = sl.get('end') if red0 else None
-    if red0 and not red and wa.get('at'):
-        a = dt.datetime.fromisoformat(wa['at']); a = a if a.tzinfo else a.replace(tzinfo=TZ)
+    if red0 and not red and (wa.get('at') or walked_at):
+        a = walked_at if by_min and walked_at else dt.datetime.fromisoformat(wa['at']); a = a if a.tzinfo else a.replace(tzinfo=TZ)
         cut = min(dt.datetime.fromisoformat(sl['end']), max(a, dt.datetime.fromisoformat(sl['start']))).isoformat(timespec='minutes')
     # mọi đoạn đỏ hôm nay (đã qua + khung hiện tại) cho đồng hồ và bản đồ mặt trận
     red_spans = [[p['start'], p['end']] for p in past if mil and not mil['active'] and not ov] + \

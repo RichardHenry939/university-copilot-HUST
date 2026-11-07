@@ -7,7 +7,7 @@ Xanh lá dừng trước mọi màu khác, trừ trắng (mục tiêu chính, kh
 - vàng (giờ ngủ đêm 22–6h, phần ngủ trưa còn lại) -> (chủ 05/11) UC KẾT THÚC phiên (chốt phần đã tập trung).
 - đỏ (khung thể dục UC xếp, đang đi bộ iCTSV) -> UC DỪNG BẮT BUỘC: gỡ chặn (máy tính + máy ảo), kể cả khi bạn đang tự dừng;
   hết khung thì (chủ 05/11) TỰ TIẾP TỤC. Phiên giải trí (tiêu ví) đang chạy thì kết thúc hẳn, chỉ trừ phút đã dùng.
-- tím (ăn sáng 7:30–8:00, ăn trưa 12–13h, ăn tối 19–20h / Camp 17:30–18:30) -> (chủ 05/11) UC tự
+- tím (ăn sáng 6:30–7:30 (chủ 07/11), ăn trưa 12–13h, ăn tối 19–20h / Camp 17:30–18:30) -> (chủ 05/11) UC tự
   tạm dừng, hết giờ tím thì tự tiếp tục (trước đây: chỉ nhắc mỗi 10 phút).
 Gọi mỗi phút trong copilot_app.alert_loop.
 Đi tắt: giờ ăn chép lại lần thứ 3 (ui/index.html, ui/widget.html, đây) — sửa lịch ăn thì sửa cả ba; chưa xét ngoại khoá
@@ -19,7 +19,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 STATE = HERE / 'school' / 'focus_rules.json'
 TZ = dt.timezone(dt.timedelta(hours=7))
-MEALS = {'ăn sáng': ('07:30', '08:00'), 'ăn trưa': ('12:00', '13:00'), 'ăn tối': ('19:00', '20:00')}
+BREAKFAST_WEEKEND = ('06:30', '08:00')   # (chủ 07/11) T7, CN
+MEALS = {'ăn sáng': ('06:30', '07:30'), 'ăn trưa': ('12:00', '13:00'), 'ăn tối': ('19:00', '20:00')}
 DINNER_CAMP = ('17:30', '18:30')
 _camp = {'day': None, 'v': False, 't': 0}
 
@@ -45,6 +46,8 @@ def color_now(post, now):
         if e.get('kind') in ('Class', 'Exam') and 'T' in st and st[:10] == today and st[11:16] <= hm < en[11:16] and 'NGHỈ' not in str(e.get('title') or ''):
             return 'blue', f"giờ {'thi' if e.get('kind') == 'Exam' else 'học'}: {e.get('title')} ({st[11:16]}–{en[11:16]})"
     if hm >= '22:00' or hm < '06:00': return 'yellow', 'giờ ngủ đêm (22:00–06:00)'
+    import sleep_tonight
+    if sleep_tonight.lock_until(now): return 'yellow', 'ngủ bù tối nay'   # (06/11) kết thúc phiên tập trung (hết nhạc, hết chuông); chặn do tick() giữ
     free, _ = nap.spans(ev, today)
     for a, b in free:
         if a <= hm < b: return 'yellow', f'giờ ngủ trưa ({a}–{b})'
@@ -66,6 +69,7 @@ def color_now(post, now):
     except Exception as e: print('focus_rules late:', e)
     meals = dict(MEALS)
     if camp_today(post, today): meals['ăn tối'] = DINNER_CAMP
+    if dt.date.fromisoformat(today).weekday() >= 5: meals['ăn sáng'] = BREAKFAST_WEEKEND   # (chủ 07/11) T7, CN nhà không nấu sáng
     for k, (a, b) in meals.items():
         if a <= hm < b: return 'purple', f'giờ {k} ({a}–{b})'
     return 'white', ''
@@ -82,6 +86,7 @@ def walk_red(now):
 
 EXAM_FOCUS_MIN = 175   # 6 khối 25 phút + 5 lượt nghỉ 5 phút
 EXAM_FOCUS_HOURS = ('06:00', '22:00')
+EXAM_OFF = HERE / 'school' / 'exam_focus_off.json'   # (chủ 06/11) nghỉ tự bật tập trung một ngày
 
 
 def auto_exam(post, notify, now):
@@ -91,6 +96,9 @@ def auto_exam(post, notify, now):
     if not EXAM_FOCUS_HOURS[0] <= now.strftime('%H:%M') < EXAM_FOCUS_HOURS[1]: return None
     subj = exam_focus.subject(now.date().isoformat())
     if not subj: return None
+    try:   # (chủ 06/11) nghỉ ốm / đi khám: school/exam_focus_off.json {"date": "YYYY-MM-DD"} -> hôm đó không tự bật; ngày khác như cũ
+        if json.loads(EXAM_OFF.read_text(encoding='utf-8')).get('date') == now.date().isoformat(): return None
+    except Exception: pass
     if color_now(post, now)[0] not in ('white', 'blue'): return None
     with wallet.lock:
         st = wallet.load()
@@ -101,6 +109,34 @@ def auto_exam(post, notify, now):
 
 
 def tick(post, notify, now=None):
+    """(06/11) Trong khung ngủ bù: sau luật thường, giữ tín hiệu chặn của máy tính tới giờ hết (không cần phiên tập trung)."""
+    r = _tick(post, notify, now)
+    import sleep_tonight, wallet
+    t = (now or dt.datetime.now(TZ)).astimezone(TZ); u = sleep_tonight.lock_until(t)
+    if u: wallet._signal(True, u, t)
+    return r
+
+
+def _phase_sync(st, now):
+    """(chủ 07/11) Đổi pha trong phiên tập trung: vào quãng nghỉ 5 phút -> gỡ chặn + báo "Đã bắt đầu nghỉ";
+    vào khối tập trung -> chặn lại + báo "Đã bắt đầu tập trung". Gọi trong wallet.lock, st là bản vừa load (tự lưu khi đổi).
+    -> (tiêu đề, nội dung) để báo, hoặc None. Đi tắt: tick 1 phút/lần nên pha đổi trễ tối đa ~1 phút; khoá điện thoại theo vòng của phone_lock."""
+    import wallet
+    a = st['active']; p = wallet.progress(st, now)
+    if not p or p['phase'] not in ('focus', 'break'): return None
+    key = f"{p['phase']}{p['index']}"
+    prev = a.get('phase_seen'); a['phase_seen'] = key
+    if prev == key: return None
+    wallet.save(st)
+    if p['phase'] == 'break':
+        wallet._signal(False, None, now)
+        return ('UC · Đã bắt đầu nghỉ', f"Nghỉ {p['phase_min']} phút, đã gỡ chặn. Hết nghỉ UC tự chặn lại.")
+    wallet._signal(True, (now + dt.timedelta(seconds=wallet._left_s(a, now))).isoformat(timespec='seconds'), now)
+    if prev is None and p['index'] == 0: return None   # mới bắt đầu phiên: đã có thông báo bắt đầu riêng
+    return ('UC · Đã bắt đầu tập trung', f"Khối {p['phase_min']} phút, đã chặn lại.")
+
+
+def _tick(post, notify, now=None):
     """(chủ 05/11) Luật mới:
     - TÍM (giờ ăn, đang đi bộ iCTSV) và ĐỎ (khung thể dục): UC tự tạm dừng (gỡ chặn) và hết màu đó thì TỰ TIẾP TỤC.
     - VÀNG (giờ ngủ đêm / ngủ trưa còn lại): UC KẾT THÚC luôn phiên (chốt phút / khối đã có, không để phiên cũ treo).
@@ -111,10 +147,12 @@ def tick(post, notify, now=None):
     with wallet.lock:
         st = wallet.load(); had = st.get('active')
         wallet.view(st, now)   # phiên hết giờ thì chốt ngay, không chờ có tab mở (nếu không ngày trước thi sẽ kẹt, không tự bật lại được)
-        if had and not st.get('active'): wallet.save(st)
+        if had: wallet.save(st)   # (07/11) lưu cả khi phiên còn chạy: view() có thể vừa cộng khối 25 phút vào ví
         a = st.get('active') or {}
         if a.get('type') not in ('focus', 'fun'): a = None
         elif wallet.by_user(a): wallet.hold_signal(st, now)   # bạn tự bấm dừng: gia hạn chặn mỗi phút
+        phase_msg = _phase_sync(st, now) if a and a.get('type') == 'focus' and not a.get('paused_at') else None
+    if phase_msg: notify(*phase_msg)
     if a is None: return auto_exam(post, notify, now)
     color, why = color_now(post, now)
     if color == 'yellow':   # giờ ngủ: chốt phiên tập trung (giải trí không đụng tới — giờ ngủ đã có khoá riêng)

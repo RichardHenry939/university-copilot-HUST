@@ -96,7 +96,7 @@ const Q = new URLSearchParams(location.search), SCREEN = Q.get('screen') || 'lap
 const SLEEP_H = 22, WAKE_H = 6, TZ = 7 * 36e5;
 // (02/11, chủ) ngủ trưa = vàng; ăn uống = tím (sinh hoạt cá nhân, không phải giờ ngủ). Giống ui/index.html — sửa cả hai chỗ.
 let NAP_SPANS = [['13:00', '15:00']];   // ngủ trưa = khung 2 giờ, có buổi học / thi chen vào thì dời (nap.py); khoá giờ ngủ khoá đúng phần này
-const hm2h = s => +s.slice(0, 2) + +s.slice(3, 5) / 60, meals =camp => [[7.5, 8], [12, 13], camp ? [17.5, 18.5] : [19, 20]];
+const hm2h = s => +s.slice(0, 2) + +s.slice(3, 5) / 60, meals =camp => [[6.5, [6, 0].includes(new Date(Date.now() + TZ).getUTCDay()) ? 8 : 7.5], [12, 13], camp ? [17.5, 18.5] : [19, 20]];
 const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const p2 = n => String(n).padStart(2, '0');
 const vn = ms => new Date(ms + TZ), vnDay = ms => vn(ms).toISOString().slice(0, 10), vnHM = ms => { const v = vn(ms); return p2(v.getUTCHours()) + ':' + p2(v.getUTCMinutes()); };
@@ -108,8 +108,10 @@ let REV = [], DL = null;   // REV: "Ôn thi định kỳ hằng ngày môn X" (k
 let CAMP = false;   // ⛺ Camp hôm nay (học ở thư viện) -> ăn tối 17:30–18:30
 async function loadDl() { try { const t = await j('/api/today'); DL = (t.deadlines || []).filter(x => !x.overdue && x.due); CAMP = t.mode === 'Camp'; } catch (e) {} render(); }
 async function loadEv() { try { const t = await j('/api/timetable/all'); EV = (t && t.events) || []; REV = (t && t.review) || []; if (t && t.nap && Array.isArray(t.nap.spans)) NAP_SPANS = t.nap.spans; OFF = false; } catch (e) { OFF = true; } render(); }
+let FOCUSING = false;   // (07/11) đang có phiên tập trung
 let BAL = null, STEP = null;   // (03/11) số dư ví + bước hôm nay cho dải tóm tắt
-async function loadSp() { try { const w = await j('/api/wallet'); const a = w.active; SP = { spans: w.spans || [], live: !!(a && a.type === 'focus' && !a.paused_at) }; BAL = w.balance; } catch (e) {} }
+async function loadSp() { try { const w = await j('/api/wallet'); const a = w.active; SP = { spans: w.spans || [], live: !!(a && a.type === 'focus' && !a.paused_at) }; BAL = w.balance;
+  const fz = !!(a && a.type === 'focus' && !a.paused_at); if (fz !== FOCUSING) { FOCUSING = fz; layout(); } } catch (e) {} }   // (chủ 07/11) đang tập trung (không tạm dừng, như desktop_icons) -> bố cục to
 let RED = null, REDS = [];   // thể dục = đỏ (khung đi bộ UC xếp, chưa bị AI xoá)
 async function loadWalk() { try { const w = await j('/api/walk'); RUNS = ((w.app || {})[w.today] || {}).runs || []; RED = w.red && w.slot && w.slot.start ? w.slot : null;
   REDS = (w.redSpans || (RED ? [[RED.start, RED.end]] : [])).map(x => [Date.parse(x[0]), Date.parse(x[1])]);   // (03/11) mọi đoạn đỏ hôm nay, kể cả khung đã bị dời
@@ -120,7 +122,7 @@ async function loadMon() { try { const w = await j('/api/widget'); MON = +Q.get(
 
 // ---- bố cục theo màn hình ----
 function layout() {
-  const g = $('#grp'), mode = SCREEN === 'ext' ? 'ext' : MON > 1 ? 'lap2' : 'lap1';
+  const g = $('#grp'), mode = SCREEN === 'ext' ? 'ext' : MON > 1 || FOCUSING ? 'lap2' : 'lap1';   // (chủ 07/11) 1 màn + đang tập trung (icon đã ẩn) -> bố cục to như màn laptop khi cắm màn phụ
   g.className = 'grp m-' + mode; g.dataset.mode = mode; g.removeAttribute('style'); $('#clk').removeAttribute('style');
   if (mode === 'lap1') {   // chỗ bạn khoanh (02/11): khoảng x 28–41%, y 0–42% của màn laptop
     // (03/11, chủ: dài lố, đè icon) ô được cấp ~x 25–41%, y 1–50% (chủ nới tới trên hàng icon thứ 5) -> khoá cả bề cao (&h= để chỉnh)

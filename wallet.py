@@ -20,6 +20,7 @@ FILE = HERE / 'school' / 'wallet.json'
 SIGNAL_CFG = HERE / 'school' / 'secret' / 'focus_signal.json'
 TZ = dt.timezone(dt.timedelta(hours=7))
 FOCUS, BREAK, BLOCK_REWARD, DEADLINE_REWARD = 25, 5, 5, 15
+FUN_MAX = 20   # (06/11, chủ) mỗi lần giải trí tối đa 20 phút
 lock = threading.Lock()
 
 
@@ -156,7 +157,8 @@ def end_focus(st, now, at=None, cut='hết ngày'):
     if not a or a['type'] != 'focus': raise ValueError('Không có phiên tập trung nào.')
     p = progress(st, at or now)
     if not p['done'] and not at: raise ValueError('Đã vào phiên tập trung thì không huỷ được. Phiên tự kết thúc khi hết giờ.')
-    blocks, reward = p['blocks_done'], p['blocks_done'] * BLOCK_REWARD
+    blocks = p['blocks_done']
+    reward = max(0, blocks - a.get('credited', 0)) * BLOCK_REWARD   # (07/11) khối đã cộng ngay lúc xong (credit_blocks) không cộng lại
     st['sessions'].append({'id': a['id'], 'start': a['start'], 'end': _iso(at or now), 'total': a['total'], 'subject': a['subject'],
                            'focus_min': p['focus_s'] // 60, 'blocks': blocks, 'pauses': a.get('pauses', []), **({'cut': cut} if at else {})})
     if reward: _add(st, 'focus', reward, now, ref=a['id'], note=f'{blocks} khối 25 phút' + (f' · {a["subject"]}' if a['subject'] else '') + (f' · {cut}' if at else ''))
@@ -165,9 +167,35 @@ def end_focus(st, now, at=None, cut='hết ngày'):
     return {'blocks': blocks, 'reward': reward}
 
 
+def credit_blocks(st, now):
+    """(chủ 07/11) cộng +5 vào ví NGAY khi xong mỗi khối 25 phút, không chờ hết phiên (phiên ngày ôn thi dài, bị giờ ăn kéo giãn
+    -> số dư đứng yên hàng giờ, lệch luật tích luỹ của fun_gate). Đếm trong a['credited']; end_focus chỉ cộng phần còn lại."""
+    a = st['active']
+    if not a or a['type'] != 'focus': return 0
+    done, had = progress(st, now)['blocks_done'], a.get('credited', 0)
+    if done <= had: return 0
+    _add(st, 'focus', (done - had) * BLOCK_REWARD, now, ref=a['id'], note=f'khối 25 phút thứ {done}' + (f' · {a["subject"]}' if a['subject'] else ''))
+    a['credited'] = done
+    return done - had
+
+
+def fun_gate(st, now):
+    """(chủ 07/11) chống lạm dụng ví: lần giải trí đầu trong ngày dùng ngay; từ lần 2 phải TÍCH LUỸ thêm (sau lúc lần trước kết thúc)
+    ít nhất 1/2 số phút đã dùng ở lần trước. -> (được không, cần thêm bao nhiêu phút). Phút tích luỹ = phút cộng vào ví (khối tập trung,
+    hoàn tất hạn), không tính thu hồi. Đi tắt: "lần trước" chỉ xét trong cùng ngày (GMT+7)."""
+    day = now.astimezone(TZ).date()
+    last = next((x for x in reversed(st['ledger']) if x['kind'] == 'fun' and _t(x['at']).astimezone(TZ).date() == day), None)
+    if not last: return True, 0
+    need = math.ceil(-last['min'] / 2)
+    got = sum(x['min'] for x in st['ledger'] if x['min'] > 0 and x['kind'] not in ('fun', 'revoke') and _t(x['at']) > _t(last['at']))
+    return got >= need, max(0, need - got)
+
+
 def start_fun(st, now):
     if st['active']: raise ValueError('Đang có một phiên chạy.')
-    cap = balance(st)
+    ok, more = fun_gate(st, now)
+    if not ok: raise ValueError(f'Lần giải trí trước dùng nhiều: tích luỹ thêm {more} phút (tập trung đủ khối) mới mở lần mới.')
+    cap = min(balance(st), FUN_MAX)
     if cap <= 0: raise ValueError('Ví đang hết phút. Tập trung đủ khối hoặc hoàn tất hạn để có thêm.')
     st['active'] = {'type': 'fun', 'id': uuid.uuid4().hex[:10], 'start': _iso(now), 'cap': cap}
     return st['active']
@@ -209,6 +237,18 @@ def stats(st, now):
         out[k] = {'focus_min': sum(x['focus_min'] for x in ses), 'blocks': sum(x['blocks'] for x in ses), 'sessions': len(ses),
                   'earned': sum(x['min'] for x in led if x['min'] > 0 and x['kind'] != 'revoke'),
                   'spent': -sum(x['min'] for x in led if x['kind'] == 'fun')}
+    return out
+
+
+def focus_by_day(st=None, now=None):
+    """(06/11, chủ) phút tập trung theo ngày {'YYYY-MM-DD': phút}, gồm cả phiên đang chạy — để thẻ "giờ đã làm", "giờ tuần này",
+    đánh giá tuần (daymode / weekly) đọc chung số với ví. Phiên tính vào ngày bắt đầu (day_cut đã cắt phiên qua 00:00)."""
+    st = st or load(); now = now or dt.datetime.now(TZ); out = {}
+    for x in st.get('sessions', []):
+        k = _t(x['start']).astimezone(TZ).date().isoformat(); out[k] = out.get(k, 0) + x.get('focus_min', 0)
+    p = progress(st, now)
+    if p:
+        k = _t(st['active']['start']).astimezone(TZ).date().isoformat(); out[k] = out.get(k, 0) + p['focus_s'] // 60
     return out
 
 
@@ -257,6 +297,7 @@ def sound_value(v):
 def view(st, now):
     """Trạng thái cho giao diện. Phiên đã hết giờ (hoặc giải trí hết số dư, hoặc đã sang ngày mới) thì tự kết thúc ở đây."""
     day_cut(st, now)
+    credit_blocks(st, now)   # (07/11) cộng ngay từng khối 25 phút
     a = st['active']
     if a and a['type'] == 'focus' and progress(st, now)['done']: end_focus(st, now)
     elif a and a['type'] == 'fun' and (now - _t(a['start'])).total_seconds() >= a['cap'] * 60: end_fun(st, now)
@@ -265,5 +306,6 @@ def view(st, now):
     if a and a['type'] == 'focus': act = {**a, **progress(st, now)}
     elif a: act = {**a, 'left_s': max(0, int(a['cap'] * 60 - (now - _t(a['start'])).total_seconds()))}
     return {'balance': balance(st), 'active': act, 'stats': stats(st, now), 'spans': spans_today(st, now), 'recent': st['ledger'][-12:][::-1],
+            'fun_need': fun_gate(st, now)[1],   # (07/11) còn phải tích luỹ bao nhiêu phút mới mở được lần giải trí kế
             'sound': sound_value(st.get('sound', 'off')),   # (chủ 05/11) âm nền dùng chung mọi tab / máy; chưa chọn = tắt
             'rules': {'focus': FOCUS, 'break': BREAK, 'block_reward': BLOCK_REWARD, 'deadline_reward': DEADLINE_REWARD}}

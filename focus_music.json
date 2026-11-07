@@ -1,12 +1,14 @@
 [
   {"id": "tRsQsTMvPNg", "title": "Claude Radio", "kind": "tập trung"},
-  {"id": "WLWJy1eXX2c", "title": "Piano cổ điển 8 giờ (Chopin, Debussy, Mozart, Bach)", "kind": "piano", "hours": 8.4},
-  {"id": "HIUYSqXSuwk", "title": "Chopin 3 giờ", "kind": "piano", "hours": 3.2},
-  {"id": "lML14o7C6r8", "title": "Beethoven: 32 sonata piano (Kempff)", "kind": "piano", "hours": 10.0},
-  {"id": "IGM1T0t7qts", "title": "Debussy: piano solo", "kind": "piano", "hours": 1.8},
-  {"id": "RHD4lC7SkoM", "title": "Bach cho học tập", "kind": "cổ điển", "hours": 2.0},
-  {"id": "51Gm5q6Z07E", "title": "Mozart 4 giờ", "kind": "cổ điển", "hours": 4.1},
-  {"id": "fLoWzp8gRK4", "title": "Cổ điển cho học tập 3 giờ", "kind": "cổ điển", "hours": 3.0},
   {"id": "sjkrrmBnpGE", "title": "Ambient không lời 4 giờ", "kind": "không lời", "hours": 4.0},
+  {"id": "YQR6lC-s6Yc", "title": "Rain: mưa nhẹ 8 giờ", "kind": "tiếng mưa", "hours": 8.0},
+  {"id": "u9p-Wf7Qh_c", "title": "Chinese Instrumental: đàn tranh 3 giờ", "kind": "không lời", "hours": 2.9},
+  {"id": "Ie5GGRkjSXE", "title": "Nhạc không lời cho tập trung 4 giờ", "kind": "không lời", "hours": 4.0},
+  {"id": "RHD4lC7SkoM", "title": "Bach cho học tập", "kind": "cổ điển", "hours": 2.0},
+  {"id": "Fd_Ey5FcrIQ", "title": "Chopin 3 giờ", "kind": "piano", "hours": 3.3},
+  {"id": "YceC7jrzp-M", "title": "Sonata piano 2,5 giờ (Beethoven, Chopin, Schubert)", "kind": "piano", "hours": 2.5},
+  {"id": "vfJnIqYaoEg", "title": "Debussy và Ravel: piano 2 giờ", "kind": "piano", "hours": 2.1},
+  {"id": "il6RqTSw0tY", "title": "Mozart 4 giờ", "kind": "cổ điển", "hours": 4.1},
+  {"id": "R0kl9xFVSnI", "title": "Cổ điển cho học tập 3 giờ", "kind": "cổ điển", "hours": 3.0},
   {"id": "jXAEIWcGXwE", "title": "Radio cổ điển (trực tiếp)", "kind": "cổ điển"}
 ]

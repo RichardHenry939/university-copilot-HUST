@@ -7,6 +7,11 @@ import pytest
 import focus_rules as F
 import wallet as W
 
+
+@pytest.fixture(autouse=True)
+def _no_exam_off(tmp_path, monkeypatch):   # (06/11) không đọc file tắt tập trung thật
+    monkeypatch.setattr(F, 'EXAM_OFF', tmp_path / 'off.json')
+
 T0 = dt.datetime(2026, 11, 3, 17, 0, tzinfo=W.TZ)
 m = lambda k: dt.timedelta(minutes=k)
 
@@ -157,3 +162,17 @@ def test_gio_an_khi_ban_tu_dung_van_giu_nguyen(env):
     color['v'] = ('purple', 'giờ ăn tối (19:00–20:00)')
     F.tick(None, notify, T0 + m(10))
     assert W.by_user(W.load()['active']) and not sent
+
+
+def test_doi_pha_nghi_go_chan_va_bao(monkeypatch):   # (chủ 07/11)
+    sig = []
+    monkeypatch.setattr(W, '_signal', lambda f, u=None, n=None: sig.append(f))
+    monkeypatch.setattr(W, 'save', lambda st, path=None: None)
+    st = W.empty(); t0 = dt.datetime(2026, 11, 7, 8, 0, tzinfo=W.TZ)
+    W.start_focus(st, 55, 'x', t0)                                    # 25 tập trung + 5 nghỉ + 25 tập trung
+    assert F._phase_sync(st, t0 + dt.timedelta(minutes=1)) is None    # đầu phiên: không báo thêm
+    m = F._phase_sync(st, t0 + dt.timedelta(minutes=26))
+    assert m[0] == 'UC · Đã bắt đầu nghỉ' and sig[-1] is False
+    assert F._phase_sync(st, t0 + dt.timedelta(minutes=27)) is None   # cùng pha: không báo lặp
+    m = F._phase_sync(st, t0 + dt.timedelta(minutes=31))
+    assert m[0] == 'UC · Đã bắt đầu tập trung' and sig[-1] is True

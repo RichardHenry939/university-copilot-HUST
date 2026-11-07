@@ -72,7 +72,7 @@ def main():
     try: st = json.loads(STATE.read_text(encoding='utf-8-sig'))
     except Exception: st = {'mode': 'online', 'fails': 0, 'last_restart': 0}
     if online():
-        if st['mode'] == 'offline':
+        if st['mode'] == 'offline' or FLAG.exists():   # (07/11) máy thức dậy: 2 lượt chạy giành nhau -> cờ còn mà trạng thái ghi 'online', n8n kẹt pause cả buổi
             FLAG.unlink(missing_ok=True); ok = docker('unpause', 'n8n')
             log(f'CÓ MẠNG lại sau {st["fails"]} phút mất -> gỡ cờ OFFLINE, n8n chạy tiếp ({"ok" if ok else "không cần/không được"})')
         st.update(mode='online', fails=0)
@@ -93,5 +93,13 @@ def main():
     STATE.write_text(json.dumps(st, ensure_ascii=False), encoding='utf-8')
 
 
+def _single():
+    """(07/11) Gập máy mở lại: Task Scheduler bù các lượt lỡ -> 2 bản chạy cùng lúc, ghi đè trạng thái nhau (n8n kẹt pause cả buổi).
+    Mutex Windows: bản sau thấy đang có bản chạy thì thoát luôn."""
+    import ctypes
+    h = ctypes.windll.kernel32.CreateMutexW(None, False, 'Global\\UC_netguard')
+    return h and ctypes.windll.kernel32.GetLastError() != 183   # 183 = ERROR_ALREADY_EXISTS
+
+
 if __name__ == '__main__':
-    main()
+    if _single(): main()

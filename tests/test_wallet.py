@@ -80,8 +80,9 @@ def test_giai_tri_tru_dung_so_phut_va_khong_vuot_so_du():
     W.start_fun(st, T0)
     W.end_fun(st, T0 + m(9) + dt.timedelta(seconds=10))   # 9 phút 10 giây -> làm tròn lên 10
     assert W.balance(st) == 5
+    W._add(st, 'focus', 5, T0 + m(15))              # (07/11) luật tích luỹ: lần 2 cần thêm >= 1/2 lần trước (10 -> 5)
     W.start_fun(st, T0 + m(20))
-    v = W.view(st, T0 + m(40))                      # quá số dư -> tự dừng, chỉ trừ 5
+    v = W.view(st, T0 + m(40))                      # quá số dư -> tự dừng, chỉ trừ đúng số dư (10)
     assert v['active'] is None and v['balance'] == 0
 
 

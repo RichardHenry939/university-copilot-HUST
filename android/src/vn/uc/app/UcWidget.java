@@ -179,6 +179,16 @@ public class UcWidget extends AppWidgetProvider {
         }
     }
 
+    /** Vẽ phần giao của hai danh sách khoảng giờ ["HH:MM","HH:MM"]. */
+    private static void lime(Canvas cv, JSONArray f, JSONArray h, int argb, float cap) {
+        for (int i = 0; f != null && i < f.length(); i++) for (int j = 0; h != null && j < h.length(); j++) {
+            JSONArray x = f.optJSONArray(i), y = h.optJSONArray(j);
+            if (x == null || y == null || x.length() != 2 || y.length() != 2) continue;
+            float s = Math.max(hh(x.optString(0)), hh(y.optString(0))), e = Math.min(hh(x.optString(1)), hh(y.optString(1)));
+            if (e > s) sector(cv, s, e, argb, cap);
+        }
+    }
+
     private static int a(double alpha, int rgb) { return ((int) Math.round(alpha * 255) << 24) | (rgb & 0xFFFFFF); }
 
     static Bitmap clock(Context c, JSONObject w, Calendar now) {
@@ -194,13 +204,14 @@ public class UcWidget extends AppWidgetProvider {
         // thứ tự lớp = luật tranh chấp: xám lãng phí < tím ăn < xanh lá tập trung < vàng ngủ < đỏ thể dục < xanh biển học
         if (nowH > 6) sector(cv, 6, Math.min(nowH, 22), a(.62, 0x2F343B), -1);
         boolean camp = dh != null && dh.optBoolean("camp");
-        float[][] meals = {{7.5f, 8}, {12, 13}, camp ? new float[]{17.5f, 18.5f} : new float[]{19, 20}};
+        float[][] meals = {{6.5f, (now.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || now.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) ? 8f : 7.5f}, {12, 13}, camp ? new float[]{17.5f, 18.5f} : new float[]{19, 20}};
         for (float[] m : meals) sector(cv, m[0], m[1], a(.6, 0x8E44AD), -1);
         if (tt != null) spans(cv, tt.optJSONArray("khoang"), a(.85, 0x2F7D4F), nowH);
         if (dh != null) spans(cv, dh.optJSONArray("ngu_trua"), a(.55, 0xF6C945), -1);
         sector(cv, 22, 24, a(.55, 0xF6C945), -1); sector(cv, 0, 6, a(.55, 0xF6C945), -1);
         if (dh != null) spans(cv, dh.optJSONArray("the_duc"), a(.75, 0xD62828), -1);
         if (dh != null) spans(cv, dh.optJSONArray("hoc"), a(.75, 0x1F6FD1), nowH);
+        if (dh != null && tt != null) lime(cv, tt.optJSONArray("khoang"), dh.optJSONArray("hoc"), a(.85, 0x9ACD32), nowH);   // (06/11) xanh nõn chuối như đồng hồ web: tập trung trong giờ học, đè xanh biển
         Paint tk = new Paint(Paint.ANTI_ALIAS_FLAG);
         for (int i = 0; i < 96; i++) {
             boolean big = i % 4 == 0;

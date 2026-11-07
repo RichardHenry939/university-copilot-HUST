@@ -65,6 +65,8 @@ public class NotifyService extends Service {
             // (05/11) đếm bước theo lượt iCTSV (WalkWatch): luồng riêng, 20 s một lần
             WalkWatch w = new WalkWatch(this); w.start();
             new Thread(() -> { while (run) { w.poll(); try { Thread.sleep(20000); } catch (InterruptedException e) { return; } } }, "uc-walk").start();
+            // (07/11) về Wi-Fi nhà thì tự bật lại Gỡ lỗi không dây (AdbWifi); 30 s một lần
+            new Thread(() -> { while (run) { AdbWifi.tick(this); try { Thread.sleep(30000); } catch (InterruptedException e) { return; } } }, "uc-adbwifi").start();
         }
         return START_STICKY;
     }

@@ -107,6 +107,11 @@ def today_view(post, refresh=False):
                      "suggested": w.get("camp_day") == d.isoformat(), "past": d < today, "today": d == today})
     m = modes.get(today.isoformat(), {"mode": "Bình thường", "hours": None})
     done_h = sum(float(x["est"] or 0) for x in items if x["status"] == "Done")
+    try:   # (06/11, chủ) giờ đã làm hôm nay = max(việc Done, phút tập trung của ví) — cùng luật với weekly.py
+        import wallet
+        done_h = max(done_h, wallet.focus_by_day().get(today.isoformat(), 0) / 60)
+    except Exception as e:
+        print("daymode wallet:", e)
     plan_h = sum(float(x["est"] or 0) for x in items)
     return {"today": today.isoformat(), "dow": DOW_FULL[today.weekday()], "mode": m["mode"], "hours": m.get("hours") or camp_default(nt),
             "items": items, "doneHours": round(done_h, 2), "planHours": round(plan_h, 2), "days": days,
